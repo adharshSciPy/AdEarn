@@ -131,6 +131,7 @@ position: relative;
   width: 90%;
 }
 .buttonContainer button{
+  cursor: pointer;;
   width: 100%;
   padding: 16px;
   border-radius: var(--border-radius);
