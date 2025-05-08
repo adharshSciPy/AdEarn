@@ -1,0 +1,111 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+:root {
+  --primary-color: #5325b5;
+  --secondary-color: #3563e9;
+  --green-text: #097000;
+  --red-text: #ff0000;
+  --font-main: "Roboto", sans-serif;
+  --border-radius: 20px;
+  --spacing: 16px;
+  --input-padding: 10px;
+  --input-radius: 6px;
+  --input-border: 1px solid #ccc;
+  --input-width: 100%;
+}
+.containerOneUser {
+  width: 100%;
+}
+.containerSubUser {
+  width: 90%;
+  margin: auto;
+}
+.containerTwoLeft {
+  width: 50%;
+}
+.containerTwoight {
+  width: 50%;
+}
+.leftMain {
+  width: 100%;
+}
+.rightMain {
+  width: 100%;
+}
+.logoContainer {
+  width: 250px;
+  height: 90px;
+  padding-left: 10px;
+  padding-top: 20px;
+}
+.logoContainer img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+.contentsContainerLeft {
+  width: 60%;
+  margin: auto;
+  height: 30px;
+  margin-top: 40px;
+}
+.headingMain {
+  text-align: start;
+}
+.headingMain h2 {
+  font-size: 36px;
+  font-weight: 600;
+}
+.paraContent {
+  text-align: start;
+  margin-top: 20px;
+}
+.paraContent p {
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 160%;
+}
+.formContainer {
+  width: 90%;
+  margin-top: 40px;
+}
+.form {
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: start;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  text-align: left;
+}
+
+.input {
+  padding: var(--input-padding);
+  border: var(--input-border);
+  border-radius: var(--input-radius);
+  width: var(--input-width);
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.forgotPassContainer{
+  margin-top: 15px;
+  width: 90%;
+  text-align: right;
+}
+.linkStyle{
+  text-decoration: none;
+  color: #1E4AE9;
+  font-size: 13px;
+}
