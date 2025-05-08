@@ -2,10 +2,14 @@ import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-const defaultRole = process.env.ADMIN_ROLE;
+const adminRole = process.env.ADMIN_ROLE;
 
 const adminSchema = new Schema(
   {
+    phoneNumber:{
+        type: Number,
+        required : true,
+    },
     adminEmail: {
       type: String,
       required: true,
@@ -14,13 +18,23 @@ const adminSchema = new Schema(
       type: String,
       required: true,
     },
-    role: {
+    adminRole: {
       type: Number,
       default: adminRole,
     },
   },
   { timestamps: true }
 );
+adminSchema.pre("save", async function (next) {
+    if (!this.isModified("password")) return next();
+    try {
+      this.password = await bcrypt.hash(this.password, 10);
+      next();
+    } catch (error) {
+      return next(error);
+    }
+  });
+
 adminSchema.methods.generateAccessToken = function () {
     return jwt.sign(
       {
@@ -33,3 +47,8 @@ adminSchema.methods.generateAccessToken = function () {
       { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
     );
   };
+  adminSchema.methods.isPasswordCorrect = async function (password) {
+    return await bcrypt.compare(password, this.password);
+  };
+  
+  export const Admin = mongoose.model("Admin", adminSchema);
