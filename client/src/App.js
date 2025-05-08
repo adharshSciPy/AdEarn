@@ -1,10 +1,15 @@
-import './App.css';
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import "./App.css";
+import { BrowserRouter, Route ,Routes} from "react-router-dom";
+import Home from "./pages/user/Login/LoginUser.jsx"
 
 function App() {
   return (
     <div className="App">
-
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+        </Routes>
+      </BrowserRouter>
     </div>
   );
 }
