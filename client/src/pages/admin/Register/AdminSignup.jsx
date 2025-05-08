@@ -1,8 +1,9 @@
 import React from 'react'
+import './AdminSignup.css'
 
 function AdminSignup() {
   return (
-    <div>AdminSignup</div>
+    <div className='div1'>AdminSignup</div>
   )
 }
 
