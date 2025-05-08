@@ -1,5 +1,6 @@
 import { React, useState, useEffect, useMemo } from 'react'
-// import Logo from "../../assets/header-logo.png"
+import Logo from "../../assets/Logo.png"
+import Avatar from "../../assets/Avatar.png"
 import "./Sidebar.css"
 import { Menu, Button } from 'antd'
 import {
@@ -36,6 +37,22 @@ function Sidebar() {
         { key: "signout", label: "Signout", icon: <LogoutOutlined />, path: "/" },
     ], []);
 
+    const user = {
+        name: "Andrew Smith",
+        role: "400",
+    };
+
+    const formatRole = (role) => {
+        switch (role) {
+            case "500":
+                return "SUPER ADMIN";
+            case "400":
+                return "ADMIN";
+            default:
+                return role.toUpperCase();
+        }
+    };
+
 
     return (
         <>
@@ -43,12 +60,24 @@ function Sidebar() {
                 <div className={`sidebar ${isPinned ? "pinned" : "collapsed"}`}>
                     <div className="sidebar-content">
                         <div className='logo'>
-                            {/* <img src={Logo} /> */}
+                            <img src={Logo} />
+                        </div>
+                        <div className="heading">
+                            {isPinned && (
+                                <>
+                                    <img src={Avatar} />
+                                    <div className="headtext">
+                                        <p>Andrew Smith</p>
+                                        <span>{formatRole(user.role)}</span>
+                                    </div>
+                                </>
+                            )}
                         </div>
                         <Menu
                             className="menu"
                             mode="vertical"
                             defaultSelectedKeys={[pathKey]}
+                            style={{ overflow: 'hidden' }}
                         >
                             {menuItems.map(({ key, label, icon, path }) => (
                                 <Menu.Item key={key} icon={icon}>
