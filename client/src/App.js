@@ -25,6 +25,8 @@ function App() {
           {/* user */}
           <Route path='/' element={<LoginUser/>}/>
           <Route path='/usersignup' element={<UserSignUp/>}/>
+          <Route path='/phoneLogin' element={<UserSignUp/>}/>
+
         </Routes>
       </BrowserRouter>
 
