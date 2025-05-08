@@ -10,6 +10,7 @@ function App() {
         <Routes>
           <Route path='/adminsignup' element={<AdminSignup />} />
           <Route path='/adminlogin' element={<AdminLogin />} />
+          
           <Route />
         </Routes>
       </BrowserRouter>
