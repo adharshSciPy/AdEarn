@@ -17,6 +17,10 @@ const userSchema=new Schema({
     password:{
         type:String
     },
+    referalCode:{
+        type:String,
+        unique:true
+    },
     firstName:{
         type:String
     },
@@ -55,6 +59,7 @@ const userSchema=new Schema({
     }
 
 },{timestamps:true})
+// password hashing
 userSchema.pre("save",async function (next) {
     if(!this.isModified("password")) return next()
         console.log("Password before hashing",this.password);
@@ -68,7 +73,22 @@ userSchema.pre("save",async function (next) {
      }
     
 });
+// password comparing
 userSchema.methods.isPasswordCorrect=async function (password) {
     return await bcrypt.compare(password,this.password)
     
 }
+// generating token
+userSchema.methods.generateAcessToken=function(){
+    const payload={id:this._id,email:this.email};
+    const accessToken=jwt.sign(payload,process.env.ACCESS_TOKEN_SECRET,{expiresIn:"7d"});
+    return accessToken
+};
+// refreshing token
+userSchema.methods.generateRefreshToken=function(){
+    const payload={id:this._id};
+    const refreshToken =jwt.sign(payload,process.env.REFRESH_TOKEN_SECRET,{expiresIn:"7d"});
+    return refreshToken
+};
+
+export default mongoose.model("User Schema",userSchema)
