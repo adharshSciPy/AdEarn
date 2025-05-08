@@ -16,13 +16,13 @@ function LoginUser() {
                 </div>
               </div>
               <div className={styles.contentsContainerLeft}>
+                <div className={styles.contentsMainLeft}>
                 <div className={styles.headingMain}>
-                  <h2>Welcome Back 👋</h2>
+                  <h2>Welcome Back</h2>
                 </div>
                 <div className={styles.paraContent}>
                   <p>
-                    This is a demo content.This is a demo content. This is a
-                    demo content.
+                    This is a demo content
                   </p>
                 </div>
                 <div className={styles.formContainer}>
@@ -61,13 +61,17 @@ function LoginUser() {
                 <div className={styles.forgotPassContainer}>
                   <Link className={styles.linkStyle}>Forgot Password?</Link>
                 </div>
+                <div className={styles.buttonContainer}>
+                  <button> Submit</button>
+                </div>
+                </div>
               </div>
             </div>
+            <div className={styles.bgContainer}></div>
           </div>
           <div className={styles.containerTwoRight}>
             <div className={styles.rightMain}></div>
           </div>
-          
         </div>
       </div>
     </div>

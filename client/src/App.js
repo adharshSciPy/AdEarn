@@ -8,7 +8,10 @@ import AdminHome from './pages/admin/Home/AdminHome';
 
 
 import LoginUser from './pages/user/Login/LoginUser';
+import PhoneLogin from './pages/user/Login/PhoneLogin';
+
 import UserSignUp from './pages/user/signUp/UserSignUp';
+
 
 function App() {
   return (
@@ -30,6 +33,8 @@ function App() {
           {/* user */}
           <Route path='/' element={<LoginUser />} />
           <Route path='/usersignup' element={<UserSignUp />} />
+          <Route path='/phonesignup' element={<PhoneLogin />} />
+
         </Routes>
       </BrowserRouter>
 
