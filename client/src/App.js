@@ -14,6 +14,8 @@ import UserSignUp from './pages/user/signUp/UserSignUp';
 import EmailRegistration from './pages/user/signUp/EmailReg'
 import ReferalCode from './pages/user/signUp/ReferalCode';
 import Form1 from './pages/user/signUp/Form1';
+import Form2 from './pages/user/signUp/Form2';
+
 
 function App() {
   return (
@@ -40,6 +42,8 @@ function App() {
           <Route path='/emailRegistration' element={<EmailRegistration />} />
           <Route path='/referalPage' element={<ReferalCode />} />
           <Route path='/form1' element={<Form1 />} />
+          <Route path='/form2' element={<Form2 />} />
+
 
 
 
