@@ -109,6 +109,8 @@ position: relative;
   border: var(--input-border);
   border-radius: var(--input-radius);
   width: var(--input-width);
+  padding: 18px;
+
 }
 
 .checkbox-group {
@@ -118,7 +120,7 @@ position: relative;
 }
 .forgotPassContainer{
   margin-top: 15px;
-  width: 90%;
+  width: 100%;
   text-align: right;
 }
 .linkStyle{
@@ -128,9 +130,10 @@ position: relative;
 }
 .buttonContainer{
   margin-top: 30px;
-  width: 90%;
+  width: 100%;
 }
 .buttonContainer button{
+  cursor: pointer;;
   width: 100%;
   padding: 16px;
   border-radius: var(--border-radius);
@@ -147,7 +150,30 @@ position: relative;
   background-position: center;
   display: none;
 }
+.seperator{
+  display: flex;
+  width: 90%;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 30px;
+}
+.hr{
+  width: 45%;
+  height: 1px;
+  border: 1px solid #CFDFE2;
+}
+.signup{
+  width: 90%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 30px;
 
+}
+.signup p{
+  padding: 0 5px;
+  font-size: 14px;
+}
 @media (max-width:1000px) {
   .contentsContainerLeft {
     width: 80%;
@@ -179,7 +205,7 @@ justify-content: space-between;
   height: max-content;
   width: 100%;
   margin: 0;
-  padding-bottom: 100px;
+  padding-bottom: 10px;
   padding-top: 20px;
   background: rgba(255, 255, 255, 0.15); /* Light glass effect */
   backdrop-filter: blur(20px);
@@ -211,6 +237,7 @@ justify-content: space-between;
 }
 .buttonContainer{
   margin: auto;
+  margin-top: 20px;
 }
 .forgotPassContainer{
   margin-top: 5px;
@@ -219,5 +246,12 @@ justify-content: space-between;
 .logoContainer img{
   display: none;
 }
-
+.seperator{
+  margin: auto;
+  margin-top: 20px;
+}
+.signup{
+  margin:auto;
+  margin-top: 30px;
+}
 }
