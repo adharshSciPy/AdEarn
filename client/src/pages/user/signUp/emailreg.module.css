@@ -1,0 +1,261 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+  
+  }
+  :root {
+    --primary-color: #5325b5;
+    --secondary-color: #3563e9;
+    --green-text: #097000;
+    --red-text: #ff0000;
+    --font-main: "Roboto", sans-serif;
+    --border-radius: 12px;
+    --spacing: 16px;
+    --input-padding: 10px;
+    --input-radius: 6px;
+    --input-border: 1px solid #ccc;
+    --input-width: 100%;
+  }
+  .containerOneUser {
+    width: 100%;
+    height: 100vh;
+  }
+  
+  .containerSubUser {
+    width: 100%;
+    display: flex;
+    height: 100vh;
+  
+  }
+  .containerTwoLeft {
+    width: 50%;
+    height: 100vh;
+  
+  
+  }
+  .containerTwoRight {
+    width: 50%;
+    height: inherit;
+    background-image: url(../../../assets/webLogin.jpg);
+    background-size: cover;
+    background-position: top;
+  }
+  .leftMain {
+    width: 100%;
+    height: 100%;
+  position: relative;
+  }
+  .rightMain {
+    width: 100%;
+    height: inherit;  
+  }
+  .logoContainer {
+    width: 240px;
+    height: 80px;
+    padding-left: 30px;
+    padding-top: 20px;
+  }
+  .logoContainer img {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+  }
+  
+  .contentsContainerLeft {
+    width: 60%;
+    margin: auto ;
+    height:max-content;
+    margin-top: 40px;
+  
+  }
+  .headingMain {
+    text-align: start;
+  }
+  .headingMain h2 {
+    font-size: 36px;
+    font-weight: 600;
+  }
+  .paraContent {
+    text-align: start;
+    margin-top: 20px;
+  }
+  .paraContent p {
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 160%;
+  }
+  .formContainer {
+    width: 90%;
+    margin-top: 40px;
+  }
+  .form {
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    justify-content: start;
+  }
+  
+  .label {
+    display: block;
+    margin-bottom: 0.5rem;
+    text-align: left;
+  }
+  
+  .input {
+    padding: var(--input-padding);
+    border: var(--input-border);
+    border-radius: var(--input-radius);
+    width: var(--input-width);
+    padding: 18px;
+  
+  }
+  
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .forgotPassContainer{
+    margin-top: 15px;
+    width: 100%;
+    text-align: right;
+  }
+  .linkStyle{
+    text-decoration: none;
+    color: #1E4AE9;
+    font-size: 13px;
+  }
+  .buttonContainer{
+    margin-top: 30px;
+    width: 100%;
+  }
+  .buttonContainer button{
+    cursor: pointer;;
+    width: 100%;
+    padding: 16px;
+    border-radius: var(--border-radius);
+    border: none;
+    background: linear-gradient(to right, #6DA2E4, #F4AD13);
+  }
+  .bgContainer{
+    position: absolute;
+    width: 50%;
+    height: 100vh;
+    top: 0;
+    z-index: -1;
+    background-image: url("../../../assets/loginPng.png");
+    background-position: center;
+    display: none;
+  }
+  .seperator{
+    display: flex;
+    width: 90%;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+  }
+  .hr{
+    width: 45%;
+    height: 1px;
+    border: 1px solid #CFDFE2;
+  }
+  .signup{
+    width: 90%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 30px;
+  
+  }
+  .signup p{
+    padding: 0 5px;
+    font-size: 14px;
+  }
+  @media (max-width:1000px) {
+    .contentsContainerLeft {
+      width: 80%;
+    }
+    
+  
+  }
+  
+  @media (max-width:768px) {
+   
+    .containerTwoRight{
+      display: none;
+    }
+    .containerTwoLeft{
+      width: 100%;
+    }
+  .bgContainer{
+    display: block;
+    width: 100%;
+    height: 100vh;
+  }
+  .leftMain{
+    height: 100vh;
+    display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  }
+  .contentsContainerLeft{
+    height: max-content;
+    width: 100%;
+    margin: 0;
+    padding-bottom: 60px;
+    padding-top: 20px;
+    background: rgba(255, 255, 255, 0.15); /* Light glass effect */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(10px); /* Safari support */
+    border-radius: 50px 50px 0 0;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  }
+  .contentsMainLeft{
+    width: 100%;
+  }
+  
+  .headingMain,.paraContent{
+    text-align: center;
+    color: #EFEFEF;
+  }
+  .label{
+    color: #EFEFEF;
+  
+  }
+  .paraContent{
+    text-align: center;
+  }
+  .formContainer{
+    margin: auto;
+    padding-top:10px ;
+  }
+  .paraContent{
+    margin-top: 10px;
+  }
+  .buttonContainer{
+    margin: auto;
+    margin-top: 20px;
+  }
+  .forgotPassContainer{
+    margin-top: 5px;
+    margin-bottom: 10px;
+  }
+  .logoContainer img{
+    display: none;
+  }
+  .seperator{
+    margin: auto;
+    margin-top: 20px;
+  }
+  .signup{
+    margin:auto;
+    margin-top: 30px;
+  }
+
+  .buttonContainer{
+    padding-top: 20px;
+  }
+  }

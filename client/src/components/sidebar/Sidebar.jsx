@@ -1,104 +1,98 @@
-import { React, useState, useEffect, useMemo } from 'react'
-import Logo from "../../assets/Logo.png"
-import Avatar from "../../assets/Avatar.png"
-import "./Sidebar.css"
-import { Menu, Button } from 'antd'
+import { React, useState, useEffect, useMemo } from "react";
+import "./Sidebar.css";
+import { Menu, Button } from "antd";
+
 import {
-    HomeOutlined, UserOutlined, ContainerOutlined, DiffOutlined, UserAddOutlined, SettingOutlined, LogoutOutlined, PushpinOutlined,
+    HomeOutlined,
+    UserOutlined,
+    ContainerOutlined,
+    SettingOutlined,
+    LogoutOutlined,
+    PushpinOutlined,
     PushpinFilled,
-} from "@ant-design/icons"
-import { NavLink, useLocation } from 'react-router-dom'
+} from "@ant-design/icons";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
 function Sidebar() {
-    const [isPinned, setIsPinned] = useState(false);
+    const navigate = useNavigate();
+    const [isPinned, setIsPinned] = useState(window.innerWidth > 768);
     const location = useLocation();
-    const pathKey = useMemo(() => location.pathname.split("/")[1] || "admin", [location]);
 
+    const menuItems = useMemo(
+        () => [
+            { key: "home", label: "Home", icon: <HomeOutlined />, path: "/Admindashboard" },
+            { key: "ads", label: "Ads", icon: <UserOutlined />, path: "/AdminAds" },
+            { key: "coupons", label: "Coupons", icon: <UserOutlined />, path: "/AdminCoupons" },
+            { key: "Report", label: "Reports", icon: <ContainerOutlined />, path: "/Adminreport" },
+            { key: "settings", label: "Settings", icon: <SettingOutlined />, path: "/Adminsettings" },
+            { key: "signout", label: "Signout", icon: <LogoutOutlined /> },
+        ]
+    );
+
+    const pathKey = useMemo(() => {
+        const currentPath = location.pathname;
+        const matchingItem = menuItems.find(item => item.path === currentPath);
+        return matchingItem ? matchingItem.key : ''; // Default to 'admin' if no match
+    }, [location, menuItems]);
+
+    // Effect to handle screen resize
     useEffect(() => {
-        const savedState = JSON.parse(localStorage.getItem("isPinned"));
-        if (savedState !== null) setIsPinned(savedState);
+        const handleResize = () => {
+            if (window.innerWidth > 768) {
+                setIsPinned(true);
+            } else {
+                const savedState = JSON.parse(localStorage.getItem("isPinned"));
+                if (savedState !== null) {
+                    setIsPinned(savedState);
+                }
+            }
+        };
+
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
     }, []);
 
     const togglePin = () => {
-        setIsPinned((prev) => {
-            const newState = !prev;
-            localStorage.setItem("isPinned", JSON.stringify(newState));
-            return newState;
-        });
-    };
-
-    const menuItems = useMemo(() => [
-        { key: "admin", label: "Dashboard", icon: <HomeOutlined />, path: "/admin" },
-        { key: "profile", label: "Profile", icon: <UserOutlined />, path: "/profile" },
-        { key: "listing", label: "Listing", icon: <ContainerOutlined />, path: "/listing" },
-        { key: "blogs", label: "Blogs", icon: <DiffOutlined />, path: "/blogs" },
-        { key: "socialmedia", label: "Social Media", icon: <UserAddOutlined />, path: "/socialmedia" },
-        { key: "settings", label: "Settings", icon: <SettingOutlined />, path: "/settings" },
-        { key: "signout", label: "Signout", icon: <LogoutOutlined />, path: "/" },
-    ], []);
-
-    const user = {
-        name: "Andrew Smith",
-        role: "400",
-    };
-
-    const formatRole = (role) => {
-        switch (role) {
-            case "500":
-                return "SUPER ADMIN";
-            case "400":
-                return "ADMIN";
-            default:
-                return role.toUpperCase();
+        if (window.innerWidth <= 768) {
+            setIsPinned((prev) => {
+                const newState = !prev;
+                localStorage.setItem("isPinned", JSON.stringify(newState));
+                return newState;
+            });
         }
     };
 
-
     return (
-        <>
-            <div className="container">
-                <div className={`sidebar ${isPinned ? "pinned" : "collapsed"}`}>
-                    <div className="sidebar-content">
-                        <div className='logo'>
-                            <img src={Logo} />
-                        </div>
-                        <div className="heading">
-                            {isPinned && (
-                                <>
-                                    <img src={Avatar} />
-                                    <div className="headtext">
-                                        <p>Andrew Smith</p>
-                                        <span>{formatRole(user.role)}</span>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                        <Menu
-                            className="menu"
-                            mode="vertical"
-                            defaultSelectedKeys={[pathKey]}
-                            style={{ overflow: 'hidden' }}
-                        >
-                            {menuItems.map(({ key, label, icon, path }) => (
-                                <Menu.Item key={key} icon={icon}>
-                                    <NavLink to={path}>{isPinned && label}</NavLink>
-                                </Menu.Item>
-                            ))}
-                        </Menu>
+        <div className="sidebar-container">
+            <div className={`sidebar ${isPinned ? "pinned" : "collapsed"}`}>
+                <div className="sidebar-content">
+                    <div className="logo"></div>
+                    <div className="pin-pin">
+                        <Button
+                            aria-label={isPinned ? "Unpin Sidebar" : "Pin Sidebar"}
+                            className="pin-button"
+                            type="text"
+                            icon={isPinned ? <PushpinFilled /> : <PushpinOutlined />}
+                            onClick={togglePin}
+                            disabled={window.innerWidth > 768}
+                        />
                     </div>
-                </div>
-                <div className="pin-pin">
-                    <Button
-                        aria-label={isPinned ? "Unpin Sidebar" : "Pin Sidebar"}
-                        className="pin-button"
-                        type="text"
-                        icon={isPinned ? <PushpinFilled /> : <PushpinOutlined />}
-                        onClick={togglePin}
-                    />
+                    <Menu
+                        className="menu"
+                        mode="vertical"
+                        selectedKeys={[pathKey]}
+                    >
+                        {menuItems.map(({ key, label, icon, path, onClick }) => (
+                            <Menu.Item key={key} icon={icon} onClick={onClick}>
+                                <NavLink to={path}>{isPinned && label}</NavLink>
+                            </Menu.Item>
+                        ))}
+                    </Menu>
                 </div>
             </div>
-        </>
-    )
+        </div>
+    );
 }
 
-export default Sidebar
+export default Sidebar;

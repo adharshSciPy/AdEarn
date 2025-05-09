@@ -8,6 +8,9 @@ function AdminHome() {
     <div className='adminmain'>
       <div className='admincontainermain'>
         <Sidebar />
+        <div className="chart">
+          <p>Home</p>
+        </div>
 
 
 

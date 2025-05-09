@@ -8,10 +8,12 @@ import AdminHome from './pages/admin/Home/AdminHome';
 
 
 import LoginUser from './pages/user/Login/LoginUser';
-import PhoneLogin from './pages/user/Login/PhoneLogin';
-
+import PhoneLogin from './pages/user/signUp/PhoneLogin';
+import PhoneOtp from "./pages/user/signUp/PhoneOtp"
 import UserSignUp from './pages/user/signUp/UserSignUp';
-
+import EmailRegistration from './pages/user/signUp/EmailReg'
+import ReferalCode from './pages/user/signUp/ReferalCode';
+import Form1 from './pages/user/signUp/Form1';
 
 function App() {
   return (
@@ -34,6 +36,15 @@ function App() {
           <Route path='/' element={<LoginUser />} />
           <Route path='/usersignup' element={<UserSignUp />} />
           <Route path='/phonesignup' element={<PhoneLogin />} />
+          <Route path='/phoneotp' element={<PhoneOtp />} />
+          <Route path='/emailRegistration' element={<EmailRegistration />} />
+          <Route path='/referalPage' element={<ReferalCode />} />
+          <Route path='/form1' element={<Form1 />} />
+
+
+
+          
+
 
         </Routes>
       </BrowserRouter>
