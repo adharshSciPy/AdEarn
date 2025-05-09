@@ -1,14 +1,128 @@
 .sidebar-container {
-  box-sizing: border-box;
+  display: flex;
+  border-radius: 20px;
+  margin-right: 10px;
+  padding: 25px;
   height: 100vh;
 }
 
+.heading {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  text-align: center;
+  padding: 16px 12px;
+  border-bottom: 0.1px solid #eee5e5;
+}
+
+.heading p {
+  color: #9b9494;
+}
+
+.headtext {
+  display: flex;
+  flex-direction: column;
+}
+
+.avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 10px;
+}
+
+.logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+}
+
+.logo img {
+  height: 40px;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.sidebar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -10px;
+  height: 100%;
+  width: 10px;
+  background: linear-gradient(to bottom, #a18cd1, #fbc2eb);
+  filter: blur(10px);
+  border-radius: 0 10px 10px 0;
+}
+
+.sidebar.pinned {
+  width: 200px;
+}
+
+.sidebar.collapsed {
+  width: 60px;
+}
+
+.sidebar-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+
+.sidebar.collapsed .logo img {
+  opacity: 0;
+  visibility: hidden;
+}
+.pin-pin {
+  /* background-color: #ebf3f5; */
+  border-radius: 20px;
+}
+.pin-button {
+  margin: 10px;
+  align-self: flex-end;
+  background-color: #08265f;
+  color: #ebf3f5;
+}
+
+.menu {
+  flex: 1;
+  overflow-y: auto;
+  background-color: white;
+}
+
+.menu .ant-menu-item {
+  justify-content: center;
+}
+
+.sidebar.pinned .menu .ant-menu-item {
+  justify-content: start;
+}
+
+/* Menu Item Text Hidden in Collapsed Mode */
+.menu .ant-menu-item {
+  transition: padding 0.3s ease-in-out;
+}
+
+.sidebar.collapsed .ant-menu-item > span {
+  display: inline-flex;
+}
+
+
+
 .sidebar-container .sidebar {
   width: 200px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  box-shadow: 5px 5px 12px #5325b5;
+  padding-top: 20px;
   display: flex;
   flex-direction: column;
   transition: width 0.3s ease-in-out;
   overflow: hidden;
+  border-radius: 20px;
 }
 
 .sidebar-container .sidebar.pinned {
@@ -81,8 +195,101 @@
   color: #000 !important;
 }
 
+/* Menu background */
+.sidebar-container .menu {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #ebf3f5;
+}
+
+/* Main menu item */
+.sidebar-container .menu .ant-menu-item {
+  background-color: #e0e7f0;
+  transition: background-color 0.3s;
+}
+
+.sidebar-container .menu .ant-menu-item:hover {
+  background-color: #d0e0ec;
+}
+
+/* Selected main item */
+.sidebar-container .menu .ant-menu-item-selected {
+  background-color: #f8cb58 !important;
+  color: #000 !important;
+}
+
+/* Submenu container */
+.sidebar-container .menu .ant-menu-submenu {
+  background-color: #deeef5;
+}
+
+.sidebar-container .menu .ant-menu-submenu-title {
+  background-color: #cde1ec;
+  color: #000;
+}
+
+.sidebar-container .menu .ant-menu-submenu-title:hover {
+  background-color: #b9d5e6;
+}
+
+/* Submenu items */
+.sidebar-container .menu .ant-menu-sub {
+  background-color: #f4f9fb;
+}
+
+.sidebar-container .menu .ant-menu-sub .ant-menu-item {
+  background-color: #f4f9fb;
+  padding-left: 40px;
+}
+
+.sidebar-container .menu .ant-menu-sub .ant-menu-item:hover {
+  background-color: #e1f0f5;
+}
+
+/* Selected submenu item */
+.sidebar-container .menu .ant-menu-sub .ant-menu-item-selected {
+  background-color: #f8cb58 !important;
+  color: #000 !important;
+}
+
+/* Selected main menu item */
+.sidebar-container .menu .ant-menu-item-selected {
+  background-color: #f8cb58 !important;
+  color: #000 !important;
+  font-weight: bold;
+}
+
+/* Selected submenu item */
+.sidebar-container .menu .ant-menu-sub .ant-menu-item-selected {
+  background-color: #f8cb58 !important;
+  color: #000 !important;
+  font-weight: bold;
+}
+
+/* Highlight the parent submenu if a child is selected */
+.sidebar-container .menu .ant-menu-submenu-selected > .ant-menu-submenu-title {
+  background-color: #f8cb58 !important;
+  color: #000 !important;
+  font-weight: bold;
+}
+
+.sidebar.pinned {
+  width: 200px;
+}
+
+.sidebar.collapsed {
+  width: 60px;
+}
+
+.sidebar-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 @media (max-width: 760px) {
-  .sidebar-container .pin-pin {
-    display: block;
+  .pin-pin {
+    display: none;
   }
 }
