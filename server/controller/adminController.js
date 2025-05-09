@@ -1,3 +1,7 @@
+import {Admin} from "../model/adminModel.js"
+import jwt from "jsonwebtoken"
+import { passwordValidator } from "../utils/passwordValidator.js";
+
 const registerAdmin = async (req, res) => {
     const { phoneNumber, password } = req.body;
   
@@ -14,16 +18,16 @@ const registerAdmin = async (req, res) => {
         });
       }
   
-      // Check for existing admin by phone number
+      
       const existingAdmin = await Admin.findOne({ phoneNumber });
       if (existingAdmin) {
         return res.status(409).json({ message: "Phone number already in use" });
       }
   
-      // Default role (optional if not in schema)
+     
       const role = Number(process.env.ADMIN_ROLE) || 1;
   
-      // Create admin
+     
       const admin = await Admin.create({ phoneNumber, password, role });
   
       // Return admin without password
@@ -41,4 +45,4 @@ const registerAdmin = async (req, res) => {
       return res.status(500).json({ message: `Internal server error: ${error.message}` });
     }
   };
-  
+  export {registerAdmin}

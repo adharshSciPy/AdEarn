@@ -8,15 +8,15 @@ const adminSchema = new Schema(
   {
     phoneNumber:{
         type: Number,
-        required : true,
+      
     },
     adminEmail: {
       type: String,
-      required: true,
+    
     },
     password: {
       type: String,
-      required: true,
+     
     },
     adminRole: {
       type: Number,
