@@ -17,7 +17,7 @@ const userSchema=new Schema({
     password:{
         type:String
     },
-    referalCode:{
+    myReferalCode:{
         type:String,
         unique:true
     },
