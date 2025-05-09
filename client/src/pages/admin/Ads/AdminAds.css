@@ -1,8 +1,8 @@
-.admincontainermain {
+.adminadscontainermain {
   display: flex;
 }
 
-.chart {
+.Adminads {
   display: flex;
   padding-top: 10px;
 }
