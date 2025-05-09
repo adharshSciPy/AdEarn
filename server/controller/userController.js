@@ -1,6 +1,6 @@
 import User from "../model/userModel.js";
 import jwt from "jsonwebtoken";
-
+import { passwordValidator } from "../utils/passwordValidator.js";
 // function to create referal code
 const generateReferalCode = async (length = 6) => {
   const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
@@ -80,7 +80,7 @@ const editUser = async (req, res) => {
     maritalStatus,
     highestEducation,
     profession,
-    emplpoyedIn,
+    employedIn,
   } = req.body;
   try {
     if(!id){
@@ -91,30 +91,61 @@ const editUser = async (req, res) => {
         return res.status(400).json({message:"User not found ,Please check the id"});
 
     }
-    const updateFields = {};
-    if (email) updateFields.email = email;
-    if (password) updateFields.password = password; 
-    if (referalCode) updateFields.myReferalCode = referalCode;
-    if (firstName) updateFields.firstName = firstName;
-    if (lastName) updateFields.lastName = lastName;
-    if (gender) updateFields.gender = gender;
-    if (state) updateFields.state = state;
-    if (district) updateFields.district = district;
-    if (location) updateFields.location = location;
-    if (pinCode) updateFields.pinCode = pinCode;
-    if (fieldOfIntrest) updateFields.fieldOfInterest = fieldOfIntrest;
-    if (maritalStatus) updateFields.maritalStatus = maritalStatus;
-    if (highestEducation) updateFields.highestEducation = highestEducation;
-    if (profession) updateFields.profession = profession;
-    if (emplpoyedIn) updateFields.employedIn = emplpoyedIn;
-    const updatedUser = await User.findByIdAndUpdate(
-        id,
-        { $set: updateFields },
-        { new: true,runValidators:true }
-      );
-      updatedUser.password = undefined;
+    if (referalCode && !user.referedBy) {
+        console.log("Referral code logic executing...");
+      
+        const referringUser = await User.findOne({ myReferalCode: referalCode });
+        if (!referringUser) {
+          return res.status(400).json({ message: "Invalid referral code" });
+        }
+      
+        if (referringUser._id.toString() === id) {
+          return res.status(400).json({ message: "Cannot use your own referral code" });
+        }
+      
+        const alreadyReferred = referringUser.referredUsers.some(
+          (refId) => refId.toString() === user._id.toString()
+        );
+      
+        if (alreadyReferred) {
+          return res.status(400).json({ message: "Already used the referral code" });
+        }
+      
+        user.referedBy = referringUser._id;
+        referringUser.referredUsers.push(user._id);
+        await referringUser.save();
+      }
+      
+    if (email) user.email = email;
+    if (password){
+        const isValidPassword = passwordValidator(password);
+      if (!isValidPassword) {
+        return res.status(400).json({
+          message:
+            "Password must be at least 8 characters long and include at least one lowercase letter, one uppercase letter, one number, and one special character",
+        });
+      }
+      user.password = password; 
+    } 
+    if (referalCode) user.referalCode = referalCode;
+    if (firstName) user.firstName = firstName;
+    if (lastName) user.lastName = lastName;
+    if (gender) user.gender = gender;
+    if (state) user.state = state;
+    if (district) user.district = district;
+    if (location) user.location = location;
+    if (pinCode) user.pinCode = pinCode;
+    if (fieldOfIntrest) user.fieldOfInterest = fieldOfIntrest;
+    if (maritalStatus) user.maritalStatus = maritalStatus;
+    if (highestEducation) user.highestEducation = highestEducation;
+    if (profession) user.profession = profession;
+    if (employedIn) user.employedIn = employedIn;
+
+    await user.save();
+    
+    user.password = undefined;
       return res.status(200).json({message:"User edited Succefully",
-        user:updatedUser
+        user
       })
 
   } catch (error) {
