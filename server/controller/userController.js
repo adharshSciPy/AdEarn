@@ -50,7 +50,7 @@ const registerUser = async (req, res) => {
       user: {
         id: user._id,
         phoneNumber: user.phoneNumber,
-        userRole: user.role,
+        role:user.role,
         myReferalCode: user.myReferalCode,
       },
       token,
@@ -156,5 +156,87 @@ const editUser = async (req, res) => {
     });
   }
 };
+// user login
+const userLogin=async(req,res)=>{
+    const{email,password}=req.body;
+    try {
+       if(!email?.trim() ||!password?.trim()){
+        return res.status(400).json({message:"All fields are required"});
 
-export { registerUser,editUser };
+       } 
+       const user=await User.findOne({email});
+       if(!user){
+        return res.status(404).json({ message: "Email doesn't exists" });
+       }
+       const isMatch = await user.isPasswordCorrect(password);
+       if (!isMatch) {
+         return res.status(401).json({ message: "Invalid credentials" });
+       }
+       const accessToken = user.generateAcessToken();
+    const refreshToken = user.generateRefreshToken();
+    const userObj=user.toObject();
+    delete userObj.password
+    return res.status(200).json({
+        message: "Login successful",
+        user:userObj,
+        accessToken,
+        refreshToken,
+        role:process.env.USER_ROLE
+      });
+    }catch (error) {
+        console.error("Login error:", error);
+        return res.status(500).json({
+          message: "Login failed",
+          error: error.message,
+    })
+}
+}
+// user logout
+const userLogout=async(req,res)=>{
+    const{id}=req.params;
+    try {
+        const user=await User.findById(id);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        user.refreshToken = null;
+        await user.save();
+    
+        res.clearCookie("refreshToken"); // if used in cookies
+    
+        return res.status(200).json({ message: "User logged out successfully" });
+      } catch (err) {
+        console.error("Logout error:", err);
+        return res.status(500).json({ message: "Internal Server Error" });
+      }
+
+}
+// user profile picture upload
+const uploadProfilePicture = async (req, res) => {
+    const { id } = req.params;
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Convert filesystem path to web-accessible URL
+        const relativePath = req.file.path.replace(/\\/g, '/').split('userUploads')[1];
+        const imageUrl = `/userUploads${relativePath}`;
+
+        user.profileImg = imageUrl;
+        await user.save();
+
+        res.status(200).json({
+            message: "Profile picture uploaded successfully",
+            profileImg: imageUrl, // Now returns a web-accessible URL
+        });
+    } catch (error) {
+        console.error("Upload error:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+export { registerUser,editUser,userLogin ,userLogout,uploadProfilePicture};
