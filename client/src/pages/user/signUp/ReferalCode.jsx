@@ -1,31 +1,36 @@
 import { React, useState } from "react";
 import logo from "../../../assets/Logo.png";
-import styles from "./phonelogin.module.css";
+import styles from "./referalpage.module.css";
 import { Link } from "react-router-dom";
 
-function PhoneLogin() {
-  const [phone, setPhone] = useState("");
+function ReferalCode() {
+  const [coupon, setCoupon] = useState("");
   const [error, setError] = useState("");
-
-  const validatePhone = (value) => {
-    const regex = /^\d{10}$/;
-    return regex.test(value);
-  };
+  const [message, setMessage] = useState("");
 
   const handleChange = (e) => {
-    setPhone(e.target.value);
-    if (error) setError(""); // clear error as user types
+    const value = e.target.value.toUpperCase();
+    setCoupon(value);
+    setError("");
+    setMessage("");
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!validatePhone(phone)) {
-      setError("Enter a valid phone number starting with +91 and 10 digits.");
+    const trimmed = coupon.trim();
+    const codePattern = /^[A-Z0-9@#$%&*]{6}$/;
+
+    if (!codePattern.test(trimmed)) {
+      setError("Invalid coupon code. Must be 6 characters: A-Z, 0-9, @#$%&*");
       return;
     }
-    setPhone("")
-    
+
+    // Proceed with valid code
+    console.log("Coupon code is valid:", trimmed);
+    setCoupon("");
+    setError("");
   };
+
   return (
     <div>
       <div className={styles.containerOneUser}>
@@ -34,54 +39,35 @@ function PhoneLogin() {
             <div className={styles.leftMain}>
               <div className={styles.logoContainer}>
                 <div className={styles.logo}>
-                  <img src={logo} alt="" />
+                  <img src={logo} alt="Logo" />
                 </div>
               </div>
               <div className={styles.contentsContainerLeft}>
                 <div className={styles.contentsMainLeft}>
                   <div className={styles.headingMain}>
-                    <h2>Welcome Back</h2>
+                    <h2>Enter Referral Code</h2>
                   </div>
                   <div className={styles.paraContent}>
-                    <p>This is a demo content</p>
+                    <p>If you have a referral or promo code, enter it below.</p>
                   </div>
                   <div className={styles.formContainer}>
-                    <form className="form" onSubmit={handleSubmit}>
+                    <form onSubmit={handleSubmit}>
                       <div className={styles.formContents}>
-                        <label htmlFor="phone" className={styles.label}>
-                          Phone Number
-                        </label>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                        >
-                          <span
-                            style={{
-                              padding: "15px",
-                              background: "#eee",
-                              borderRadius: "4px 4px 4px 4px",
-                            }}
-                          >
-                            +91
-                          </span>
+                        <label className={styles.label}>Coupon Code</label>
+                        <div className={styles.inputFlex}>
                           <input
-                            id="phone"
-                            type="tel"
-                            value={phone}
+                            id="coupon"
+                            name="coupon"
+                            value={coupon}
                             onChange={handleChange}
                             required
                             className={styles.input}
-                            placeholder="10-digit number"
-                            style={{ flex: 1 }}
+                            placeholder="#EDED231"
                           />
                         </div>
-                        {error && (
-                          <p style={{ color: "red", fontSize: "0.9rem",padding:"0.5rem" }}>
-                            {error}
-                          </p>
+                        {error && <p className={styles.errorText}>{error}</p>}
+                        {message && (
+                          <p className={styles.successText}>{message}</p>
                         )}
                       </div>
                       <div className={styles.buttonContainer}>
@@ -90,6 +76,10 @@ function PhoneLogin() {
                     </form>
                   </div>
                 </div>
+              <div className={styles.skipContainer}>
+                <button>skip</button>
+              </div>
+
               </div>
             </div>
             <div className={styles.bgContainer}></div>
@@ -103,4 +93,4 @@ function PhoneLogin() {
   );
 }
 
-export default PhoneLogin;
+export default ReferalCode;

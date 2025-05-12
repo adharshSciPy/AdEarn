@@ -1,8 +1,8 @@
-.admincontainermain {
+.adminsettingscontainermain {
   display: flex;
 }
 
-.chart {
+.settings {
   display: flex;
   padding-top: 10px;
 }

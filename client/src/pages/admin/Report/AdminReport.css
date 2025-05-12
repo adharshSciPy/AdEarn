@@ -1,8 +1,8 @@
-.admincontainermain {
+.adminreportcontainermain {
   display: flex;
 }
 
-.chart {
+.report {
   display: flex;
   padding-top: 10px;
 }

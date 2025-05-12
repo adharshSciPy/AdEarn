@@ -1,8 +1,8 @@
-.admincontainermain {
+.kycverifycontainermain {
   display: flex;
 }
 
-.chart {
+.kycverify {
   display: flex;
   padding-top: 10px;
 }

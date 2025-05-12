@@ -64,19 +64,14 @@
   }
   
   .contentsContainerLeft {
-    width: 70%;
+    width: 60%;
     margin: auto ;
-    height:inherit;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    height:max-content;
+    margin-top: 40px;
+  
   }
   .headingMain {
     text-align: start;
-  }
-  .contentsMainLeft{
-    width: 100%;
-    padding:0 0 80px 0;
   }
   .headingMain h2 {
     font-size: 36px;
@@ -94,6 +89,15 @@
   .formContainer {
     width: 90%;
     margin-top: 40px;
+    overflow: scroll;
+    height:50vh ;
+    scrollbar-width: none;
+
+  }
+  .scrollContainer{
+    color: red;
+    margin-top: 10px;
+    font-size: 10px
   }
   .form {
     max-width: 400px;
@@ -105,16 +109,17 @@
   
   .label {
     display: block;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     text-align: left;
-    font-size: 16px;
   }
   
   .input {
-    padding: 18px;
+    padding: var(--input-padding);
     border: var(--input-border);
     border-radius: var(--input-radius);
     width: var(--input-width);
+    padding: 18px;
+  
   }
   
   .checkbox-group {
@@ -133,10 +138,11 @@
     font-size: 13px;
   }
   .buttonContainer{
-    margin-top: 80px;
-    width:100%;
+    margin-top: 30px;
+    width: 100%;
   }
   .buttonContainer button{
+    cursor: pointer;;
     width: 100%;
     padding: 16px;
     border-radius: var(--border-radius);
@@ -153,7 +159,46 @@
     background-position: center;
     display: none;
   }
+  .seperator{
+    display: flex;
+    width: 90%;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+  }
+  .hr{
+    width: 45%;
+    height: 1px;
+    border: 1px solid #CFDFE2;
+  }
+  .signup{
+    width: 90%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 30px;
   
+  }
+  .signup p{
+    padding: 0 5px;
+    font-size: 14px;
+  }
+  
+  .optionButtonOuterDiv button{
+    padding: 10px;
+    margin-right: 10px;
+    border-radius: var(--border-radius);
+    border: none;
+    margin-top: 10px;
+
+  }
+  .selected{
+
+    background-color: #f8cb58; /* Apply hover styles here */
+    border-style: none;
+    color: #fff;
+   }
+
   @media (max-width:1000px) {
     .contentsContainerLeft {
       width: 80%;
@@ -185,7 +230,7 @@
     height: max-content;
     width: 100%;
     margin: 0;
-    padding-bottom: 20px;
+    padding-bottom: 10px;
     padding-top: 20px;
     background: rgba(255, 255, 255, 0.15); /* Light glass effect */
     backdrop-filter: blur(20px);
@@ -195,7 +240,6 @@
   }
   .contentsMainLeft{
     width: 100%;
-    padding-bottom: 70px;
   }
   
   .headingMain,.paraContent{
@@ -218,6 +262,7 @@
   }
   .buttonContainer{
     margin: auto;
+    margin-top: 20px;
   }
   .forgotPassContainer{
     margin-top: 5px;
@@ -226,10 +271,22 @@
   .logoContainer img{
     display: none;
   }
-  .formContents{
-    padding: 30px 0;
+  .seperator{
+    margin: auto;
+    margin-top: 20px;
   }
-  .formContainer{
-    width: 80%;
+  .signup{
+    margin:auto;
+    margin-top: 30px;
+  }
+
+  .buttonContainer{
+    padding-top: 20px;
+  }
+  .scrollContainer{
+    width: 90%;
+    margin: auto;
+    font-size: 16px;
+    margin-top: 20px;
   }
   }

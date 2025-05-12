@@ -1,8 +1,8 @@
-.admincontainermain {
+.admincontestcontainermain {
   display: flex;
 }
 
-.chart {
+.contest {
   display: flex;
   padding-top: 10px;
 }

@@ -1,8 +1,8 @@
-.admincontainermain {
+.couponcontainermain {
   display: flex;
 }
 
-.chart {
+.coupon {
   display: flex;
   padding-top: 10px;
 }
