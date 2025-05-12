@@ -25,7 +25,7 @@ const registerAdmin = async (req, res) => {
       }
   
      
-      const role = Number(process.env.ADMIN_ROLE) || 1;
+      const role = Number(process.env.ADMIN_ROLE) || 400;
   
      
       const admin = await Admin.create({ phoneNumber, password, role });
@@ -50,7 +50,7 @@ const registerAdmin = async (req, res) => {
   const { adminEmail, password } = req.body;
 
   try {
-    // Find the admin
+ 
     const admin = await Admin.findById(id);
     if (!admin) {
       return res.status(404).json({ message: "Admin not found" });
@@ -61,7 +61,6 @@ const registerAdmin = async (req, res) => {
       admin.adminEmail = adminEmail;
     }
 
-    // Update and hash password if provided
     if (password) {
       if (!passwordValidator(password)) {
         return res.status(400).json({
@@ -85,4 +84,36 @@ const registerAdmin = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-export {registerAdmin,updateAdmin}
+
+const adminLogin = async (req, res) => {
+  const { adminEmail, password } = req.body;
+
+  try {
+    const admin = await Admin.findOne({ adminEmail });
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    const isMatch = await admin.isPasswordCorrect(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const token = jwt.sign(
+      { id: admin._id, role: admin.adminRole },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
+    );
+
+    res.status(200).json({
+      message: "Login successful",
+      token,
+      adminId: admin._id,
+      adminEmail: admin.adminEmail,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+export {registerAdmin,updateAdmin,adminLogin}

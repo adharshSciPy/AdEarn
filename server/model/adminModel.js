@@ -22,6 +22,13 @@ const adminSchema = new Schema(
       type: Number,
       default: adminRole,
     },
+        otp: {
+      type: String,
+    },
+    otpExpiry: {
+      type: Date,
+    },
+
   },
   { timestamps: true }
 );
