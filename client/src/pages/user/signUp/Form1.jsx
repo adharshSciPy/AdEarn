@@ -48,7 +48,7 @@ function Form1() {
       </button>
     ));
   const stateCityMap = {
-    Kerala: [
+    "Kerala": [
       "Thiruvananthapuram",
       "Kollam",
       "Pathanamthitta",
@@ -104,7 +104,7 @@ function Form1() {
       "Viluppuram",
       "Virudhunagar",
     ],
-    Karnataka: [
+    "Karnataka": [
       "Bagalkot",
       "Bangalore Urban",
       "Bangalore Rural",

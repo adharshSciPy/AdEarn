@@ -1,8 +1,11 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt, { hash } from "bcryptjs";
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+dotenv.config();
 
-const userRole = process.env.USER_ROLE;
+const userRole = (process.env.USER_ROLE);
+// console.log("user role",process.env.USER_ROLE)
 const userSchema = new Schema(
   {
     role: {
@@ -53,24 +56,27 @@ const userSchema = new Schema(
       type: String,
     },
     employedIn: {
-      type: String,
+      type: String
+    },
+    profileImg:{
+      type:String
     },
     myReferalCode: {
       type: String,
       unique: true,
     },
-    referalCode:{
-type:String
+    referalCode: {
+      type: String,
     },
     referedBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
     },
     referredUsers: [{ type: Schema.Types.ObjectId, ref: "User" }],
-    referalCredits:{
-        type:Number,
-        default:0
-    }
+    referalCredits: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

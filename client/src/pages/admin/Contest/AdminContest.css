@@ -1,0 +1,8 @@
+.admincontestcontainermain {
+  display: flex;
+}
+
+.contest {
+  display: flex;
+  padding-top: 10px;
+}

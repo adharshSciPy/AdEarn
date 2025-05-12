@@ -1,0 +1,8 @@
+.adminreportcontainermain {
+  display: flex;
+}
+
+.report {
+  display: flex;
+  padding-top: 10px;
+}
