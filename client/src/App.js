@@ -23,6 +23,10 @@ import ReferalCode from './pages/user/signUp/ReferalCode';
 import Form1 from './pages/user/signUp/Form1';
 import Form2 from './pages/user/signUp/Form2';
 import UserHome from './pages/user/Home/UserHome';
+import Adsmanager from './pages/user/Adsmanager/Adsmanager';
+import AdTemplateSelector from "./pages/user/AdTemplateSelector/AdTemplateSelector"
+import ContestPage from './pages/user/ContextPage/ContestPage';
+
 
 function App() {
   return (
@@ -58,6 +62,12 @@ function App() {
           <Route path='/form1' element={<Form1 />} />
           <Route path='/form2' element={<Form2 />} />
           <Route path='/userhome' element={<UserHome />} />
+          <Route path='/adsmanageruser' element={<Adsmanager />} />
+          <Route path='/adstemplate' element={<AdTemplateSelector />} />
+          <Route path='/contextpage' element={<ContestPage />} />
+
+
+
 
 
 

@@ -256,6 +256,9 @@ const addKyc = async (req, res) => {
     currentAddress,
     documentType,
     documentNumber,
+    bankName,
+    accountNumber,
+    ifscCode
   } = req.body;
 
   // Validate required fields
@@ -271,16 +274,18 @@ const addKyc = async (req, res) => {
     currentAddress,
     documentType,
     documentNumber,
+    bankName,
+    accountNumber,
+    ifscCode
   };
 
- for(const[key,value] of Object.entries(requiredFields)){
-  if(!value||value.trim()===""){
-  return res.status(400).json({ message: `${key} is required.` });
-
+  for (const [key, value] of Object.entries(requiredFields)) {
+    if (!value || value.trim() === "") {
+      return res.status(400).json({ message: `${key} is required.` });
+    }
   }
- }
 
-  // Validate file
+  
   if (!req.file) {
     return res.status(400).json({ message: "Document file is required." });
   }
@@ -291,16 +296,12 @@ const addKyc = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (user.kycDetails) {
-      return res.status(400).json({ message: "KYC already submitted for this user" });
-    }
-
     // Normalize file path
     const fullPath = req.file.path.replace(/\\/g, '/');
-const documentFile = `/userKyc/${path.basename(fullPath)}`;
+    const documentFile = `/userKyc/${path.basename(fullPath)}`;
 
-
-    const newKyc = await kyc.create({
+    // Prepare KYC data
+    const kycData = {
       userId: user._id,
       fullName,
       dob: dateOfBirth,
@@ -314,17 +315,39 @@ const documentFile = `/userKyc/${path.basename(fullPath)}`;
       documentType,
       documentNumber,
       documentFile,
+      bankName,
+      accountNumber,
+      ifscCode,
       kycStatus: "pending",
       kycSubmittedAt: new Date(),
-    });
+    };
 
-    // Link the new KYC to user
-    user.kycDetails = newKyc._id;
-    await user.save();
+    let kycDetails;
+    
+    if (user.kycDetails) {
+      // Update existing KYC
+      kycDetails = await kyc.findByIdAndUpdate(
+        user.kycDetails,
+        { $set: kycData },
+        { new: true }
+      );
+      
+      if (!kycDetails) {
+        // If reference exists but KYC document not found, create new one
+        kycDetails = await kyc.create(kycData);
+        user.kycDetails = kycDetails._id;
+        await user.save();
+      }
+    } else {
+      // Create new KYC
+      kycDetails = await kyc.create(kycData);
+      user.kycDetails = kycDetails._id;
+      await user.save();
+    }
 
     res.status(201).json({
       message: "KYC submitted successfully",
-      kycDetails: newKyc,
+      kycDetails: kycDetails,
     });
   } catch (error) {
     console.error("Error submitting KYC:", error);

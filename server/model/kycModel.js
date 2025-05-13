@@ -42,6 +42,16 @@ documentNumber:{
 documentFile:{
     type:String
 },
+bankName:{
+    type:String
+},
+accountNumber:{
+    type:Number
+},
+ifscCode:{
+    type:String
+},
+
 kycStatus: {
     type: String,
     enum: ["pending", "approved", "rejected"],
