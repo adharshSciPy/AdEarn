@@ -1,0 +1,19 @@
+.admincontainermain {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.chart {
+  width: calc(100% - 250px);
+  margin-left: 250px;
+  position: fixed;
+  top: 150px; 
+  z-index: 999;
+  height: 40px;
+  /* background-color: blue; */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
