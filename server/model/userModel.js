@@ -77,6 +77,10 @@ const userSchema = new Schema(
       type: Number,
       default: 0,
     },
+    kycDetails:{
+      type:Schema.Types.ObjectId,
+      ref:"kyc"
+    }
   },
   { timestamps: true }
 );

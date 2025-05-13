@@ -18,7 +18,10 @@ app.use(express.urlencoded({ extended: true, limit: '16kb' }));
 
 app.use(cors());
 app.use('/api/v1/user',userRouter)
-app.use("/userUploads", express.static(path.join(__dirname, "userUploads")));
+app.use("/userUploads", express.static(path.join(__dirname, "Uploads/userUploads")));
+app.use("/userKyc", express.static(path.join(__dirname, "Uploads/userKyc")));
+
+
 app.use('/api/v1/admin',adminRouter)
 
 const PORT = process.env.PORT || 8000;

@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Define upload directory (using absolute path)
-const uploadDir = path.join(__dirname, "../Uploads/userUploads");
+const uploadDir = path.join(__dirname, "../Uploads/userKyc");
 
 // Multer storage settings
 const storage = multer.diskStorage({
@@ -37,13 +37,13 @@ const fileFilter = (req, file, cb) => {
 };
 
 // Multer configuration
-const uploadUserImg = multer({
+const userKyc = multer({
   storage: storage,
   limits: { 
     fileSize: 5 * 1024 * 1024, // 5MB
     files: 1 // Limit to single file
   },
   fileFilter: fileFilter,
-}).single("profileImg"); // Explicitly set to handle single file
+}).single("userKyc"); // Explicitly set to handle single file
 
-export default uploadUserImg;
+export default userKyc;
