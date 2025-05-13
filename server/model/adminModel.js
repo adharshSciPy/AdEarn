@@ -1,6 +1,9 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+dotenv.config();
+
 
 const adminRole = process.env.ADMIN_ROLE;
 
@@ -22,6 +25,13 @@ const adminSchema = new Schema(
       type: Number,
       default: adminRole,
     },
+        otp: {
+      type: String,
+    },
+    otpExpiry: {
+      type: Date,
+    },
+
   },
   { timestamps: true }
 );
