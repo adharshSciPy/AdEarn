@@ -20,6 +20,7 @@ function Sidebar() {
     const [isPinned, setIsPinned] = useState(false);
     const location = useLocation();
     const [openKeys, setOpenKeys] = useState([]);
+    const pathname = location.pathname;
 
     const onOpenChange = (keys) => {
         const latestOpenKey = keys.find(key => !openKeys.includes(key));
@@ -27,6 +28,10 @@ function Sidebar() {
         setOpenKeys(latestOpenKey ? [latestOpenKey] : []);
     };
 
+    useEffect(() => {
+        const savedState = JSON.parse(localStorage.getItem("isPinned"));
+        if (savedState !== null) setIsPinned(savedState);
+    }, []);
 
 
     const user = {
@@ -51,91 +56,93 @@ function Sidebar() {
             {
                 key: "home", label: "Home", icon: <HomeOutlined />,
                 children: [
-                    { key: "home-all", label: "All Ads", path: "/Admindashboard" },
-                    { key: "home-new", label: "New Ad", path: "/AdminAds" },
+                    { key: "home-all", label: "All Home", path: "/Admindashboard" },
+                    { key: "home-new", label: "New Home", path: "/demo" },
                 ]
             },
             {
                 key: "ads", label: "Ads", icon: <UserOutlined />,
                 children: [
                     { key: "ads-all", label: "All Ads", path: "/AdminAds" },
-                    { key: "ads-new", label: "New Ad", path: "/AdminAds" },
+                    { key: "ads-new", label: "New Ad", path: "/demo" },
                 ],
             },
             {
                 key: "coupons", label: "Coupons", icon: <UserOutlined />,
                 children: [
-                    { key: "coupons-all", label: "All Ads", path: "/AdminCoupon" },
-                    { key: "coupons-new", label: "New Ad", path: "/AdminAds" },
+                    { key: "coupons-all", label: "All Coupons", path: "/AdminCoupon" },
+                    { key: "coupons-new", label: "New Coupons", path: "/demo" },
                 ]
 
             },
             {
                 key: "adminkyc", label: "KYCVerify", icon: <UserOutlined />,
                 children: [
-                    { key: "adminkyc-all", label: "All Ads", path: "/AdminKYC" },
-                    { key: "adminkyc-new", label: "New Ad", path: "/AdminAds" },
+                    { key: "adminkyc-all", label: "All KYCVerify", path: "/AdminKYC" },
+                    { key: "adminkyc-new", label: "New KYCVerify", path: "/demo" },
                 ]
             },
             {
                 key: "gallery", label: "Gallery", icon: <UserOutlined />,
                 children: [
-                    { key: "gallery-all", label: "All Ads", path: "/AdminGallery" },
-                    { key: "gallery-new", label: "New Ad", path: "/AdminAds" },
+                    { key: "gallery-all", label: "All Gallery", path: "/AdminGallery" },
+                    { key: "gallery-new", label: "New Gallery", path: "/demo" },
                 ]
             },
             {
                 key: "contest", label: "Contest", icon: <UserOutlined />,
                 children: [
-                    { key: "contest-all", label: "All Ads", path: "/AdminContest" },
-                    { key: "contest-new", label: "New Ad", path: "/AdminAds" },
+                    { key: "contest-all", label: "All Contest", path: "/AdminContest" },
+                    { key: "contest-new", label: "New Contest", path: "/demo" },
                 ]
             },
             {
                 key: "report", label: "Reports", icon: <ContainerOutlined />,
                 children: [
-                    { key: "report-all", label: "All Ads", path: "/AdminReport" },
-                    { key: "report-new", label: "New Ad", path: "/AdminAds" },
+                    { key: "report-all", label: "All Reports", path: "/AdminReport" },
+                    { key: "report-new", label: "New Reports", path: "/demo" },
                 ]
             },
             {
                 key: "settings", label: "Settings", icon: <SettingOutlined />,
                 children: [
-                    { key: "settings-all", label: "All Ads", path: "/AdminSettings" },
-                    { key: "settings-new", label: "New Ad", path: "/AdminAds" },
+                    { key: "settings-all", label: "All Settings", path: "/AdminSettings" },
+                    { key: "settings-new", label: "New Settings", path: "/demo" },
                 ]
             }
         ]
     );
 
     const pathKey = useMemo(() => {
-        const currentPath = location.pathname;
-        for (let item of menuItems) {
-            if (item.children) {
-                const match = item.children.find(child => child.path === currentPath);
-                if (match) return match.key;
-            } else if (item.path === currentPath) {
-                return item.key;
+        let found = null;
+        const findKey = (items) => {
+            for (const item of items) {
+                if (item.path === pathname) {
+                    found = item.key;
+                } else if (item.children) {
+                    findKey(item.children);
+                }
             }
-        }
-        return '';
-    }, [location, menuItems]);
+        };
+        findKey(menuItems);
+        return found;
+    }, [pathname]);
 
-    // Effect to handle screen resize
+
+
+
     useEffect(() => {
         const handleResize = () => {
-            if (window.innerWidth > 768) {
-                setIsPinned(true);
-            } else {
+            if (window.innerWidth <= 768) {
                 const savedState = JSON.parse(localStorage.getItem("isPinned"));
-                if (savedState !== null) {
-                    setIsPinned(savedState);
-                }
+                setIsPinned(savedState !== null ? savedState : false);
+            } else {
+                setIsPinned(true);
             }
         };
 
         handleResize();
-        window.addEventListener("resize", handleResize);
+        window.addEventListener("resize", handleResize);    
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
@@ -165,22 +172,13 @@ function Sidebar() {
                             </>
                         )}
                     </div>
-                    {/* <div className="pin-pin">
-                        <Button
-                            aria-label={isPinned ? "Unpin Sidebar" : "Pin Sidebar"}
-                            className="pin-button"
-                            type="text"
-                            icon={isPinned ? <PushpinFilled /> : <PushpinOutlined />}
-                            onClick={togglePin}
-                            disabled={window.innerWidth > 768}
-                        />
-                    </div> */}
                     <Menu
                         className="menu"
                         mode="inline"
                         selectedKeys={[pathKey]}
                         openKeys={openKeys}
                         onOpenChange={onOpenChange}
+                        inlineCollapsed={!isPinned}
                     >
                         {menuItems.map(({ key, label, icon, path, children }) =>
                             children ? (
