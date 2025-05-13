@@ -1,5 +1,7 @@
 import User from "../model/userModel.js";
+import kyc from "../model/kycModel.js"
 import jwt from "jsonwebtoken";
+import path from "path";
 import { passwordValidator } from "../utils/passwordValidator.js";
 // function to create referal code
 const generateReferalCode = async (length = 6) => {
@@ -239,4 +241,118 @@ const uploadProfilePicture = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
-export { registerUser,editUser,userLogin ,userLogout,uploadProfilePicture};
+// kyc details 
+const addKyc = async (req, res) => {
+  const { id } = req.params;
+  const {
+    fullName,
+    dateOfBirth,
+    gender,
+    nationality,
+    guardianName,
+    email,
+    phoneNumber,
+    permanentAddress,
+    currentAddress,
+    documentType,
+    documentNumber,
+    bankName,
+    accountNumber,
+    ifscCode
+  } = req.body;
+
+  // Validate required fields
+  const requiredFields = {
+    fullName,
+    dateOfBirth,
+    gender,
+    nationality,
+    guardianName,
+    email,
+    phoneNumber,
+    permanentAddress,
+    currentAddress,
+    documentType,
+    documentNumber,
+    bankName,
+    accountNumber,
+    ifscCode
+  };
+
+  for (const [key, value] of Object.entries(requiredFields)) {
+    if (!value || value.trim() === "") {
+      return res.status(400).json({ message: `${key} is required.` });
+    }
+  }
+
+  
+  if (!req.file) {
+    return res.status(400).json({ message: "Document file is required." });
+  }
+
+  try {
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Normalize file path
+    const fullPath = req.file.path.replace(/\\/g, '/');
+    const documentFile = `/userKyc/${path.basename(fullPath)}`;
+
+    // Prepare KYC data
+    const kycData = {
+      userId: user._id,
+      fullName,
+      dob: dateOfBirth,
+      gender,
+      nationality,
+      guardianName,
+      email,
+      phoneNumber,
+      permanentAddress,
+      currentAddress,
+      documentType,
+      documentNumber,
+      documentFile,
+      bankName,
+      accountNumber,
+      ifscCode,
+      kycStatus: "pending",
+      kycSubmittedAt: new Date(),
+    };
+
+    let kycDetails;
+    
+    if (user.kycDetails) {
+      // Update existing KYC
+      kycDetails = await kyc.findByIdAndUpdate(
+        user.kycDetails,
+        { $set: kycData },
+        { new: true }
+      );
+      
+      if (!kycDetails) {
+        // If reference exists but KYC document not found, create new one
+        kycDetails = await kyc.create(kycData);
+        user.kycDetails = kycDetails._id;
+        await user.save();
+      }
+    } else {
+      // Create new KYC
+      kycDetails = await kyc.create(kycData);
+      user.kycDetails = kycDetails._id;
+      await user.save();
+    }
+
+    res.status(201).json({
+      message: "KYC submitted successfully",
+      kycDetails: kycDetails,
+    });
+  } catch (error) {
+    console.error("Error submitting KYC:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export { registerUser,editUser,userLogin ,userLogout,uploadProfilePicture,addKyc};
