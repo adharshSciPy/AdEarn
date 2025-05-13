@@ -1,5 +1,7 @@
 import User from "../model/userModel.js";
+import kyc from "../model/kycModel.js"
 import jwt from "jsonwebtoken";
+import path from "path";
 import { passwordValidator } from "../utils/passwordValidator.js";
 // function to create referal code
 const generateReferalCode = async (length = 6) => {
@@ -239,4 +241,95 @@ const uploadProfilePicture = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
-export { registerUser,editUser,userLogin ,userLogout,uploadProfilePicture};
+// kyc details 
+const addKyc = async (req, res) => {
+  const { id } = req.params;
+  const {
+    fullName,
+    dateOfBirth,
+    gender,
+    nationality,
+    guardianName,
+    email,
+    phoneNumber,
+    permanentAddress,
+    currentAddress,
+    documentType,
+    documentNumber,
+  } = req.body;
+
+  // Validate required fields
+  const requiredFields = {
+    fullName,
+    dateOfBirth,
+    gender,
+    nationality,
+    guardianName,
+    email,
+    phoneNumber,
+    permanentAddress,
+    currentAddress,
+    documentType,
+    documentNumber,
+  };
+
+ for(const[key,value] of Object.entries(requiredFields)){
+  if(!value||value.trim()===""){
+  return res.status(400).json({ message: `${key} is required.` });
+
+  }
+ }
+
+  // Validate file
+  if (!req.file) {
+    return res.status(400).json({ message: "Document file is required." });
+  }
+
+  try {
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.kycDetails) {
+      return res.status(400).json({ message: "KYC already submitted for this user" });
+    }
+
+    // Normalize file path
+    const fullPath = req.file.path.replace(/\\/g, '/');
+const documentFile = `/userKyc/${path.basename(fullPath)}`;
+
+
+    const newKyc = await kyc.create({
+      userId: user._id,
+      fullName,
+      dob: dateOfBirth,
+      gender,
+      nationality,
+      guardianName,
+      email,
+      phoneNumber,
+      permanentAddress,
+      currentAddress,
+      documentType,
+      documentNumber,
+      documentFile,
+      kycStatus: "pending",
+      kycSubmittedAt: new Date(),
+    });
+
+    // Link the new KYC to user
+    user.kycDetails = newKyc._id;
+    await user.save();
+
+    res.status(201).json({
+      message: "KYC submitted successfully",
+      kycDetails: newKyc,
+    });
+  } catch (error) {
+    console.error("Error submitting KYC:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export { registerUser,editUser,userLogin ,userLogout,uploadProfilePicture,addKyc};

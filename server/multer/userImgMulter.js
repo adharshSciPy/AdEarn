@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Define upload directory (using absolute path)
-const uploadDir = path.join(__dirname, "../userUploads");
+const uploadDir = path.join(__dirname, "../Uploads/userUploads");
 
 // Multer storage settings
 const storage = multer.diskStorage({
