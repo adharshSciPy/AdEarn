@@ -1,0 +1,36 @@
+.header {
+  width: calc(100% - 250px); /* assuming sidebar is 250px */
+  margin-left: 250px;
+  position: fixed;
+  top: 10px;
+  z-index: 1000;
+}
+
+.headermain {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px;
+  padding: 0 20px;
+}
+
+.sectionone {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 20px;
+  justify-content: space-evenly;
+  padding: 30px;
+}
+
+/* .sectiontwo {
+  display: flex;
+  flex-direction: column;
+} */
+
+.sectiontwo {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 20px;
+  justify-content: space-evenly;
+  padding: 30px;
+}

@@ -1,18 +1,18 @@
 import React from 'react'
-import './AdminHome.css'
+import styles from './adminhome.module.css'
 import Sidebar from '../../../components/sidebar/Sidebar'
+import Header from '../../../components/Header/Header'
 
 
 function AdminHome() {
   return (
-    <div className='adminmain'>
-      <div className='admincontainermain'>
+    <div className={styles.adminmain}>
+      <div className={styles.admincontainermain}>
         <Sidebar />
-        <div className="chart">
+        <Header />
+        <div className={styles.chart}>
           <p>Home</p>
         </div>
-
-
 
 
       </div>
