@@ -24,3 +24,79 @@
   justify-content: center;
   align-items: center;
 }
+
+.tabMenu ul {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+  border-bottom: 2px solid #ddd;
+}
+
+.tabMenu li {
+  padding: 10px 20px;
+  cursor: pointer;
+  color: #693bb8;
+  border-bottom: 3px solid transparent;
+  text-align: center;
+  font-size: 20px;
+}
+
+.tabMenu .active {
+  border-bottom: 3px solid #693bb8;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.payoutTableSection h2 {
+  margin: 20px 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.payoutTable {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.payoutTable th,
+.payoutTable td {
+  padding: 12px 16px;
+  text-align: center;
+}
+.payoutTable td {
+  color: #000;
+}
+
+.payoutTable th {
+  background-color: #693bb8;
+  color: white;
+}
+
+.payoutTable tbody tr {
+  border-bottom: 1px solid #ccc;
+}
+
+.statusOngoing {
+  color: green;
+}
+.statusStopped {
+  color: red;
+}
+
+.redeemBtn,
+.cancelBtn {
+  margin-right: 8px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.redeemBtn {
+  background-color: transparent;
+  color: #693bb8;
+  border: 1px solid #693bb8;
+}
