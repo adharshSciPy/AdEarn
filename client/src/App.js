@@ -26,7 +26,7 @@ import UserHome from './pages/user/Home/UserHome';
 import Adsmanager from './pages/user/Adsmanager/Adsmanager';
 import AdTemplateSelector from "./pages/user/AdTemplateSelector/AdTemplateSelector"
 import ContestPage from './pages/user/ContextPage/ContestPage';
-
+import WalletPage from './pages/user/WalletPage/WalletPage'
 
 function App() {
   return (
@@ -65,6 +65,8 @@ function App() {
           <Route path='/adsmanageruser' element={<Adsmanager />} />
           <Route path='/adstemplate' element={<AdTemplateSelector />} />
           <Route path='/contextpage' element={<ContestPage />} />
+          <Route path='/walletpage' element={<WalletPage />} />
+
 
 
 
