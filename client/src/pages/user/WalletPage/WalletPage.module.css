@@ -17,6 +17,10 @@
 .firstMain {
   background-image: url("../../../assets/homeBackground.png");
   display: flex;
+  background-repeat: no-repeat;
+  border-radius: 10px;
+
+
 }
 .firstMainleftContainer {
   width: 50%;

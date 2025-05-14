@@ -5,7 +5,6 @@
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
     "@canvasjs/react-charts": "^1.0.2",
-    "@phosphor-icons/react": "^2.1.7",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",

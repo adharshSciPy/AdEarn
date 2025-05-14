@@ -27,6 +27,7 @@ import Adsmanager from './pages/user/Adsmanager/Adsmanager';
 import AdTemplateSelector from "./pages/user/AdTemplateSelector/AdTemplateSelector"
 import ContestPage from './pages/user/ContextPage/ContestPage';
 import WalletPage from './pages/user/WalletPage/WalletPage'
+import RefaralPage from './pages/user/ReferalPage/RefaralPage';
 
 function App() {
   return (
@@ -66,6 +67,8 @@ function App() {
           <Route path='/adstemplate' element={<AdTemplateSelector />} />
           <Route path='/contextpage' element={<ContestPage />} />
           <Route path='/walletpage' element={<WalletPage />} />
+          <Route path='/referalpageuser' element={<RefaralPage />} />
+
 
 
 

@@ -3,7 +3,6 @@ import styles from './adminhome.module.css'
 import Sidebar from '../../../components/sidebar/Sidebar'
 import Header from '../../../components/Header/Header'
 import CanvasJSReact from '@canvasjs/react-charts';
-import { Notepad } from "@phosphor-icons/react";
 import { FileTextOutlined, TagOutlined, UserAddOutlined, ProjectOutlined } from "@ant-design/icons"
 
 const CanvasJSChart = CanvasJSReact.CanvasJSChart;
