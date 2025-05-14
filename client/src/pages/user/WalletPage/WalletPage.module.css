@@ -1,0 +1,275 @@
+.mainContainer {
+  width: 100%;
+}
+.homeMainContainer {
+  width: 100%;
+  display: flex;
+}
+.homeContainer {
+  width: 100%;
+}
+.firstContent {
+  width: 95%;
+  margin: auto;
+  margin-top: 50px;
+  border-radius: 10px;
+}
+.firstMain {
+  background-image: url("../../../assets/homeBackground.png");
+  display: flex;
+}
+.firstMainleftContainer {
+  width: 50%;
+}
+.firstMainrightContainer {
+  width: 50%;
+}
+.firstMainHeader {
+  margin-left: 30px;
+}
+.firstMainHeader h2 {
+  color: white;
+  font-size: 30px;
+  font-weight: 600;
+  padding-top: 30px;
+}
+.firstMainp {
+  margin-left: 30px;
+  padding-top: 15px;
+  color: white;
+  padding-right: 150px;
+  line-height: 25px;
+}
+.firstMainp p {
+  font-size: 18px;
+}
+.firstMainbutton {
+  margin-top: 45px;
+  margin-left: 30px;
+  margin-bottom: 40px;
+  overflow: hidden;
+}
+.firstMainbutton button {
+  position: relative;
+  z-index: 1;
+  color: white;
+  padding: 10px 30px;
+  background: transparent;
+  border: 1px solid white;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: color 0.4s ease;
+  overflow: hidden;
+}
+
+.firstMainbutton button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, #6da2e4, #f4ad13);
+  z-index: -1;
+  transition: opacity 0.4s ease;
+  opacity: 0;
+}
+
+.firstMainbutton button:hover::before {
+  opacity: 1;
+}
+
+.firstImageContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+.firstImageContainerMain {
+  height: 310px;
+  width: 440px;
+  background-image: url("../../../assets/homeimage.png");
+  background-position: center;
+  background-size: contain;
+}
+.walletContainer {
+  font-family: 'Segoe UI', sans-serif;
+  padding: 20px;
+  background-color: #f4f8fc;
+}
+
+.walletHeader {
+  background-color: #693bb8;
+  color: white;
+  padding: 40px;
+  border-radius: 10px;
+  text-align: left;
+
+}
+
+.walletHeader h1 {
+  font-size: 2em;
+  margin-bottom: 10px;
+}
+
+.walletBalanceSection {
+  background: white;
+  border-radius: 10px;
+  margin: 20px 0;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.balanceCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #693bb8;
+  color: white;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+
+}
+
+.balanceAmount {
+  font-size: 2em;
+  padding-left: 40px;
+}
+
+.buyButton {
+  background-color: white;
+  color: #693bb8;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.referBox {
+  background: white;
+  color: #693bb8;
+  padding: 25px 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  font-size: 0.9em;
+  display: flex;
+  flex-direction: column ;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+}
+.referBox span{
+    padding: 5px;
+}
+
+.copyBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1em;
+}
+
+.requestBox {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30px;
+}
+
+.requestBtn {
+  color: #5D32B9;
+  border: none;
+  padding: 8px 16px;
+  font-weight: 500;
+  font-size: 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: transparent;
+}
+.tabMenu{
+}
+.tabMenu ul {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+  border-bottom: 2px solid #ddd;
+}
+
+.tabMenu li {
+  padding: 10px 20px;
+  cursor: pointer;
+  color: #693bb8;
+  border-bottom: 3px solid transparent;
+  text-align: center;
+}
+
+.tabMenu .active {
+  border-bottom: 3px solid #693bb8;
+  font-weight: bold;
+}
+.payoutTableSection{
+}
+.payoutTableSection h2 {
+  margin: 20px 0;
+  font-size: 20px;
+  font-weight: 600;
+
+}
+.image{
+    height: 15px;
+    width: 15px;
+    object-fit: contain;
+}
+.contentTwo{
+    background-color: #D6E4FD;
+    width: 95%;
+    margin: auto;
+    padding: 30px;
+    margin-top: 50px;
+    border-radius: 20px;
+}
+.payoutTable {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.payoutTable th,
+.payoutTable td {
+  padding: 12px 16px;
+  text-align: center;
+
+}
+.payoutTable td{
+    color: #693bb8  ;
+}
+
+.payoutTable th {
+  background-color: #693bb8;
+  color: white;
+}
+
+.redeemBtn,
+.cancelBtn {
+  margin-right: 8px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.redeemBtn {
+  background-color: transparent;
+  color: #693bb8;
+  border: 1px solid #693bb8;
+}
+
+.cancelBtn {
+  background-color: transparent;
+  color: #693bb8;
+  border: 1px solid #693bb8;
+}
