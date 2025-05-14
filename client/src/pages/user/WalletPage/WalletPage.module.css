@@ -188,8 +188,7 @@
   cursor: pointer;
   background-color: transparent;
 }
-.tabMenu{
-}
+
 .tabMenu ul {
   display: flex;
   list-style: none;
@@ -209,8 +208,6 @@
 .tabMenu .active {
   border-bottom: 3px solid #693bb8;
   font-weight: bold;
-}
-.payoutTableSection{
 }
 .payoutTableSection h2 {
   margin: 20px 0;
