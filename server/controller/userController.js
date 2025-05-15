@@ -20,6 +20,24 @@ const generateReferalCode = async (length = 6) => {
   }
   return code;
 };
+// function to generate unique user id
+const generateUniqueUserId = async () => {
+  let unique = false;
+  let uniqueCode;
+
+  while (!unique) {
+   
+    const randomNumber = Math.floor(100000 + Math.random() * 900000);
+    uniqueCode = `#${randomNumber}`;
+
+    const existingUser = await User.findOne({ uniqueUserId: uniqueCode });
+    if (!existingUser) {
+      unique = true;
+    }
+  }
+
+  return uniqueCode;
+};
 
 // register user with otp only
 const registerUser = async (req, res) => {
@@ -46,7 +64,9 @@ const registerUser = async (req, res) => {
     const myReferalCode = await generateReferalCode();
     user.myReferalCode = myReferalCode;
     await user.save();
-
+    const uniqueUserId=await generateUniqueUserId();
+    user.uniqueUserId=uniqueUserId;
+    await user.save();
     return res.status(200).json({
       message: "User registered succesfully",
       user: {
@@ -54,6 +74,7 @@ const registerUser = async (req, res) => {
         phoneNumber: user.phoneNumber,
         role:user.role,
         myReferalCode: user.myReferalCode,
+        uniqueUserId:user.uniqueUserId
       },
       token,
     });
@@ -354,5 +375,18 @@ const addKyc = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+const getUserByUniqueId=async(req,res)=>{
+  const {id}=req.body;
+  try {
+    const user=await User.findOne({uniqueUserId:id});
+if(!user){
+  return res.status(400).json({messsage:"No User Found ,Please check the ID"})
+}
+return res.status(200).json({message:"User fetched succesfully",data:user})
+  } catch (error) {
+     console.error("Error fetching user:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
 
-export { registerUser,editUser,userLogin ,userLogout,uploadProfilePicture,addKyc};
+export { registerUser,editUser,userLogin ,userLogout,uploadProfilePicture,addKyc,getUserByUniqueId};
