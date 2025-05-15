@@ -1,6 +1,8 @@
 import {Admin} from "../model/adminModel.js"
+import User from "../model/userModel.js";
 import jwt from "jsonwebtoken"
 import { passwordValidator } from "../utils/passwordValidator.js";
+import kyc from "../model/kycModel.js";
 
 const registerAdmin = async (req, res) => {
     const { phoneNumber, password } = req.body;
@@ -116,4 +118,131 @@ const adminLogin = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-export {registerAdmin,updateAdmin,adminLogin}
+//to fetch all users
+const getAllUsers = async (req, res) => {
+  try {
+    const allUsers = await User.find();
+
+    if (!allUsers || allUsers.length === 0) {
+      return res.status(404).json({ message: "No users found" });
+    }
+
+    res.status(200).json({
+      message: "Users fetched successfully",
+      users: allUsers,
+    });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+const getSingleUser=async(req,res)=>{
+  const{id}=req.body;
+  try {
+    const user=await User.findById(id);
+    if(!user){
+     return res.status(400).json({message:"No user found,Please check the Id"})
+    }
+    return res.status(200).json({message:"User fetched Succesfully",data:user});
+  } catch (error) {
+     console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+// to fetch users who have requested for Kyc verification
+const fetchKycUploadedUsers=async(req,res)=>{
+try {
+  const fetchKycUsers=await User.find({kycDetails:{$exists:true,$ne:null}});
+    if (!fetchKycUsers || fetchKycUsers.length === 0) {
+      return res.status(400).json({ message: "No pending verification requests" });
+    }
+return res.status(200).json({message:"Users who have requested for kyc verification",data:fetchKycUsers})    
+
+} catch (error) {
+   console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Internal server error" });
+}
+};
+// to view each induvidual for kyc verification
+const fetchSingleKycUploadUser=async(req,res)=>{
+  const{id}=req.body;
+
+  try {
+    const user=await User.findById(id);
+    if(!user){
+      return res.status(400).json({message:"No user found,Please check the Id"})
+    }
+    if (!user.kycDetails) {
+      return res.status(400).json({ message: "User has not submitted KYC details." });
+    }
+    const kycDetails=await kyc.findById((user.kycDetails))
+    return res.status(200).json({message:"User fetched Succesfully",data:kycDetails});
+    
+  } catch (error) {
+     console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+// kyc verification
+const verifyKyc = async (req, res) => {
+  const { id } = req.body;
+
+  try {
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(400).json({ message: "No user found. Please check the ID." });
+    }
+
+    if (!user.kycDetails) {
+      return res.status(400).json({ message: "User has not submitted KYC details." });
+    }
+
+    
+    const updatedKyc = await kyc.findByIdAndUpdate(
+      user.kycDetails,
+      { kycStatus: "approved" },
+      { new: true }
+    );
+
+    if (!updatedKyc) {
+      return res.status(404).json({ message: "KYC document not found." });
+    }
+
+    return res.status(200).json({
+      message: "KYC approved successfully.",
+      kyc: updatedKyc
+    });
+
+  } catch (error) {
+    console.error("Error verifying KYC:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+const rejectKyc=async(req,res)=>{
+  const{id}=req.body;
+  try {
+    const user=await User.findById(id);
+    if(!user){
+      return res.status(400).json({message:"No user found. Please check the ID."})
+    }
+    if(!user.kycDetails){
+      return res.status(400).json({ message: "User has not submitted KYC details." });
+
+    }
+    const updatedKyc=await kyc.findByIdAndUpdate(  user.kycDetails,
+      { kycStatus: "rejected" },
+      { new: true })
+      if (!updatedKyc) {
+      return res.status(404).json({ message: "KYC document not found." });
+    }
+      return res.status(200).json({
+      message: "Your request for kyc verification has been rejected.",
+      kyc: updatedKyc
+    });
+  } catch (error) {
+    console.error("Error rejecting KYC:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+export {registerAdmin,updateAdmin,adminLogin,getAllUsers,getSingleUser,fetchKycUploadedUsers,fetchSingleKycUploadUser,verifyKyc,rejectKyc}
