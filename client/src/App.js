@@ -11,6 +11,7 @@ import AdminGallery from './pages/admin/Gallery/AdminGallery';
 import AdminContest from './pages/admin/Contest/AdminContest';
 import AdminReport from './pages/admin/Report/AdminReport';
 import AdminSettings from './pages/admin/Settings/AdminSettings';
+import VerifyAds from './pages/admin/VerifyAds/VerifyAds';
 
 
 
@@ -46,7 +47,7 @@ function App() {
           <Route path='/AdminContest' element={<AdminContest />} />
           <Route path='/AdminReport' element={<AdminReport />} />
           <Route path='/AdminSettings' element={<AdminSettings />} />
-
+          <Route path='/VerifyAds' element={<VerifyAds />} />
 
 
 

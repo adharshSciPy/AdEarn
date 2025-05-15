@@ -3,9 +3,16 @@ import Sidebar from '../../../components/sidebar/Sidebar'
 import Header from '../../../components/Header/Header';
 import styles from "./AdminAds.module.css"
 import { Button, Flex, Progress, Tooltip } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 
 function AdminAds() {
+
+  const navigate = useNavigate()
+
+  const handlenavigate = () => {
+    navigate("/VerifyAds")
+  }
 
   const [activeTab, setActiveTab] = useState("Ads");
 
@@ -171,7 +178,7 @@ function AdminAds() {
                       <td>
                         <button
                           className={styles.redeemBtn}
-                        // onClick={handleRedeemClick}
+                          onClick={handlenavigate}
                         >
                           Verify Now
                         </button>
