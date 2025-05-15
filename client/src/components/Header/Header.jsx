@@ -14,7 +14,7 @@ function Header() {
                         <Input.Search
                             placeholder="Search..."
                             allowClear
-                            onBlur={() => setShowSearch(false)} // Hide when focus is lost
+                            onBlur={() => setShowSearch(false)}
                             autoFocus
                             style={{ width: 200 }}
                         />

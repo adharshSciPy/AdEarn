@@ -1,10 +1,10 @@
-import { ImageAd } from "../models/ImageAd.js";
-import { VideoAd } from "../models/VideoAd.js";
-import { SurveyAd } from "../models/SurveyAd.js";
+import { ImageAd } from "../model/imageadModel.js";
+import { VideoAd } from "../model/videoadModel.js";
+import { SurveyAd } from "../model/surveyadModel.js";
 
 // ------------------- IMAGE AD -------------------
 
-export const createImageAd = async (req, res) => {
+const createImageAd = async (req, res) => {
   const { title, description, imageUrl } = req.body;
 
   if (!title || !description || !imageUrl) {
@@ -16,7 +16,6 @@ export const createImageAd = async (req, res) => {
       title,
       description,
       imageUrl,
-      createdBy: req.user.id,
     });
     res.status(201).json({ message: "Image Ad created successfully", ad });
   } catch (err) {
@@ -26,7 +25,7 @@ export const createImageAd = async (req, res) => {
 
 // ------------------- VIDEO AD -------------------
 
-export const createVideoAd = async (req, res) => {
+const createVideoAd = async (req, res) => {
   const { title, description, videoUrl } = req.body;
 
   if (!title || !description || !videoUrl) {
@@ -38,7 +37,6 @@ export const createVideoAd = async (req, res) => {
       title,
       description,
       videoUrl,
-      createdBy: req.user.id,
     });
     res.status(201).json({ message: "Video Ad created successfully", ad });
   } catch (err) {
@@ -48,14 +46,14 @@ export const createVideoAd = async (req, res) => {
 
 // ------------------- SURVEY AD -------------------
 
-export const createSurveyAd = async (req, res) => {
+const createSurveyAd = async (req, res) => {
   const { title, questions } = req.body;
 
   if (!title || !Array.isArray(questions) || questions.length === 0) {
     return res.status(400).json({ message: "Survey Ad must have a title and at least one question" });
   }
 
-  // Validate each question
+
   for (const q of questions) {
     if (!q.questionText || !Array.isArray(q.options) || q.options.length < 2) {
       return res.status(400).json({
@@ -68,10 +66,11 @@ export const createSurveyAd = async (req, res) => {
     const ad = await SurveyAd.create({
       title,
       questions,
-      createdBy: req.user.id,
+
     });
-    res.status(201).json({ message: "Survey Ad created successfully", ad });
+    res.status(200).json({ message: "Survey Ad created successfully", ad });
   } catch (err) {
     res.status(500).json({ message: "Survey Ad creation failed", error: err.message });
   }
 };
+export { createImageAd,createVideoAd,createSurveyAd};

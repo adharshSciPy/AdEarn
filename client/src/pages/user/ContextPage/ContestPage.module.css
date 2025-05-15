@@ -1,0 +1,196 @@
+.pageWrapper {
+  padding: 20px;
+  font-family: 'Poppins', sans-serif;
+width: 90%;
+margin: auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-right: 10px;
+}
+
+.tag {
+  background-color: #dcd5f8;
+  color: #4a3fd9;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.cardContainer {
+    width: 100%;
+  display: flex;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.card {
+  
+  border-radius: 10px;
+  flex: 1;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.cardHeader {
+  background-color: #5325B5;
+  color: white;
+  text-align: center;
+  padding: 20px 0;
+  font-weight: 600;
+}
+
+.cardContent {
+  padding: 16px;
+  background-color: #F3E8FF; 
+  border-radius: 10px;
+  position: relative;
+  margin-top: -10px;
+  
+}
+.headerContent{
+    width: 100%;
+}
+.entryDetails{
+    margin: 20px 0;
+}
+
+.lockIcon {
+  font-size: 20px;
+  position: absolute;
+  top: 16px;
+  left: 16px;
+}
+.headerContent{
+    display: flex;
+    justify-content: space-between;
+    margin: 50px 0;
+    border-top: 1px solid #DFE5EF ;
+
+}
+.twoButtons{
+    padding-top: 10px;
+}
+.twoButtons h3{
+    font-size: 15px;
+    font-weight: 400;
+    color: #5325B5;
+
+}
+.link{
+    text-decoration: none;
+    color: #5325B5;
+    font-size: 15px;
+
+}
+.logContainer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.seeAll{
+    margin-left: 30px;
+    padding-top: 10px;
+
+}
+.buttonLog{
+    padding-top: 10px;
+}
+.buttonLog button{
+    padding: 5px 20px;
+    border: 2px solid #DFE5EF;
+    border-radius: 10px;
+    cursor: pointer;
+}
+.date {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 12px;
+  color: #555;
+}
+
+.entry {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 40px 0 10px;
+}
+
+.details {
+  font-size: 16px;
+  font-weight: 600;
+  color: #444;
+  margin: 20px 0;
+}
+
+.enterButton {
+  background-color: white;
+  color: #4a3fd9;
+  border: 1px solid #4a3fd9;
+  border-radius: 5px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 13px;
+  margin-top: 30PX;
+}
+.buttonContainer{
+    width: 100%;
+    display: flex;
+    justify-content:center;
+    
+    margin: 20px 0;
+}
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  font-size: 14px;
+}
+
+.table th, .table td {
+  padding: 12px;
+  text-align: center;
+}
+
+.nameCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.ongoing {
+  color: green;
+  font-weight: 600;
+}
+
+.editIcons {
+  display: flex;
+  gap: 8px;
+  justify-content: space-around;
+}
+
+.iconBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
