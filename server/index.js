@@ -6,6 +6,7 @@ import userRouter from "./routes/userRoute.js";
 import adminRouter from "./routes/adminRoute.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import superAdminRouter from "./routes/superAdminRoute.js";
 
 
 dotenv.config();
@@ -23,7 +24,7 @@ app.use("/userKyc", express.static(path.join(__dirname, "Uploads/userKyc")));
 
 
 app.use('/api/v1/admin',adminRouter)
-
+app.use('/api/v1/super-admin',superAdminRouter)
 const PORT = process.env.PORT || 8000;
 
 connectDb()
