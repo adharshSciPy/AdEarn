@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const imageAdSchema = new mongoose.Schema({
+const imageAd = new mongoose.Schema({
   title: {
     type: String,
     required: true,
@@ -16,8 +16,8 @@ const imageAdSchema = new mongoose.Schema({
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
+    required: false,
   },
 }, { timestamps: true });
 
-export const ImageAd = mongoose.model('ImageAd', imageAdSchema);
+export const ImageAd = mongoose.model('ImageAd', imageAd);
