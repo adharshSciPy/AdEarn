@@ -199,7 +199,8 @@ function AdminAds() {
                       <td>
                         <button
                           className={styles.redeemBtn}
-                        // onClick={handleRedeemClick}
+                          onClick={handlenavigate}
+
                         >
                           Verify Now
                         </button>
@@ -220,7 +221,8 @@ function AdminAds() {
                       <td>
                         <button
                           className={styles.redeemBtn}
-                        // onClick={handleRedeemClick}
+                          onClick={handlenavigate}
+
                         >
                           Verify Now
                         </button>
@@ -241,7 +243,8 @@ function AdminAds() {
                       <td>
                         <button
                           className={styles.redeemBtn}
-                        // onClick={handleRedeemClick}
+                          onClick={handlenavigate}
+
                         >
                           Verify Now
                         </button>
@@ -262,7 +265,8 @@ function AdminAds() {
                       <td>
                         <button
                           className={styles.redeemBtn}
-                        // onClick={handleRedeemClick}
+                          onClick={handlenavigate}
+
                         >
                           Verify Now
                         </button>
@@ -283,7 +287,8 @@ function AdminAds() {
                       <td>
                         <button
                           className={styles.redeemBtn}
-                        // onClick={handleRedeemClick}
+                          onClick={handlenavigate}
+
                         >
                           Verify Now
                         </button>
