@@ -2,15 +2,20 @@ import mongoose, { Schema } from "mongoose";
 import bcrypt, { hash } from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import { type } from "os";
 dotenv.config();
 
-const userRole = (process.env.USER_ROLE);
+const userRole = process.env.USER_ROLE;
 // console.log("user role",process.env.USER_ROLE)
 const userSchema = new Schema(
   {
     role: {
       type: Number,
       default: userRole,
+    },
+    uniqueUserId: {
+      type: String,
+      unique: true,
     },
     phoneNumber: {
       type: String,
@@ -56,10 +61,10 @@ const userSchema = new Schema(
       type: String,
     },
     employedIn: {
-      type: String
+      type: String,
     },
-    profileImg:{
-      type:String
+    profileImg: {
+      type: String,
     },
     myReferalCode: {
       type: String,
@@ -77,10 +82,10 @@ const userSchema = new Schema(
       type: Number,
       default: 0,
     },
-    kycDetails:{
-      type:Schema.Types.ObjectId,
-      ref:"kyc"
-    }
+    kycDetails: {
+      type: Schema.Types.ObjectId,
+      ref: "kyc",
+    },
   },
   { timestamps: true }
 );

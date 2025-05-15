@@ -1,0 +1,112 @@
+import superAdmin from "../model/superAdminModel.js";
+import jwt from "jsonwebtoken";
+import path from "path";
+import { Admin } from "../model/adminModel.js";
+
+import { passwordValidator } from "../utils/passwordValidator.js";
+// register super admin
+const registerSuperAdmin = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    
+    if (!passwordValidator(password)) {
+      return res.status(400).json({
+        message:
+          "Password must be at least 8 characters long, contain one uppercase letter, one lowercase letter, one number, and one special character.",
+      });
+    }
+
+    
+    const existingAdmin = await superAdmin.findOne({ email });
+    if (existingAdmin) {
+      return res.status(400).json({ message: "Email is already in use" });
+    }
+
+
+    const newAdmin = await superAdmin.create({
+      email,
+      password,
+    });
+  const token = jwt.sign(
+      { id: newAdmin._id, role: newAdmin.role },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "7d" }
+    );
+    
+
+
+    return res.status(201).json({
+      message: "Super Admin registered successfully",
+      admin: {
+        id: newAdmin._id,
+        email: newAdmin.email,
+        role: newAdmin.role,
+      },
+      token,
+    });
+  } catch (error) {
+    console.error("Error in registerSuperAdmin:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+// super admin login
+const superAdminLogin = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const admin = await superAdmin.findOne({ email });
+    if (!admin) {
+      return res.status(400).json({ message: "Admin not found" });
+    }
+
+    const isMatch = await admin.isPasswordCorrect(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const token = jwt.sign(
+      { id: admin._id, role: admin.role },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
+    );
+
+    res.status(200).json({
+      message: "Login successful",
+      token,
+      superAdminId: admin._id,
+      email: admin.email,
+      role:admin.role
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+  // to fetch all admins
+  const getAllAdmins=async(req,res)=>{
+    try {
+      const allAdmins=await Admin.find();
+      if(!allAdmins||allAdmins.length===0){
+        return res.status(400).json({message:"No admins Found"})
+      }
+      return res.status(200).json({message:"All admins fetched succesfully",data:allAdmins})
+    } catch (error) {
+     console.error("Login error:", error);
+    res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+export {registerSuperAdmin,superAdminLogin,getAllAdmins}

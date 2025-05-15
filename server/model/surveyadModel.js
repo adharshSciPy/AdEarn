@@ -14,14 +14,14 @@ const surveyAdSchema = new mongoose.Schema({
       options: {
         type: [String],
         required: true,
-        validate: [arr => arr.length >= 3, 'Each question must have at least 3 options'],
+        validate: [arr => arr.length >= 2, 'Each question must have at least 2 options'],
       },
     },
   ],
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
+    required: false,
   },
 }, { timestamps: true });
 
