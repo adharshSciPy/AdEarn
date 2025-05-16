@@ -100,6 +100,16 @@
   padding: 10px;
 }
 
+.approvalbuttons{
+  display: flex;
+  justify-content: column;
+  justify-content: end;
+  gap: 20px;
+  padding: 20px;
+}
+
+
+
 @media (max-width: 1600px) {
   .adspreview {
     display: flex;

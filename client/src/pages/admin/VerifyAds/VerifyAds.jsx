@@ -4,6 +4,7 @@ import Sidebar from '../../../components/sidebar/Sidebar'
 import Header from '../../../components/Header/Header'
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
+import { Button } from 'antd';
 
 function VerifyAds() {
   return (
@@ -92,6 +93,11 @@ function VerifyAds() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div className={styles.approvalbuttons}>
+              <Button style={{ backgroundColor: '#5d32b9', color: 'white' }}>Reject</Button>
+              <Button style={{ color: '#5d32b9' }}>Approve</Button>
             </div>
 
           </div>
