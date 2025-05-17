@@ -280,3 +280,18 @@
   font-size: 30px;
   font-weight: 600;
 }
+.buttonContainer{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+.buttonContainer button{
+    margin-top: 2rem;
+  align-self: flex-start;
+  background: #5D32B9;
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}

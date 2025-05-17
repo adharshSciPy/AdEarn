@@ -29,6 +29,9 @@ import AdTemplateSelector from "./pages/user/AdTemplateSelector/AdTemplateSelect
 import ContestPage from './pages/user/ContextPage/ContestPage';
 import WalletPage from './pages/user/WalletPage/WalletPage'
 import RefaralPage from './pages/user/ReferalPage/RefaralPage';
+import UserProfileEditForm from './pages/user/UserProfileEdit/UserProfileEdit' 
+import KycVerification from './pages/user/KycForm/KycForm' 
+
 
 function App() {
   return (
@@ -69,6 +72,9 @@ function App() {
           <Route path='/contextpage' element={<ContestPage />} />
           <Route path='/walletpage' element={<WalletPage />} />
           <Route path='/referalpageuser' element={<RefaralPage />} />
+          <Route path='/userprofile' element={<UserProfileEditForm />} />
+          <Route path='/kycverification' element={<KycVerification />} />
+
 
 
 
