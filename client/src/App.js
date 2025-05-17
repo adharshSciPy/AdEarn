@@ -31,7 +31,7 @@ import WalletPage from './pages/user/WalletPage/WalletPage'
 import RefaralPage from './pages/user/ReferalPage/RefaralPage';
 import UserProfileEditForm from './pages/user/UserProfileEdit/UserProfileEdit' 
 import KycVerification from './pages/user/KycForm/KycForm' 
-
+import TemplateEditor from './pages/user/adTemplateEditor/TemplateEditor';
 
 function App() {
   return (
@@ -74,6 +74,8 @@ function App() {
           <Route path='/referalpageuser' element={<RefaralPage />} />
           <Route path='/userprofile' element={<UserProfileEditForm />} />
           <Route path='/kycverification' element={<KycVerification />} />
+          <Route path='/templateEditor' element={<TemplateEditor />} />
+
 
 
 

@@ -280,3 +280,11 @@
   font-size: 30px;
   font-weight: 600;
 }
+@media (max-width: 800px) {
+  .firstMainrightContainer {
+    display: none;
+  }
+  .firstMainleftContainer {
+    width: 100%;
+  }
+}
