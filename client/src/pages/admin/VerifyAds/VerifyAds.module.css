@@ -1,3 +1,126 @@
-.div {
-    background-color: red;
+.verifyadsmain {
+  height: max-content;
+  padding-bottom: 200px;
+}
+
+.verifyadscontainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.adscontainer {
+  width: calc(100% - 250px);
+  margin-left: 250px;
+  position: absolute;
+  top: 330px;
+  z-index: 999;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.adspreview {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  padding: 30px;
+}
+
+.previewone {
+  background-color: #ff7a42;
+  width: 700px;
+  height: 700px;
+  border-radius: 20px;
+}
+
+.previewtwo {
+  background: linear-gradient(to right, #fcc188, #7042d2, #2e008e);
+  width: 400px;
+  height: 700px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 80px;
+  padding: 50px;
+}
+
+.adsitems {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.listitems {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(241, 234, 234, 0.6);
+  padding: 8px 0;
+  position: relative;
+  padding-left: 20px;
+}
+
+.listitems::before {
+  content: "•";
+  color: white;
+  position: absolute;
+  left: 0;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.listitems p {
+  color: rgb(241, 234, 234, 0.6);
+}
+
+.adsdatamain {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background-color: #5d32b9;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 20px;
+  color: white;
+}
+
+.adsnametext {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px;
+}
+
+.approvalbuttons{
+  display: flex;
+  justify-content: column;
+  justify-content: end;
+  gap: 20px;
+  padding: 20px;
+}
+
+
+
+@media (max-width: 1600px) {
+  .adspreview {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    gap: 30px;
+    padding: 30px;
+  }
+
+  .adsdatamain {
+    display: flex;
+    flex-wrap: wrap;
+  }
 }
