@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import Sidebar from '../../../components/sidebar/Sidebar'
 import Header from '../../../components/Header/Header';
 import styles from "./AdminAds.module.css"
-import { Button, Flex, Progress, Tooltip, Pagination } from 'antd';
+import { Button, Flex, Progress, Tooltip, Pagination, Select } from 'antd';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -26,13 +26,17 @@ const adsVerifyData = Array.from({ length: 30 }, (_, i) => ({
   totalViews: 800,
   totalAmount: 500,
   status: i % 3 === 0 ? 'Stopped' : 'Ongoing',
-  endDate: "2025-06-05",
+  endDate: "2025/06/05",
   verificationStatus: "Verify Now",
 }));
 
 
 
 function AdminAds() {
+
+  const [selectedMonth, setSelectedMonth] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(null);
+
 
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
@@ -57,9 +61,40 @@ function AdminAds() {
     setCurrentPage(page);
   };
 
-  const paginatedAds = adsData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const filteredAds = adsData.filter(ad => {
+    if (!ad.startDate || !ad.startDate.includes('/')) return false;
 
-  const paginatedVerifyAds = adsVerifyData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    const [day, month, year] = ad.startDate.split('/');
+    return (
+      (!selectedMonth || month === selectedMonth) &&
+      (!selectedYear || year === selectedYear)
+    );
+  });
+
+
+
+  const filteredVerifyAds = adsVerifyData.filter(ad => {
+    if (!ad.date || !ad.date.includes('/')) return false;
+
+    const [day, month, year] = ad.date.split('/');
+    return (
+      (!selectedMonth || month === selectedMonth) &&
+      (!selectedYear || year === selectedYear)
+    );
+  });
+
+
+
+  const paginatedAds = filteredAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const paginatedVerifyAds = filteredVerifyAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const onChange = value => {
+    console.log(`selected ${value}`);
+  };
+  const onSearch = value => {
+    console.log('search:', value);
+  };
 
 
   return (
@@ -82,8 +117,45 @@ function AdminAds() {
                 ))}
               </ul>
             </nav>
-            <div style={{ display: 'flex', justifyContent: 'end' }}>
+            <div style={{ display: 'flex', justifyContent: 'end', gap: "20px" }}>
               <Button>Log</Button>
+              <Select
+                showSearch
+                placeholder="Month"
+                optionFilterProp="label"
+                onChange={(value) => setSelectedMonth(value)}
+                onSearch={onSearch}
+                options={[
+                  { value: '01', label: 'January' },
+                  { value: '02', label: 'February' },
+                  { value: '03', label: 'March' },
+                  { value: '04', label: 'April' },
+                  { value: '05', label: 'May' },
+                  { value: '06', label: 'June' },
+                  { value: '07', label: 'July' },
+                  { value: '08', label: 'August' },
+                  { value: '09', label: 'September' },
+                  { value: '10', label: 'October' },
+                  { value: '11', label: 'November' },
+                  { value: '12', label: 'December' },
+                ]}
+
+              />
+              <Select
+                showSearch
+                placeholder="Year"
+                optionFilterProp="label"
+                onChange={(value) => setSelectedYear(value)}
+                onSearch={onSearch}
+                options={Array.from({ length: 20 }, (_, i) => {
+                  const year = 2025 + i;
+                  return {
+                    value: year.toString(),
+                    label: year.toString(),
+                  };
+                })}
+
+              />
             </div>
             {activeTab === "Ads" && (
               <section className={styles.payoutTableSection}>
@@ -132,7 +204,7 @@ function AdminAds() {
                   <Pagination
                     current={currentPage}
                     pageSize={pageSize}
-                    total={adsData.length}
+                    total={filteredAds.length}
                     onChange={handlePageChange}
                   />
                 </div>
@@ -163,7 +235,7 @@ function AdminAds() {
                           Approved
                         </td>
                         <td>
-                           <Flex gap="small" vertical>
+                          <Flex gap="small" vertical>
                             <Tooltip title={`${ad.views} out of ${ad.totalViews} views`}>
                               <Progress
                                 percent={100}
@@ -199,7 +271,7 @@ function AdminAds() {
                   <Pagination
                     current={currentPage}
                     pageSize={pageSize}
-                    total={adsVerifyData.length}
+                    total={filteredVerifyAds.length}
                     onChange={handlePageChange}
                   />
                 </div>
