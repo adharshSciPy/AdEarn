@@ -1,26 +1,34 @@
-import { React, useState } from "react";
-import styles from "./UserEdit.module.css";
-import Avatar from "../../../assets/Avatar.png";
+import React, { useState } from "react";
+import styles from "./Kyc.module.css";
 
-function UserProfileEdit() {
+function KycForm() {
   const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
+    fullName: "",
+    dob: "",
     gender: "",
+    nationality: "",
+    guardianName: "",
+    email: "",
+    phone: "",
+    permanentAddress: "",
+    currentAddress: "",
+    document: null,
+    bankName: "",
+    accountNumber: "",
+    ifsc: "",
     state: "",
     city: "",
-    pincode: "",
-    location: "",
   });
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, files } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "file" ? files[0] : value,
     }));
   };
-  const stateCityMap = {
-    Kerala: [
+
+  const stateCityMap = {Kerala: [
       "Thiruvananthapuram",
       "Kollam",
       "Pathanamthitta",
@@ -407,163 +415,101 @@ function UserProfileEdit() {
     Lakshadweep: ["Kavaratti", "Agatti", "Amini", "Andrott", "Kalpeni"],
     Puducherry: ["Puducherry", "Karaikal", "Mahe", "Yanam"],
   };
+
+  const cityOptions = form.state ? stateCityMap[form.state] || [] : [];
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log(form); // Handle form submission logic here
+  };
+
   return (
     <div className={styles.mainUserContainer}>
-      <div className={styles.contentsContainer}>
-        <div className={styles.firstContent}>
-          <div className={styles.firstMain}>
-            <div className={styles.firstMainleftContainer}>
-              <div className={styles.firstMainHeader}>
-                <h2>Your Wallet</h2>
-              </div>
-              <div className={styles.firstMainp}>
-                <p>
-                  Providing cheap car rental services and safe and comfortable
-                  facilities.
-                </p>
-              </div>
-              <div className={styles.firstMainbutton}>
-                <button>Place Ads</button>
-              </div>
-            </div>
-
-            <div className={styles.firstMainrightContainer}>
-              <div className={styles.firstImageContainer}>
-                <div className={styles.firstImageContainerMain}></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className={styles.profileWrapper}>
         <div className={styles.editformHeading}>
-          <h2>Profile Edit</h2>
+          <h2>KYC Form</h2>
         </div>
-        <div className={styles.profileCard}>
-          <div className={styles.profileHead}>
-            <div className={styles.leftPanel}>
-              <div className={styles.avatarWrapper}>
-                <div className={styles.imgWrapper}>
-                  <img src={Avatar} alt="" />
-                </div>
-                <div className={styles.detailWrapper}>
-                  <div className={styles.nameConatainer}>
-                    <h5>Alexa</h5>
-                  </div>
-                  <div className={styles.emailConatainer}> demo@gnauk</div>
-                </div>
-              </div>
-              <div className={styles.formGroup}>
-                <label>Full Name</label>
-                <input type="text" placeholder="Your Full Name" />
-                <label>Gender</label>
-                <select
-                  style={{
-                    padding: "10px",
-                    borderRadius: "10px",
-                    border: "none",
-                  }}
-                >
-                  <option value="gender">Gender</option>
+        <form className={styles.profileCard} onSubmit={handleSubmit}>
+          <div className={styles.formGroup}>
+            <label>Full Name</label>
+            <input type="text" name="fullName" value={form.fullName} onChange={handleChange} placeholder="Your Full Name" />
 
-                  <option value="Male"> Male</option>
-                  <option value="Female">Female</option>
-                </select>
-                <label>Language</label>
-                <input type="text" placeholder="Your Language" />
-              </div>
-            </div>
+            <label>Date of Birth</label>
+            <input type="date" name="dob" value={form.dob} onChange={handleChange} />
 
-            <div className={styles.rightPanel}>
-              <div className={styles.formGroup}>
-                <label>State</label>
-                <select
-                  style={{
+            <label>Gender</label>
+            <select name="gender" value={form.gender} onChange={handleChange}style={{
                     padding: "10px",
                     borderRadius: "10px",
                     border: "none",
-                  }}
-                  required
-                  value={form.state || ""}
-                  onChange={handleChange}
-                  name="state"
-                >
-                  <option>Select Your State</option>
-                  <option value="Andhra Pradesh">Andhra Pradesh</option>
-                  <option value="Arunachal Pradesh">Arunachal Pradesh</option>
-                  <option value="Assam">Assam</option>
-                  <option value="Bihar">Bihar</option>
-                  <option value="Chhattisgarh">Chhattisgarh</option>
-                  <option value="Goa">Goa</option>
-                  <option value="Gujarat">Gujarat</option>
-                  <option value="Haryana">Haryana</option>
-                  <option value="Himachal Pradesh">Himachal Pradesh</option>
-                  <option value="Jharkhand">Jharkhand</option>
-                  <option value="Karnataka">Karnataka</option>
-                  <option value="Kerala">Kerala</option>
-                  <option value="Madhya Pradesh">Madhya Pradesh</option>
-                  <option value="Maharashtra">Maharashtra</option>
-                  <option value="Manipur">Manipur</option>
-                  <option value="Meghalaya">Meghalaya</option>
-                  <option value="Mizoram">Mizoram</option>
-                  <option value="Nagaland">Nagaland</option>
-                  <option value="Odisha">Odisha</option>
-                  <option value="Punjab">Punjab</option>
-                  <option value="Rajasthan">Rajasthan</option>
-                  <option value="Sikkim">Sikkim</option>
-                  <option value="Tamil Nadu">Tamil Nadu</option>
-                  <option value="Telangana">Telangana</option>
-                  <option value="Tripura">Tripura</option>
-                  <option value="Uttar Pradesh">Uttar Pradesh</option>
-                  <option value="Uttarakhand">Uttarakhand</option>
-                  <option value="West Bengal">West Bengal</option>
-                  <option value="Andaman and Nicobar Islands">
-                    Andaman and Nicobar Islands
-                  </option>
-                  <option value="Chandigarh">Chandigarh</option>
-                  <option value="Dadra and Nagar Haveli and Daman and Diu">
-                    Dadra and Nagar Haveli and Daman and Diu
-                  </option>
-                  <option value="Delhi">Delhi</option>
-                  <option value="Jammu and Kashmir">Jammu and Kashmir</option>
-                  <option value="Ladakh">Ladakh</option>
-                  <option value="Lakshadweep">Lakshadweep</option>
-                  <option value="Puducherry">Puducherry</option>
-                </select>
-                <label>Country</label>
-                <select
-                  style={{
+                  }}>
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+
+            <label>Nationality</label>
+            <input type="text" name="nationality" value={form.nationality} onChange={handleChange} placeholder="Nationality" />
+
+            <label>Guardian Name</label>
+            <input type="text" name="guardianName" value={form.guardianName} onChange={handleChange} placeholder="Guardian Name" />
+
+            <label>Email</label>
+            <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" />
+
+            <label>Phone Number</label>
+            <input type="text" name="phone" value={form.phone} onChange={handleChange} placeholder="Phone Number" />
+
+            <label>Permanent Address</label>
+            <input type="text" name="permanentAddress" value={form.permanentAddress} onChange={handleChange} placeholder="Permanent Address" />
+
+            <label>Current Address</label>
+            <input type="text" name="currentAddress" value={form.currentAddress} onChange={handleChange} placeholder="Current Address" />
+
+            <label>State</label>
+            <select name="state" value={form.state} onChange={handleChange} style={{
                     padding: "10px",
                     borderRadius: "10px",
                     border: "none",
-                  }}
-                  required
-                  name="city"
-                  value={form.city}
-                  onChange={handleChange}
-                >
-                  <option value="">Select Your City</option>
-                  {(stateCityMap[form.state] || []).map((city) => (
-                    <option key={city} value={city}>
-                      {city}
-                    </option>
-                  ))}
-                </select>
-                <label>Email Address</label>
-                <input type="email" placeholder="New Email Address" />
-              </div>
-              <div className={styles.kycWrapper}>
-                <h3>Update your KYC *</h3>
-                <button className={styles.kycButton}>Verify Now</button>
-              </div>
-              <button className={styles.saveBtn}>Save</button>
+                  }}>
+              <option value="">Select State</option>
+              {Object.keys(stateCityMap).map((state) => (
+                <option key={state} value={state}>{state}</option>
+              ))}
+            </select>
+
+            <label>City</label>
+            <select name="city" value={form.city} onChange={handleChange} disabled={!form.state} style={{
+                    padding: "10px",
+                    borderRadius: "10px",
+                    border: "none",
+                  }}>
+              <option value="">Select City</option>
+              {cityOptions.map((city) => (
+                <option key={city} value={city}>{city}</option>
+              ))}
+            </select>
+
+            <label>Document Proof</label>
+            <input type="file" name="document" onChange={handleChange} />
+
+            <label>Bank Name</label>
+            <input type="text" name="bankName" value={form.bankName} onChange={handleChange} placeholder="Bank Name" />
+
+            <label>Account Number</label>
+            <input type="text" name="accountNumber" value={form.accountNumber} onChange={handleChange} placeholder="Account Number" />
+
+            <label>IFSC Code</label>
+            <input type="text" name="ifsc" value={form.ifsc} onChange={handleChange} placeholder="IFSC Code" />
+
+            <div className={styles.buttonContainer}>
+              <button type="submit">Save</button>
             </div>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
 }
 
-export default UserProfileEdit;
+export default KycForm;
