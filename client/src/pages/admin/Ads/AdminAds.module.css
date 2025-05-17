@@ -100,3 +100,14 @@
   color: #693bb8;
   border: 1px solid #693bb8;
 }
+
+.pagination{
+  display: flex;
+  flex-direction: row;
+  justify-content: right;
+  width: 100%;
+  max-width: 1480px;
+  margin-top: 20px;
+  padding-bottom: 30px;
+
+}

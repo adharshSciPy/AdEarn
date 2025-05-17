@@ -47,7 +47,7 @@ function App() {
           <Route path='/AdminContest' element={<AdminContest />} />
           <Route path='/AdminReport' element={<AdminReport />} />
           <Route path='/AdminSettings' element={<AdminSettings />} />
-          <Route path='/VerifyAds' element={<VerifyAds />} />
+          <Route path='/VerifyAds/:adId' element={<VerifyAds />} />
 
 
 

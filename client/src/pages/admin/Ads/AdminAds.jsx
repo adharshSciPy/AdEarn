@@ -2,16 +2,44 @@ import React, { useState } from 'react'
 import Sidebar from '../../../components/sidebar/Sidebar'
 import Header from '../../../components/Header/Header';
 import styles from "./AdminAds.module.css"
-import { Button, Flex, Progress, Tooltip } from 'antd';
+import { Button, Flex, Progress, Tooltip, Pagination } from 'antd';
 import { useNavigate } from 'react-router-dom';
+
+
+const adsData = Array.from({ length: 30 }, (_, i) => ({
+  id: i + 1,
+  title: `Ads ${i + 1}`,
+  status: i % 3 === 0 ? 'Stopped' : 'Ongoing',
+  approved: true,
+  amount: 500,
+  views: Math.floor(Math.random() * 800),
+  totalViews: 800,
+  startDate: "02/06/2025",
+  endDate: "05/06/2025",
+}));
+
+const adsVerifyData = Array.from({ length: 30 }, (_, i) => ({
+  id: i + 1,
+  date: "02/06/2025",
+  title: `Ads ${i + 1}`,
+  views: Math.floor(Math.random() * 800),
+  totalViews: 800,
+  totalAmount: 500,
+  status: i % 3 === 0 ? 'Stopped' : 'Ongoing',
+  endDate: "2025-06-05",
+  verificationStatus: "Verify Now",
+}));
+
 
 
 function AdminAds() {
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
-  const handlenavigate = () => {
-    navigate("/VerifyAds")
+  const handlenavigate = (adId) => {
+    navigate(`/VerifyAds/${adId}`)
   }
 
   const [activeTab, setActiveTab] = useState("Ads");
@@ -24,6 +52,14 @@ function AdminAds() {
     "Ads",
     "Verify Ads"
   ];
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const paginatedAds = adsData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const paginatedVerifyAds = adsVerifyData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 
   return (
@@ -64,86 +100,42 @@ function AdminAds() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>Ads 1<br />
-                        Approved</td>
-                      <Flex gap="small" vertical style={{ marginTop: "20px" }}>
-                        <Tooltip title="500 out of 800 views">
-                          <Progress percent={100} success={{ percent: 60, strokeColor: '#FCB859' }} strokeWidth={5} strokeColor="#2B2B36" showInfo={false} />
-                        </Tooltip>
-                      </Flex>
-                      <td>&#8377; 500</td>
-                      <td>02/06/025</td>
-                      <td>05/06/025</td>
-                      <td><span className={styles.statusOngoing}>Ongoing</span></td>
-                    </tr>
-                    <tr>
-                      <td>Ads 1<br />
-                        Approved</td>
-                      <Flex gap="small" vertical style={{ marginTop: "20px" }}>
-                        <Tooltip title="200 out of 800 views">
-                          <Progress percent={100} success={{ percent: 20, strokeColor: '#FCB859' }} strokeWidth={5} strokeColor="#2B2B36" showInfo={false} />
-                        </Tooltip>
-                      </Flex>
-                      <td>&#8377; 500</td>
-                      <td>02/06/025</td>
-                      <td>05/06/025</td>
-                      <td><span className={styles.statusStopped}>Stopped</span></td>
-                    </tr>
-                    <tr>
-                      <td>Ads 1<br />
-                        Approved</td>
-                      <Flex gap="small" vertical style={{ marginTop: "20px" }}>
-                        <Tooltip title="650 out of 800 views">
-                          <Progress percent={100} success={{ percent: 80, strokeColor: '#FCB859' }} strokeWidth={5} strokeColor="#2B2B36" showInfo={false} />
-                        </Tooltip>
-                      </Flex>
-                      <td>&#8377; 500</td>
-                      <td>02/06/025</td>
-                      <td>05/06/025</td>
-                      <td><span className={styles.statusOngoing}>Ongoing</span></td>
-                    </tr>
-                    <tr>
-                      <td>Ads 1<br />
-                        Approved</td>
-                      <Flex gap="small" vertical style={{ marginTop: "20px" }}>
-                        <Tooltip title="200 out of 800 views">
-                          <Progress percent={100} success={{ percent: 20, strokeColor: '#FCB859' }} strokeWidth={5} strokeColor="#2B2B36" showInfo={false} />
-                        </Tooltip>
-                      </Flex>
-                      <td>&#8377; 500</td>
-                      <td>02/06/025</td>
-                      <td>05/06/025</td>
-                      <td><span className={styles.statusStopped}>Stopped</span></td>
-                    </tr>
-                    <tr>
-                      <td>Ads 1<br />
-                        Approved</td>
-                      <Flex gap="small" vertical style={{ marginTop: "20px" }}>
-                        <Tooltip title="600 out of 800 views">
-                          <Progress percent={100} success={{ percent: 70, strokeColor: '#FCB859' }} strokeWidth={5} strokeColor="#2B2B36" showInfo={false} />
-                        </Tooltip>
-                      </Flex>
-                      <td>&#8377; 500</td>
-                      <td>02/06/025</td>
-                      <td>05/06/025</td>
-                      <td><span className={styles.statusOngoing}>Ongoing</span></td>
-                    </tr>
-                    <tr>
-                      <td>Ads 1<br />
-                        Approved</td>
-                      <Flex gap="small" vertical style={{ marginTop: "20px" }}>
-                        <Tooltip title="700 out of 800 views">
-                          <Progress percent={100} success={{ percent: 90, strokeColor: '#FCB859' }} strokeWidth={5} strokeColor="#2B2B36" showInfo={false} />
-                        </Tooltip>
-                      </Flex>
-                      <td>&#8377; 500</td>
-                      <td>02/06/025</td>
-                      <td>05/06/025</td>
-                      <td><span className={styles.statusOngoing}>Ongoing</span></td>
-                    </tr>
+                    {paginatedAds.map((ad) => (
+                      <tr key={ad.id}>
+                        <td>{ad.title}<br />Approved</td>
+                        <td>
+                          <Flex gap="small" vertical>
+                            <Tooltip title={`${ad.views} out of ${ad.totalViews} views`}>
+                              <Progress
+                                percent={100}
+                                success={{ percent: (ad.views / ad.totalViews) * 100, strokeColor: '#FCB859' }}
+                                strokeWidth={5}
+                                strokeColor="#2B2B36"
+                                showInfo={false}
+                              />
+                            </Tooltip>
+                          </Flex>
+                        </td>
+                        <td>&#8377; {ad.amount}</td>
+                        <td>{ad.startDate}</td>
+                        <td>{ad.endDate}</td>
+                        <td>
+                          <span className={ad.status === "Ongoing" ? styles.statusOngoing : styles.statusStopped}>
+                            {ad.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
+                <div className={styles.pagination}>
+                  <Pagination
+                    current={currentPage}
+                    pageSize={pageSize}
+                    total={adsData.length}
+                    onChange={handlePageChange}
+                  />
+                </div>
               </section>
             )}
 
@@ -163,139 +155,54 @@ function AdminAds() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>03/04/2025</td>
-                      <td>Ads 1<br />
-                        Approved</td>
-                      <Flex gap="small" vertical style={{ marginTop: "20px" }}>
-                        <Tooltip title="300 out of 800 views">
-                          <Progress percent={100} success={{ percent: 40, strokeColor: '#FCB859' }} strokeWidth={5} strokeColor="#2B2B36" showInfo={false} />
-                        </Tooltip>
-                      </Flex>
-                      <td>&#8377; 500</td>
-                      <td><span className={styles.statusOngoing}>Started</span></td>
-                      <td>03/04/2025</td>
-                      <td>
-                        <button
-                          className={styles.redeemBtn}
-                          onClick={handlenavigate}
-                        >
-                          Verify Now
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>03/04/2025</td>
-                      <td>Ads 1<br />
-                        Approved</td>
-                      <Flex gap="small" vertical style={{ marginTop: "20px" }}>
-                        <Tooltip title="600 out of 800 views">
-                          <Progress percent={100} success={{ percent: 60, strokeColor: '#FCB859' }} strokeWidth={5} strokeColor="#2B2B36" showInfo={false} />
-                        </Tooltip>
-                      </Flex>
-                      <td>&#8377; 500</td>
-                      <td><span className={styles.statusStopped}>Not Started</span></td>
-                      <td>03/04/2025</td>
-                      <td>
-                        <button
-                          className={styles.redeemBtn}
-                          onClick={handlenavigate}
+                    {paginatedVerifyAds.map((ad) => (
+                      <tr key={ad.id}>
+                        <td>{ad.date}</td>
+                        <td>
+                          {ad.title}<br />
+                          Approved
+                        </td>
+                        <td>
+                           <Flex gap="small" vertical>
+                            <Tooltip title={`${ad.views} out of ${ad.totalViews} views`}>
+                              <Progress
+                                percent={100}
+                                success={{ percent: (ad.views / ad.totalViews) * 100, strokeColor: '#FCB859' }}
+                                strokeWidth={5}
+                                strokeColor="#2B2B36"
+                                showInfo={false}
+                              />
+                            </Tooltip>
+                          </Flex>
+                        </td>
+                        <td>&#8377; {ad.totalAmount}</td>
+                        <td>
+                          <span className={ad.status === "Ongoing" ? styles.statusOngoing : styles.statusStopped}>
+                            {ad.status === "Ongoing" ? "Started" : "Stopped"}
+                          </span>
+                        </td>
+                        <td>{ad.endDate}</td>
+                        <td>
+                          <button
+                            className={styles.redeemBtn}
+                            onClick={() => handlenavigate(ad.id)}
+                          >
+                            {'Verify Now'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
 
-                        >
-                          Verify Now
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>03/04/2025</td>
-                      <td>Ads 1<br />
-                        Approved</td>
-                      <Flex gap="small" vertical style={{ marginTop: "20px" }}>
-                        <Tooltip title="650 out of 800 views">
-                          <Progress percent={100} success={{ percent: 80, strokeColor: '#FCB859' }} strokeWidth={5} strokeColor="#2B2B36" showInfo={false} />
-                        </Tooltip>
-                      </Flex>
-                      <td>&#8377; 500</td>
-                      <td><span className={styles.statusOngoing}>Started</span></td>
-                      <td>03/04/2025</td>
-                      <td>
-                        <button
-                          className={styles.redeemBtn}
-                          onClick={handlenavigate}
-
-                        >
-                          Verify Now
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>03/04/2025</td>
-                      <td>Ads 1<br />
-                        Approved</td>
-                      <Flex gap="small" vertical style={{ marginTop: "20px" }}>
-                        <Tooltip title="200 out of 800 views">
-                          <Progress percent={100} success={{ percent: 30, strokeColor: '#FCB859' }} strokeWidth={5} strokeColor="#2B2B36" showInfo={false} />
-                        </Tooltip>
-                      </Flex>
-                      <td>&#8377; 500</td>
-                      <td><span className={styles.statusStopped}>Not Started</span></td>
-                      <td>03/04/2025</td>
-                      <td>
-                        <button
-                          className={styles.redeemBtn}
-                          onClick={handlenavigate}
-
-                        >
-                          Verify Now
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>03/04/2025</td>
-                      <td>Ads 1<br />
-                        Approved</td>
-                      <Flex gap="small" vertical style={{ marginTop: "20px" }}>
-                        <Tooltip title="400 out of 800 views">
-                          <Progress percent={100} success={{ percent: 50, strokeColor: '#FCB859' }} strokeWidth={5} strokeColor="#2B2B36" showInfo={false} />
-                        </Tooltip>
-                      </Flex>
-                      <td>&#8377; 500</td>
-                      <td><span className={styles.statusOngoing}>Started</span></td>
-                      <td>03/04/2025</td>
-                      <td>
-                        <button
-                          className={styles.redeemBtn}
-                          onClick={handlenavigate}
-
-                        >
-                          Verify Now
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>03/04/2025</td>
-                      <td>Ads 1<br />
-                        Approved</td>
-                      <Flex gap="small" vertical style={{ marginTop: "20px" }}>
-                        <Tooltip title="650 out of 800 views">
-                          <Progress percent={100} success={{ percent: 80, strokeColor: '#FCB859' }} strokeWidth={5} strokeColor="#2B2B36" showInfo={false} />
-                        </Tooltip>
-                      </Flex>
-                      <td>&#8377; 500</td>
-                      <td><span className={styles.statusOngoing}>Started</span></td>
-                      <td>03/04/2025</td>
-                      <td>
-                        <button
-                          className={styles.redeemBtn}
-                          onClick={handlenavigate}
-
-                        >
-                          Verify Now
-                        </button>
-                      </td>
-                    </tr>
                   </tbody>
                 </table>
+                <div className={styles.pagination}>
+                  <Pagination
+                    current={currentPage}
+                    pageSize={pageSize}
+                    total={adsVerifyData.length}
+                    onChange={handlePageChange}
+                  />
+                </div>
               </section>
             )}
           </div>
