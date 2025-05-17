@@ -1,0 +1,207 @@
+.firstContent {
+  width: 95%;
+  margin: auto;
+  margin-top: 50px;
+  border-radius: 10px;
+}
+.firstMain {
+  background-image: url("../../../assets/homeBackground.png");
+  display: flex;
+}
+.firstMainleftContainer {
+  width: 50%;
+}
+.firstMainrightContainer {
+  width: 50%;
+}
+.firstMainHeader {
+  margin-left: 30px;
+}
+.firstMainHeader h2 {
+  color: white;
+  font-size: 30px;
+  font-weight: 600;
+  padding-top: 30px;
+}
+.firstMainp {
+  margin-left: 30px;
+  padding-top: 15px;
+  color: white;
+  padding-right: 150px;
+  line-height: 25px;
+}
+.firstMainp p {
+  font-size: 18px;
+}
+.firstMainbutton {
+  margin-top: 45px;
+  margin-left: 30px;
+  margin-bottom: 40px;
+}
+.firstMainbutton button {
+  position: relative;
+  z-index: 1;
+  color: white;
+  padding: 10px 30px;
+  background: transparent;
+  border: 1px solid white;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: color 0.4s ease;
+  overflow: hidden;
+
+}
+
+.firstMainbutton button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, #6da2e4, #f4ad13);
+  z-index: -1;
+  transition: opacity 0.4s ease;
+  opacity: 0;
+}
+
+.firstMainbutton button:hover::before {
+  opacity: 1;
+
+}
+
+.firstImageContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+.firstImageContainerMain {
+  height: 310px;
+  width: 440px;
+  background-image: url("../../../assets/homeimage.png");
+  background-position: center;
+  background-size: contain;
+}
+.wrapper {
+  margin-top: 100px;
+  padding: 2rem;
+  max-width: 95%;
+  margin:50px auto;
+  background-color: #D6E4FD;
+  border-radius: 10px;
+}
+
+.heading {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: #5D32B9;
+  font-weight: 500;
+}
+
+.planContainer {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.planCard {
+  flex: 1;
+  border: 2px solid #ccc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.planCard:hover,
+.planCard.active {
+  border-color: #007bff;
+  background-color: #f0f8ff;
+}
+
+.planCard h3 {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #5D32B9;
+
+
+
+}
+
+.templateSection {
+  margin-top: 3rem;
+}
+
+.templates {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.templateCard {
+  flex: 1;
+  border: 2px solid #ccc;
+  padding: 1rem;
+  text-align: center;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.templateCard img {
+  width: 100%;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+}
+.planCard p{
+  color: black;
+  padding: 30px 0;
+}
+.planCard button{
+  padding: 10PX 20PX;
+  background-color:#8d5ef2 ;
+  border: none;
+  border-radius: 10px;
+}
+.templateCard.selected {
+  border-color: #28a745;
+  background-color: #e6f4ea;
+}
+
+.confirmButton {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.confirmButton button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+@media (max-width: 800px) {
+  .firstMainrightContainer {
+    display: none;
+  }
+  .firstMainleftContainer {
+    width: 100%;
+  }
+}
+@media (max-width:600px) {
+  .planContainer{
+    flex-direction: column;
+  }
+  .templates{
+    flex-direction: column;
+  }
+  .firstMainp{
+    padding-right: 50PX;
+  }
+}

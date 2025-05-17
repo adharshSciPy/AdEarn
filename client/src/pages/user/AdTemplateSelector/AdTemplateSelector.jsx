@@ -2,76 +2,103 @@ import React, { useState } from "react";
 import Template1 from "./Templates/Template1";
 import Template2 from "./Templates/Template2";
 import Template3 from "./Templates/Template3";
-import "./adtemplate.css"; // Add borders, selected highlight, etc.
+import styles from "./adtemplate.module.css"; // Add borders, selected highlight, etc.
+import padam from "../../../assets/adTemp1.png";
 
-const templates = [
-  { id: 1, name: "Template 1", component: Template1 },
-  { id: 2, name: "Template 2", component: Template2 },
-  { id: 3, name: "Template 3", component: Template3 },
-];
 
 const AdTemplateSelector = () => {
-  const [selectedId, setSelectedId] = useState(1);
-  const [formData, setFormData] = useState({
-    title: "Big Sale Coming Soon!",
-    description: "Don't miss out on our special discounts.",
-    image: "https://via.placeholder.com/300x150",
-  });
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
 
-  const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const SelectedTemplateComponent = templates.find(t => t.id === selectedId).component;
+  const templates = [
+    { id: 1, name: "Template One", image: `${padam}` },
+    { id: 2, name: "Template Two", image: `${padam}` },
+    { id: 3, name: "Template Three", image: `${padam}` },
+  ];
 
   return (
     <div>
-      <h2>Select an Ad Template</h2>
-      <div style={{ display: "flex", gap: "15px" }}>
-        {templates.map((tpl) => (
-          <button
-            key={tpl.id}
-            style={{
-              padding: "10px 20px",
-              border: tpl.id === selectedId ? "2px solid green" : "1px solid gray",
-            }}
-            onClick={() => setSelectedId(tpl.id)}
+      <div>
+        <div className={styles.contentsContainer}>
+          <div className={styles.firstContent}>
+            <div className={styles.firstMain}>
+              <div className={styles.firstMainleftContainer}>
+                <div className={styles.firstMainHeader}>
+                  <h2>Place Your Ads</h2>
+                </div>
+                <div className={styles.firstMainp}>
+                  <p>
+                    Providing cheap car rental services and safe and comfortable
+                    facilities.
+                  </p>
+                </div>
+                <div className={styles.firstMainbutton}>
+                  <button>Place Ads</button>
+                </div>
+              </div>
+
+              <div className={styles.firstMainrightContainer}>
+                <div className={styles.firstImageContainer}>
+                  <div className={styles.firstImageContainerMain}></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.wrapper}>
+        <h2 className={styles.heading}>Choose Your Ad Plan</h2>
+
+        <div className={styles.planContainer}>
+          <div
+            className={`${styles.planCard} ${
+              selectedPlan === "manual" ? styles.active : ""
+            }`}
+            onClick={() => setSelectedPlan("manual")}
           >
-            {tpl.name}
-          </button>
-        ))}
-      </div>
+            <h3>Manual Ad Upload</h3>
+            <p>Upload your custom ad manually with full control.</p>
+            <button>Select</button>
+          </div>
 
-      <h3 style={{ marginTop: "20px" }}>Edit Ad Content</h3>
-      <div style={{ marginBottom: "20px" }}>
-        <input
-          type="text"
-          name="title"
-          placeholder="Ad Title"
-          value={formData.title}
-          onChange={handleChange}
-          style={{ display: "block", marginBottom: "10px", width: "100%" }}
-        />
-        <textarea
-          name="description"
-          placeholder="Ad Description"
-          value={formData.description}
-          onChange={handleChange}
-          style={{ display: "block", marginBottom: "10px", width: "100%" }}
-        />
-        <input
-          type="text"
-          name="image"
-          placeholder="Image URL"
-          value={formData.image}
-          onChange={handleChange}
-          style={{ display: "block", marginBottom: "10px", width: "100%" }}
-        />
-      </div>
+          <div
+            className={`${styles.planCard} ${
+              selectedPlan === "template" ? styles.active : ""
+            }`}
+            onClick={() => setSelectedPlan("template")}
+          >
+            <h3>Use Admin Templates</h3>
+            <p>Choose from 3 beautiful templates designed for you.</p>
+            <button>Select</button>
+          </div>
+        </div>
 
-      <h3>Live Preview</h3>
-      <div style={{ border: "1px solid #ddd", padding: "20px", maxWidth: "500px" }}>
-        <SelectedTemplateComponent data={formData} />
+        {selectedPlan === "template" && (
+          <div className={styles.templateSection}>
+            <h3>Select a Template</h3>
+            <div className={styles.templates}>
+              {templates.map((temp) => (
+                <div
+                  key={temp.id}
+                  className={`${styles.templateCard} ${
+                    selectedTemplate === temp.id ? styles.selected : ""
+                  }`}
+                  onClick={() => setSelectedTemplate(temp.id)}
+                >
+                  <img src={temp.image} alt={temp.name} />
+                  <p>{temp.name}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {selectedPlan && (
+          <div className={styles.confirmButton}>
+            <button onClick={() => alert("Plan submitted!")}>Continue</button>
+          </div>
+        )}
       </div>
     </div>
   );
