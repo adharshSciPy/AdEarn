@@ -2,6 +2,7 @@ import superAdmin from "../model/superAdminModel.js";
 import jwt from "jsonwebtoken";
 import path from "path";
 import { Admin } from "../model/adminModel.js";
+import User from "../model/userModel.js";
 
 import { passwordValidator } from "../utils/passwordValidator.js";
 // register super admin
@@ -9,18 +10,15 @@ const registerSuperAdmin = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-
     if (!email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ message: "Invalid email format" });
     }
 
-    
     if (!passwordValidator(password)) {
       return res.status(400).json({
         message:
@@ -28,24 +26,20 @@ const registerSuperAdmin = async (req, res) => {
       });
     }
 
-    
     const existingAdmin = await superAdmin.findOne({ email });
     if (existingAdmin) {
       return res.status(400).json({ message: "Email is already in use" });
     }
 
-
     const newAdmin = await superAdmin.create({
       email,
       password,
     });
-  const token = jwt.sign(
+    const token = jwt.sign(
       { id: newAdmin._id, role: newAdmin.role },
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: "7d" }
     );
-    
-
 
     return res.status(201).json({
       message: "Super Admin registered successfully",
@@ -87,7 +81,7 @@ const superAdminLogin = async (req, res) => {
       token,
       superAdminId: admin._id,
       email: admin.email,
-      role:admin.role
+      role: admin.role,
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -95,18 +89,63 @@ const superAdminLogin = async (req, res) => {
   }
 };
 
-  // to fetch all admins
-  const getAllAdmins=async(req,res)=>{
-    try {
-      const allAdmins=await Admin.find();
-      if(!allAdmins||allAdmins.length===0){
-        return res.status(400).json({message:"No admins Found"})
-      }
-      return res.status(200).json({message:"All admins fetched succesfully",data:allAdmins})
-    } catch (error) {
-     console.error("Login error:", error);
-    res.status(500).json({ message: "Internal server error" });
+// to fetch all admins
+const getAllAdmins = async (req, res) => {
+  try {
+    const allAdmins = await Admin.find();
+    if (!allAdmins || allAdmins.length === 0) {
+      return res.status(400).json({ message: "No admins Found" });
     }
+    return res
+      .status(200)
+      .json({ message: "All admins fetched succesfully", data: allAdmins });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
+};
+// to enable or disable user (user.isUserEnabled:true?Enabled User:Disabled User)
+const toggleUserStatus = async (req, res) => {
+  const { id } = req.body;
+  try {
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(400).json({ message: "No User Found" });
+    }
+    user.isUserEnabled = !user.isUserEnabled;
+    await user.save();
+    res.status(200).json({
+      message: `User status updated to ${
+        user.isUserEnabled ? "Enabled" : "Disabled"
+      }`,
+      user,
+    });
+  } catch (error) {
+    console.error("Error toggling user status:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+// to enable or disable Admins(admin.isAdminEnabled:true?Enabled Admin:Disabled User)
+const toggleAdminStatus=async(req,res)=>{
+  const{id}=req.body;
+  try {
+    const admin=await Admin.findById(id);
+    if(!admin){
+      return res.status(400).json("Admin not found");
 
-export {registerSuperAdmin,superAdminLogin,getAllAdmins}
+    }
+    admin.isAdminEnabled=!admin.isAdminEnabled;
+    await admin.save();
+     res.status(200).json({
+      message: `Admin status updated to ${
+        admin.isAdminEnabled ? "Enabled" : "Disabled"
+      }`,
+      admin,
+    });
+  } catch (error) {
+     console.error("Error toggling admin status:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+}
+
+export { registerSuperAdmin, superAdminLogin, getAllAdmins, toggleUserStatus,toggleAdminStatus };

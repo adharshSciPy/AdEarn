@@ -37,13 +37,13 @@ const fileFilter = (req, file, cb) => {
 };
 
 // Multer configuration
-const adImageUpload= multer({
+const adImageUpload = multer({
   storage: storage,
   limits: { 
-    fileSize: 5 * 1024 * 1024, // 5MB
+    fileSize: 5 * 1024 * 1024, // 5MB limit
     files: 1 // Limit to single file
   },
   fileFilter: fileFilter,
-}).single("profileImg"); // Explicitly set to handle single file
+}).single("imageAd"); // Explicitly handle single file
 
 export default adImageUpload;

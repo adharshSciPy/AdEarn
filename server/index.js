@@ -22,10 +22,11 @@ app.use(cors());
 app.use('/api/v1/user',userRouter)
 app.use("/userUploads", express.static(path.join(__dirname, "Uploads/userUploads")));
 app.use("/userKyc", express.static(path.join(__dirname, "Uploads/userKyc")));
-app.use("/adUploads", express.static(path.join(__dirname, "Uploads/adUploads")));
+app.use("/imgAdUploads", express.static(path.join(__dirname, "Uploads/imageAdUploads")));
 
 app.use('/api/v1/admin',adminRouter)
 app.use('/api/v1/ads',adsRouter)
+app.use('/videoAdUploads', express.static(path.join(__dirname, 'Uploads/videoAdUploads')));
 
 app.use('/api/v1/super-admin',superAdminRouter)
 const PORT = process.env.PORT || 8000;

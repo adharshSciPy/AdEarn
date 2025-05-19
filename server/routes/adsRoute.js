@@ -4,15 +4,14 @@ import {
   createVideoAd,
   createSurveyAd,
 } from "../controller/adsController.js";
-
-
+import adImageUpload from "../multer/adImageMulter.js"; 
+import adVideoUpload from "../multer/adVideoMulter.js"
 
 const adsRouter = Router();
 
-adsRouter.post("/image-ad",  createImageAd);
-adsRouter.post("/image-ad", adImageUpload, createImageAd);
-// adsRouter.post("/video-ad", uploadVideo.single("video"), createVideoAd);     
-adsRouter.post("/survey-ad",  createSurveyAd);
+
+adsRouter.post("/image-ad/:id", adImageUpload, createImageAd);
+adsRouter.post("/video-ad/:id", adVideoUpload, createVideoAd);
+adsRouter.post("/survey-ad", createSurveyAd);
 
 export default adsRouter;
- 

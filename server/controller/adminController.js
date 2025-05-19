@@ -100,7 +100,11 @@ const adminLogin = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-
+ if (!admin.isAdminEnabled) {
+      return res
+        .status(400)
+        .json({ message: " Your Login has been blocked by Admin" });
+    }
     const token = jwt.sign(
       { id: admin._id, role: admin.adminRole },
       process.env.ACCESS_TOKEN_SECRET,
@@ -219,6 +223,7 @@ const verifyKyc = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 }
+// kyc rejection
 const rejectKyc=async(req,res)=>{
   const{id}=req.body;
   try {

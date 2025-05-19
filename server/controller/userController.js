@@ -1,5 +1,5 @@
 import User from "../model/userModel.js";
-import kyc from "../model/kycModel.js"
+import kyc from "../model/kycModel.js";
 import jwt from "jsonwebtoken";
 import path from "path";
 import { passwordValidator } from "../utils/passwordValidator.js";
@@ -26,7 +26,6 @@ const generateUniqueUserId = async () => {
   let uniqueCode;
 
   while (!unique) {
-   
     const randomNumber = Math.floor(100000 + Math.random() * 900000);
     uniqueCode = `#${randomNumber}`;
 
@@ -37,6 +36,14 @@ const generateUniqueUserId = async () => {
   }
 
   return uniqueCode;
+};
+// to format the time 
+const formatTo12HourTime = (date) => {
+  return date.toLocaleString("en-US", {
+    hour: "numeric",
+    minute: "numeric",
+    hour12: true,
+  });
 };
 
 // register user with otp only
@@ -64,17 +71,17 @@ const registerUser = async (req, res) => {
     const myReferalCode = await generateReferalCode();
     user.myReferalCode = myReferalCode;
     await user.save();
-    const uniqueUserId=await generateUniqueUserId();
-    user.uniqueUserId=uniqueUserId;
+    const uniqueUserId = await generateUniqueUserId();
+    user.uniqueUserId = uniqueUserId;
     await user.save();
     return res.status(200).json({
       message: "User registered succesfully",
       user: {
         id: user._id,
         phoneNumber: user.phoneNumber,
-        role:user.role,
+        role: user.role,
         myReferalCode: user.myReferalCode,
-        uniqueUserId:user.uniqueUserId
+        uniqueUserId: user.uniqueUserId,
       },
       token,
     });
@@ -106,50 +113,55 @@ const editUser = async (req, res) => {
     employedIn,
   } = req.body;
   try {
-    if(!id){
-        return res.status(400).json({message:"Please provide the id"})
+    if (!id) {
+      return res.status(400).json({ message: "Please provide the id" });
     }
-    const user=await User.findById(id);
-    if(!user){
-        return res.status(400).json({message:"User not found ,Please check the id"});
-
+    const user = await User.findById(id);
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "User not found ,Please check the id" });
     }
     if (referalCode && !user.referedBy) {
-        console.log("Referral code logic executing...");
-      
-        const referringUser = await User.findOne({ myReferalCode: referalCode });
-        if (!referringUser) {
-          return res.status(400).json({ message: "Invalid referral code" });
-        }
-      
-        if (referringUser._id.toString() === id) {
-          return res.status(400).json({ message: "Cannot use your own referral code" });
-        }
-      
-        const alreadyReferred = referringUser.referredUsers.some(
-          (refId) => refId.toString() === user._id.toString()
-        );
-      
-        if (alreadyReferred) {
-          return res.status(400).json({ message: "Already used the referral code" });
-        }
-      
-        user.referedBy = referringUser._id;
-        referringUser.referredUsers.push(user._id);
-        await referringUser.save();
+      console.log("Referral code logic executing...");
+
+      const referringUser = await User.findOne({ myReferalCode: referalCode });
+      if (!referringUser) {
+        return res.status(400).json({ message: "Invalid referral code" });
       }
-      
+
+      if (referringUser._id.toString() === id) {
+        return res
+          .status(400)
+          .json({ message: "Cannot use your own referral code" });
+      }
+
+      const alreadyReferred = referringUser.referredUsers.some(
+        (refId) => refId.toString() === user._id.toString()
+      );
+
+      if (alreadyReferred) {
+        return res
+          .status(400)
+          .json({ message: "Already used the referral code" });
+      }
+
+      user.referedBy = referringUser._id;
+      referringUser.referredUsers.push(user._id);
+      await referringUser.save();
+    }
+
     if (email) user.email = email;
-    if (password){
-        const isValidPassword = passwordValidator(password);
+    if (password) {
+      const isValidPassword = passwordValidator(password);
       if (!isValidPassword) {
         return res.status(400).json({
           message:
             "Password must be at least 8 characters long and include at least one lowercase letter, one uppercase letter, one number, and one special character",
         });
       }
-      user.password = password; 
-    } 
+      user.password = password;
+    }
     if (referalCode) user.referalCode = referalCode;
     if (firstName) user.firstName = firstName;
     if (lastName) user.lastName = lastName;
@@ -165,104 +177,107 @@ const editUser = async (req, res) => {
     if (employedIn) user.employedIn = employedIn;
 
     await user.save();
-    
-    user.password = undefined;
-      return res.status(200).json({message:"User edited Succefully",
-        user
-      })
 
+    user.password = undefined;
+    return res.status(200).json({ message: "User edited Succefully", user });
   } catch (error) {
     console.error("Error updating user:", error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       message: "Error updating user",
-      error: error.message 
+      error: error.message,
     });
   }
 };
 // user login
-const userLogin=async(req,res)=>{
-    const{email,password}=req.body;
-    try {
-       if(!email?.trim() ||!password?.trim()){
-        return res.status(400).json({message:"All fields are required"});
-
-       } 
-       const user=await User.findOne({email});
-       if(!user){
-        return res.status(404).json({ message: "Email doesn't exists" });
-       }
-       const isMatch = await user.isPasswordCorrect(password);
-       if (!isMatch) {
-         return res.status(401).json({ message: "Invalid credentials" });
-       }
-       const accessToken = user.generateAcessToken();
+const userLogin = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    if (!email?.trim() || !password?.trim()) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "Email doesn't exists" });
+    }
+    const isMatch = await user.isPasswordCorrect(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+    if (!user.isUserEnabled) {
+      return res
+        .status(400)
+        .json({ message: "User login has been blocked by Admin" });
+    }
+    const accessToken = user.generateAcessToken();
     const refreshToken = user.generateRefreshToken();
-    const userObj=user.toObject();
-    delete userObj.password
+    const userObj = user.toObject();
+    delete userObj.password;
     return res.status(200).json({
-        message: "Login successful",
-        user:userObj,
-        accessToken,
-        refreshToken,
-        role:process.env.USER_ROLE
-      });
-    }catch (error) {
-        console.error("Login error:", error);
-        return res.status(500).json({
-          message: "Login failed",
-          error: error.message,
-    })
-}
-}
+      message: "Login successful",
+      user: userObj,
+      accessToken,
+      refreshToken,
+      role: process.env.USER_ROLE,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    return res.status(500).json({
+      message: "Login failed",
+      error: error.message,
+    });
+  }
+};
 // user logout
-const userLogout=async(req,res)=>{
-    const{id}=req.params;
-    try {
-        const user=await User.findById(id);
-        if (!user) return res.status(404).json({ message: "User not found" });
+const userLogout = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-        user.refreshToken = null;
-        await user.save();
-    
-        res.clearCookie("refreshToken"); // if used in cookies
-    
-        return res.status(200).json({ message: "User logged out successfully" });
-      } catch (err) {
-        console.error("Logout error:", err);
-        return res.status(500).json({ message: "Internal Server Error" });
-      }
+    user.refreshToken = null;
+    user.lastSeen = formatTo12HourTime(new Date());
+    await user.save();
 
-}
+    res.clearCookie("refreshToken"); // if used in cookies
+
+    return res.status(200).json({ message: "User logged out successfully" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 // user profile picture upload
 const uploadProfilePicture = async (req, res) => {
-    const { id } = req.params;
-    try {
-        if (!req.file) {
-            return res.status(400).json({ message: "No file uploaded" });
-        }
-
-        const user = await User.findById(id);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        // Convert filesystem path to web-accessible URL
-        const relativePath = req.file.path.replace(/\\/g, '/').split('userUploads')[1];
-        const imageUrl = `/userUploads${relativePath}`;
-
-        user.profileImg = imageUrl;
-        await user.save();
-
-        res.status(200).json({
-            message: "Profile picture uploaded successfully",
-            profileImg: imageUrl, // Now returns a web-accessible URL
-        });
-    } catch (error) {
-        console.error("Upload error:", error);
-        res.status(500).json({ message: "Internal Server Error" });
+  const { id } = req.params;
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
     }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Convert filesystem path to web-accessible URL
+    const relativePath = req.file.path
+      .replace(/\\/g, "/")
+      .split("userUploads")[1];
+    const imageUrl = `/userUploads${relativePath}`;
+
+    user.profileImg = imageUrl;
+    await user.save();
+
+    res.status(200).json({
+      message: "Profile picture uploaded successfully",
+      profileImg: imageUrl, // Now returns a web-accessible URL
+    });
+  } catch (error) {
+    console.error("Upload error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 };
-// kyc details 
+// kyc details
 const addKyc = async (req, res) => {
   const { id } = req.params;
   const {
@@ -279,7 +294,7 @@ const addKyc = async (req, res) => {
     documentNumber,
     bankName,
     accountNumber,
-    ifscCode
+    ifscCode,
   } = req.body;
 
   // Validate required fields
@@ -297,7 +312,7 @@ const addKyc = async (req, res) => {
     documentNumber,
     bankName,
     accountNumber,
-    ifscCode
+    ifscCode,
   };
 
   for (const [key, value] of Object.entries(requiredFields)) {
@@ -306,7 +321,6 @@ const addKyc = async (req, res) => {
     }
   }
 
-  
   if (!req.file) {
     return res.status(400).json({ message: "Document file is required." });
   }
@@ -318,7 +332,7 @@ const addKyc = async (req, res) => {
     }
 
     // Normalize file path
-    const fullPath = req.file.path.replace(/\\/g, '/');
+    const fullPath = req.file.path.replace(/\\/g, "/");
     const documentFile = `/userKyc/${path.basename(fullPath)}`;
 
     // Prepare KYC data
@@ -344,7 +358,7 @@ const addKyc = async (req, res) => {
     };
 
     let kycDetails;
-    
+
     if (user.kycDetails) {
       // Update existing KYC
       kycDetails = await kyc.findByIdAndUpdate(
@@ -352,7 +366,7 @@ const addKyc = async (req, res) => {
         { $set: kycData },
         { new: true }
       );
-      
+
       if (!kycDetails) {
         // If reference exists but KYC document not found, create new one
         kycDetails = await kyc.create(kycData);
@@ -375,18 +389,30 @@ const addKyc = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-const getUserByUniqueId=async(req,res)=>{
-  const {id}=req.body;
+const getUserByUniqueId = async (req, res) => {
+  const { id } = req.body;
   try {
-    const user=await User.findOne({uniqueUserId:id});
-if(!user){
-  return res.status(400).json({messsage:"No User Found ,Please check the ID"})
-}
-return res.status(200).json({message:"User fetched succesfully",data:user})
+    const user = await User.findOne({ uniqueUserId: id });
+    if (!user) {
+      return res
+        .status(400)
+        .json({ messsage: "No User Found ,Please check the ID" });
+    }
+    return res
+      .status(200)
+      .json({ message: "User fetched succesfully", data: user });
   } catch (error) {
-     console.error("Error fetching user:", error);
+    console.error("Error fetching user:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
-}
+};
 
-export { registerUser,editUser,userLogin ,userLogout,uploadProfilePicture,addKyc,getUserByUniqueId};
+export {
+  registerUser,
+  editUser,
+  userLogin,
+  userLogout,
+  uploadProfilePicture,
+  addKyc,
+  getUserByUniqueId,
+};
