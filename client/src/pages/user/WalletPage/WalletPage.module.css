@@ -274,3 +274,12 @@
   color: #693bb8;
   border: 1px solid #693bb8;
 }
+
+@media (max-width: 800px) {
+  .firstMainrightContainer {
+    display: none;
+  }
+  .firstMainleftContainer {
+    width: 100%;
+  }
+}

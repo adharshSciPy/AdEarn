@@ -11,6 +11,8 @@ import AdminGallery from './pages/admin/Gallery/AdminGallery';
 import AdminContest from './pages/admin/Contest/AdminContest';
 import AdminReport from './pages/admin/Report/AdminReport';
 import AdminSettings from './pages/admin/Settings/AdminSettings';
+import VerifyAds from './pages/admin/VerifyAds/VerifyAds';
+import VerifyKYC from './pages/admin/VerifyKYC/VerifyKYC';
 
 
 
@@ -28,6 +30,9 @@ import AdTemplateSelector from "./pages/user/AdTemplateSelector/AdTemplateSelect
 import ContestPage from './pages/user/ContextPage/ContestPage';
 import WalletPage from './pages/user/WalletPage/WalletPage'
 import RefaralPage from './pages/user/ReferalPage/RefaralPage';
+import UserProfileEditForm from './pages/user/UserProfileEdit/UserProfileEdit'
+import KycVerification from './pages/user/KycForm/KycForm'
+import TemplateEditor from './pages/user/adTemplateEditor/TemplateEditor';
 
 function App() {
   return (
@@ -46,7 +51,8 @@ function App() {
           <Route path='/AdminContest' element={<AdminContest />} />
           <Route path='/AdminReport' element={<AdminReport />} />
           <Route path='/AdminSettings' element={<AdminSettings />} />
-
+          <Route path='/VerifyAds/:adId' element={<VerifyAds />} />
+          <Route path='/VerifyKYC/:adId' element={<VerifyKYC />} />
 
 
 
@@ -68,6 +74,11 @@ function App() {
           <Route path='/contextpage' element={<ContestPage />} />
           <Route path='/walletpage' element={<WalletPage />} />
           <Route path='/referalpageuser' element={<RefaralPage />} />
+          <Route path='/userprofile' element={<UserProfileEditForm />} />
+          <Route path='/kycverification' element={<KycVerification />} />
+          <Route path='/templateEditor' element={<TemplateEditor />} />
+
+
 
 
 

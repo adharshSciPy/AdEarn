@@ -1,0 +1,121 @@
+.container {
+  display: flex;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor input {
+  margin-bottom: 1rem;
+  padding: 8px;
+  font-size: 1rem;
+}
+
+.preview {
+  flex: 1;
+  position: relative;
+}
+
+.templateWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.templateImage {
+  width: 100%;
+  border-radius: 10px;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: white;
+  padding: 20px;
+  width: 100%;
+}
+
+.title {
+  position: absolute;
+  top: 60px;
+  left: 30px;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.subtitle {
+  position: absolute;
+  top: 110px;
+  left: 30px;
+  font-style: italic;
+}
+
+.features {
+  position: absolute;
+  top: 160px;
+  left: 30px;
+  list-style: none;
+  padding: 0;
+}
+
+.features li {
+  margin-bottom: 4px;
+}
+
+.footer {
+  position: absolute;
+  bottom: 70px;
+  left: 30px;
+  font-size: 0.9rem;
+}
+
+.cta {
+  position: absolute;
+  bottom: 30px;
+  left: 30px;
+  padding: 8px 16px;
+  background-color: #007bff;
+  border: none;
+  border-radius: 6px;
+  color: white;
+}
+.adContents{
+    width: 100%;
+    overflow: hidden;
+}
+.logoAd{
+    height: 70px;
+    width: 100px;
+}
+.logoAd img{
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+}
+.contentsFirstAd{
+background-color:#007bff;
+padding: 10px 5px;
+color: white;
+}
+.secondContentAd{
+    margin: 10px 0px;
+    color: white;
+}
+.thirdContentAd p{
+color: white;
+margin: 5px;
+}
+.lastContent{
+   color:white 
+}
+.adFooter{
+    background-color: white;
+    width: 100%;
+}
+.adHead{}
+.imageContainerAd{}

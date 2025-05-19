@@ -1,0 +1,297 @@
+.mainContainer {
+  width: 100%;
+}
+.homeMainContainer {
+  width: 100%;
+  display: flex;
+}
+.homeContainer {
+  width: 100%;
+}
+.firstContent {
+  width: 95%;
+  margin: auto;
+  padding-top: 50px;
+  border-radius: 10px;
+}
+.firstMain {
+  background-image: url("../../../assets/homeBackground.png");
+  display: flex;
+  background-repeat: no-repeat;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.firstMainleftContainer {
+  width: 50%;
+}
+.firstMainrightContainer {
+  width: 50%;
+}
+.firstMainHeader {
+  margin-left: 30px;
+}
+.firstMainHeader h2 {
+  color: white;
+  font-size: 30px;
+  font-weight: 600;
+  padding-top: 30px;
+}
+.firstMainp {
+  margin-left: 30px;
+  padding-top: 15px;
+  color: white;
+  padding-right: 150px;
+  line-height: 25px;
+}
+.firstMainp p {
+  font-size: 18px;
+}
+.firstMainbutton {
+  margin-top: 45px;
+  margin-left: 30px;
+  margin-bottom: 40px;
+  overflow: hidden;
+}
+.firstMainbutton button {
+  position: relative;
+  z-index: 1;
+  color: white;
+  padding: 10px 30px;
+  background: transparent;
+  border: 1px solid white;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: color 0.4s ease;
+  overflow: hidden;
+}
+
+.firstMainbutton button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, #6da2e4, #f4ad13);
+  z-index: -1;
+  transition: opacity 0.4s ease;
+  opacity: 0;
+}
+
+.firstMainbutton button:hover::before {
+  opacity: 1;
+}
+
+.firstImageContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+.firstImageContainerMain {
+  height: 310px;
+  width: 440px;
+  background-image: url("../../../assets/mystery.png");
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  transform: rotate(30deg);
+
+
+}
+.profileWrapper {
+  width: 95%;
+  margin: auto;
+  padding: 2rem;
+  height: max-content;
+  padding: 0px 140px 80px 140px;
+  background-color: #D6E4FD;
+  border-radius: 10px;
+  margin-bottom: 40px;
+  margin-top: 40px;
+}
+
+.title {
+  font-size: 24px;
+  color: #5d3fd3;
+  margin-bottom: 1rem;
+}
+
+.profileCard {
+  background-color: #d6e4fd;
+  border-radius: 16px;
+  padding: 2rem;
+  gap: 2rem;
+  border: 1px solid #3563E9;
+}
+
+.leftPanel,
+.rightPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 30px 40px;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.username {
+  font-size: 18px;
+  margin: 0;
+}
+
+.userRole {
+  font-size: 14px;
+  color: gray;
+}
+.avatarWrapper{
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.imgWrapper{
+  height:50px;
+  width: 50px;
+  border-radius: 50px;
+  
+
+}
+.kycWrapper{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 30px;
+  color: #5D32B9;
+}
+.detailWrapper{
+  margin-left: 40px;
+}
+.kycButton{
+  padding: 5px 10px;
+  border-radius: 10px;
+  background-color: #5D32B9;
+  border: none;
+  color: white;
+
+}
+.imgWrapper img{
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  overflow: hidden;
+}
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.formGroup label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.formGroup input {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.kycBtn {
+  margin-top: 1rem;
+  background: #5d3fd3;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.emailSection {
+  margin-top: 2rem;
+  font-size: 14px;
+}
+
+.email {
+  color: #5d3fd3;
+  font-weight: bold;
+}
+
+.emailSection a {
+  color: #5d3fd3;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.editTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.editBtn {
+  background: #5d3fd3;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+}
+
+.saveBtn {
+  margin-top: 2rem;
+  align-self: flex-start;
+  background: #5D32B9;
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+.profileHead{
+  display: flex;
+  width:95%;
+  margin: auto;
+  padding: 30px 0;
+
+}
+.editformHeading{
+  color: #5D32B9;
+  padding: 40px 0;
+}
+
+.editformHeading h2{
+  font-size: 30px;
+  font-weight: 600;
+}
+.buttonContainer{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+.buttonContainer button{
+    margin-top: 2rem;
+  align-self: flex-start;
+  background: #5D32B9;
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
