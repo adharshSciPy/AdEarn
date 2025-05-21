@@ -3,6 +3,7 @@ import User from "../model/userModel.js";
 import jwt from "jsonwebtoken"
 import { passwordValidator } from "../utils/passwordValidator.js";
 import kyc from "../model/kycModel.js";
+import { Ad } from "../model/AdsModel.js";
 
 const registerAdmin = async (req, res) => {
     const { phoneNumber, password } = req.body;
@@ -251,4 +252,59 @@ const rejectKyc=async(req,res)=>{
   }
 }
 
-export {registerAdmin,updateAdmin,adminLogin,getAllUsers,getSingleUser,fetchKycUploadedUsers,fetchSingleKycUploadUser,verifyKyc,rejectKyc}
+// to verify ads
+const verifyAdById = async (req, res) => {
+  const { adId } = req.body;
+
+  if (!adId) {
+    return res.status(400).json({ message: "adId is required" });
+  }
+
+  try {
+    const ad = await Ad.findById(adId)
+      .populate("imgAdRef")
+      .populate("videoAdRef")
+      .populate("surveyAdRef");
+
+    if (!ad) {
+      return res.status(404).json({ message: "Ad not found" });
+    }
+
+    let updatedAd = null;
+
+    if (ad.imgAdRef && !ad.imgAdRef.isAdVerified) {
+      updatedAd = await ImageAd.findByIdAndUpdate(
+        ad.imgAdRef._id,
+        { isAdVerified: true },
+        { new: true }
+      );
+    } else if (ad.videoAdRef && !ad.videoAdRef.isAdVerified) {
+      updatedAd = await VideoAd.findByIdAndUpdate(
+        ad.videoAdRef._id,
+        { isAdVerified: true },
+        { new: true }
+      );
+    } else if (ad.surveyAdRef && !ad.surveyAdRef.isAdVerified) {
+      updatedAd = await SurveyAd.findByIdAndUpdate(
+        ad.surveyAdRef._id,
+        { isAdVerified: true },
+        { new: true }
+      );
+    } else {
+      return res.status(200).json({ message: "Ad is already verified" });
+    }
+
+    return res.status(200).json({
+      message: "Ad verified successfully",
+      updatedAd,
+    });
+  } catch (error) {
+    console.error("Error verifying ad:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
+
+export {registerAdmin,updateAdmin,adminLogin,getAllUsers,getSingleUser,fetchKycUploadedUsers,fetchSingleKycUploadUser,verifyKyc,rejectKyc,verifyAdById}
