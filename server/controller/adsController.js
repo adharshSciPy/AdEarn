@@ -35,6 +35,7 @@ const createImageAd = async (req, res) => {
       title,
       description,
       imageUrl,
+      createdBy: user._id,
     });
 
     
@@ -88,6 +89,8 @@ const createVideoAd = async (req, res) => {
       title,
       description,
       videoUrl,
+      createdBy: user._id,
+
     });
     const ad=await Ad.create({
       videoAdRef:videoAd._id
@@ -144,6 +147,8 @@ const createSurveyAd = async (req, res) => {
     const surveyAd = await SurveyAd.create({
       title,
       questions,
+      createdBy: user._id,
+
     });
 
     // Create Ad and link SurveyAd
@@ -169,5 +174,61 @@ const createSurveyAd = async (req, res) => {
     });
   }
 };
+// fetching all the ads verification
+const fetchAdsForVerification = async (req, res) => {
+  try {
+    const allAds = await Ad.find()
+      .populate("imgAdRef")
+      .populate("videoAdRef")
+      .populate("surveyAdRef");
 
-export { createImageAd,createVideoAd,createSurveyAd};
+    if (!allAds || allAds.length === 0) {
+      return res.status(400).json({ message: "No Ads found" });
+    }
+
+    // Filter only ads where any one of the refs is not verified
+    const unverifiedAds = allAds.filter((ad) => {
+      return (
+        (ad.imgAdRef && !ad.imgAdRef.isAdVerified) ||
+        (ad.videoAdRef && !ad.videoAdRef.isAdVerified) ||
+        (ad.surveyAdRef && !ad.surveyAdRef.isAdVerified)
+      );
+    });
+
+    if (unverifiedAds.length === 0) {
+      return res.status(404).json({ message: "No unverified ads found" });
+    }
+
+    const adsWithVerificationStatus = unverifiedAds.map((ad) => {
+      return {
+        _id: ad._id,
+        imageAd: ad.imgAdRef
+          ? {
+              ...ad.imgAdRef.toObject(),
+              isVerified: ad.imgAdRef.isAdVerified,
+            }
+          : null,
+        videoAd: ad.videoAdRef
+          ? {
+              ...ad.videoAdRef.toObject(),
+              isVerified: ad.videoAdRef.isAdVerified,
+            }
+          : null,
+        surveyAd: ad.surveyAdRef
+          ? {
+              ...ad.surveyAdRef.toObject(),
+              isVerified: ad.surveyAdRef.isAdVerified,
+            }
+          : null,
+      };
+    });
+
+    res.status(200).json({ ads: adsWithVerificationStatus });
+  } catch (error) {
+    console.error("Error fetching ads for verification:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+export { createImageAd,createVideoAd,createSurveyAd,fetchAdsForVerification};

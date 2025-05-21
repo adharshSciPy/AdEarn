@@ -18,6 +18,10 @@ const imageAd = new mongoose.Schema({
     ref: 'User',
     required: false,
   },
+  isAdVerified:{
+    type:Boolean,
+    default:false
+  }
 }, { timestamps: true });
 
 export const ImageAd = mongoose.model('ImageAd', imageAd);
