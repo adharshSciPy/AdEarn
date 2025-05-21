@@ -33,7 +33,7 @@ import RefaralPage from './pages/user/ReferalPage/RefaralPage';
 import UserProfileEditForm from './pages/user/UserProfileEdit/UserProfileEdit'
 import KycVerification from './pages/user/KycForm/KycForm'
 import TemplateEditor from './pages/user/adTemplateEditor/TemplateEditor';
-
+import AdForm from './pages/user/AdForm/AdForm'
 function App() {
   return (
     <div className="App">
@@ -77,6 +77,8 @@ function App() {
           <Route path='/userprofile' element={<UserProfileEditForm />} />
           <Route path='/kycverification' element={<KycVerification />} />
           <Route path='/templateEditor' element={<TemplateEditor />} />
+          <Route path='/adform' element={<AdForm />} />
+
 
 
 
