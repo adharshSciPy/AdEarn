@@ -1,31 +1,57 @@
-import multer from 'multer';
-import path from 'path';
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 
+// Get current directory path
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
+// Define video upload directory
+const uploadDir = path.join(__dirname, "../Uploads/videoAdUploads");
+
+// Ensure the directory exists
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Multer storage settings
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/videos'); // make sure this folder exists
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
   },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const fileExtension = path.extname(file.originalname);
+    cb(null, `${file.fieldname}-${uniqueSuffix}${fileExtension}`);
   },
 });
 
+// Allowed video types
+const allowedVideoTypes = [
+  "video/mp4",
+  "video/mpeg",
+  "video/ogg",
+  "video/webm",
+];
 
+// File filter for videos only
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['video/mp4', 'video/avi', 'video/mkv', 'video/mov'];
-  if (allowedTypes.includes(file.mimetype)) {
+  if (allowedVideoTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Only video files are allowed'), false);
+    cb(new Error("Invalid file type. Only video files are allowed!"), false);
   }
 };
 
-export const uploadVideo = multer({
-  storage,
-  fileFilter,
+// Multer configuration for video ads
+const videoAdUpload = multer({
+  storage: storage,
   limits: {
-    fileSize: 50 * 1024 * 1024, // limit to 50MB
+    fileSize: 100 * 1024 * 1024, // 100MB max size
+    files: 1,
   },
-});
+  fileFilter: fileFilter,
+}).single("videoAd"); // expects the field name to be "videoAd"
+
+export default videoAdUpload;

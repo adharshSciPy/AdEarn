@@ -66,6 +66,18 @@ const userSchema = new Schema(
     profileImg: {
       type: String,
     },
+    isUserEnabled:{
+      type:Boolean,
+      default:true
+    },
+      lastSeen: {
+      type: String,
+      default: null,
+    },
+    ads:[{
+type:Schema.Types.ObjectId,
+ref:"Ad"
+    }],
     myReferalCode: {
       type: String,
       unique: true,
