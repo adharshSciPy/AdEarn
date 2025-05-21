@@ -250,4 +250,5 @@ const rejectKyc=async(req,res)=>{
     return res.status(500).json({ message: "Internal Server Error" });
   }
 }
+
 export {registerAdmin,updateAdmin,adminLogin,getAllUsers,getSingleUser,fetchKycUploadedUsers,fetchSingleKycUploadUser,verifyKyc,rejectKyc}

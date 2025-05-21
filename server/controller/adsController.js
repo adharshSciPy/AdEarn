@@ -20,7 +20,9 @@ const createImageAd = async (req, res) => {
 
   // Validate title and description
   if (!title || !description) {
-    return res.status(400).json({ message: "Title and description are required" });
+    return res
+      .status(400)
+      .json({ message: "Title and description are required" });
   }
 
   try {
@@ -29,8 +31,7 @@ const createImageAd = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-  
-   const imageUrl = `/imgAdUploads/${req.file.filename}`;
+    const imageUrl = `/imgAdUploads/${req.file.filename}`;
     const imageAd = await ImageAd.create({
       title,
       description,
@@ -38,12 +39,10 @@ const createImageAd = async (req, res) => {
       createdBy: user._id,
     });
 
-    
     const ad = await Ad.create({
       imgAdRef: imageAd._id,
     });
 
-   
     user.ads.push(ad._id);
     await user.save();
 
@@ -51,9 +50,8 @@ const createImageAd = async (req, res) => {
       message: "Image Ad created and linked successfully",
       imageAd,
       ad,
-      user
+      user,
     });
-
   } catch (error) {
     console.error("Error creating Image Ad:", error);
     return res.status(500).json({
@@ -67,16 +65,18 @@ const createImageAd = async (req, res) => {
 
 const createVideoAd = async (req, res) => {
   const { title, description } = req.body;
-  const{id}=req.params;
+  const { id } = req.params;
 
   if (!id) {
     return res.status(400).json({ message: "User ID is required" });
   }
-  if(!req.file){
-      return res.status(400).json({ message: "Video file required" });
+  if (!req.file) {
+    return res.status(400).json({ message: "Video file required" });
   }
-  if (!title || !description ) {
-    return res.status(400).json({ message: "All fields are required for Video Ad" });
+  if (!title || !description) {
+    return res
+      .status(400)
+      .json({ message: "All fields are required for Video Ad" });
   }
 
   try {
@@ -90,18 +90,17 @@ const createVideoAd = async (req, res) => {
       description,
       videoUrl,
       createdBy: user._id,
-
     });
-    const ad=await Ad.create({
-      videoAdRef:videoAd._id
-    })
+    const ad = await Ad.create({
+      videoAdRef: videoAd._id,
+    });
     user.ads.push(ad._id);
     await user.save();
-     return res.status(200).json({
+    return res.status(200).json({
       message: "Video Ad created and linked successfully",
       videoAd,
       ad,
-      user
+      user,
     });
   } catch (error) {
     console.error("Error creating video Ad:", error);
@@ -148,7 +147,6 @@ const createSurveyAd = async (req, res) => {
       title,
       questions,
       createdBy: user._id,
-
     });
 
     // Create Ad and link SurveyAd
@@ -174,7 +172,7 @@ const createSurveyAd = async (req, res) => {
     });
   }
 };
-// fetching all the ads verification
+// fetching all the ads with isVerified:false for verification
 const fetchAdsForVerification = async (req, res) => {
   try {
     const allAds = await Ad.find()
@@ -229,6 +227,70 @@ const fetchAdsForVerification = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+// fetching all the ads with isVerified:true to display to users (ads that have been verified by Admin)
+const fetchVerifiedAds = async (req, res) => {
+  try {
+    const allAds = await Ad.find()
+      .populate("imgAdRef")
+      .populate("videoAdRef")
+      .populate("surveyAdRef");
+
+    if (!allAds || allAds.length === 0) {
+      return res.status(400).json({ message: "No Ads found" });
+    }
+
+    // Filter ads where any of the refs are verified
+    const verifiedAds = allAds.filter((ad) => {
+      return (
+        (ad.imgAdRef && ad.imgAdRef.isAdVerified) ||
+        (ad.videoAdRef && ad.videoAdRef.isAdVerified) ||
+        (ad.surveyAdRef && ad.surveyAdRef.isAdVerified)
+      );
+    });
+
+    if (verifiedAds.length === 0) {
+      return res.status(404).json({ message: "No verified ads found" });
+    }
+
+    // Format ads with verification status
+    const adsWithStatus = verifiedAds.map((ad) => ({
+      _id: ad._id,
+      imageAd: ad.imgAdRef && ad.imgAdRef.isAdVerified
+        ? {
+            ...ad.imgAdRef.toObject(),
+            isVerified: ad.imgAdRef.isAdVerified,
+          }
+        : null,
+      videoAd: ad.videoAdRef && ad.videoAdRef.isAdVerified
+        ? {
+            ...ad.videoAdRef.toObject(),
+            isVerified: ad.videoAdRef.isAdVerified,
+          }
+        : null,
+      surveyAd: ad.surveyAdRef && ad.surveyAdRef.isAdVerified
+        ? {
+            ...ad.surveyAdRef.toObject(),
+            isVerified: ad.surveyAdRef.isAdVerified,
+          }
+        : null,
+    }));
+
+    return res.status(200).json({
+      message: "Verified ads fetched successfully",
+      ads: adsWithStatus,
+    });
+  } catch (error) {
+    console.error("Error fetching verified ads:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 
-export { createImageAd,createVideoAd,createSurveyAd,fetchAdsForVerification};
+
+export {
+  createImageAd,
+  createVideoAd,
+  createSurveyAd,
+  fetchAdsForVerification,
+  fetchVerifiedAds
+};
