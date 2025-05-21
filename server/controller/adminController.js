@@ -3,6 +3,7 @@ import User from "../model/userModel.js";
 import jwt from "jsonwebtoken"
 import { passwordValidator } from "../utils/passwordValidator.js";
 import kyc from "../model/kycModel.js";
+import { Ad } from "../model/AdsModel.js";
 
 const registerAdmin = async (req, res) => {
     const { phoneNumber, password } = req.body;
@@ -250,4 +251,65 @@ const rejectKyc=async(req,res)=>{
     return res.status(500).json({ message: "Internal Server Error" });
   }
 }
-export {registerAdmin,updateAdmin,adminLogin,getAllUsers,getSingleUser,fetchKycUploadedUsers,fetchSingleKycUploadUser,verifyKyc,rejectKyc}
+
+// verifyad
+const fetchVerifiedAds = async (req, res) => {
+  try {
+    const allAds = await Ad.find()
+      .populate("imgAdRef")
+      .populate("videoAdRef")
+      .populate("surveyAdRef");
+
+    if (!allAds || allAds.length === 0) {
+      return res.status(400).json({ message: "No Ads found" });
+    }
+
+    // Filter ads where any of the refs are verified
+    const verifiedAds = allAds.filter((ad) => {
+      return (
+        (ad.imgAdRef && ad.imgAdRef.isAdVerified) ||
+        (ad.videoAdRef && ad.videoAdRef.isAdVerified) ||
+        (ad.surveyAdRef && ad.surveyAdRef.isAdVerified)
+      );
+    });
+
+    if (verifiedAds.length === 0) {
+      return res.status(404).json({ message: "No verified ads found" });
+    }
+
+    // Format ads with verification status
+    const adsWithStatus = verifiedAds.map((ad) => ({
+      _id: ad._id,
+      imageAd: ad.imgAdRef && ad.imgAdRef.isAdVerified
+        ? {
+            ...ad.imgAdRef.toObject(),
+            isVerified: ad.imgAdRef.isAdVerified,
+          }
+        : null,
+      videoAd: ad.videoAdRef && ad.videoAdRef.isAdVerified
+        ? {
+            ...ad.videoAdRef.toObject(),
+            isVerified: ad.videoAdRef.isAdVerified,
+          }
+        : null,
+      surveyAd: ad.surveyAdRef && ad.surveyAdRef.isAdVerified
+        ? {
+            ...ad.surveyAdRef.toObject(),
+            isVerified: ad.surveyAdRef.isAdVerified,
+          }
+        : null,
+    }));
+
+    return res.status(200).json({
+      message: "Verified ads fetched successfully",
+      ads: adsWithStatus,
+    });
+  } catch (error) {
+    console.error("Error fetching verified ads:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
+export {registerAdmin,updateAdmin,adminLogin,getAllUsers,getSingleUser,fetchKycUploadedUsers,fetchSingleKycUploadUser,verifyKyc,rejectKyc,fetchVerifiedAds}
