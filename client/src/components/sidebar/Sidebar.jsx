@@ -83,13 +83,6 @@ function Sidebar() {
                 ]
             },
             {
-                key: "gallery", label: "Gallery", icon: <UserOutlined />,
-                children: [
-                    { key: "gallery-all", label: "All Gallery", path: "/AdminGallery" },
-                    { key: "gallery-new", label: "New Gallery", path: "/demo" },
-                ]
-            },
-            {
                 key: "contest", label: "Contest", icon: <UserOutlined />,
                 children: [
                     { key: "contest-all", label: "All Contest", path: "/AdminContest" },

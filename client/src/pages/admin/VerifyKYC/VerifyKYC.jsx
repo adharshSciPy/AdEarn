@@ -16,6 +16,9 @@ function VerifyKYC() {
         <div className={styles.Kyccontainer}>
           <div style={{ width: '100%', maxWidth: '1550px', height: '600px', padding: '30px' }} className={styles.kycimage}>
             <h1>KYC Details</h1>
+            <div className={styles.logbutton}>
+              <Button>Log</Button>
+            </div>
             <div className={styles.kycuserdetails}>
               <div className={styles.userimage}>
                 <img src={UserImage} />
