@@ -34,6 +34,8 @@ import UserProfileEditForm from './pages/user/UserProfileEdit/UserProfileEdit'
 import KycVerification from './pages/user/KycForm/KycForm'
 import TemplateEditor from './pages/user/adTemplateEditor/TemplateEditor';
 import AdForm from './pages/user/AdForm/AdForm'
+import UserReport from "./pages/user/ReportPage/ReportPageUser"
+import SurveyAds from "./pages/user/SurveyAds/Surveyads"
 function App() {
   return (
     <div className="App">
@@ -78,6 +80,11 @@ function App() {
           <Route path='/kycverification' element={<KycVerification />} />
           <Route path='/templateEditor' element={<TemplateEditor />} />
           <Route path='/adform' element={<AdForm />} />
+          <Route path='/adreportuser' element={<UserReport />} />
+          <Route path='/surveyaduser' element={<SurveyAds />} />
+
+          
+
 
 
 
