@@ -103,8 +103,16 @@ function Surveyads() {
 
   return (
     <div>
+      <div className={styles.pageHead}>
+        <div className={styles.subpageHead}>
+          <div className={styles.pageHeading}>
+            <h1>Survey Ads</h1>
+          </div>
+        </div>
+      </div>
       <div className={styles.adFormMain}>
         {/* Ad Text */}
+        <div className=""></div>
         <div className={styles.adName}>
           <div className={styles.labelContainer}>
             <div className={styles.labelImg}>

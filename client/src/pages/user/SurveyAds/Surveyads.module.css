@@ -19,7 +19,25 @@
   width: 95%;
   margin: auto;
   background-color: #d6e4fd;
-  padding: 50px;
+  padding: 70px 50px 50px 50px;
+  margin-top: -20px;
+  position: relative;
+  z-index: -10;
+}
+.pageHead{
+  width: 95%;
+  margin: auto;
+  background-color: #5D32B9;
+  padding: 25px 0;
+  border-radius: 20px;
+}
+.subpageHead{
+  width: 95%;
+  margin: auto; 
+}
+.pageHeading h1{
+  color: white;
+  font-weight: 600;
 }
 .heading {
   margin-top: 20px;
@@ -254,6 +272,7 @@
 .AdNameHead h2{
 margin-bottom: 20px;
 }
+
 @media (max-width: 869px){
     .questionContainer{
         flex-direction: column;
