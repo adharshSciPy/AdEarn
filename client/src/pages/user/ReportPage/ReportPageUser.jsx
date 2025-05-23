@@ -1,27 +1,22 @@
-import { React, useState } from "react";
-import { Link } from "react-router-dom";
-import styles from "./adsmanager.module.css";
+import React from "react";
+
+import { useState } from "react";
+import styles from "./Report.module.css";
 import edit from "../../../assets/edit.png";
 import Duplicate from "../../../assets/copy.png";
 import report from "../../../assets/report.png";
-import Delete from "../../../assets/delete.png";
-import generatePdf from "../Pdfgenerator/PdfGenerator"
+import generatePdf from "../Pdfgenerator/PdfGenerator";
+import Chart from "react-apexcharts";
 
-function Adsmanager() {
+function ReportPageUser() {
   const [toggleStates, setToggleStates] = useState({});
-  const handleToggle = (id) => {
-    setToggleStates((prevState) => ({
-      ...prevState,
-      [id]: !prevState[id],
-    }));
-  };
 
   const tableData = [
     {
       id: 1,
       name: "John Doe",
       age: 28,
-      email: "videoAd",
+      email: "Video Ad",
       phone: "100",
       address: "2000",
       city: "New York",
@@ -32,7 +27,71 @@ function Adsmanager() {
       id: 2,
       name: "Jane Smith",
       age: 32,
-      email: "Imagead",
+      email: "Image Ad",
+      phone: "1000",
+      address: "2500",
+      city: "Los Angeles",
+      state: "200",
+      country: "outgoing",
+    },
+{
+      id: 3,
+      name: "John Doe",
+      age: 28,
+      email: "Video Ad",
+      phone: "100",
+      address: "2000",
+      city: "New York",
+      state: "300",
+      country: "ongoing",
+    },
+    {
+      id: 4,
+      name: "Jane Smith",
+      age: 32,
+      email: "Image Ad",
+      phone: "1000",
+      address: "2500",
+      city: "Los Angeles",
+      state: "200",
+      country: "outgoing",
+    },{
+      id: 5,
+      name: "John Doe",
+      age: 28,
+      email: "Video Ad",
+      phone: "100",
+      address: "2000",
+      city: "New York",
+      state: "300",
+      country: "ongoing",
+    },
+    {
+      id: 6,
+      name: "Jane Smith",
+      age: 32,
+      email: "Image Ad",
+      phone: "1000",
+      address: "2500",
+      city: "Los Angeles",
+      state: "200",
+      country: "outgoing",
+    },{
+      id: 7,
+      name: "John Doe",
+      age: 28,
+      email: "Video Ad",
+      phone: "100",
+      address: "2000",
+      city: "New York",
+      state: "300",
+      country: "ongoing",
+    },
+    {
+      id: 8,
+      name: "Jane Smith",
+      age: 32,
+      email: "Image Ad",
       phone: "1000",
       address: "2500",
       city: "Los Angeles",
@@ -40,11 +99,51 @@ function Adsmanager() {
       country: "outgoing",
     },
   ];
+
+  const chartLabels = tableData.map((item) => `${item.name} (${item.email})`);
+  const chartSeries = tableData.map((item) => parseInt(item.phone));
+  const chartOptions = {
+    chart: {
+      type: "donut",
+    },
+    labels: chartLabels,
+    plotOptions: {
+      pie: {
+        donut: {
+          labels: {
+            show: true,
+            total: {
+              show: true,
+              label: "Total Reach",
+              formatter: () =>
+                chartSeries.reduce((a, b) => a + b, 0).toString(),
+            },
+          },
+        },
+      },
+    },
+    responsive: [
+      {
+        breakpoint: 480,
+        options: {
+          chart: {
+            width: 300,
+          },
+          legend: {
+            position: "bottom",
+          },
+        },
+      },
+    ],
+    legend: {
+      position: "right",
+    },
+  };
+
   return (
     <div>
       <div className={styles.mainContainer}>
         <div className={styles.homeMainContainer}>
-          {/* <Sidebar/> */}
           <div className={styles.homeContainer}>
             <div className={styles.contentsContainer}>
               <div className={styles.firstContent}>
@@ -72,45 +171,51 @@ function Adsmanager() {
                 </div>
               </div>
             </div>
+
+            {/* Chart Section */}
+            <div className={styles.ChartContainer}>
+              <div className={styles.ChartChild}>
+                <div className={styles.AdCountContainer}>
+                  <div className={styles.Adheading}><h3>Total Ads</h3></div>
+                  <div className={styles.AdNumber}>
+                    <h2>{tableData.length}</h2> 
+                  </div>
+                </div>
+              </div>
+              <div className={styles.ChartChild}>
+                <div className={styles.AdCountContainer}>
+                  <div className={styles.Adheading}><h3>Total Star Spent</h3></div>
+                  <div className={styles.AdNumber}>
+                    <h2>
+                      {tableData.reduce(
+                        (total, item) => total + parseInt(item.address),
+                        0
+                      )}
+                    </h2>
+                  </div>
+                </div>
+              </div>
+              <div className={styles.ChartChildLast}>
+                <div className={styles.AdCountContainer}>
+                  <div className="donut">
+                    <div className={styles.Adheading}><h3>Total Reach</h3></div>
+                    <Chart
+                      options={chartOptions}
+                      series={chartSeries}
+                      type="donut"
+                      width="380"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Table Section */}
             <div className={styles.tableContainer}>
               <div className={styles.tableMain}>
                 <div className={styles.buttonsContainer}>
-                  <div className={styles.tickContainer}>
-                    <input type="checkbox" className={styles.tick} />
-                  </div>
-                  <div className={styles.createButtonContainer}>
-                    <button style={{ display: "flex", alignItems: "center" }}>
-                      <span style={{ fontSize: "20px", paddingRight: "10px" }}>
-                        +
-                      </span>
-                      create
-                    </button>
-                  </div>
-                  <div className={styles.duplicateButtonContainer}>
-                    <button style={{ display: "flex", alignItems: "center" }}>
-                      <span style={{ height: "20px", width: "35px" }}>
-                        <img src={Duplicate} alt="" className={styles.img} />
-                      </span>
-                      Duplicate
-                    </button>
-                  </div>
-
-                  <div className={styles.deleteButtonContainer}>
-                    <button style={{ display: "flex", alignItems: "center" }}>
-                      <span style={{ height: "20px", width: "35px" }}>
-                        <img src={Delete} alt="" className={styles.img} />
-                      </span>
-                      Delete
-                    </button>
-                  </div>
                   <div className={styles.reportButtonContainer}>
-                    <button
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
+                    <button style={{ display: "flex", alignItems: "center" }}>
                       <span style={{ height: "20px", width: "35px" }}>
                         <img src={report} alt="" className={styles.img} />
                       </span>
@@ -126,13 +231,12 @@ function Adsmanager() {
                     <thead>
                       <tr>
                         <th></th>
-                        <th>On/Off</th>
                         <th>Ads Name</th>
                         <th>Ads Type</th>
                         <th>Total Reach</th>
                         <th>Total Views</th>
-                        <th>Report</th>
                         <th>Status</th>
+                        <th></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -142,27 +246,10 @@ function Adsmanager() {
                             <input type="checkbox" className={styles.tick} />
                           </td>
                           <td className={styles.tdBorder}>
-                            <div
-                              className={`${styles.switchContainer} ${
-                                toggleStates[row.id] ? styles.on : ""
-                              }`}
-                              onClick={() => handleToggle(row.id)}
-                            >
-                              <div
-                                className={`${styles.switchButton} ${
-                                  toggleStates[row.id] ? styles.on : ""
-                                }`}
-                              ></div>
-                            </div>
-                          </td>
-                          <td className={styles.tdBorder}>
                             <div className={styles.tdMainContainer}>
                               <div className={styles.topTd}>
                                 <p>{row.name}</p>
-                                <button
-                                  style={{ display: "flex" }}
-                                  className={styles.tdButton}
-                                >
+                                <button className={styles.tdButton}>
                                   <span
                                     style={{
                                       height: "12px",
@@ -201,6 +288,15 @@ function Adsmanager() {
                           <td>{row.email}</td>
                           <td>{row.phone}</td>
                           <td>{row.address}</td>
+                          <td
+                            style={{
+                              color: toggleStates[row.id] ? "green" : "red",
+                              fontWeight: "bold",
+                              textAlign: "center",
+                            }}
+                          >
+                            {toggleStates[row.id] ? "Ongoing" : "Paused"}
+                          </td>
                           <td>
                             <button
                               className={styles.downloadLink}
@@ -209,15 +305,6 @@ function Adsmanager() {
                               Download
                             </button>
                           </td>
-                          <td
-                            style={{
-                              color: toggleStates[row.id] ? "green" : "red",
-                              fontWeight: "bold",
-                              textAlign: "center",
-                            }}
-                          >
-                            {toggleStates[row.id] ? "Ongoing" : "paused"}
-                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -225,6 +312,7 @@ function Adsmanager() {
                 </div>
               </div>
             </div>
+            {/* End table section */}
           </div>
         </div>
       </div>
@@ -232,4 +320,4 @@ function Adsmanager() {
   );
 }
 
-export default Adsmanager;
+export default ReportPageUser;

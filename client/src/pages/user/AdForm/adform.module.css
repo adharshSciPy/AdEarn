@@ -152,3 +152,43 @@
   width: 100%;
   margin-top: 10px;
 }
+.buttondiv{
+  margin-top: 100px;
+  display: flex;
+  justify-content: end;
+}
+.buttondiv button{
+  font-size: 25px;
+  padding: 10px 30px;
+  border-radius: 10px;
+}
+.backButton{
+  margin-right:30px;
+  background-color:"transparent";
+  border:"1px solid #3563E9"
+}
+@media (max-width:769px) {
+  .adFormMain{
+    width: 100%;
+    padding: 10px;
+  }
+  .adName{
+    padding: 20px;
+  }
+  .container{
+    padding: 20px 10px;
+  }
+  .buttondiv{
+    margin-top: 20px;
+    justify-content: center;
+
+  }
+  .buttondiv button{
+    width: 100%;
+    font-size: 20px;
+  }
+.backButton{
+  margin-right: 0px;
+  margin-bottom: 30px;
+}
+}
