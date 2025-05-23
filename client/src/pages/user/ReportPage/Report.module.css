@@ -1,0 +1,341 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+.mainContainer {
+  width: 100%;
+  background-color: #F6F7F9;
+}
+.homeMainContainer {
+  width: 100%;
+  display: flex;
+}
+.homeContainer {
+  width: 100%;
+}
+.firstContent {
+  width: 95%;
+  margin: auto;
+  margin-top: 50px;
+  border-radius: 10px;
+}
+.firstMain {
+  background-image: url("../../../assets/homeBackground.png");
+  display: flex;
+}
+.firstMainleftContainer {
+  width: 50%;
+}
+.firstMainrightContainer {
+  width: 50%;
+}
+.firstMainHeader {
+  margin-left: 30px;
+}
+.firstMainHeader h2 {
+  color: white;
+  font-size: 30px;
+  font-weight: 600;
+  padding-top: 30px;
+}
+.firstMainp {
+  margin-left: 30px;
+  padding-top: 15px;
+  color: white;
+  padding-right: 150px;
+  line-height: 25px;
+}
+.firstMainp p {
+  font-size: 18px;
+}
+.firstMainbutton {
+  margin-top: 45px;
+  margin-left: 30px;
+  margin-bottom: 40px;
+}
+.firstMainbutton button {
+  position: relative;
+  z-index: 1;
+  color: white;
+  padding: 10px 30px;
+  background: transparent;
+  border: 1px solid white;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: color 0.4s ease;
+}
+
+.firstMainbutton button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, #6da2e4, #f4ad13);
+  z-index: -1;
+  transition: opacity 0.4s ease;
+  opacity: 0;
+}
+
+.firstMainbutton button:hover::before {
+  opacity: 1;
+}
+
+.firstImageContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+.firstImageContainerMain {
+  height: 310px;
+  width: 440px;
+  background-image: url("../../../assets/homeimage.png");
+  background-position: center;
+  background-size: contain;
+}
+.tableContainer{
+    width: 95%;
+    margin: auto;
+    background-color: #D6E4FD;
+    margin-top: 40px;
+    border-radius: 10px;
+    margin-bottom: 40px;
+    overflow: hidden;
+}
+
+.buttonsContainer{
+    width: 100%;
+    padding:30px 0;
+
+}
+.buttonsContainer{
+    display: flex;
+    align-items: center;
+    margin-left: 15px;
+}
+.createButtonContainer button{
+    padding: 8px 15px;
+    margin-left: 20px;
+    border-radius: 10px;
+    border:1px solid #3563E9;
+}
+.duplicateButtonContainer button{
+    padding: 8px 15px;
+    margin-left: 20px;
+    border-radius: 10px;
+    border:1px solid #3563E9;
+}
+.editButtonContainer button{
+    padding: 8px 15px;
+    margin-left: 20px;
+    border-radius: 10px;
+    border:1px solid #3563E9;
+}
+.deleteButtonContainer button{
+    padding: 8px 15px;
+    margin-left: 20px;
+    border-radius: 10px;
+    border:1px solid #3563E9;
+}
+.reportButtonContainer button{
+    padding: 8px 15px;
+    margin-left: 20px;
+    border-radius: 10px;
+    border:1px solid #3563E9;
+}
+.img{
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+}
+.tick{
+    height: 15px;
+    width: 15px;
+}
+.tableSub{
+    overflow: hidden;
+}
+.tableSub th,td{
+    text-align: center;
+    padding: 15px 10px;
+}
+.tableSub th{
+    background-color: #5D32B9;
+    color: white;
+}
+.tdBorder{
+    border-left: 1px solid #3563E9;
+    border-right: 1px solid #3563E9;
+
+}
+.tdMainContainer{
+    display: flex;
+    flex-direction: column;
+}
+.topTd{
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+.tdButton{
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+}
+.bottomTd{
+    display: flex;
+    justify-content: center;
+    margin-top: 5px;
+    align-items: center;
+}
+.tdButton p{
+    font-size: 8px;
+}
+.switchContainer {
+  width: 60px;
+  height: 30px;
+  background-color: #ccc;
+  border-radius: 30px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.switchButton {
+  width: 26px;
+  height: 26px;
+  background-color: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: left 0.3s ease;
+}
+
+.switchContainer.on {
+  background-color: #4caf50;
+}
+
+.switchButton.on {
+  left: 32px;
+}
+.ongoingStatus {
+  color: green;
+  font-weight: bold;
+  text-align: center;
+}
+
+.outgoingStatus {
+  color: red;
+  font-weight: bold;
+  text-align: center;
+}
+.downloadLink {
+  background-color: transparent;
+  border: 1px solid #007bff;
+  color: #007bff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  text-align: center;
+}
+
+.downloadLink:hover {
+  background-color: #007bff;
+  color: #fff;
+}
+.ChartContainer{
+  width: 95%;
+  margin: auto;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.ChartChild{
+  flex: 1;
+  height: 100%;
+
+}
+.ChartChildLast{
+  flex: 2;
+  height: 300px;
+}
+.AdCountContainer{
+  padding: 50px;
+  background-color: #D6E4FD;
+  margin-top: 40px;
+  overflow: hidden;
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+
+}
+.Adheading{
+  font-size: 30px;
+  text-align: center  ;
+}
+.AdNumber{
+  font-size: 40px;
+}
+.AdNumber h2{
+  font-weight: 500;
+}
+.Adheading h3{
+  font-weight: 500;
+}
+@media (max-width:1069px) {
+.ChartChildLast{
+  flex-basis: 100%;
+  margin-bottom: 40px
+}
+.AdNumber{
+  font-size: 25px;
+}
+.Adheading h3{
+  font-size: 18px;
+}
+}
+@media (max-width: 800px) {
+  .firstContent{
+    width: 100%;
+  }
+  .firstMainrightContainer {
+    display: none;
+  }
+  .firstMainleftContainer {
+    width: 100%;
+  }
+.ChartContainer{
+  width: 100%;
+  background-color: white;
+}
+.ChartContainer{
+gap: 10px;
+}
+.ChartChild{
+height: max-content;
+}
+.AdCountContainer{
+  height: max-content;
+  margin-top: 10px;
+}
+.tableContainer{
+  width: 100%;
+  margin-bottom: 0px;
+}
+.mainContainer{
+  background-color: white;
+}
+} 

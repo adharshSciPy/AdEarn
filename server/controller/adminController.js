@@ -303,8 +303,56 @@ const verifyAdById = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+const getAdminWallet = async (req, res) => {
+  try {
+    const wallet = await AdminWallet.findOne().populate('transactions.userId', 'email');
+
+    if (!wallet) {
+      return res.status(404).json({ message: "Admin wallet not found" });
+    }
+
+    return res.status(200).json({
+      message: "Admin wallet fetched successfully",
+      totalStars: wallet.totalStars,
+      transactions: wallet.transactions,
+    });
+  } catch (error) {
+    console.error("Error fetching admin wallet:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// This function is meant to be called from the star purchase logic (not an API endpoint)
+const addStarsToAdminWallet = async (userId, totalStarsPurchased) => {
+  try {
+    const starsForAdmin = Math.floor(totalStarsPurchased * 0.10); // 10% logic
+
+    let wallet = await AdminWallet.findOne();
+
+    if (!wallet) {
+      wallet = new AdminWallet();
+    }
+
+    wallet.totalStars += starsForAdmin;
+    wallet.transactions.push({
+      userId: userId,
+      starsReceived: starsForAdmin,
+    });
+
+    const updatedWallet = await wallet.save();
+
+    return {
+      success: true,
+      starsAdded: starsForAdmin,
+      updatedWallet,
+    };
+  } catch (error) {
+    console.error("Error updating admin wallet:", error);
+    throw new Error("Failed to update admin wallet");
+  }
+};
 
 
 
 
-export {registerAdmin,updateAdmin,adminLogin,getAllUsers,getSingleUser,fetchKycUploadedUsers,fetchSingleKycUploadUser,verifyKyc,rejectKyc,verifyAdById}
+export {registerAdmin,updateAdmin,adminLogin,getAllUsers,getSingleUser,fetchKycUploadedUsers,fetchSingleKycUploadUser,verifyKyc,rejectKyc,verifyAdById,getAdminWallet,addStarsToAdminWallet}

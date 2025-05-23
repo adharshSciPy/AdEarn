@@ -4,6 +4,7 @@ import Delete from "../../../assets/delete.png";
 
 const WalletPage = () => {
   const [activeTab, setActiveTab] = useState("Payouts");
+  const [showBuyStarsModal, setShowBuyStarsModal] = useState(false);
 
   const handleTabClick = (tabName) => {
     setActiveTab(tabName);
@@ -53,7 +54,7 @@ const WalletPage = () => {
         <section className={styles.walletBalanceSection}>
           <div className={styles.balanceCard}>
             <div className={styles.balanceAmount}>500</div>
-            <button className={styles.buyButton}>Buy stars</button>
+            <button className={styles.buyButton} onClick={() => setShowBuyStarsModal(true)}>Buy stars</button>
             <div className={styles.referBox}>
               <span>🔗 Refer Codes & Earn</span>
               <code>
@@ -210,21 +211,24 @@ const WalletPage = () => {
             <table className={styles.payoutTable}>
               <thead>
                 <tr>
-                  <th style={{width:"20%"}}>Date</th>
-                  <th style={{width:"20%"}}>Request no</th>
-                  <th style={{width:"20%"}}>Star</th>
-                  <th style={{width:"20%"}}>Payout amount</th>
-                  <th style={{width:"20%"}}>Reason</th>
+                  <th style={{ width: "20%" }}>Date</th>
+                  <th style={{ width: "20%" }}>Request no</th>
+                  <th style={{ width: "20%" }}>Star</th>
+                  <th style={{ width: "20%" }}>Payout amount</th>
+                  <th style={{ width: "20%" }}>Reason</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td style={{width:"19%"}}>03/04/2025</td>
-                  <td style={{width:"19%"}}>Request 1</td>
-                  <td style={{width:"19%"}}>50</td>
-                  <td style={{width:"18%"}}>500</td>
-                  <td style={{width:"25%"}}>
-                    <p>reason behind the cancellation reason behind the cancellation reason behind the cancellation</ p>                  
+                  <td style={{ width: "19%" }}>03/04/2025</td>
+                  <td style={{ width: "19%" }}>Request 1</td>
+                  <td style={{ width: "19%" }}>50</td>
+                  <td style={{ width: "18%" }}>500</td>
+                  <td style={{ width: "25%" }}>
+                    <p>
+                      reason behind the cancellation reason behind the
+                      cancellation reason behind the cancellation
+                    </p>
                   </td>
                 </tr>
               </tbody>
@@ -232,6 +236,22 @@ const WalletPage = () => {
           </section>
         )}
       </div>
+      {showBuyStarsModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <p className={styles.modalP} style={{textAlign:"center"}}>Start Purchase</p>
+            <p className={styles.modalP} style={{fontSize:"12px",paddingTop:"5px"}}>Enter number of stars</p>
+            <input placeholder="Enter number of stars" type="number" className={styles.modalInput} ></input>
+            <p className={styles.indicator}> * minimum</p>
+            <div className={styles.modalActions}>
+              <button onClick={() => setShowBuyStarsModal(false)} style={{marginRight:"20px"}}>
+                Cancel
+              </button>
+              <button>Proceed</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
