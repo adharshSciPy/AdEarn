@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import styles from "./Surveyads.module.css";
 import tickAd from "../../../assets/tickAd.png";
+import Navbar from "../NavBar/Navbar";
 
 function Surveyads() {
   const [questionType, setQuestionType] = useState("yesno");
@@ -102,7 +103,8 @@ function Surveyads() {
   };
 
   return (
-    <div>
+    <>
+      <Navbar/>
       <div className={styles.pageHead}>
         <div className={styles.subpageHead}>
           <div className={styles.pageHeading}>
@@ -410,7 +412,7 @@ function Surveyads() {
       </div>
       </div>
       
-    </div>
+    </>
   );
 }
 

@@ -1,5 +1,5 @@
 import  Router  from "express";
-import { addKyc, editUser, getUserByUniqueId, registerUser, uploadProfilePicture, userLogin, userLogout, } from "../controller/userController.js";
+import { addKyc, editUser, getUserByUniqueId, registerUser, starBuy, uploadProfilePicture, userLogin, userLogout, } from "../controller/userController.js";
 import uploadUserImg from "../multer/userImgMulter.js";
 import userKyc from "../multer/kycVerificationMulter.js";
 const userRouter = Router()
@@ -10,6 +10,8 @@ userRouter.route('/logout/:id').post(userLogout);
 userRouter.route('/profile-upload/:id').post(uploadUserImg, uploadProfilePicture);
 userRouter.route('/kyc-verification/:id').post(userKyc, addKyc);
 userRouter.route('/by-uniqueid').get(getUserByUniqueId);
+userRouter.route('/buy-stars/:id').post(starBuy);
+
 
 
 

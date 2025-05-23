@@ -10,6 +10,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import styles from "./adform.module.css";
 import tickAd from "../../../assets/tickAd.png";
+import Navbar from "../NavBar/Navbar";
 // Leaflet default icon setup
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -507,6 +508,7 @@ function AdForm() {
   };
   return (
     <>
+    <Navbar/>
       <div className={styles.adFormMain}>
         <div className={styles.adName}>
           <div className={styles.labelContainer}>

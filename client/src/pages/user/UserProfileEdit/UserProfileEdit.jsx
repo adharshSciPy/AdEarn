@@ -1,6 +1,7 @@
 import { React, useState } from "react";
 import styles from "./UserEdit.module.css";
 import Avatar from "../../../assets/Avatar.png";
+import Navbar from "../NavBar/Navbar";
 
 function UserProfileEdit() {
   const [form, setForm] = useState({
@@ -408,6 +409,8 @@ function UserProfileEdit() {
     Puducherry: ["Puducherry", "Karaikal", "Mahe", "Yanam"],
   };
   return (
+    <>
+    <Navbar/>
     <div className={styles.mainUserContainer}>
       <div className={styles.contentsContainer}>
         <div className={styles.firstContent}>
@@ -563,6 +566,7 @@ function UserProfileEdit() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

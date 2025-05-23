@@ -1,6 +1,7 @@
 import React from "react";
 import styles from "./ContestPage.module.css";
 import { Link } from "react-router-dom";
+import Navbar from "../NavBar/Navbar";
 
 
 const contests = [
@@ -40,6 +41,8 @@ const contests = [
 
 const ContestPage = () => {
   return (
+    <>
+    <Navbar/>
     <div className={styles.pageWrapper}>
         <div className={styles.headerContent}>
             <div className={styles.logContainer}>
@@ -135,6 +138,7 @@ const ContestPage = () => {
         </table>
       </div>
     </div>
+    </>
   );
 };
 

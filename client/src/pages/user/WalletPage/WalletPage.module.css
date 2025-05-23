@@ -226,6 +226,7 @@
   padding: 30px;
   margin-top: 50px;
   border-radius: 20px;
+  overflow: hidden;
 }
 .payoutTable {
   width: 100%;

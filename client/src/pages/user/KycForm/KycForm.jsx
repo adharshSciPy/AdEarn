@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import styles from "./Kyc.module.css";
+import Navbar from "../NavBar/Navbar";
 
 function KycForm() {
   const [form, setForm] = useState({
@@ -424,6 +425,8 @@ function KycForm() {
   };
 
   return (
+    <>
+    <Navbar/>
     <div className={styles.mainUserContainer}>
       <div className={styles.profileWrapper}>
         <div className={styles.editformHeading}>
@@ -509,6 +512,7 @@ function KycForm() {
         </form>
       </div>
     </div>
+    </>
   );
 }
 
