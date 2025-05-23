@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import path from "path";
 import { passwordValidator } from "../utils/passwordValidator.js";
 import { Admin } from "../model/adminModel.js";
+import AdminWallet from "../model/adminwalletModel.js"
 // function to create referal code
 const generateReferalCode = async (length = 6) => {
   const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
@@ -452,10 +453,39 @@ if(referredUser?.userWalletDetails){
          await firstUser.userWalletDetails.save();
       }
     }
-    const admin=await Admin.find()
-
-  } catch (error) {}
+  let adminWallet = await AdminWallet.findOne();
+  if(!adminWallet){
+    adminWallet=new AdminWallet({
+      totalStars: Math.floor(adminShare),
+       transactions: [
+          {
+            userId: user._id,
+            starsReceived: Math.floor(adminShare),
+          },
+        ],  
+    })
+  }else{
+    adminWallet.totalStars += Math.floor(adminShare);
+      adminWallet.transactions.push({
+        userId: user._id,
+        starsReceived: Math.floor(adminShare),
+      });
+  }
+    await adminWallet.save();
+return res.status(200).json({message: "Star purchase successful",
+      starsRequested: starsNeeded,
+      totalStarsGenerated,
+      userShare: Math.floor(userShare),
+      adminShare: Math.floor(adminShare),
+      referredUserShare: Math.floor(referredUserShare),
+      amountToPay: rupeesToPay,
+    });
+  } catch (error) {
+    console.error("Error in starBuy:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 };
+
 
 export {
   registerUser,
@@ -465,4 +495,5 @@ export {
   uploadProfilePicture,
   addKyc,
   getUserByUniqueId,
+  starBuy
 };
