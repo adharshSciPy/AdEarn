@@ -13,6 +13,7 @@ import AdminReport from './pages/admin/Report/AdminReport';
 import AdminSettings from './pages/admin/Settings/AdminSettings';
 import VerifyAds from './pages/admin/VerifyAds/VerifyAds';
 import VerifyKYC from './pages/admin/VerifyKYC/VerifyKYC';
+import ContestForm from './pages/admin/ContestForm/ContestForm';
 
 
 
@@ -56,6 +57,7 @@ function App() {
           <Route path='/AdminSettings' element={<AdminSettings />} />
           <Route path='/VerifyAds/:adId' element={<VerifyAds />} />
           <Route path='/VerifyKYC/:adId' element={<VerifyKYC />} />
+          <Route path='/ContestForm' element={<ContestForm />} />
 
 
 
@@ -81,15 +83,15 @@ function App() {
           <Route path='/kycverification' element={<KycVerification />} />
           <Route path='/templateEditor' element={<TemplateEditor />} />
           <Route path='/adform' element={<AdForm />} />
-           <Route path='/adreportuser' element={<UserReport />} />
+          <Route path='/adreportuser' element={<UserReport />} />
           <Route path='/surveyaduser' element={<SurveyAds />} />
-          
 
 
-        {/* SuperAdmin */}
-        <Route path='/manageadmin' element={<ManageAdmin />} />
 
- 
+          {/* SuperAdmin */}
+          <Route path='/manageadmin' element={<ManageAdmin />} />
+
+
 
 
 
