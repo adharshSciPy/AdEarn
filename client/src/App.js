@@ -89,10 +89,7 @@ function App() {
         {/* SuperAdmin */}
         <Route path='/manageadmin' element={<ManageAdmin />} />
 
-
-        {/* SuperAdmin */}
-        <Route path='/manageadmin' element={<ManageAdmin />} />
-
+ 
 
 
 
