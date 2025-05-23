@@ -30,6 +30,11 @@
   background-color: #5D32B9;
   padding: 25px 0;
   border-radius: 20px;
+  margin-top: 50px;
+  
+}
+.mainsurvey{
+  background-color: #F6F7F9;
 }
 .subpageHead{
   width: 95%;

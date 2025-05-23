@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import styles from "./WalletPage.module.css";
 import Delete from "../../../assets/delete.png";
+import Navbar from "../NavBar/Navbar";
+
 
 const WalletPage = () => {
   const [activeTab, setActiveTab] = useState("Payouts");
@@ -22,6 +24,9 @@ const WalletPage = () => {
   ];
 
   return (
+    
+    <>
+    <Navbar/>
     <div className={styles.walletContainer}>
       <div className={styles.contentsContainer}>
         <div className={styles.firstContent}>
@@ -253,6 +258,7 @@ const WalletPage = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 
