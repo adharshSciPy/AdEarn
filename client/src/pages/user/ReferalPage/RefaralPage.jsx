@@ -1,6 +1,7 @@
 import {React,useState} from "react";
 import styles from "./ReferalPage.module.css";
 import avatar from "../../../assets/Avatar.png"
+import Navbar from "../NavBar/Navbar";
 
 function RefaralPage() {
     const referrals = [
@@ -24,6 +25,7 @@ const [searchTerm, setSearchTerm] = useState("");
   );
   return (
     <div>
+      <Navbar/>
       <div className={styles.contentsContainer}>
         <div className={styles.firstContent}>
           <div className={styles.firstMain}>
