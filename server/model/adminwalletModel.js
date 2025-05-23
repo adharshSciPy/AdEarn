@@ -1,5 +1,4 @@
-const mongoose = require('mongoose');
-const { Schema } = mongoose;
+import mongoose,{Schema} from "mongoose";
 
 const transactionSchema = new Schema(
   {
@@ -31,4 +30,8 @@ const adminWalletSchema = new Schema(
   { timestamps: true }
 );
 
-export DEFAU mongoose.model('AdminWallet', adminWalletSchema);
+export default mongoose.model('AdminWallet', adminWalletSchema);
+
+
+
+
