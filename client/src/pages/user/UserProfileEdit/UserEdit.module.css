@@ -1,3 +1,7 @@
+.mainUserContainer{
+
+  background-color: #F6F7F9;
+}
 .mainContainer {
   width: 100%;
 }
@@ -13,6 +17,8 @@
   margin: auto;
   padding-top: 50px;
   border-radius: 10px;
+  background-color: #F6F7F9;
+
 }
 .firstMain {
   background-image: url("../../../assets/homeBackground.png");
@@ -107,9 +113,9 @@
   padding: 2rem;
   height: max-content;
   padding: 0px 140px 80px 140px;
-  background-color: #D6E4FD;
+    background-color: #F6F7F9;
+
   border-radius: 10px;
-  margin-bottom: 40px;
   margin-top: 40px;
 }
 

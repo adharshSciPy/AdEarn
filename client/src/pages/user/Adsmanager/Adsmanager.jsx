@@ -6,6 +6,7 @@ import Duplicate from "../../../assets/copy.png";
 import report from "../../../assets/report.png";
 import Delete from "../../../assets/delete.png";
 import generatePdf from "../Pdfgenerator/PdfGenerator"
+import Navbar from "../NavBar/Navbar";
 
 function Adsmanager() {
   const [toggleStates, setToggleStates] = useState({});
@@ -42,6 +43,7 @@ function Adsmanager() {
   ];
   return (
     <div>
+      <Navbar/>
       <div className={styles.mainContainer}>
         <div className={styles.homeMainContainer}>
           {/* <Sidebar/> */}

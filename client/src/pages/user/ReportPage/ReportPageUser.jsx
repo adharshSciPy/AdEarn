@@ -7,6 +7,7 @@ import Duplicate from "../../../assets/copy.png";
 import report from "../../../assets/report.png";
 import generatePdf from "../Pdfgenerator/PdfGenerator";
 import Chart from "react-apexcharts";
+import Navbar from "../NavBar/Navbar";
 
 function ReportPageUser() {
   const [toggleStates, setToggleStates] = useState({});
@@ -142,6 +143,7 @@ function ReportPageUser() {
 
   return (
     <div>
+      <Navbar/>
       <div className={styles.mainContainer}>
         <div className={styles.homeMainContainer}>
           <div className={styles.homeContainer}>

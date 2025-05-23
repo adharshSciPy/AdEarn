@@ -3,10 +3,12 @@ import { Link } from "react-router-dom";
 import Sidebar from"../../../components/sidebar/Sidebar"
 import styles from "./userhome.module.css";
 import logo from "../../../assets/Logo.png";
+import Navbar from "../NavBar/Navbar";
 
 function UserHome() {
   return (
     <div>
+      <Navbar/>
       <div className={styles.mainContainer}>
         <div className={styles.homeMainContainer}>
           {/* <Sidebar/> */}
