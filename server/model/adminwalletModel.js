@@ -31,4 +31,4 @@ const adminWalletSchema = new Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('AdminWallet', adminWalletSchema);
+export DEFAU mongoose.model('AdminWallet', adminWalletSchema);
