@@ -3,6 +3,7 @@ import kyc from "../model/kycModel.js";
 import jwt from "jsonwebtoken";
 import path from "path";
 import { passwordValidator } from "../utils/passwordValidator.js";
+import { Admin } from "../model/adminModel.js";
 // function to create referal code
 const generateReferalCode = async (length = 6) => {
   const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
@@ -37,7 +38,7 @@ const generateUniqueUserId = async () => {
 
   return uniqueCode;
 };
-// to format the time 
+// to format the time
 const formatTo12HourTime = (date) => {
   return date.toLocaleString("en-US", {
     hour: "numeric",
@@ -405,6 +406,55 @@ const getUserByUniqueId = async (req, res) => {
     console.error("Error fetching user:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
+};
+// to buy stars
+const starBuy = async (req, res) => {
+  const { id } = req.params;
+  const { starsNeeded } = req.body;
+  if (!starsNeeded || starsNeeded <= 0) {
+    return res.status(400).json({ message: "Invalid starsNeeded value" });
+  }
+  try {
+    const conversionRate = 4;
+    const percentageToUser = 60;
+    const totalStarsGenerated = starsNeeded * (100 / percentageToUser);
+    const rupeesToPay = totalStarsGenerated / conversionRate;
+    const userShare = starsNeeded;
+    const superAdminShare = totalStarsGenerated * 0.2;
+    const adminShare = totalStarsGenerated * 0.1;
+    const referredUserShare = totalStarsGenerated * 0.1;
+    const user = await User.findById(id)
+      .populate("userWalletDetails")
+      .populate("referedBy");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const wallet = user.userWalletDetails;
+    if (!wallet) {
+      return res.status(404).json({ message: "User wallet not found" });
+    }
+    wallet.totalStars+=Math.floor(userShare);
+    wallet.starBought.push({
+      starsNeeded: Math.floor(userShare),
+      paymentStatus: "completed",
+    });
+    await wallet.save();
+    if(user.referedBy){
+const referredUser=await User.findById(user.referedBy).populate("userWalletDetails");
+if(referredUser?.userWalletDetails){
+  referredUser.userWalletDetails.totalStars += Math.floor(referredUserShare);
+  await referredUser.userWalletDetails.save()
+}
+    }else{
+      const firstUser=await User.findOne({}).sort({createdAt:1}).populate("userWalletDetails");
+      if(firstUser?.userWalletDetails){
+         firstUser.userWalletDetails.totalStars += Math.floor(referredUserShare);
+         await firstUser.userWalletDetails.save();
+      }
+    }
+    const admin=await Admin.find()
+
+  } catch (error) {}
 };
 
 export {
