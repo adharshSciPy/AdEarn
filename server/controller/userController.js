@@ -5,6 +5,7 @@ import path from "path";
 import { passwordValidator } from "../utils/passwordValidator.js";
 import { Admin } from "../model/adminModel.js";
 import AdminWallet from "../model/adminwalletModel.js"
+import UserWallet from "../model/userWallet.js"
 // function to create referal code
 const generateReferalCode = async (length = 6) => {
   const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
@@ -72,6 +73,8 @@ const registerUser = async (req, res) => {
     );
     const myReferalCode = await generateReferalCode();
     user.myReferalCode = myReferalCode;
+       const wallet = await UserWallet.create({ totalStars: 0 });
+    user.userWalletDetails = wallet._id;
     await user.save();
     const uniqueUserId = await generateUniqueUserId();
     user.uniqueUserId = uniqueUserId;
