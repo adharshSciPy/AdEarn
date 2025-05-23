@@ -86,7 +86,7 @@ function Sidebar() {
                 key: "contest", label: "Contest", icon: <UserOutlined />,
                 children: [
                     { key: "contest-all", label: "All Contest", path: "/AdminContest" },
-                    { key: "contest-new", label: "New Contest", path: "/demo" },
+                    { key: "contest-new", label: "Contest Form", path: "/ContestForm" },
                 ]
             },
             {

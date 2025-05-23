@@ -1,0 +1,62 @@
+.contestformmain {
+  height: max-content;
+  padding-bottom: 200px;
+}
+
+.contestformcontainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.contestform {
+  width: calc(100% - 250px);
+  margin-left: 250px;
+  position: absolute;
+  top: 330px;
+  z-index: 999;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.contestformpage {
+  width: 100%;
+  height: 100%;
+  border: 2px solid #693bb8;
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.uploadbutton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid #693bb8;
+  width: 500px;
+  height: 80px;
+  gap: 10px;
+  border-radius: 10px;
+}
+
+.uploadbutton Button {
+  width: 150px;
+  background-color: #693bb8;
+}
+
+.actionbuttons{
+  display: flex;
+  flex-direction: row;
+  justify-content: end;
+  width: 100%;
+  gap: 15px;
+  margin-top: 15px;
+  margin-right: 20px;
+}
