@@ -19,8 +19,6 @@
   display: flex;
   background-repeat: no-repeat;
   border-radius: 10px;
-
-
 }
 .firstMainleftContainer {
   width: 50%;
@@ -98,7 +96,7 @@
   background-size: contain;
 }
 .walletContainer {
-  font-family: 'Segoe UI', sans-serif;
+  font-family: "Segoe UI", sans-serif;
   padding: 20px;
   background-color: #f4f8fc;
 }
@@ -109,7 +107,6 @@
   padding: 40px;
   border-radius: 10px;
   text-align: left;
-
 }
 
 .walletHeader h1 {
@@ -134,7 +131,6 @@
   margin-bottom: 10px;
   position: relative;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-
 }
 
 .balanceAmount {
@@ -159,13 +155,13 @@
   border-radius: 8px;
   font-size: 0.9em;
   display: flex;
-  flex-direction: column ;
+  flex-direction: column;
   gap: 6px;
   justify-content: center;
   align-items: center;
 }
-.referBox span{
-    padding: 5px;
+.referBox span {
+  padding: 5px;
 }
 
 .copyBtn {
@@ -183,7 +179,7 @@
 }
 
 .requestBtn {
-  color: #5D32B9;
+  color: #5d32b9;
   border: none;
   padding: 8px 16px;
   font-weight: 500;
@@ -217,20 +213,19 @@
   margin: 20px 0;
   font-size: 20px;
   font-weight: 600;
-
 }
-.image{
-    height: 15px;
-    width: 15px;
-    object-fit: contain;
+.image {
+  height: 15px;
+  width: 15px;
+  object-fit: contain;
 }
-.contentTwo{
-    background-color: #D6E4FD;
-    width: 95%;
-    margin: auto;
-    padding: 30px;
-    margin-top: 50px;
-    border-radius: 20px;
+.contentTwo {
+  background-color: #d6e4fd;
+  width: 95%;
+  margin: auto;
+  padding: 30px;
+  margin-top: 50px;
+  border-radius: 20px;
 }
 .payoutTable {
   width: 100%;
@@ -243,10 +238,9 @@
 .payoutTable td {
   padding: 12px 16px;
   text-align: center;
-
 }
-.payoutTable td{
-    color: #693bb8  ;
+.payoutTable td {
+  color: #693bb8;
 }
 
 .payoutTable th {
@@ -274,7 +268,65 @@
   color: #693bb8;
   border: 1px solid #693bb8;
 }
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
 
+.modalContent {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 50%;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: end;
+  margin-top: 1.5rem;
+}
+
+.modalActions button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.modalActions button:first-child {
+  background-color: #ccc;
+}
+
+.modalActions button:last-child {
+  background-color: #007bff;
+  color: white;
+}
+.modalP {
+  font-size: 14px;
+  color: #007bff;
+}
+.modalInput {
+  padding: 10px;
+  width: 100%;
+  margin: 10px 0;
+  border: 1px solid #007bff;
+  color: #007bff;
+}
+.modalInput::placeholder{
+  color: #007bff;
+}
+.indicator{
+  color: red;
+  font-size: 10px;
+}
 @media (max-width: 800px) {
   .firstMainrightContainer {
     display: none;
