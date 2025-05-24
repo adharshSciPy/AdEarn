@@ -234,6 +234,7 @@
 
 /* Main menu item */
 .sidebar-container .menu .ant-menu-item {
+  background-color: #e0e7f0;
   transition: background-color 0.3s;
 }
 

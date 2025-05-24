@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import "./manageadmin.css";
 import padam from "../../../assets/cardbackground.jpg";
-import Sidebar from "../../../components/sidebar/Sidebar";
-
+import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar"
 function ManageAdmin() {
   const [isEnabled, setIsEnabled] = useState(true);
 
   return (
     <div className="admincontestcontainermain1">
-      <Sidebar />
+      <SuperSidebar/>
 
       <div className="manageadmin-wrapper">
         <div className="manageadmin-header">

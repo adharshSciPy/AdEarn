@@ -1,19 +1,19 @@
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
-import AdminLogin from './pages/admin/Login/AdminLogin'
+import AdminLogin from './pages/admin/Login/AdminOTP'
 import AdminSignup from './pages/admin/Register/AdminSignup'
 import AdminHome from './pages/admin/Home/AdminHome';
 import AdminAds from './pages/admin/Ads/AdminAds';
 import AdminCoupon from './pages/admin/Coupons/AdminCoupon'
 import KYCVerify from './pages/admin/KYCVerify/KYCVerify'
-import AdminGallery from './pages/admin/Gallery/AdminGallery';
 import AdminContest from './pages/admin/Contest/AdminContest';
 import AdminReport from './pages/admin/Report/AdminReport';
 import AdminSettings from './pages/admin/Settings/AdminSettings';
 import VerifyAds from './pages/admin/VerifyAds/VerifyAds';
 import VerifyKYC from './pages/admin/VerifyKYC/VerifyKYC';
 import ContestForm from './pages/admin/ContestForm/ContestForm';
+import Adminemailregister from "./pages/admin/Emailregister/Adminemailregister"
 
 
 
@@ -45,13 +45,14 @@ function App() {
         <Routes>
           {/* admin */}
 
-          <Route path='/adminsignup' element={<AdminSignup />} />
-          <Route path='/adminlogin' element={<AdminLogin />} />
+          <Route path='/adminphoneregister' element={<AdminSignup />} />
+          <Route path='/adminotp' element={<AdminLogin />} />
+          <Route path='/adminemail' element={<Adminemailregister />} />
+          
           <Route path='/Admindashboard' element={<AdminHome />} />
           <Route path='/AdminAds' element={<AdminAds />} />
           <Route path='/AdminCoupon' element={<AdminCoupon />} />
           <Route path='/AdminKYC' element={<KYCVerify />} />
-          <Route path='/AdminGallery' element={<AdminGallery />} />
           <Route path='/AdminContest' element={<AdminContest />} />
           <Route path='/AdminReport' element={<AdminReport />} />
           <Route path='/AdminSettings' element={<AdminSettings />} />
