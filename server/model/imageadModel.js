@@ -21,6 +21,13 @@ const imageAd = new mongoose.Schema({
   isAdVerified:{
     type:Boolean,
     default:false
+  },
+  totalViewCount:{
+    type:Number,
+    default:0
+  },
+  userViewNeeded:{
+    
   }
 }, { timestamps: true });
 
