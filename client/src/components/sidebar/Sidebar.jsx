@@ -56,15 +56,13 @@ function Sidebar() {
             {
                 key: "home", label: "Home", icon: <HomeOutlined />,
                 children: [
-                    { key: "home-all", label: "All Home", path: "/Admindashboard" },
-                    { key: "home-new", label: "New Home", path: "/demo" },
+                    { key: "home-all", label: "All Home", path: "/Admindashboard" }
                 ]
             },
             {
                 key: "ads", label: "Ads", icon: <UserOutlined />,
                 children: [
-                    { key: "ads-all", label: "All Ads", path: "/AdminAds" },
-                    { key: "ads-new", label: "New Ad", path: "/demo" },
+                    { key: "ads-all", label: "All Ads", path: "/AdminAds" }
                 ],
             },
             {
@@ -78,8 +76,7 @@ function Sidebar() {
             {
                 key: "adminkyc", label: "KYCVerify", icon: <UserOutlined />,
                 children: [
-                    { key: "adminkyc-all", label: "All KYCVerify", path: "/AdminKYC" },
-                    { key: "adminkyc-new", label: "New KYCVerify", path: "/demo" },
+                    { key: "adminkyc-all", label: "All KYCVerify", path: "/AdminKYC" }
                 ]
             },
             {
@@ -92,15 +89,13 @@ function Sidebar() {
             {
                 key: "report", label: "Reports", icon: <ContainerOutlined />,
                 children: [
-                    { key: "report-all", label: "All Reports", path: "/AdminReport" },
-                    { key: "report-new", label: "New Reports", path: "/demo" },
+                    { key: "report-all", label: "All Reports", path: "/AdminReport" }
                 ]
             },
             {
                 key: "settings", label: "Settings", icon: <SettingOutlined />,
                 children: [
-                    { key: "settings-all", label: "All Settings", path: "/AdminSettings" },
-                    { key: "settings-new", label: "New Settings", path: "/demo" },
+                    { key: "settings-all", label: "Settings", path: "/AdminSettings" }
                 ]
             }
         ]
