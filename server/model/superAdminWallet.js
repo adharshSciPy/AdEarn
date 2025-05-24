@@ -1,6 +1,6 @@
 import mongoose,{Schema} from "mongoose";
 
-const transactionSchema = new Schema(
+const transactionSchemaSA = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
@@ -19,18 +19,18 @@ const transactionSchema = new Schema(
   { _id: false }
 );
 
-const adminWalletSchema = new Schema(
+const superAdminWalletSchema = new Schema(
   {
     totalStars: {
       type: Number,
       default: 0,
     },
-    transactions: [transactionSchema],
+    transactions: [transactionSchemaSA],
   },
   { timestamps: true }
 );
 
-export default mongoose.model('AdminWallet', adminWalletSchema);
+export default mongoose.model('SuperAdminWallet', superAdminWalletSchema);
 
 
 

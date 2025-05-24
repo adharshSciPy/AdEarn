@@ -3,6 +3,10 @@ import kyc from "../model/kycModel.js";
 import jwt from "jsonwebtoken";
 import path from "path";
 import { passwordValidator } from "../utils/passwordValidator.js";
+import { Admin } from "../model/adminModel.js";
+import AdminWallet from "../model/adminwalletModel.js"
+import {UserWallet} from "../model/userWallet.js"
+import SuperAdminWallet from "../model/superAdminWallet.js";
 // function to create referal code
 const generateReferalCode = async (length = 6) => {
   const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
@@ -37,7 +41,7 @@ const generateUniqueUserId = async () => {
 
   return uniqueCode;
 };
-// to format the time 
+// to format the time
 const formatTo12HourTime = (date) => {
   return date.toLocaleString("en-US", {
     hour: "numeric",
@@ -70,6 +74,8 @@ const registerUser = async (req, res) => {
     );
     const myReferalCode = await generateReferalCode();
     user.myReferalCode = myReferalCode;
+       const wallet = await UserWallet.create({ totalStars: 0 });
+    user.userWalletDetails = wallet._id;
     await user.save();
     const uniqueUserId = await generateUniqueUserId();
     user.uniqueUserId = uniqueUserId;
@@ -406,6 +412,124 @@ const getUserByUniqueId = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+// to buy stars
+const starBuy = async (req, res) => {
+  const { id } = req.params;
+  const { starsNeeded } = req.body;
+
+  if (!starsNeeded || starsNeeded <= 0) {
+    return res.status(400).json({ message: "Invalid starsNeeded value" });
+  }
+
+  try {
+    const conversionRate = 4;
+    const percentageToUser = 60;
+
+    const totalStarsGenerated = starsNeeded * (100 / percentageToUser); // e.g. 100
+    const rupeesToPay = totalStarsGenerated / conversionRate;
+    const userShare = starsNeeded;
+    const superAdminShare = totalStarsGenerated * 0.2;
+    const adminShare = totalStarsGenerated * 0.1;
+    const referredUserShare = totalStarsGenerated * 0.1;
+
+    const user = await User.findById(id)
+      .populate("userWallet")
+      .populate("referedBy");
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const wallet = user.userWalletDetails;
+    if (!wallet) return res.status(404).json({ message: "User wallet not found" });
+
+    // ✅ Update user's wallet
+    wallet.totalStars += Math.floor(userShare);
+    wallet.starBought.push({
+      starsNeeded: Math.floor(userShare),
+      paymentStatus: "completed",
+    });
+    await wallet.save();
+
+    // ✅ Referral share
+    if (user.referedBy) {
+      const referredUser = await User.findById(user.referedBy).populate("userWalletDetails");
+      if (referredUser?.userWalletDetails) {
+        referredUser.userWalletDetails.totalStars += Math.floor(referredUserShare);
+        referredUser.userWalletDetails.starBought.push({
+          starsNeeded: Math.floor(referredUserShare),
+          paymentStatus: "completed",
+        });
+        await referredUser.userWalletDetails.save();
+      }
+    } else {
+      // No referral – assign to first registered user
+      const firstUser = await User.findOne().sort({ createdAt: 1 }).populate("userWalletDetails");
+      if (firstUser?.userWalletDetails) {
+        firstUser.userWalletDetails.totalStars += Math.floor(referredUserShare);
+        firstUser.userWalletDetails.starBought.push({
+          starsNeeded: Math.floor(referredUserShare),
+          paymentStatus: "completed",
+        });
+        await firstUser.userWalletDetails.save();
+      }
+    }
+
+    // ✅ Admin Wallet
+    let adminWallet = await AdminWallet.findOne();
+    if (!adminWallet) {
+      adminWallet = new AdminWallet({
+        totalStars: Math.floor(adminShare),
+        transactions: [{
+          userId: user._id,
+          starsReceived: Math.floor(adminShare),
+        }],
+      });
+    } else {
+      adminWallet.totalStars += Math.floor(adminShare);
+      adminWallet.transactions.push({
+        userId: user._id,
+        starsReceived: Math.floor(adminShare),
+      });
+    }
+    await adminWallet.save();
+
+    // ✅ Super Admin Wallet
+    let superAdminWallet = await SuperAdminWallet.findOne();
+    if (!superAdminWallet) {
+      superAdminWallet = new SuperAdminWallet({
+        totalStars: Math.floor(superAdminShare),
+        transactions: [{
+          userId: user._id,
+          starsReceived: Math.floor(superAdminShare),
+        }],
+      });
+    } else {
+      superAdminWallet.totalStars += Math.floor(superAdminShare);
+      superAdminWallet.transactions.push({
+        userId: user._id,
+        starsReceived: Math.floor(superAdminShare),
+      });
+    }
+    await superAdminWallet.save();
+
+    // ✅ Final response
+    return res.status(200).json({
+      message: "Star purchase successful",
+      starsRequested: starsNeeded,
+      totalStarsGenerated,
+      userShare: Math.floor(userShare),
+      adminShare: Math.floor(adminShare),
+      superAdminShare: Math.floor(superAdminShare),
+      referredUserShare: Math.floor(referredUserShare),
+      amountToPay: rupeesToPay,
+    });
+
+  } catch (error) {
+    console.error("Error in starBuy:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 
 export {
   registerUser,
@@ -415,4 +539,5 @@ export {
   uploadProfilePicture,
   addKyc,
   getUserByUniqueId,
+  starBuy
 };

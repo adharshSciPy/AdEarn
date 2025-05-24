@@ -98,6 +98,11 @@ ref:"Ad"
       type: Schema.Types.ObjectId,
       ref: "kyc",
     },
+    userWalletDetails: {
+  type: Schema.Types.ObjectId,
+  ref: "UserWallet",
+}
+    
   },
   { timestamps: true }
 );
