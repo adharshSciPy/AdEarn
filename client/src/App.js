@@ -7,7 +7,6 @@ import AdminHome from './pages/admin/Home/AdminHome';
 import AdminAds from './pages/admin/Ads/AdminAds';
 import AdminCoupon from './pages/admin/Coupons/AdminCoupon'
 import KYCVerify from './pages/admin/KYCVerify/KYCVerify'
-import AdminGallery from './pages/admin/Gallery/AdminGallery';
 import AdminContest from './pages/admin/Contest/AdminContest';
 import AdminReport from './pages/admin/Report/AdminReport';
 import AdminSettings from './pages/admin/Settings/AdminSettings';
@@ -51,7 +50,6 @@ function App() {
           <Route path='/AdminAds' element={<AdminAds />} />
           <Route path='/AdminCoupon' element={<AdminCoupon />} />
           <Route path='/AdminKYC' element={<KYCVerify />} />
-          <Route path='/AdminGallery' element={<AdminGallery />} />
           <Route path='/AdminContest' element={<AdminContest />} />
           <Route path='/AdminReport' element={<AdminReport />} />
           <Route path='/AdminSettings' element={<AdminSettings />} />
