@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken"
 import { passwordValidator } from "../utils/passwordValidator.js";
 import kyc from "../model/kycModel.js";
 import { Ad } from "../model/AdsModel.js";
+import AdminWallet from "../model/adminwalletModel.js"
 
 const registerAdmin = async (req, res) => {
     const { phoneNumber, password } = req.body;
@@ -321,38 +322,23 @@ const getAdminWallet = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-
-// This function is meant to be called from the star purchase logic (not an API endpoint)
-const addStarsToAdminWallet = async (userId, totalStarsPurchased) => {
+const getSuperAdminWallet = async (req, res) => {
   try {
-    const starsForAdmin = Math.floor(totalStarsPurchased * 0.10); // 10% logic
-
-    let wallet = await AdminWallet.findOne();
+    const wallet = await AdminWallet.findOne().populate('transactions.userId', 'email');
 
     if (!wallet) {
-      wallet = new AdminWallet();
+      return res.status(404).json({ message: "Admin wallet not found" });
     }
 
-    wallet.totalStars += starsForAdmin;
-    wallet.transactions.push({
-      userId: userId,
-      starsReceived: starsForAdmin,
+    return res.status(200).json({
+      message: "Admin wallet fetched successfully",
+      totalStars: wallet.totalStars,
+      transactions: wallet.transactions,
     });
-
-    const updatedWallet = await wallet.save();
-
-    return {
-      success: true,
-      starsAdded: starsForAdmin,
-      updatedWallet,
-    };
   } catch (error) {
-    console.error("Error updating admin wallet:", error);
-    throw new Error("Failed to update admin wallet");
+    console.error("Error fetching admin wallet:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-
-
-
-export {registerAdmin,updateAdmin,adminLogin,getAllUsers,getSingleUser,fetchKycUploadedUsers,fetchSingleKycUploadUser,verifyKyc,rejectKyc,verifyAdById,getAdminWallet,addStarsToAdminWallet}
+export {registerAdmin,updateAdmin,adminLogin,getAllUsers,getSingleUser,fetchKycUploadedUsers,fetchSingleKycUploadUser,verifyKyc,rejectKyc,verifyAdById,getAdminWallet,getSuperAdminWallet}

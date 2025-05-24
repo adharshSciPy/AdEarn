@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import path from "path";
 import { Admin } from "../model/adminModel.js";
 import User from "../model/userModel.js";
+import SuperAdminWallet from "../model/superAdminWallet.js";
 
 import { passwordValidator } from "../utils/passwordValidator.js";
 // register super admin
@@ -147,5 +148,23 @@ const toggleAdminStatus=async(req,res)=>{
     res.status(500).json({ message: "Server Error" });
   }
 }
+const getSuperAdminWallet = async (req, res) => {
+  try {
+    const Swallet = await SuperAdminWallet.findOne().populate('transactions.userId', 'email');
 
-export { registerSuperAdmin, superAdminLogin, getAllAdmins, toggleUserStatus,toggleAdminStatus };
+    if (!Swallet) {
+      return res.status(404).json({ message: "Admin wallet not found" });
+    }
+
+    return res.status(200).json({
+      message: "Super-Admin wallet fetched successfully",
+      totalStars: Swallet.totalStars,
+      transactions: Swallet.transactions,
+    });
+  } catch (error) {
+    console.error("Error fetching super-admin wallet:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export { registerSuperAdmin, superAdminLogin, getAllAdmins, toggleUserStatus,toggleAdminStatus,getSuperAdminWallet };
