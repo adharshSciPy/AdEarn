@@ -425,7 +425,7 @@ const starBuy = async (req, res) => {
     const adminShare = totalStarsGenerated * 0.1;
     const referredUserShare = totalStarsGenerated * 0.1;
     const user = await User.findById(id)
-      .populate("userWalletDetails")
+      .populate("userWallet")
       .populate("referedBy");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
