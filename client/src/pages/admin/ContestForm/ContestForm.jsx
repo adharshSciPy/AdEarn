@@ -30,7 +30,7 @@ function ContestForm() {
                 <Header />
                 <div className={styles.contestform}>
                     <div style={{ width: '100%', maxWidth: '1550px', height: '600px', padding: '30px' }} className={styles.formpage}>
-                        <h1>Contest Form</h1>
+                        <h1>Contest Winner</h1>
                         <div className={styles.contestformpage}>
                             <label>Enter Contest Name</label>
                             <Input type='text' style={{ maxWidth: 500 }} />
