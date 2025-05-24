@@ -37,7 +37,15 @@ import TemplateEditor from './pages/user/adTemplateEditor/TemplateEditor';
 import AdForm from './pages/user/AdForm/AdForm'
 import UserReport from "./pages/user/ReportPage/ReportPageUser"
 import SurveyAds from "./pages/user/SurveyAds/Surveyads"
+
+
+
+
+
+
 import ManageAdmin from './pages/superadmin/ManageAdmin/ManageAdmin';
+import SuperAdminAdUser from './pages/superadmin/AdsUser/SuperAdminAdsUser';
+
 function App() {
   return (
     <div className="App">
@@ -91,6 +99,8 @@ function App() {
 
           {/* SuperAdmin */}
           <Route path='/manageadmin' element={<ManageAdmin />} />
+          <Route path='/superadminadsuser' element={<SuperAdminAdUser />} />
+
 
 
 
