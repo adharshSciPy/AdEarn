@@ -54,16 +54,10 @@ function Sidebar() {
     const menuItems = useMemo(
         () => [
             {
-                key: "home", label: "Home", icon: <HomeOutlined />,
-                children: [
-                    { key: "home-all", label: "All Home", path: "/Admindashboard" }
-                ]
+                key: "home", label: "Home", icon: <HomeOutlined />, path: "/Admindashboard",
             },
             {
-                key: "ads", label: "Ads", icon: <UserOutlined />,
-                children: [
-                    { key: "ads-all", label: "All Ads", path: "/AdminAds" }
-                ],
+                key: "ads", label: "Ads", icon: <UserOutlined />, path: "/AdminAds",
             },
             {
                 key: "coupons", label: "Coupons", icon: <UserOutlined />,
@@ -74,29 +68,20 @@ function Sidebar() {
 
             },
             {
-                key: "adminkyc", label: "KYCVerify", icon: <UserOutlined />,
-                children: [
-                    { key: "adminkyc-all", label: "All KYCVerify", path: "/AdminKYC" }
-                ]
+                key: "adminkyc", label: "KYCVerify", icon: <UserOutlined />, path: "/AdminKYC",
             },
             {
                 key: "contest", label: "Contest", icon: <UserOutlined />,
                 children: [
                     { key: "contest-all", label: "All Contest", path: "/AdminContest" },
-                    { key: "contest-new", label: "Contest Form", path: "/ContestForm" },
+                    { key: "contest-new", label: "Contest Winners", path: "/ContestForm" },
                 ]
             },
             {
-                key: "report", label: "Reports", icon: <ContainerOutlined />,
-                children: [
-                    { key: "report-all", label: "All Reports", path: "/AdminReport" }
-                ]
+                key: "report", label: "Reports", icon: <ContainerOutlined />, path: "/AdminReport",
             },
             {
-                key: "settings", label: "Settings", icon: <SettingOutlined />,
-                children: [
-                    { key: "settings-all", label: "Settings", path: "/AdminSettings" }
-                ]
+                key: "settings", label: "Settings", icon: <SettingOutlined />, path: "/AdminSettings",
             }
         ]
     );
@@ -130,7 +115,7 @@ function Sidebar() {
         };
 
         handleResize();
-        window.addEventListener("resize", handleResize);    
+        window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 

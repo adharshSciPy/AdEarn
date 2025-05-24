@@ -1,0 +1,97 @@
+.adminmain {
+  height: max-content;
+  padding-bottom: 200px;
+}
+
+.adminsettingscontainermain {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.settings {
+  width: calc(100% - 250px);
+  margin-left: 250px;
+  position: absolute;
+  top: 330px;
+  z-index: 999;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.headdesign {
+  background-image: url(../../../assets/Maskgroup.png);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  width: 100%;
+  max-width: 1500px;
+  height: 250px;
+  border-radius: 10px;
+  margin-top: 20px;
+  position: relative;
+}
+
+.profileimg {
+  background-image: url(../../../assets/cardBack.jpg);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 10px solid white;
+  margin-bottom: 20px;
+  position: absolute;
+  top: 20px;
+  left: 120px;
+}
+
+.actionbuttons {
+  display: flex;
+  justify-content: end;
+  margin-top: 20px;
+  gap: 20px;
+}
+
+.tabs {
+  display: flex;
+  justify-content: start;
+  padding: 20px;
+  margin-top: 50px;
+  width: 100%;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 900px;
+  margin-top: 30px;
+}
+
+.row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 280px;
+}
+
+.inputGroup label {
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.uploadArea {
+  margin-top: 20px;
+}
