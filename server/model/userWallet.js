@@ -27,4 +27,4 @@ const userWallet = new Schema({
     },
   ],
 });
-export default mongoose.model("userWallet", userWallet);
+export const UserWallet = mongoose.model("UserWallet", userWallet);
