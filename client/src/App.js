@@ -42,7 +42,7 @@ import SurveyAds from "./pages/user/SurveyAds/Surveyads"
 
 
 
-
+import SuperadminDash from './pages/superadmin/Dashboard/SuperadminDash';
 import ManageAdmin from './pages/superadmin/ManageAdmin/ManageAdmin';
 import SuperAdminAdUser from './pages/superadmin/AdsUser/SuperAdminAdsUser';
 
@@ -56,7 +56,7 @@ function App() {
           <Route path='/adminphoneregister' element={<AdminSignup />} />
           <Route path='/adminotp' element={<AdminLogin />} />
           <Route path='/adminemail' element={<Adminemailregister />} />
-          
+
           <Route path='/Admindashboard' element={<AdminHome />} />
           <Route path='/AdminAds' element={<AdminAds />} />
           <Route path='/AdminCoupon' element={<AdminCoupon />} />
@@ -98,6 +98,7 @@ function App() {
 
 
           {/* SuperAdmin */}
+          <Route path='/SuperadminDash' element={<SuperadminDash />} />
           <Route path='/manageadmin' element={<ManageAdmin />} />
           <Route path='/superadminadsuser' element={<SuperAdminAdUser />} />
 

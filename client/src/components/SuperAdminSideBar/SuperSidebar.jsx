@@ -34,7 +34,7 @@ function Sidebar() {
 
   const user = {
     name: "Andrew Smith",
-    role: "400",
+    role: "500",
   };
 
   const formatRole = (role) => {
@@ -53,9 +53,7 @@ function Sidebar() {
       key: "home",
       label: "Home",
       icon: <HomeOutlined />,
-      children: [
-        { key: "home-all", label: "All Home", path: "/superAdmindashboard" },
-      ],
+      path: "/SuperadminDash"
     },
     {
       key: "users",
@@ -151,7 +149,7 @@ function Sidebar() {
         { key: "admin-delete", label: " Delete Admin", path: "/demo" },
       ],
     },
-     {
+    {
       key: "report",
       label: "Report & Analytics",
       icon: <ContainerOutlined />,

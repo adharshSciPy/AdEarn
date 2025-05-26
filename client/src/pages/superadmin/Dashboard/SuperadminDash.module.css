@@ -1,0 +1,193 @@
+.superdashmain {
+  height: max-content;
+  padding-bottom: 200px;
+}
+
+.superdashcontainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.superdashspace {
+  width: calc(100% - 250px);
+  margin-left: 250px;
+  position: absolute;
+  top: 330px;
+  z-index: 999;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.superdashcard {
+  width: 100%;
+  height: max-content;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px,
+    rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
+  border-radius: 10px;
+  margin-top: 15px;
+  padding: 30px;
+}
+
+.superhead {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.supercardsection {
+  padding: 15px;
+}
+
+.supercardsection {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.cardiconusers {
+  background-color: rgb(233, 90, 113);
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.superadminusers {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 200px;
+  height: 180px;
+  background-color: #ffe2e5;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.superadminusers h3,
+p {
+  font-family: "Times New Roman", Times, serif;
+}
+
+.cardiconaccounts {
+  background-color: #ff947a;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.superadminaccounts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 200px;
+  height: 180px;
+  background-color: #fff4de;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.superadminaccounts h3,
+p {
+  font-family: "Times New Roman", Times, serif;
+}
+
+.cardiconstars {
+  background-color: #3cd856;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.superadminstars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 200px;
+  height: 180px;
+  background-color: #dcfce7;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.superadminstars h3,
+p {
+  font-family: "Times New Roman", Times, serif;
+}
+
+.cardiconcoupons {
+  background-color: #bf83ff;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.superadmincoupons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 200px;
+  height: 180px;
+  background-color: #f3e8ff;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.superadmincoupons h3,
+p {
+  font-family: "Times New Roman", Times, serif;
+}
+
+.percentage {
+  color: rgb(59, 18, 211);
+}
+
+.supergraphsection {
+  display: flex;
+  justify-content: space-between;
+}
+
+.graphheading h5 {
+  font-size: 20px;
+}
+
+.graphheading h6 {
+  color: grey;
+  font-size: 15px;
+}
+
+
+.superadmingraph {
+  width: 100%;
+  height: 550px;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px,
+    rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
+  border-radius: 10px;
+  padding: 30px;
+  background-color: white;
+  overflow: hidden;
+  margin-top: 20px;
+  margin-bottom: 500px;
+}
