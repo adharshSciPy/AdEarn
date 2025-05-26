@@ -425,23 +425,24 @@ const starBuy = async (req, res) => {
     const conversionRate = 4;
     const percentageToUser = 60;
 
-    const totalStarsGenerated = starsNeeded * (100 / percentageToUser); // e.g. 100
+    const totalStarsGenerated = starsNeeded * (100 / percentageToUser); 
     const rupeesToPay = totalStarsGenerated / conversionRate;
     const userShare = starsNeeded;
     const superAdminShare = totalStarsGenerated * 0.2;
     const adminShare = totalStarsGenerated * 0.1;
     const referredUserShare = totalStarsGenerated * 0.1;
 
-    const user = await User.findById(id)
-      .populate("userWallet")
-      .populate("referedBy");
+   const user = await User.findById(id)
+  .populate("userWalletDetails")
+  .populate("referedBy");
+
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const wallet = user.userWalletDetails;
     if (!wallet) return res.status(404).json({ message: "User wallet not found" });
 
-    // ✅ Update user's wallet
+  
     wallet.totalStars += Math.floor(userShare);
     wallet.starBought.push({
       starsNeeded: Math.floor(userShare),
@@ -449,7 +450,7 @@ const starBuy = async (req, res) => {
     });
     await wallet.save();
 
-    // ✅ Referral share
+  
     if (user.referedBy) {
       const referredUser = await User.findById(user.referedBy).populate("userWalletDetails");
       if (referredUser?.userWalletDetails) {
@@ -473,7 +474,7 @@ const starBuy = async (req, res) => {
       }
     }
 
-    // ✅ Admin Wallet
+    
     let adminWallet = await AdminWallet.findOne();
     if (!adminWallet) {
       adminWallet = new AdminWallet({
@@ -492,7 +493,7 @@ const starBuy = async (req, res) => {
     }
     await adminWallet.save();
 
-    // ✅ Super Admin Wallet
+    
     let superAdminWallet = await SuperAdminWallet.findOne();
     if (!superAdminWallet) {
       superAdminWallet = new SuperAdminWallet({
@@ -511,7 +512,7 @@ const starBuy = async (req, res) => {
     }
     await superAdminWallet.save();
 
-    // ✅ Final response
+    
     return res.status(200).json({
       message: "Star purchase successful",
       starsRequested: starsNeeded,
@@ -528,7 +529,37 @@ const starBuy = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+// to post ads using stars or amount with automated views 
+// const adPost=async(req,res)=>{
+//   const{id}=req.params;
+//   const{userViewsNeeded}=req.body;
+//   if(!id || userViewsNeeded){
+//     return res.status(400).json({message:"Id or Required views invalid"})
 
+//   }
+//   try {
+//   let requiredViews=userViewsNeeded;
+//   const starsDeductionRate=0.6
+//   const starsToBeDeducted=(requiredViews*starsDeductionRate);
+//   const user=await User.findById(id);
+//   if(!user){
+//     return res.status(400).json({message:"User not found"})
+//   }
+//   const userStars=user.populate("UserWallet");
+//   const neededStars=starsToBeDeducted-userStars;
+
+//   if(!userStars||userStars.totalStars<starsToBeDeducted){
+//     return res.status(402).json({message:`Insuffient stars.You need ${neededStars} stars to proceed`});
+//   }
+//   const balanceStars=userStars-neededStars;
+//   await user.save();
+  
+//   } catch (error) {
+    
+//   }
+
+
+// }
 
 
 export {

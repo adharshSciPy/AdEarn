@@ -3,59 +3,118 @@ import { VideoAd } from "../model/videoadModel.js";
 import { SurveyAd } from "../model/surveyadModel.js";
 import User from "../model/userModel.js";
 import { Ad } from "../model/AdsModel.js";
+function generateStarPayoutPlan(views, totalStars) {
+  const payout = Array(views).fill(0);
+  const weights = [5, 4, 3, 2, 1];
+  const counts = { 5: 1, 4: 1, 3: 2, 2: 4, 1: 46 };
+
+  // Flatten the weights array according to counts
+  let distributedStars = [];
+  for (let star of weights) {
+    for (let i = 0; i < counts[star]; i++) {
+      distributedStars.push(star);
+    }
+  }
+
+  // Fill the rest with 0s if totalStars allows
+  while (distributedStars.length < views && distributedStars.reduce((a, b) => a + b, 0) < totalStars) {
+    distributedStars.push(0);
+  }
+
+  // Adjust if totalStars doesn't match
+  let currentSum = distributedStars.reduce((a, b) => a + b, 0);
+  while (currentSum > totalStars) {
+    for (let i = 0; i < distributedStars.length && currentSum > totalStars; i++) {
+      if (distributedStars[i] > 0) {
+        distributedStars[i]--;
+        currentSum--;
+      }
+    }
+  }
+
+  // Randomly shuffle the array
+  for (let i = distributedStars.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [distributedStars[i], distributedStars[j]] = [distributedStars[j], distributedStars[i]];
+  }
+
+  return distributedStars;
+}
 
 // ------------------- IMAGE AD -------------------
 const createImageAd = async (req, res) => {
-  const { title, description } = req.body;
+  const { title, description, userViewsNeeded } = req.body;
   const { id } = req.params;
 
   if (!id) {
     return res.status(400).json({ message: "User ID is required" });
   }
 
-  // Check if the file was uploaded
   if (!req.file) {
     return res.status(400).json({ message: "Image file is required" });
   }
 
-  // Validate title and description
-  if (!title || !description) {
-    return res
-      .status(400)
-      .json({ message: "Title and description are required" });
+  if (!title || !description || !userViewsNeeded) {
+    return res.status(400).json({ message: "Missing required fields" });
   }
 
   try {
-    const user = await User.findById(id);
+    const user = await User.findById(id).populate("userWalletDetails");
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const userWallet = user.userWalletDetails;
+    if (!userWallet) {
+      return res.status(400).json({ message: "User wallet not found" });
+    }
+
+    // Calculate required stars
+    const starsDeductionRate = 0.6;
+    const starsToBeDeducted = userViewsNeeded * starsDeductionRate;
+
+    if (userWallet.totalStars < starsToBeDeducted) {
+      const starsShort = starsToBeDeducted - userWallet.totalStars;
+      return res.status(401).json({
+        message: `Insufficient stars. You need ${starsShort} more stars to post this ad.`,
+      });
+    }
+
+    // Deduct stars and save wallet
+    userWallet.totalStars -= starsToBeDeducted;
+    await userWallet.save();
+
+    // Create Image Ad
     const imageUrl = `/imgAdUploads/${req.file.filename}`;
     const imageAd = await ImageAd.create({
       title,
       description,
       imageUrl,
       createdBy: user._id,
+      userViewsNeeded,
+      totalStarsAllocated:starsToBeDeducted,
+  //  starPayoutPlan: [starsToBeDeducted], 
     });
 
     const ad = await Ad.create({
       imgAdRef: imageAd._id,
     });
 
+    // Link ad to user
     user.ads.push(ad._id);
     await user.save();
 
     return res.status(200).json({
-      message: "Image Ad created and linked successfully",
+      message: "Image Ad created successfully and stars deducted",
       imageAd,
       ad,
-      user,
+      remainingStars: userWallet.totalStars,
     });
   } catch (error) {
-    console.error("Error creating Image Ad:", error);
+    console.error("Error creating image ad:", error);
     return res.status(500).json({
-      message: "Image Ad creation failed",
+      message: "Failed to create ad",
       error: error.message,
     });
   }
@@ -284,6 +343,60 @@ const fetchVerifiedAds = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+// To fetch single verified ad
+
+const fetchSingleVerifiedAd = async (req, res) => {
+  const { adId } = req.params;
+
+  try {
+    const ad = await Ad.findById(adId)
+      .populate("imgAdRef")
+      .populate("videoAdRef")
+      .populate("surveyAdRef");
+
+    if (!ad) {
+      return res.status(404).json({ message: "Ad not found" });
+    }
+
+    const isImageAdVerified = ad.imgAdRef && ad.imgAdRef.isAdVerified;
+    const isVideoAdVerified = ad.videoAdRef && ad.videoAdRef.isAdVerified;
+    const isSurveyAdVerified = ad.surveyAdRef && ad.surveyAdRef.isAdVerified;
+
+    if (!isImageAdVerified && !isVideoAdVerified && !isSurveyAdVerified) {
+      return res.status(403).json({ message: "Ad is not verified" });
+    }
+
+    const formattedAd = {
+      _id: ad._id,
+      imageAd: isImageAdVerified
+        ? {
+            ...ad.imgAdRef.toObject(),
+            isVerified: ad.imgAdRef.isAdVerified,
+          }
+        : null,
+      videoAd: isVideoAdVerified
+        ? {
+            ...ad.videoAdRef.toObject(),
+            isVerified: ad.videoAdRef.isAdVerified,
+          }
+        : null,
+      surveyAd: isSurveyAdVerified
+        ? {
+            ...ad.surveyAdRef.toObject(),
+            isVerified: ad.surveyAdRef.isAdVerified,
+          }
+        : null,
+    };
+
+    return res.status(200).json({
+      message: "Verified ad fetched successfully",
+      ad: formattedAd,
+    });
+  } catch (error) {
+    console.error("Error fetching single verified ad:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 
 
@@ -292,5 +405,6 @@ export {
   createVideoAd,
   createSurveyAd,
   fetchAdsForVerification,
-  fetchVerifiedAds
+  fetchVerifiedAds,
+  fetchSingleVerifiedAd
 };
