@@ -284,6 +284,60 @@ const fetchVerifiedAds = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+// To fetch single verified ad
+
+const fetchSingleVerifiedAd = async (req, res) => {
+  const { adId } = req.params;
+
+  try {
+    const ad = await Ad.findById(adId)
+      .populate("imgAdRef")
+      .populate("videoAdRef")
+      .populate("surveyAdRef");
+
+    if (!ad) {
+      return res.status(404).json({ message: "Ad not found" });
+    }
+
+    const isImageAdVerified = ad.imgAdRef && ad.imgAdRef.isAdVerified;
+    const isVideoAdVerified = ad.videoAdRef && ad.videoAdRef.isAdVerified;
+    const isSurveyAdVerified = ad.surveyAdRef && ad.surveyAdRef.isAdVerified;
+
+    if (!isImageAdVerified && !isVideoAdVerified && !isSurveyAdVerified) {
+      return res.status(403).json({ message: "Ad is not verified" });
+    }
+
+    const formattedAd = {
+      _id: ad._id,
+      imageAd: isImageAdVerified
+        ? {
+            ...ad.imgAdRef.toObject(),
+            isVerified: ad.imgAdRef.isAdVerified,
+          }
+        : null,
+      videoAd: isVideoAdVerified
+        ? {
+            ...ad.videoAdRef.toObject(),
+            isVerified: ad.videoAdRef.isAdVerified,
+          }
+        : null,
+      surveyAd: isSurveyAdVerified
+        ? {
+            ...ad.surveyAdRef.toObject(),
+            isVerified: ad.surveyAdRef.isAdVerified,
+          }
+        : null,
+    };
+
+    return res.status(200).json({
+      message: "Verified ad fetched successfully",
+      ad: formattedAd,
+    });
+  } catch (error) {
+    console.error("Error fetching single verified ad:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 
 
@@ -292,5 +346,6 @@ export {
   createVideoAd,
   createSurveyAd,
   fetchAdsForVerification,
-  fetchVerifiedAds
+  fetchVerifiedAds,
+  fetchSingleVerifiedAd
 };
