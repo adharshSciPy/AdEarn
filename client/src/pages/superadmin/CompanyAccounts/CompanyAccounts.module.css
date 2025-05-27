@@ -1,0 +1,97 @@
+.accountsmain {
+  height: max-content;
+  padding-bottom: 200px;
+}
+
+.accountscontainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.accountsgraph {
+  width: calc(100% - 250px);
+  margin-left: 250px;
+  position: absolute;
+  top: 330px;
+  z-index: 999;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logbutton {
+  display: flex;
+  justify-content: end;
+  margin-top: 20px;
+}
+
+.companygraph {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  margin-top: 20px;
+  width: 100%;
+  height: 100%;
+}
+
+.totalamountsection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 80px;
+}
+
+.accountshead {
+  display: flex;
+  justify-content: start;
+  margin-top: 30px;
+}
+
+.accountsheadsection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 200px;
+  margin-top: 20px;
+  padding: 50px;
+  background-color: #693bb8;
+  color: white;
+  border-radius: 20px;
+}
+
+.accountamountdetails {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.estimatesection {
+   display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 200px;
+  margin-top: 20px;
+  padding: 50px;
+  background-color: #693bb8;
+  color: white;
+  border-radius: 20px;
+}
+
+.estimatelist ol{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    gap: 10px;
+}
+
+.amountlist{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+}

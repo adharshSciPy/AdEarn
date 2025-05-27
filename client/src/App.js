@@ -46,6 +46,7 @@ import SuperadminDash from './pages/superadmin/Dashboard/SuperadminDash';
 import ManageAdmin from './pages/superadmin/ManageAdmin/ManageAdmin';
 import SuperAdminAdUser from './pages/superadmin/AdsUser/SuperAdminAdsUser';
 import Superadminotp from './pages/superadmin/Superadminotp/Superadminotp';
+import CompanyAccounts from './pages/superadmin/CompanyAccounts/CompanyAccounts';
 
 function App() {
   return (
@@ -103,6 +104,7 @@ function App() {
           <Route path='/manageadmin' element={<ManageAdmin />} />
           <Route path='/superadminadsuser' element={<SuperAdminAdUser />} />
           <Route path='/Superadminotp' element={<Superadminotp />} />
+          <Route path='/Companyaccounts' element={<CompanyAccounts />} />
 
 
 
