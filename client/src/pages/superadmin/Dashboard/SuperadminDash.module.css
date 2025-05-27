@@ -189,5 +189,16 @@ p {
   background-color: white;
   overflow: hidden;
   margin-top: 20px;
-  margin-bottom: 500px;
+  margin-bottom: 50px;
+}
+
+.seemore{
+  display: flex;
+  justify-content: end;
+  margin-bottom: 20px;
+}
+
+.seemore Button{
+  background-color: white;
+  color: #693bb8;
 }
