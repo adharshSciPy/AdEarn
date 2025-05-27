@@ -3,57 +3,57 @@ import { VideoAd } from "../model/videoadModel.js";
 import { SurveyAd } from "../model/surveyadModel.js";
 import User from "../model/userModel.js";
 import { Ad } from "../model/AdsModel.js";
-function generateStarPayoutPlan(views, totalStars) {
-  const payout = Array(views).fill(0);
-  const weights = [5, 4, 3, 2, 1];
-  const counts = { 5: 1, 4: 1, 3: 2, 2: 4, 1: 46 };
+// function generateStarPayoutPlan(views, totalStars) {
+//   const payout = Array(views).fill(0);
+//   const weights = [5, 4, 3, 2, 1];
+//   const counts = { 5: 1, 4: 1, 3: 2, 2: 4, 1: 46 };
 
-  // Flatten the weights array according to counts
-  let distributedStars = [];
-  for (let star of weights) {
-    for (let i = 0; i < counts[star]; i++) {
-      distributedStars.push(star);
-    }
-  }
+//   // Flatten the weights array according to counts
+//   let distributedStars = [];
+//   for (let star of weights) {
+//     for (let i = 0; i < counts[star]; i++) {
+//       distributedStars.push(star);
+//     }
+//   }
 
-  // Fill the rest with 0s if totalStars allows
-  while (
-    distributedStars.length < views &&
-    distributedStars.reduce((a, b) => a + b, 0) < totalStars
-  ) {
-    distributedStars.push(0);
-  }
+//   // Fill the rest with 0s if totalStars allows
+//   while (
+//     distributedStars.length < views &&
+//     distributedStars.reduce((a, b) => a + b, 0) < totalStars
+//   ) {
+//     distributedStars.push(0);
+//   }
 
-  // Adjust if totalStars doesn't match
-  let currentSum = distributedStars.reduce((a, b) => a + b, 0);
-  while (currentSum > totalStars) {
-    for (
-      let i = 0;
-      i < distributedStars.length && currentSum > totalStars;
-      i++
-    ) {
-      if (distributedStars[i] > 0) {
-        distributedStars[i]--;
-        currentSum--;
-      }
-    }
-  }
+//   // Adjust if totalStars doesn't match
+//   let currentSum = distributedStars.reduce((a, b) => a + b, 0);
+//   while (currentSum > totalStars) {
+//     for (
+//       let i = 0;
+//       i < distributedStars.length && currentSum > totalStars;
+//       i++
+//     ) {
+//       if (distributedStars[i] > 0) {
+//         distributedStars[i]--;
+//         currentSum--;
+//       }
+//     }
+//   }
 
-  // Randomly shuffle the array
-  for (let i = distributedStars.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [distributedStars[i], distributedStars[j]] = [
-      distributedStars[j],
-      distributedStars[i],
-    ];
-  }
+//   // Randomly shuffle the array
+//   for (let i = distributedStars.length - 1; i > 0; i--) {
+//     const j = Math.floor(Math.random() * (i + 1));
+//     [distributedStars[i], distributedStars[j]] = [
+//       distributedStars[j],
+//       distributedStars[i],
+//     ];
+//   }
 
-  return distributedStars;
-}
+//   return distributedStars;
+// }
 
 // ------------------- IMAGE AD -------------------
 const createImageAd = async (req, res) => {
-  const { title, description, userViewsNeeded } = req.body;
+  const { title, description, userViewsNeeded,adPeriod,adRepetition} = req.body;
   const { id } = req.params;
 
   if (!id) {
@@ -64,7 +64,7 @@ const createImageAd = async (req, res) => {
     return res.status(400).json({ message: "Image file is required" });
   }
 
-  if (!title || !description || !userViewsNeeded) {
+  if (!title || !description || !userViewsNeeded||!adPeriod||!adRepetition) {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
@@ -115,6 +115,8 @@ const createImageAd = async (req, res) => {
       title,
       description,
       imageUrl,
+      adPeriod,
+      adRepetition,
       createdBy: user._id,
       userViewsNeeded,
       totalStarsAllocated: starsToBeDeducted,
@@ -430,31 +432,62 @@ const fetchVerifiedImgAd = async (req, res) => {
   try {
     const allAds = await Ad.find().populate("imgAdRef");
 
-    const verifiedImgAds = allAds.filter(
-      (ads) => ads.imgAdRef && ads.imgAdRef.isAdVerified
-    );
+    const currentDate = new Date();
 
-    if (verifiedImgAds.length === 0) {
-      return res.status(404).json({ message: "No verified image ads found" });
+    const verifiedImgAds = [];
+
+    for (const ad of allAds) {
+      const imgAd = ad.imgAdRef;
+
+      if (
+        imgAd &&
+        imgAd.isAdVerified &&
+        imgAd.isAdVisible &&
+        imgAd.totalViewCount < imgAd.userViewsNeeded &&
+        (!imgAd.adExpirationTime || imgAd.adExpirationTime > currentDate)
+      ) {
+        verifiedImgAds.push({
+          _id: ad._id,
+          imageAd: {
+            ...imgAd.toObject(),
+            isVerified: imgAd.isAdVerified,
+          },
+        });
+      } else if (imgAd) {
+        // Update visibility if views reached or expired
+        let shouldUpdate = false;
+        const updateFields = {};
+
+        if (imgAd.totalViewCount >= imgAd.userViewsNeeded && !imgAd.isViewsReached) {
+          updateFields.isViewsReached = true;
+          shouldUpdate = true;
+        }
+
+        if (imgAd.adExpirationTime && imgAd.adExpirationTime <= currentDate && imgAd.isAdVisible) {
+          updateFields.isAdVisible = false;
+          shouldUpdate = true;
+        }
+
+        if (shouldUpdate) {
+          await ImageAd.findByIdAndUpdate(imgAd._id, updateFields);
+        }
+      }
     }
 
-    const formattedAds = verifiedImgAds.map((ads) => ({
-      _id: ads._id,
-      imageAd: {
-        ...ads.imgAdRef.toObject(),
-        isVerified: ads.imgAdRef.isAdVerified,
-      },
-    }));
+    if (verifiedImgAds.length === 0) {
+      return res.status(404).json({ message: "No verified and eligible image ads found" });
+    }
 
     return res.status(200).json({
       message: "Verified image ads fetched successfully",
-      ads: formattedAds,
+      ads: verifiedImgAds,
     });
   } catch (error) {
     console.error("Error fetching verified image ads:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 // to fetch verified videoAd
 const fetchVerifiedVideoAd = async (req, res) => {
   try {
@@ -607,6 +640,7 @@ const viewAd = async (req, res) => {
     });
   }
 };
+// 
 
 export {
   createImageAd,
