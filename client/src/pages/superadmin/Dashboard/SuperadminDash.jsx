@@ -13,12 +13,19 @@ import {
     Tooltip,
     Legend,
 } from 'chart.js';
+import { useNavigate } from 'react-router-dom';
 import { Line } from 'react-chartjs-2';
+import { Tabs, Table, Button, Avatar, Tag } from 'antd';
+
+const { TabPane } = Tabs;
+
 
 
 
 
 function SuperadminDash() {
+
+    const navigate = useNavigate()
 
     ChartJS.register(
         LineElement,
@@ -78,6 +85,105 @@ function SuperadminDash() {
     const onChange = (date, dateString) => {
         console.log(date, dateString);
     };
+
+    const columns = [
+        {
+            title: 'Users',
+            dataIndex: 'user',
+            render: (text, record) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Avatar src={record.avatar} />
+                    <div>
+                        <div style={{ fontWeight: 'bold' }}>{record.name}</div>
+                        <div style={{ fontSize: 12, color: '#999' }}>{record.username}</div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            title: 'Total stars',
+            dataIndex: 'stars'
+        },
+        {
+            title: 'Referral codes',
+            dataIndex: 'referral',
+            render: (code, record) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div
+                        style={{
+                            background: record.referralColor,
+                            padding: '2px 8px',
+                            borderRadius: '10px',
+                            minWidth: '50px'
+                        }}
+                    />
+                    <span style={{ color: 'purple' }}>{code}</span>
+                </div>
+            )
+        },
+        {
+            title: 'View ads',
+            dataIndex: 'viewAds'
+        },
+        {
+            title: 'Coupons',
+            dataIndex: 'coupons'
+        }
+    ];
+
+    // 👤 All Users Data
+    const allUsersData = [
+        {
+            key: '1',
+            avatar: 'https://i.pravatar.cc/100?img=1',
+            name: 'User 1',
+            username: 'Jason Roy',
+            stars: 100,
+            referral: '5 stars',
+            referralColor: '#E6FFFB',
+            viewAds: '5 stars',
+            coupons: '5 stars'
+        },
+        {
+            key: '2',
+            avatar: 'https://i.pravatar.cc/100?img=2',
+            name: 'User 2',
+            username: 'Mathew Flintoff',
+            stars: 200,
+            referral: '5 stars',
+            referralColor: '#F0F5FF',
+            viewAds: '5 stars',
+            coupons: '5 stars'
+        }
+    ];
+
+    // 📢 Ads Users Data
+    const adsUsersData = [
+        {
+            key: '1',
+            avatar: 'https://i.pravatar.cc/100?img=3',
+            name: 'User A',
+            username: 'Anil Kumar',
+            stars: 150,
+            referral: '4 stars',
+            referralColor: '#FFF7E6',
+            viewAds: '4 stars',
+            coupons: '3 stars'
+        },
+        {
+            key: '2',
+            avatar: 'https://i.pravatar.cc/100?img=4',
+            name: 'User B',
+            username: 'George Cruize',
+            stars: 180,
+            referral: '5 stars',
+            referralColor: '#F9F0FF',
+            viewAds: '5 stars',
+            coupons: '4 stars'
+        }
+    ];
+
+
     return (
         <div className={styles.superdashmain}>
             <div className={styles.superdashcontainer}>
@@ -169,6 +275,26 @@ function SuperadminDash() {
                             <div style={{ width: '100%', height: '420px' }}>
                                 <Line data={data} options={options} />
                             </div>
+                        </div>
+                        <div style={{ marginBottom: "50px" }}>
+                            <h2>All Users</h2>
+                            <Tabs defaultActiveKey="1" size="large">
+                                <TabPane
+                                    tab={<Button shape="round">All Users</Button>}
+                                    key="1"
+                                >
+                                    <Table columns={columns} dataSource={allUsersData} pagination={false} />
+                                </TabPane>
+                                <TabPane
+                                    tab={<Button shape="round">Ads Users</Button>}
+                                    key="2"
+                                >
+                                    <Table columns={columns} dataSource={adsUsersData} pagination={false} />
+                                </TabPane>
+                            </Tabs>
+                        </div>
+                        <div className={styles.seemore}>
+                            <Button onClick={() => navigate("/superadminadsuser")}>See more</Button>
                         </div>
                     </div>
                 </div>
