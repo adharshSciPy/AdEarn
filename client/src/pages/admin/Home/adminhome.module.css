@@ -216,3 +216,12 @@
 .cardfour {
   background-color: #ffe2e5;
 }
+
+.allusertab{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  margin-top: 50px;
+  margin-bottom: 50px;
+}

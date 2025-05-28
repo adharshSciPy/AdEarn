@@ -2,6 +2,7 @@ import React from 'react'
 import styles from "./CompanyAccounts.module.css"
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar"
 import Header from '../../../components/Header/Header'
+import { FileTextOutlined, TagOutlined, UserAddOutlined, ProjectOutlined } from "@ant-design/icons"
 import { Button } from 'antd'
 import {
     Chart as ChartJS,
@@ -67,6 +68,14 @@ function CompanyAccounts() {
             }
         }
     };
+
+    const transactions = [
+        { id: 1, stars: 1000, amount: 200 },
+        { id: 2, stars: 1500, amount: 300 },
+        { id: 3, stars: 2000, amount: 400 },
+    ];
+
+
     return (
         <div className={styles.accountsmain}>
             <div className={styles.accountscontainer}>
@@ -111,6 +120,165 @@ function CompanyAccounts() {
                                 <h1>₹ 5000</h1>
                             </div>
                         </div>
+
+                        <div className={styles.cards}>
+                            <div className={styles.cardone}>
+                                <div className={styles.cardoneTop}></div>
+                                <div className={styles.iconWrapper}>
+                                    <div className={styles.iconCircle}>
+                                        <FileTextOutlined style={{ fontSize: 20, color: 'white' }} />
+                                    </div>
+
+                                </div>
+                                <h3>Ads</h3>
+                                <h4>&#8377; 500</h4>
+                                <p>+5% from yesterday</p>
+                            </div>
+                            <div className={styles.cardthree}>
+                                <div className={styles.cardthreeTop}></div>
+                                <div className={styles.iconWrapper}>
+                                    <div className={styles.iconCirclePurple}>
+                                        <UserAddOutlined style={{ fontSize: 20, color: 'white' }} />
+                                    </div>
+                                </div>
+                                <h3>Users</h3>
+                                <h4>&#8377; 500</h4>
+                                <p>+0,5% from yesterday</p>
+                            </div>
+                            <div className={styles.cardfour}>
+                                <div className={styles.cardfourTop}></div>
+                                <div className={styles.iconWrapper}>
+                                    <div className={styles.iconCircleBlue}>
+                                        <ProjectOutlined style={{ fontSize: 20, color: 'white' }} />
+                                    </div>
+                                </div>
+                                <h3>Payouts</h3>
+                                <h4>&#8377; 500</h4>
+                                <p>+8% from yesterday</p>
+                            </div>
+                            <div className={styles.cardfour}>
+                                <div className={styles.cardfourTop}></div>
+                                <div className={styles.iconWrapper}>
+                                    <div className={styles.iconCircleBlue}>
+                                        <ProjectOutlined style={{ fontSize: 20, color: 'white' }} />
+                                    </div>
+                                </div>
+                                <h3>Company accounts</h3>
+                                <h4>&#8377; 500</h4>
+                                <p>+8% from yesterday</p>
+                            </div>
+                            <div className={styles.cardone}>
+                                <div className={styles.cardoneTop}></div>
+                                <div className={styles.iconWrapper}>
+                                    <div className={styles.iconCircle}>
+                                        <FileTextOutlined style={{ fontSize: 20, color: 'white' }} />
+                                    </div>
+
+                                </div>
+                                <h3>Admin accounts</h3>
+                                <h4>&#8377; 500</h4>
+                                <p>+5% from yesterday</p>
+                            </div>
+                            <div className={styles.cardfour}>
+                                <div className={styles.cardfourTop}></div>
+                                <div className={styles.iconWrapper}>
+                                    <div className={styles.iconCircleBlue}>
+                                        <ProjectOutlined style={{ fontSize: 20, color: 'white' }} />
+                                    </div>
+                                </div>
+                                <h3>Welcome Bonus</h3>
+                                <h4>&#8377; 500</h4>
+                                <p>+8% from yesterday</p>
+                            </div>
+                            <div className={styles.cardthree}>
+                                <div className={styles.cardthreeTop}></div>
+                                <div className={styles.iconWrapper}>
+                                    <div className={styles.iconCirclePurple}>
+                                        <UserAddOutlined style={{ fontSize: 20, color: 'white' }} />
+                                    </div>
+                                </div>
+                                <h3>Referral Bonus</h3>
+                                <h4>&#8377; 500</h4>
+                                <p>+0,5% from yesterday</p>
+                            </div>
+                            <div className={styles.cardtwo}>
+                                <div className={styles.cardtwoTop}></div>
+                                <div className={styles.iconWrapper}>
+                                    <div className={styles.iconCircleGreen}>
+                                        <TagOutlined style={{ fontSize: 20, color: 'white' }} />
+                                    </div>
+
+                                </div>
+                                <h3>Contest</h3>
+                                <h4>&#8377; 500</h4>
+                                <p>+1,2% from yesterday</p>
+                            </div>
+                            <div className={styles.cardthree}>
+                                <div className={styles.cardthreeTop}></div>
+                                <div className={styles.iconWrapper}>
+                                    <div className={styles.iconCirclePurple}>
+                                        <UserAddOutlined style={{ fontSize: 20, color: 'white' }} />
+                                    </div>
+                                </div>
+                                <h3>Coupons</h3>
+                                <h4>&#8377; 500</h4>
+                                <p>+0,5% from yesterday</p>
+                            </div>
+                            <div className={styles.cardfour}>
+                                <div className={styles.cardfourTop}></div>
+                                <div className={styles.iconWrapper}>
+                                    <div className={styles.iconCircleBlue}>
+                                        <ProjectOutlined style={{ fontSize: 20, color: 'white' }} />
+                                    </div>
+                                </div>
+                                <h3>Subscription</h3>
+                                <h4>&#8377; 500</h4>
+                                <p>+8% from yesterday</p>
+                            </div>
+                        </div>
+
+                        <div className={styles.table}>
+                            <div className={styles.tabletitle}>
+                                <h2>Recent Transactions</h2>
+                            </div>
+                            <div className={styles.tablesection}>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <td>Redeem star count</td>
+                                            <td>Amount</td>
+                                            <td>Export</td>
+                                            <td>Delete</td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {transactions.map((txn) => (
+                                            <tr key={txn.id}>
+                                                <td>{txn.stars}</td>
+                                                <td>₹ {txn.amount}</td>
+                                                <td><a href="#">Download</a></td>
+                                                <td>
+                                                    <button
+                                                        onClick={() => console.log(`Delete transaction ${txn.id}`)}
+                                                        style={{
+                                                            background: 'transparent',
+                                                            border: 'none',
+                                                            color: 'red',
+                                                            cursor: 'pointer',
+                                                            fontSize: '16px'
+                                                        }}
+                                                    >
+                                                        🗑
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+
                     </div>
                 </div>
             </div>
