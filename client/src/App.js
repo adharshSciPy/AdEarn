@@ -48,6 +48,9 @@ import SuperAdminAdUser from './pages/superadmin/AdsUser/SuperAdminAdsUser';
 import Superadminotp from './pages/superadmin/Superadminotp/Superadminotp';
 import CompanyAccounts from './pages/superadmin/CompanyAccounts/CompanyAccounts';
 import StarDistributionPage from './pages/superadmin/StarDistributionPage/StarDistributionPage'
+import SuperAdminUserAccount from './pages/superadmin/UserAccount/UserAccount'
+import SuperAdminAdminAccount from './pages/superadmin/AdminAccount/AdminAccount'
+
 
 function App() {
   return (
@@ -107,6 +110,10 @@ function App() {
           <Route path='/Superadminotp' element={<Superadminotp />} />
           <Route path='/Companyaccounts' element={<CompanyAccounts />} />
           <Route path='/StarDistribution' element={<StarDistributionPage />} />
+          <Route path='/superadminuseraccount' element={<SuperAdminUserAccount />} />
+          <Route path='/superadminadminaccount' element={<SuperAdminAdminAccount />} />
+
+
 
 
 

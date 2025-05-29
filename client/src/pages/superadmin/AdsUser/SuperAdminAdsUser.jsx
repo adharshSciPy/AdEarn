@@ -1,83 +1,131 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styles from "./superadsuser.module.css";
-import { Switch } from "antd";
-import { DeleteOutlined } from "@ant-design/icons";
-import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar"
-const users = [
-  {
-    id: 1,
-    name: "User 1",
-    fullName: "Jason Roy",
-    lastSeen: "9.45 am",
-    stars: 100,
-    adsViewed: 10,
-    blacklisted: true,
-  },
-  {
-    id: 2,
-    name: "User 2",
-    fullName: "Mathew Flintoff",
-    lastSeen: "2 days ago",
-    stars: 200,
-    adsViewed: 10,
-    blacklisted: false,
-  },
-  {
-    id: 3,
-    name: "User 3",
-    fullName: "Anil Kumar",
-    lastSeen: "9.45 am",
-    stars: 200,
-    adsViewed: 10,
-    blacklisted: false,
-  },
-  {
-    id: 4,
-    name: "User 4",
-    fullName: "George Cruize",
-    lastSeen: "1 days ago",
-    stars: 200,
-    adsViewed: 10,
-    blacklisted: true,
-  },
-  {
-    id: 5,
-    name: "User 4",
-    fullName: "George Cruize",
-    lastSeen: "9.00 am",
-    stars: 200,
-    adsViewed: 10,
-    blacklisted: false,
-  },
-];
+import { Modal, Switch } from "antd";
+import { DeleteOutlined, HolderOutlined } from "@ant-design/icons";
+import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
+import Header from '../../../components/Header/Header'
+
+
+const users = Array.from({ length: 100 }, (_, i) => ({
+  id: i + 1,
+  name: `User ${i + 1}`,
+  fullName: `Full Name ${i + 1}`,
+  lastSeen: i % 3 === 0 ? "Today" : i % 3 === 1 ? "Yesterday" : "2 days ago",
+  stars: 100 + i,
+  adsViewed: i % 2 === 0 ? 10 : 0,
+  blacklisted: i % 5 === 0,
+}));
+
+const USERS_PER_LOAD = 20;
 
 function SuperAdminAdsUser() {
+  const [activeTab, setActiveTab] = useState("All Users");
+  const [visibleUsers, setVisibleUsers] = useState([]);
+  const [loadedCount, setLoadedCount] = useState(1);
+  const containerRef = useRef(null);
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  const filteredUsers = users.filter((user) => {
+    if (activeTab === "Ads Users") return user.adsViewed > 0;
+    if (activeTab === "Disabled Users") return user.blacklisted;
+    return true;
+  });
+
+  useEffect(() => {
+    setLoadedCount(1);
+    setVisibleUsers(filteredUsers.slice(0, USERS_PER_LOAD));
+  }, [activeTab]);
+
+  const handleScroll = () => {
+    const container = containerRef.current;
+    if (!container) return;
+    const nearBottom =
+      container.scrollTop + container.clientHeight >=
+      container.scrollHeight - 20;
+    if (nearBottom && loadedCount * USERS_PER_LOAD < filteredUsers.length) {
+      const nextCount = loadedCount + 1;
+      const nextUsers = filteredUsers.slice(0, nextCount * USERS_PER_LOAD);
+      setVisibleUsers(nextUsers);
+      setLoadedCount(nextCount);
+    }
+  };
+
+  const showActivateModal = (user) => {
+    setSelectedUser(user);
+    setIsModalVisible(true);
+  };
+
+  const handleActivate = () => {
+    // Replace this with backend update if needed
+    console.log("Activated:", selectedUser);
+    setIsModalVisible(false);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+
   return (
     <div className={styles.adsuser}>
-        <SuperSidebar/>
-      <div className={styles.container}>
+      <SuperSidebar />
+      <Header/>
+      <div
+        className={styles.container}
+        ref={containerRef}
+        onScroll={handleScroll}
+      >
         <div className={styles.header}>
           <div>
-            <h2>Welcome back Super Admin!</h2>
-            <p>Check dashboard</p>
+            <p
+              style={{
+                fontSize: "20px",
+                fontWeight: "500",
+                paddingBottom: "5px",
+              }}
+            >
+              Welcome back Super Admin!
+            </p>
+            <p
+              style={{
+                fontSize: "17px",
+                fontWeight: "500",
+                paddingBottom: "5px",
+              }}
+            >
+              Check dashboard
+            </p>
           </div>
           <div className={styles.filters}>
-            {/* <select>
-              <option>Month</option>
-            </select>
-            <select>
-              <option>Year</option>
-            </select> */}
             <button className={styles.logout}>Log</button>
           </div>
         </div>
 
         <h1 className={styles.title}>Ads Users</h1>
 
+        <div className={styles.monthYear}>
+          <select>
+            <option>Month</option>
+          </select>
+          <select>
+            <option>Year</option>
+          </select>
+        </div>
+
         <div className={styles.tabs}>
-          <button className={styles.tab}>All Users</button>
-          <button className={styles.tab}>Ads Users</button>
-          <button className={styles.tab}>Disabled Users</button>
+          {["All Users", "Ads Users", "Disabled Users"].map((tab) => (
+            <div
+              key={tab}
+              className={`${styles.tabButton} ${
+                activeTab === tab ? styles.activeTab : ""
+              }`}
+              onClick={() => setActiveTab(tab)}
+            >
+              <HolderOutlined />
+              <button className={styles.tab}>{tab}</button>
+            </div>
+          ))}
         </div>
 
         <div className={styles.table}>
@@ -87,9 +135,10 @@ function SuperAdminAdsUser() {
             <div>Total stars</div>
             <div>Ads Viewed</div>
             <div>Black listed</div>
-            <div>Disable & Enable</div>
+            <div>Actions</div>
           </div>
-          {users.map((user, idx) => (
+
+          {visibleUsers.map((user) => (
             <div className={styles.tableRow} key={user.id}>
               <div className={styles.userCell}>
                 <img
@@ -111,12 +160,37 @@ function SuperAdminAdsUser() {
                 {user.blacklisted ? "Listed" : "Not Listed"}
               </div>
               <div className={styles.actions}>
-                <Switch size="small" defaultChecked />
-                <DeleteOutlined className={styles.deleteIcon} />
+                {activeTab === "Disabled Users" ? (
+                  <button
+                    className={styles.activateBtn}
+                    onClick={() => showActivateModal(user)}
+                  >
+                    Activate
+                  </button>
+                ) : (
+                  <>
+                    <Switch size="small" defaultChecked />
+                    <DeleteOutlined className={styles.deleteIcon} />
+                  </>
+                )}
               </div>
             </div>
           ))}
         </div>
+
+        <Modal
+          title="Activate User"
+          open={isModalVisible}
+          onOk={handleActivate}
+          onCancel={handleCancel}
+          okText="Yes, Activate"
+          cancelText="Cancel"
+        >
+          <p>
+            Are you sure you want to activate{" "}
+            <strong>{selectedUser?.fullName}</strong>?
+          </p>
+        </Modal>
       </div>
     </div>
   );
