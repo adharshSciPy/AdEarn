@@ -7,6 +7,8 @@ import { Admin } from "../model/adminModel.js";
 import AdminWallet from "../model/adminwalletModel.js"
 import {UserWallet} from "../model/userWallet.js"
 import SuperAdminWallet from "../model/superAdminWallet.js";
+import axios from "axios";
+
 // function to create referal code
 const generateReferalCode = async (length = 6) => {
   const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
@@ -174,7 +176,32 @@ const editUser = async (req, res) => {
     if (gender) user.gender = gender;
     if (state) user.state = state;
     if (district) user.district = district;
-    if (location) user.location = location;
+    if (location) {
+      user.location = location;
+      try {
+        const geoRes = await axios.get("https://nominatim.openstreetmap.org/search", {
+          params: {
+            q: location,
+            format: "json",
+            limit: 1,
+          },
+          headers: {
+            "User-Agent": "YourAppName", // Required
+          },
+        });
+
+        if (geoRes.data && geoRes.data.length > 0) {
+          const { lat, lon } = geoRes.data[0];
+          user.locationCoordinates = {
+            lat: parseFloat(lat),
+            lng: parseFloat(lon),
+          };
+        }
+      } catch (geoError) {
+        console.error("Geocoding error:", geoError.message);
+        // Optionally: you can continue without failing
+      }
+    };
     if (pinCode) user.pinCode = pinCode;
     if (fieldOfIntrest) user.fieldOfInterest = fieldOfIntrest;
     if (maritalStatus) user.maritalStatus = maritalStatus;

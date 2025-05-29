@@ -51,12 +51,12 @@ const imageAd = new mongoose.Schema(
       // required:true
     },
     adPeriod: {
-      type: String,
+      type: Number,
       // required: true,
     },
     adRepetition: {
-      type: Number,
-      // required: true,
+      type: Boolean,
+      default:false
     },
     adRepeatSchedule: [
       {
@@ -90,8 +90,29 @@ const imageAd = new mongoose.Schema(
         starsGiven: Number,
       },
     ],
+    targetRegions: [
+      {
+        location: {
+          type: {
+            type: String,
+            enum: ['Point'],
+            default: 'Point',
+          },
+          coordinates: {
+            type: [Number], // [longitude, latitude]
+            required: true,
+          },
+        },
+        radius: {
+          type: Number,
+          required: true,
+        },
+      }
+    ],
+
   },
   { timestamps: true }
 );
+imageAd.index({ 'targetRegions.location': '2dsphere' });
 
 export const ImageAd = mongoose.model("ImageAd", imageAd);

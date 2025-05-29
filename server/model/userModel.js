@@ -45,6 +45,13 @@ const userSchema = new Schema(
     location: {
       type: String,
     },
+    locationCoordinates: {
+  type: {
+    lat: { type: Number },
+    lng: { type: Number },
+  },
+  default: null,
+},
     pinCode: {
       type: Number,
     },

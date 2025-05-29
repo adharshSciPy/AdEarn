@@ -1,0 +1,208 @@
+.userstarsmain {
+  height: max-content;
+  padding-bottom: 200px;
+}
+
+.userstarscontainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.starssection {
+  width: calc(100% - 250px);
+  margin-left: 250px;
+  position: absolute;
+  top: 330px;
+  z-index: 999;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.distributionhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.totalstardistribution {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 50px;
+  margin-top: 50px;
+  background-color: #693bb8;
+  color: white;
+  border-radius: 15px;
+}
+
+.container {
+  height: 100vh;
+  overflow-y: auto;
+
+  width: 100%;
+  padding: 24px;
+  padding-top: 50px;
+  font-family: "Segoe UI", sans-serif;
+  background: rgba(255, 255, 255, 0.1); /* Semi-transparent */
+  backdrop-filter: blur(10px); /* Frosted-glass blur */
+  -webkit-backdrop-filter: blur(10px); /* Safari support */
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  margin-right: 30px;
+  margin-top: 100px;
+  margin-bottom: 50px;
+}
+.activeTab {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  transition: 0.3s ease;
+}
+.headerContainer {
+  background-color: red;
+  padding: 20px;
+  position: relative;
+}
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filters {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.logout {
+  border: 1px solid #ccc;
+  padding: 10px 30px;
+  background-color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.title {
+  font-size: 35px;
+  margin: 20px 0 10px;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.tab {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.table {
+  width: 100%;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.tableHeader,
+.tableRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  padding: 14px 16px;
+  align-items: center;
+  font-size: 14px;
+}
+
+.tableHeader {
+  background-color: #295bd2;
+  color: white;
+  font-weight: bold;
+}
+
+.tableRow {
+  border-top: 1px solid #f0f0f0;
+  background: #fff;
+}
+
+.userCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.listed {
+  color: red;
+  font-weight: 500;
+}
+
+.notListed {
+  color: green;
+  font-weight: 500;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-around;
+}
+
+.deleteIcon {
+  color: #555;
+  cursor: pointer;
+}
+.monthYear {
+  width: 100%;
+  display: flex;
+  justify-content: end;
+  gap: 15px;
+}
+.monthYear select {
+  padding: 10px;
+}
+.tabButton {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 16px;
+  gap: 5px;
+  border: 1px solid #dfe5ef;
+  border-radius: 10px;
+}
+
+.activateBtn {
+  padding: 4px 10px;
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.activateBtn:hover {
+  background-color: #40a9ff;
+}
+
+.activeTab {
+  background-color: #f0f0f0;
+}
