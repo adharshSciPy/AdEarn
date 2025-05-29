@@ -71,7 +71,7 @@ function Sidebar() {
       children: [
         { key: "user-account", label: "User Account", path: "/AdminAds" },
         { key: "admin-account", label: "Admin Account", path: "/AdminAds" },
-        { key: "company-account", label: "Company Account", path: "/AdminAds" },
+        { key: "company-account", label: "Company Account", path: "/Companyaccounts" },
         { key: "welcome-account", label: "Welcome Account", path: "/AdminAds" },
         {
           key: "Referal-account",

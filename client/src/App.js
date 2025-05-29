@@ -45,6 +45,8 @@ import SurveyAds from "./pages/user/SurveyAds/Surveyads"
 import SuperadminDash from './pages/superadmin/Dashboard/SuperadminDash';
 import ManageAdmin from './pages/superadmin/ManageAdmin/ManageAdmin';
 import SuperAdminAdUser from './pages/superadmin/AdsUser/SuperAdminAdsUser';
+import Superadminotp from './pages/superadmin/Superadminotp/Superadminotp';
+import CompanyAccounts from './pages/superadmin/CompanyAccounts/CompanyAccounts';
 import SuperAdminUserAccount from './pages/superadmin/UserAccount/UserAccount'
 import SuperAdminAdminAccount from './pages/superadmin/AdminAccount/AdminAccount'
 
@@ -104,6 +106,8 @@ function App() {
           <Route path='/SuperadminDash' element={<SuperadminDash />} />
           <Route path='/manageadmin' element={<ManageAdmin />} />
           <Route path='/superadminadsuser' element={<SuperAdminAdUser />} />
+          <Route path='/Superadminotp' element={<Superadminotp />} />
+          <Route path='/Companyaccounts' element={<CompanyAccounts />} />
           <Route path='/superadminuseraccount' element={<SuperAdminUserAccount />} />
           <Route path='/superadminadminaccount' element={<SuperAdminAdminAccount />} />
 

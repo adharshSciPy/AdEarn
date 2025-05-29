@@ -1,15 +1,15 @@
-.adminmain {
+.accountsmain {
   height: max-content;
-  padding-bottom: 100px;
+  padding-bottom: 200px;
 }
 
-.admincontainermain {
+.accountscontainer {
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
-.chart {
+.accountsgraph {
   width: calc(100% - 250px);
   margin-left: 250px;
   position: absolute;
@@ -21,23 +21,85 @@
   align-items: center;
 }
 
-.spline {
-  box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
-  border-radius: 10px;
+.logbutton {
+  display: flex;
+  justify-content: end;
+  margin-top: 20px;
+}
+
+.companygraph {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  margin-top: 20px;
+  width: 100%;
+  height: 100%;
+}
+
+.totalamountsection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 80px;
+}
+
+.accountshead {
+  display: flex;
+  justify-content: start;
+  margin-top: 30px;
+}
+
+.accountsheadsection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 200px;
+  margin-top: 20px;
+  padding: 50px;
+  background-color: #693bb8;
+  color: white;
+  border-radius: 20px;
+}
+
+.accountamountdetails {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.estimatesection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 200px;
+  margin-top: 20px;
+  padding: 50px;
+  background-color: #693bb8;
+  color: white;
+  border-radius: 20px;
+}
+
+.estimatelist ol {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  gap: 10px;
+}
+
+.amountlist {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
 }
 
 .cards {
-  width: calc(100% - 250px);
-  position: absolute;
-  top: 330px;
-  z-index: 999;
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-evenly;
-  align-items: center;
-  box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
-  border-radius: 10px;
-  max-width: 1550px;
+  gap: 20px;
 }
 
 .cardicon {
@@ -58,7 +120,7 @@
   flex-direction: column;
   justify-content: center;
   width: 200px;
-  height: 250px;
+  height: 280px;
   padding: 20px;
   border-radius: 20px;
   position: relative;
@@ -217,11 +279,54 @@
   background-color: #ffe2e5;
 }
 
-.allusertab{
+.accountimage {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  gap: 30px;
+  /* Adds spacing between sections */
+}
+
+.table {
+  margin-top: 40px;
+  z-index: 1;
+  position: relative;
+  padding-bottom: 30px;
+}
+
+.tabletitle h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.tablesection table {
   width: 100%;
-  margin-top: 50px;
-  margin-bottom: 50px;
+  border-collapse: collapse;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: relative;
+  bottom: 0;
+}
+
+.tablesection thead td {
+  font-weight: 600;
+  padding: 14px 16px;
+  background: #693bb8;
+  color: white;
+}
+
+.tablesection tbody td {
+  padding: 12px 16px;
+  border-top: 1px solid #eee;
+}
+
+.tablesection td a {
+  color: #6418C3;
+  text-decoration: none;
+}
+
+.tablesection td button:hover {
+  opacity: 0.7;
 }
