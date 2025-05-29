@@ -46,6 +46,13 @@ import SuperadminDash from './pages/superadmin/Dashboard/SuperadminDash';
 import ManageAdmin from './pages/superadmin/ManageAdmin/ManageAdmin';
 import SuperAdminAdUser from './pages/superadmin/AdsUser/SuperAdminAdsUser';
 import Superadminotp from './pages/superadmin/Superadminotp/Superadminotp';
+import CompanyAccounts from './pages/superadmin/CompanyAccounts/CompanyAccounts';
+import StarDistributionPage from './pages/superadmin/StarDistributionPage/StarDistributionPage'
+import SuperAdminUserAccount from './pages/superadmin/UserAccount/UserAccount'
+import SuperAdminAdminAccount from './pages/superadmin/AdminAccount/AdminAccount'
+import WelcomeBonus from './pages/superadmin/WelcomeBonus/WelcomeBonus';
+import ContestPageAccount from './pages/superadmin/ContestAccount/ContestAccount';
+import Userstars from './pages/superadmin/Userstars/Userstars';
 
 function App() {
   return (
@@ -103,6 +110,17 @@ function App() {
           <Route path='/manageadmin' element={<ManageAdmin />} />
           <Route path='/superadminadsuser' element={<SuperAdminAdUser />} />
           <Route path='/Superadminotp' element={<Superadminotp />} />
+          <Route path='/Companyaccounts' element={<CompanyAccounts />} />
+          <Route path='/StarDistribution' element={<StarDistributionPage />} />
+          <Route path='/superadminuseraccount' element={<SuperAdminUserAccount />} />
+          <Route path='/superadminadminaccount' element={<SuperAdminAdminAccount />} />
+          <Route path='/superadminwelcomebonus' element={<WelcomeBonus />} />
+          <Route path='/superadmincontestaccount' element={<ContestPageAccount />} />
+          <Route path='/Userstar' element={<Userstars />} />
+
+
+
+
 
 
 
