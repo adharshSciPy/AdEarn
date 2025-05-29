@@ -50,10 +50,21 @@ import { Ad } from "../model/AdsModel.js";
 
 //   return distributedStars;
 // }
+// function to calculate the region (radius)
+function calculateDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const toRad = deg => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 // ------------------- IMAGE AD -------------------
 const createImageAd = async (req, res) => {
-  const { title, description, userViewsNeeded,adPeriod} = req.body;
+  const { title, description, userViewsNeeded, adPeriod, locations } = req.body;
   const { id } = req.params;
 
   if (!id) {
@@ -64,16 +75,48 @@ const createImageAd = async (req, res) => {
     return res.status(400).json({ message: "Image file is required" });
   }
 
-  
   if (!title || !description || !userViewsNeeded) {
     return res.status(400).json({ message: "Missing required fields" });
   }
-  const parsedAdPeriod = parseFloat(adPeriod); 
+
+  const parsedAdPeriod = parseFloat(adPeriod);
   const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
+
+  // Parse and validate multiple locations
+  let targetRegions = [];
+  try {
+    const parsedLocations = typeof locations === "string" ? JSON.parse(locations) : locations;
+
+    if (!Array.isArray(parsedLocations) || parsedLocations.length === 0) {
+      return res.status(400).json({ message: "At least one location is required" });
+    }
+
+    for (const loc of parsedLocations) {
+      if (!loc.coords || !loc.radius) continue;
+
+      const [latStr, lngStr] = loc.coords.split(",");
+      const latitude = parseFloat(latStr);
+      const longitude = parseFloat(lngStr);
+      const radius = parseFloat(loc.radius);
+
+      if (isNaN(latitude) || isNaN(longitude) || isNaN(radius)) {
+        return res.status(400).json({ message: "Invalid location format" });
+      }
+
+      targetRegions.push({
+        location: {
+          type: "Point",
+          coordinates: [longitude, latitude],
+        },
+        radius,
+      });
+    }
+  } catch (err) {
+    return res.status(400).json({ message: "Invalid location format", error: err.message });
+  }
 
   try {
     const user = await User.findById(id).populate("userWalletDetails");
-
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -83,7 +126,6 @@ const createImageAd = async (req, res) => {
       return res.status(400).json({ message: "User wallet not found" });
     }
 
-    // Calculate required stars
     const starsDeductionRate = 0.6;
     const starsToBeDeducted = userViewsNeeded * starsDeductionRate;
 
@@ -97,7 +139,7 @@ const createImageAd = async (req, res) => {
     // Create star payout plan
     const highvalueArray = [5, 4, 3, 2];
     const highValueStarConversion = userViewsNeeded / 100;
-    const highValueStars = highvalueArray.map(val => val * highValueStarConversion);
+    const highValueStars = highvalueArray.map((val) => val * highValueStarConversion);
     const highValueTotal = highValueStars.reduce((acc, val) => acc + val, 0);
 
     const singleStarsCount = Math.floor(starsToBeDeducted - highValueTotal);
@@ -112,25 +154,23 @@ const createImageAd = async (req, res) => {
     userWallet.totalStars -= starsToBeDeducted;
     await userWallet.save();
 
-    // Create Image Ad
+    // Save image ad
     const imageUrl = `/imgAdUploads/${req.file.filename}`;
     const imageAd = await ImageAd.create({
       title,
       description,
       imageUrl,
-       adPeriod: adRepetition ? parsedAdPeriod : 0,
-       adRepetition,
+      adPeriod: adRepetition ? parsedAdPeriod : 0,
+      adRepetition,
       createdBy: user._id,
       userViewsNeeded,
       totalStarsAllocated: starsToBeDeducted,
       starPayoutPlan,
+      targetRegions,
     });
 
-    const ad = await Ad.create({
-      imgAdRef: imageAd._id,
-    });
+    const ad = await Ad.create({ imgAdRef: imageAd._id });
 
-    // Link ad to user
     user.ads.push(ad._id);
     await user.save();
 
@@ -148,6 +188,7 @@ const createImageAd = async (req, res) => {
     });
   }
 };
+
 
 
 // ------------------- VIDEO AD -------------------
@@ -433,39 +474,71 @@ const fetchSingleVerifiedAd = async (req, res) => {
 // to fetch verified imageAd based on repation if any periodic fetchng and only if the view count is not reached
 const fetchVerifiedImgAd = async (req, res) => {
   try {
-    const { userId } = req.params; 
+    const { userId } = req.params;
+    const userLat = parseFloat(req.query.lat);
+    const userLng = parseFloat(req.query.lng);
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // ✅ Use stored coordinates from the profile
+    const profileCoords = user.locationCoordinates
+      ? { lat: user.locationCoordinates.lat, lng: user.locationCoordinates.lng }
+      : null;
+
+    // ✅ Validate that at least one location source exists
+    if ((!userLat || !userLng) && !profileCoords) {
+      return res.status(400).json({
+        message: "No valid user geolocation available for location-based ad matching",
+      });
+    }
+
     const allAds = await Ad.find().populate("imgAdRef");
     const currentDate = new Date();
     const verifiedImgAds = [];
 
     for (const ad of allAds) {
       const imgAd = ad.imgAdRef;
-  if (imgAd?.createdBy?.toString() === userId) {
-        continue;
-      }
-      if (
-        imgAd &&
+      if (!imgAd || imgAd.createdBy?.toString() === userId) continue;
+
+      const isUserInTargetRegion = imgAd.targetRegions?.some(region => {
+        if (!region?.location?.coordinates) return false;
+
+        const [targetLng, targetLat] = region.location.coordinates;
+        const radiusMeters = region.radius * 1000;
+
+        const withinLiveLocation =
+          userLat && userLng &&
+          calculateDistance(userLat, userLng, targetLat, targetLng) <= radiusMeters;
+
+        const withinProfileLocation =
+          profileCoords &&
+          calculateDistance(profileCoords.lat, profileCoords.lng, targetLat, targetLng) <=
+            radiusMeters;
+
+        return withinLiveLocation || withinProfileLocation;
+      });
+
+      if (!isUserInTargetRegion) continue;
+
+      const hasUserViewed = imgAd.viewersRewarded.some(
+        entry => entry.userId.toString() === userId
+      );
+
+      const adIsActive =
         imgAd.isAdVerified &&
         imgAd.isAdVisible &&
         imgAd.totalViewCount < imgAd.userViewsNeeded &&
-        (!imgAd.adExpirationTime || imgAd.adExpirationTime > currentDate)
-      ) {
-        const hasUserViewed = imgAd.viewersRewarded.some(
-          (entry) => entry.userId.toString() === userId
-        );
+        (!imgAd.adExpirationTime || imgAd.adExpirationTime > currentDate);
 
-        if (!imgAd.adRepetition && hasUserViewed) {
-          continue; // Skip ad for this user if repetition is off and already viewed
-        }
+      if (adIsActive) {
+        if (!imgAd.adRepetition && hasUserViewed) continue;
 
         if (imgAd.adRepetition) {
           const userSchedule = imgAd.adRepeatSchedule.find(
-            (entry) => entry.userId.toString() === userId
+            entry => entry.userId.toString() === userId
           );
-
-          if (userSchedule && userSchedule.nextScheduledAt > currentDate) {
-            continue; // Skip if user is not yet eligible for repeated view
-          }
+          if (userSchedule && userSchedule.nextScheduledAt > currentDate) continue;
         }
 
         verifiedImgAds.push({
@@ -475,10 +548,9 @@ const fetchVerifiedImgAd = async (req, res) => {
             isVerified: imgAd.isAdVerified,
           },
         });
-      } else if (imgAd) {
-        // Update visibility if views reached or expired
-        let shouldUpdate = false;
+      } else {
         const updateFields = {};
+        let shouldUpdate = false;
 
         if (imgAd.totalViewCount >= imgAd.userViewsNeeded && !imgAd.isViewsReached) {
           updateFields.isViewsReached = true;
@@ -497,7 +569,7 @@ const fetchVerifiedImgAd = async (req, res) => {
     }
 
     if (verifiedImgAds.length === 0) {
-      return res.status(404).json({ message: "No verified and eligible image ads found" });
+      return res.status(404).json({ message: "No verified and eligible image ads found for your location" });
     }
 
     return res.status(200).json({
