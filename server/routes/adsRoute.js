@@ -22,7 +22,7 @@ adsRouter.post("/survey-ad", createSurveyAd);
 adsRouter.get("/ads-to-verify", fetchAdsForVerification);
 adsRouter.get("/verified-ads", fetchVerifiedAds);
 adsRouter.get('/single-verified/:adId', fetchSingleVerifiedAd);
-adsRouter.get('/image-ads', fetchVerifiedImgAd);
+adsRouter.get('/image-ads/:userId', fetchVerifiedImgAd);
 adsRouter.get('/video-ads', fetchVerifiedVideoAd);
 adsRouter.post('/view-ads/:userId', viewAd);
 

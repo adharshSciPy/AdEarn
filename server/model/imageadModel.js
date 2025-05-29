@@ -51,12 +51,12 @@ const imageAd = new mongoose.Schema(
       // required:true
     },
     adPeriod: {
-      type: String,
+      type: Number,
       // required: true,
     },
     adRepetition: {
-      type: Number,
-      // required: true,
+      type: Boolean,
+      default:false
     },
     adRepeatSchedule: [
       {

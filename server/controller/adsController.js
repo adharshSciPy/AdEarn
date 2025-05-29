@@ -53,7 +53,7 @@ import { Ad } from "../model/AdsModel.js";
 
 // ------------------- IMAGE AD -------------------
 const createImageAd = async (req, res) => {
-  const { title, description, userViewsNeeded,adPeriod,adRepetition} = req.body;
+  const { title, description, userViewsNeeded,adPeriod} = req.body;
   const { id } = req.params;
 
   if (!id) {
@@ -64,9 +64,12 @@ const createImageAd = async (req, res) => {
     return res.status(400).json({ message: "Image file is required" });
   }
 
-  if (!title || !description || !userViewsNeeded||!adPeriod||!adRepetition) {
+  
+  if (!title || !description || !userViewsNeeded) {
     return res.status(400).json({ message: "Missing required fields" });
   }
+  const parsedAdPeriod = parseFloat(adPeriod); 
+  const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
 
   try {
     const user = await User.findById(id).populate("userWalletDetails");
@@ -115,8 +118,8 @@ const createImageAd = async (req, res) => {
       title,
       description,
       imageUrl,
-      adPeriod,
-      adRepetition,
+       adPeriod: adRepetition ? parsedAdPeriod : 0,
+       adRepetition,
       createdBy: user._id,
       userViewsNeeded,
       totalStarsAllocated: starsToBeDeducted,
@@ -427,18 +430,19 @@ const fetchSingleVerifiedAd = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-// to fetch verified imageAd
+// to fetch verified imageAd based on repation if any periodic fetchng and only if the view count is not reached
 const fetchVerifiedImgAd = async (req, res) => {
   try {
+    const { userId } = req.params; 
     const allAds = await Ad.find().populate("imgAdRef");
-
     const currentDate = new Date();
-
     const verifiedImgAds = [];
 
     for (const ad of allAds) {
       const imgAd = ad.imgAdRef;
-
+  if (imgAd?.createdBy?.toString() === userId) {
+        continue;
+      }
       if (
         imgAd &&
         imgAd.isAdVerified &&
@@ -446,6 +450,24 @@ const fetchVerifiedImgAd = async (req, res) => {
         imgAd.totalViewCount < imgAd.userViewsNeeded &&
         (!imgAd.adExpirationTime || imgAd.adExpirationTime > currentDate)
       ) {
+        const hasUserViewed = imgAd.viewersRewarded.some(
+          (entry) => entry.userId.toString() === userId
+        );
+
+        if (!imgAd.adRepetition && hasUserViewed) {
+          continue; // Skip ad for this user if repetition is off and already viewed
+        }
+
+        if (imgAd.adRepetition) {
+          const userSchedule = imgAd.adRepeatSchedule.find(
+            (entry) => entry.userId.toString() === userId
+          );
+
+          if (userSchedule && userSchedule.nextScheduledAt > currentDate) {
+            continue; // Skip if user is not yet eligible for repeated view
+          }
+        }
+
         verifiedImgAds.push({
           _id: ad._id,
           imageAd: {
@@ -487,6 +509,7 @@ const fetchVerifiedImgAd = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 // to fetch verified videoAd
 const fetchVerifiedVideoAd = async (req, res) => {
@@ -550,96 +573,118 @@ const fetchVerifiedSurveyAd = async (req, res) => {
 };
 // to watch ads,star split,view count
 const viewAd = async (req, res) => {
-  const { adId } = req.body; //the from ads schema not imgAdRef or videoAdRef or surveyAdRef
-  const {userId}=req.params;
+  const { adId } = req.body;
+  const { userId } = req.params;
+
   try {
     const user = await User.findById(userId).populate("userWalletDetails");
-    if (!user) {
-      return res.status(400).json({ message: "User not found" });
-    }
+    if (!user) return res.status(400).json({ message: "User not found" });
+
     const ad = await Ad.findById(adId)
       .populate("imgAdRef")
       .populate("videoAdRef")
       .populate("surveyAdRef");
-      if(!ad){
-        return res.status(404).json({ message: "Ad not found" });
-      }
-    //    const isImageAdVerified = ad.imgAdRef && ad.imgAdRef.isAdVerified;
-    // const isVideoAdVerified = ad.videoAdRef && ad.videoAdRef.isAdVerified;
-    // const isSurveyAdVerified = ad.surveyAdRef && ad.surveyAdRef.isAdVerified;
 
-    // if (!isImageAdVerified && !isVideoAdVerified && !isSurveyAdVerified) {
-    //   return res.status(403).json({ message: "Ad is not verified" });
-    // }
-    // const formattedAd = {
-    //   _id: ad._id,
-    //   imageAd: isImageAdVerified
-    //     ? {
-    //         ...ad.imgAdRef.toObject(),
-    //         isVerified: ad.imgAdRef.isAdVerified,
-    //       }
-    //     : null,
-    //   videoAd: isVideoAdVerified
-    //     ? {
-    //         ...ad.videoAdRef.toObject(),
-    //         isVerified: ad.videoAdRef.isAdVerified,
-    //       }
-    //     : null,
-    //   surveyAd: isSurveyAdVerified
-    //     ? {
-    //         ...ad.surveyAdRef.toObject(),
-    //         isVerified: ad.surveyAdRef.isAdVerified,
-    //       }
-    //     : null,
-    // };
-    const imageAd = ad.imgAdRef;
-    if (!imageAd || !imageAd.isAdVerified) {
-      return res.status(403).json({ message: "Ad is not verified or not an image ad" });
+    if (!ad) return res.status(404).json({ message: "Ad not found" });
+
+    // Identify which ad type it is
+    const adTypes = [
+      { ref: ad.imgAdRef, type: "Image" },
+      { ref: ad.videoAdRef, type: "Video" },
+      { ref: ad.surveyAdRef, type: "Survey" },
+    ];
+
+    const adObj = adTypes.find(({ ref }) => ref && ref.isAdVerified)?.ref;
+    const adType = adTypes.find(({ ref }) => ref && ref.isAdVerified)?.type;
+
+    if (!adObj) {
+      return res.status(403).json({ message: "Ad is not verified or not found in any category" });
     }
-     const alreadyViewed = imageAd.viewersRewarded.some(
+
+    const now = new Date();
+
+    // Check if user already rewarded
+    const previouslyRewarded = adObj.viewersRewarded.find(
       (entry) => entry.userId.toString() === userId
     );
-    if (alreadyViewed) {
+
+    const userRepeat = adObj.adRepeatSchedule.find(
+      (entry) => entry.userId.toString() === userId
+    );
+
+    // If repetition is off and user already viewed
+    if (!adObj.adRepetition && previouslyRewarded) {
       return res.status(409).json({ message: "User has already viewed this ad" });
     }
-    if (imageAd.starPayoutPlan.length === 0) {
+
+    // If repetition is on but time not reached
+    if (adObj.adRepetition) {
+      if (userRepeat && userRepeat.nextScheduledAt > now) {
+        const waitTime = (userRepeat.nextScheduledAt - now) / 1000 / 60;
+        return res.status(429).json({
+          message: `Ad will be available again in ${Math.ceil(waitTime)} minute(s)`,
+        });
+      }
+    }
+
+    // If no rewards left
+    if (adObj.starPayoutPlan.length === 0) {
       return res.status(410).json({ message: "All rewards have been claimed" });
     }
-    
-    const starsToGive = imageAd.starPayoutPlan.shift();
-     imageAd.totalViewCount += 1;
-     if (imageAd.totalViewCount >= imageAd.userViewsNeeded) {
-      imageAd.isViewsReached = true;
+
+    // Reward the user
+    const starsToGive = adObj.starPayoutPlan.shift();
+    adObj.totalViewCount += 1;
+
+    if (adObj.totalViewCount >= adObj.userViewsNeeded) {
+      adObj.isViewsReached = true;
     }
-       imageAd.viewersRewarded.push({
+
+    adObj.viewersRewarded.push({
       userId: user._id,
       starsGiven: starsToGive,
     });
-      // Update user's wallet
+
+    if (adObj.adRepetition) {
+      const nextScheduledAt = new Date(now.getTime() + adObj.adPeriod * 60 * 60 * 1000);
+      if (userRepeat) {
+        userRepeat.viewsRepatitionCount += 1;
+        userRepeat.nextScheduledAt = nextScheduledAt;
+      } else {
+        adObj.adRepeatSchedule.push({
+          userId: user._id,
+          viewsRepatitionCount: 1,
+          nextScheduledAt,
+        });
+      }
+    }
+
     const wallet = user.userWalletDetails;
     if (!wallet) {
       return res.status(500).json({ message: "User wallet not found" });
     }
+
     wallet.totalStars += starsToGive;
 
-    await Promise.all([imageAd.save(), wallet.save()]);
+    await Promise.all([adObj.save(), wallet.save()]);
 
     return res.status(200).json({
-      message: "Ad viewed successfully and stars rewarded",
+      message: `${adType} Ad viewed successfully and stars rewarded`,
       starsRewarded: starsToGive,
-      currentViewCount: imageAd.totalViewCount,
-      remainingPayouts: imageAd.starPayoutPlan.length,
-      isViewsReached: imageAd.isViewsReached,
+      currentViewCount: adObj.totalViewCount,
+      remainingPayouts: adObj.starPayoutPlan.length,
+      isViewsReached: adObj.isViewsReached,
     });
 
   } catch (error) {
-     console.error("Error viewing ad:", error);
+    console.error("Error viewing ad:", error);
     return res.status(500).json({
       message: "Error viewing ad",
       error: error.message,
     });
   }
 };
+
 // 
 
 export {
