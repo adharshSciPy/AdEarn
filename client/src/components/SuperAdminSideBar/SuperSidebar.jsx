@@ -109,7 +109,7 @@ function Sidebar() {
           label: "Subscription Star",
           path: "/AdminAds",
         },
-        { key: "Ads-star", label: "Ads Star", path: "/AdminAds" },
+        { key: "Ads-star", label: "Ads Star", path: "/AdsDistribution" },
       ],
     },
     {

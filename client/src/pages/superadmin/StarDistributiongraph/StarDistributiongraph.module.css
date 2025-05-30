@@ -1,0 +1,37 @@
+.stardisplaymain {
+  height: max-content;
+  padding-bottom: 200px;
+}
+
+.stardisplaycontainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.stardisplaygraph {
+  width: calc(100% - 250px);
+  margin-left: 250px;
+  position: absolute;
+  top: 330px;
+  z-index: 999;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.stardisplayhead{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.stardisplaying{
+    width: 100%;
+    height: max-content;
+    border-radius: 10px;
+    margin-top: 30px;
+    background-color: #4446FF;
+}
