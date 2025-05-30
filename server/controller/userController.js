@@ -8,6 +8,8 @@ import AdminWallet from "../model/adminwalletModel.js"
 import {UserWallet} from "../model/userWallet.js"
 import SuperAdminWallet from "../model/superAdminWallet.js";
 import axios from "axios";
+import mongoose from "mongoose";
+import { Ad } from "../model/AdsModel.js";
 
 // function to create referal code
 const generateReferalCode = async (length = 6) => {
@@ -186,7 +188,7 @@ const editUser = async (req, res) => {
             limit: 1,
           },
           headers: {
-            "User-Agent": "YourAppName", // Required
+            "User-Agent": "AdEarn", // Required
           },
         });
 
@@ -587,6 +589,61 @@ const starBuy = async (req, res) => {
 
 
 // }
+// to fetch user viewed ads
+const getViewedAds = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid user ID" });
+  }
+
+  try {
+    const user = await User.findById(id).populate("viewedAds.adId");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Now populate ad refs inside each ad
+    const adIds = user.viewedAds.map((entry) => entry.adId._id);
+
+    const ads = await Ad.find({ _id: { $in: adIds } })
+      .populate("imgAdRef")
+      .populate("videoAdRef")
+      .populate("surveyAdRef");
+
+    // Map ads into a lookup table for easier matching
+    const adMap = new Map();
+    for (const ad of ads) {
+      adMap.set(ad._id.toString(), ad);
+    }
+
+    const viewedAds = user.viewedAds.map((entry) => {
+      const ad = adMap.get(entry.adId._id.toString());
+
+      const adType = ad?.imgAdRef
+        ? "Image"
+        : ad?.videoAdRef
+        ? "Video"
+        : ad?.surveyAdRef
+        ? "Survey"
+        : "Unknown";
+
+      return {
+        adId: ad?._id,
+        type: adType,
+        title: ad?.title || "",
+        viewedAt: entry.viewedAt,
+        fullAdData: ad || null,
+      };
+    });
+
+    return res.status(200).json({ viewedAds });
+  } catch (err) {
+    console.error("Error fetching viewed ads:", err);
+    return res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
 
 
 export {
@@ -597,5 +654,6 @@ export {
   uploadProfilePicture,
   addKyc,
   getUserByUniqueId,
-  starBuy
+  starBuy,
+  getViewedAds
 };
