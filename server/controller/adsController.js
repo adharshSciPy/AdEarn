@@ -194,50 +194,106 @@ const createImageAd = async (req, res) => {
 // ------------------- VIDEO AD -------------------
 
 const createVideoAd = async (req, res) => {
-  const { title, description } = req.body;
+  const { title, description, videoUrl, userViewsNeeded, adPeriod, locations } = req.body;
   const { id } = req.params;
 
-  if (!id) {
-    return res.status(400).json({ message: "User ID is required" });
-  }
-  if (!req.file) {
-    return res.status(400).json({ message: "Video file required" });
-  }
-  if (!title || !description) {
-    return res
-      .status(400)
-      .json({ message: "All fields are required for Video Ad" });
+  if (!id) return res.status(400).json({ message: "User ID is required" });
+  if (!title || !description || !videoUrl || !userViewsNeeded)
+    return res.status(400).json({ message: "Missing required fields" });
+
+  const parsedAdPeriod = parseFloat(adPeriod);
+  const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
+
+  // Parse and validate multiple locations
+  let targetRegions = [];
+  try {
+    const parsedLocations = typeof locations === "string" ? JSON.parse(locations) : locations;
+    if (!Array.isArray(parsedLocations) || parsedLocations.length === 0) {
+      return res.status(400).json({ message: "At least one location is required" });
+    }
+
+    for (const loc of parsedLocations) {
+      if (!loc.coords || !loc.radius) continue;
+
+      const [latStr, lngStr] = loc.coords.split(",");
+      const latitude = parseFloat(latStr);
+      const longitude = parseFloat(lngStr);
+      const radius = parseFloat(loc.radius);
+
+      if (isNaN(latitude) || isNaN(longitude) || isNaN(radius)) {
+        return res.status(400).json({ message: "Invalid location format" });
+      }
+
+      targetRegions.push({
+        location: {
+          type: "Point",
+          coordinates: [longitude, latitude],
+        },
+        radius,
+      });
+    }
+  } catch (err) {
+    return res.status(400).json({ message: "Invalid location format", error: err.message });
   }
 
   try {
-    const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    const user = await User.findById(id).populate("userWalletDetails");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const userWallet = user.userWalletDetails;
+    if (!userWallet) return res.status(400).json({ message: "User wallet not found" });
+
+    const starsDeductionRate = 0.6;
+    const starsToBeDeducted = userViewsNeeded * starsDeductionRate;
+
+    if (userWallet.totalStars < starsToBeDeducted) {
+      const starsShort = starsToBeDeducted - userWallet.totalStars;
+      return res.status(401).json({ message: `Insufficient stars. You need ${starsShort} more stars to post this ad.` });
     }
-    const videoUrl = `/videoAdUploads/${req.file.filename}`;
+
+    // Create star payout plan
+    const highvalueArray = [5, 4, 3, 2];
+    const highValueStarConversion = userViewsNeeded / 100;
+    const highValueStars = highvalueArray.map(val => val * highValueStarConversion);
+    const highValueTotal = highValueStars.reduce((acc, val) => acc + val, 0);
+
+    const singleStarsCount = Math.floor(starsToBeDeducted - highValueTotal);
+    const singleStars = Array(singleStarsCount).fill(1);
+
+    const nullStarsCount = userViewsNeeded - (highValueStars.length + singleStars.length);
+    const nullStars = Array(nullStarsCount).fill(0);
+
+    const starPayoutPlan = [...highValueStars, ...singleStars, ...nullStars];
+
+    // Deduct stars from wallet
+    userWallet.totalStars -= starsToBeDeducted;
+    await userWallet.save();
+
+    // Save video ad
     const videoAd = await VideoAd.create({
       title,
       description,
       videoUrl,
+      adPeriod: adRepetition ? parsedAdPeriod : 0,
+      adRepetition,
       createdBy: user._id,
+      userViewsNeeded,
+      totalStarsAllocated: starsToBeDeducted,
+      starPayoutPlan,
+      targetRegions,
     });
-    const ad = await Ad.create({
-      videoAdRef: videoAd._id,
-    });
-    user.ads.push(ad._id);
+
+    user.ads.push(videoAd._id);
     await user.save();
+
     return res.status(200).json({
-      message: "Video Ad created and linked successfully",
+      message: "Video Ad created successfully and stars deducted",
       videoAd,
-      ad,
-      user,
+      remainingStars: userWallet.totalStars,
     });
   } catch (error) {
-    console.error("Error creating video Ad:", error);
-    return res.status(500).json({
-      message: "Video Ad creation failed",
-      error: error.message,
-    });
+    console.error("Error creating video ad:", error);
+    return res.status(500).json({ message: "Failed to create video ad", error: error.message });
   }
 };
 
@@ -583,30 +639,107 @@ const fetchVerifiedImgAd = async (req, res) => {
 };
 
 
-// to fetch verified videoAd
+// to fetch verified imageAd based on repation if any periodic fetchng and only if the view count is not reached
 const fetchVerifiedVideoAd = async (req, res) => {
   try {
-    const allAds = await Ad.find().populate("videoAdRef");
+    const { userId } = req.params;
+    const userLat = parseFloat(req.query.lat);
+    const userLng = parseFloat(req.query.lng);
 
-    const verifiedVideoAds = allAds.filter(
-      (ads) => ads.videoAdRef && ads.videoAdRef.isAdVerified
-    );
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (verifiedVideoAds.length === 0) {
-      return res.status(404).json({ message: "No verified video ads found" });
+    const profileCoords = user.locationCoordinates
+      ? { lat: user.locationCoordinates.lat, lng: user.locationCoordinates.lng }
+      : null;
+
+    if ((!userLat || !userLng) && !profileCoords) {
+      return res.status(400).json({
+        message: "No valid user geolocation available for location-based ad matching",
+      });
     }
 
-    const formattedAds = verifiedVideoAds.map((ads) => ({
-      _id: ads._id,
-      videoAd: {
-        ...ads.videoAdRef.toObject(),
-        isVerified: ads.videoAdRef.isAdVerified,
-      },
-    }));
+    const allVideoAds = await VideoAd.find();
+    const currentDate = new Date();
+    const verifiedVideoAds = [];
+
+    for (const videoAd of allVideoAds) {
+      if (!videoAd || videoAd.createdBy?.toString() === userId) continue;
+
+      const isUserInTargetRegion = videoAd.targetRegions?.some(region => {
+        if (!region?.location?.coordinates) return false;
+
+        const [targetLng, targetLat] = region.location.coordinates;
+        const radiusMeters = region.radius * 1000;
+
+        const withinLiveLocation =
+          userLat && userLng &&
+          calculateDistance(userLat, userLng, targetLat, targetLng) <= radiusMeters;
+
+        const withinProfileLocation =
+          profileCoords &&
+          calculateDistance(profileCoords.lat, profileCoords.lng, targetLat, targetLng) <=
+            radiusMeters;
+
+        return withinLiveLocation || withinProfileLocation;
+      });
+
+      if (!isUserInTargetRegion) continue;
+
+      const hasUserViewed = videoAd.viewersRewarded.some(
+        entry => entry.userId.toString() === userId
+      );
+
+      const adIsActive =
+        videoAd.isAdVerified &&
+        videoAd.isAdVisible &&
+        videoAd.totalViewCount < videoAd.userViewsNeeded &&
+        (!videoAd.adExpirationTime || videoAd.adExpirationTime > currentDate);
+
+      if (adIsActive) {
+        if (!videoAd.adRepetition && hasUserViewed) continue;
+
+        if (videoAd.adRepetition) {
+          const userSchedule = videoAd.adRepeatSchedule.find(
+            entry => entry.userId.toString() === userId
+          );
+          if (userSchedule && userSchedule.nextScheduledAt > currentDate) continue;
+        }
+
+        verifiedVideoAds.push({
+          _id: videoAd._id,
+          videoAd: {
+            ...videoAd.toObject(),
+            isVerified: videoAd.isAdVerified,
+          },
+        });
+      } else {
+        const updateFields = {};
+        let shouldUpdate = false;
+
+        if (videoAd.totalViewCount >= videoAd.userViewsNeeded && !videoAd.isViewsReached) {
+          updateFields.isViewsReached = true;
+          shouldUpdate = true;
+        }
+
+        if (videoAd.adExpirationTime && videoAd.adExpirationTime <= currentDate && videoAd.isAdVisible) {
+          updateFields.isAdVisible = false;
+          shouldUpdate = true;
+        }
+
+        if (shouldUpdate) {
+          await VideoAd.findByIdAndUpdate(videoAd._id, updateFields);
+        }
+      }
+    }
+
+    if (verifiedVideoAds.length === 0) {
+      return res.status(404).json({ message: "No verified and eligible video ads found for your location" });
+    }
 
     return res.status(200).json({
       message: "Verified video ads fetched successfully",
-      ads: formattedAds,
+      ads: verifiedVideoAds,
     });
   } catch (error) {
     console.error("Error fetching verified video ads:", error);
