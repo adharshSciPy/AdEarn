@@ -738,7 +738,18 @@ const viewAd = async (req, res) => {
 
     wallet.totalStars += starsToGive;
 
-    await Promise.all([adObj.save(), wallet.save()]);
+   const alreadyViewed = user.viewedAds.some(
+      (entry) => entry.adId.toString() === ad._id.toString()
+    );
+
+    if (!alreadyViewed) {
+      user.viewedAds.push({
+        adId: ad._id,
+        viewedAt: new Date(),
+      });
+    }
+
+    await Promise.all([adObj.save(), wallet.save(), user.save()]);
 
     return res.status(200).json({
       message: `${adType} Ad viewed successfully and stars rewarded`,

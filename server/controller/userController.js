@@ -186,7 +186,7 @@ const editUser = async (req, res) => {
             limit: 1,
           },
           headers: {
-            "User-Agent": "YourAppName", // Required
+            "User-Agent": "AdEarn", // Required
           },
         });
 

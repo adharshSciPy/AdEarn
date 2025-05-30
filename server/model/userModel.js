@@ -108,7 +108,13 @@ ref:"Ad"
     userWalletDetails: {
   type: Schema.Types.ObjectId,
   ref: "UserWallet",
-}
+},
+viewedAds: [
+  {
+    adId: { type: Schema.Types.ObjectId, ref: "Ad" },
+    viewedAt: { type: Date, default: Date.now },
+  }
+],
     
   },
   { timestamps: true }
