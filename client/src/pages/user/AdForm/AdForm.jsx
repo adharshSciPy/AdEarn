@@ -508,7 +508,7 @@ function AdForm() {
   };
   return (
     <>
-    <Navbar/>
+      <Navbar />
       <div className={styles.adFormMain}>
         <div className={styles.adName}>
           <div className={styles.labelContainer}>
@@ -603,6 +603,7 @@ function AdForm() {
                 className={styles.inputBox}
                 value={pos.radiusKm}
                 placeholder="Radius (km)"
+                onChange={(e) => handleRadiusChange(index, e.target.value)}
               />
             </div>
           ))}
@@ -727,10 +728,18 @@ function AdForm() {
           </div>
         </div>
         <div className={styles.buttondiv}>
-              <div className="">
-                <button className={styles.backButton}>Back</button>
-                <button style={{backgroundColor:"#3563E9",border:"none",color:"white"}}>Save & Continue</button>
-              </div>
+          <div className="">
+            <button className={styles.backButton}>Back</button>
+            <button
+              style={{
+                backgroundColor: "#3563E9",
+                border: "none",
+                color: "white",
+              }}
+            >
+              Save & Continue
+            </button>
+          </div>
         </div>
       </div>
     </>

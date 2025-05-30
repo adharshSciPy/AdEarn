@@ -53,6 +53,8 @@ import SuperAdminAdminAccount from './pages/superadmin/AdminAccount/AdminAccount
 import WelcomeBonus from './pages/superadmin/WelcomeBonus/WelcomeBonus';
 import ContestPageAccount from './pages/superadmin/ContestAccount/ContestAccount';
 import Userstars from './pages/superadmin/Userstars/Userstars';
+import AdsDistribution from './pages/superadmin/AdsDistribution/AdsDistribution';
+import StarDistributiongraph from './pages/superadmin/StarDistributiongraph/StarDistributiongraph'
 
 function App() {
   return (
@@ -117,7 +119,8 @@ function App() {
           <Route path='/superadminwelcomebonus' element={<WelcomeBonus />} />
           <Route path='/superadmincontestaccount' element={<ContestPageAccount />} />
           <Route path='/Userstar' element={<Userstars />} />
-
+          <Route path='/AdsDistribution' element={<AdsDistribution />} />
+          <Route path='/StarDistributiongraph' element={<StarDistributiongraph />} />
 
 
 

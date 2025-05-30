@@ -1,0 +1,376 @@
+.accountsmain {
+  height: max-content;
+  padding-bottom: 200px;
+}
+
+.accountscontainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.accountsgraph {
+  width: calc(100% - 250px);
+  margin-left: 250px;
+  position: absolute;
+  top: 330px;
+  z-index: 999;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logbutton {
+  display: flex;
+  justify-content: end;
+  margin-top: 20px;
+}
+
+.companygraph {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  margin-top: 20px;
+  width: 100%;
+  height: 100%;
+}
+
+.totalamountsection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 80px;
+}
+
+.accountshead {
+  display: flex;
+  justify-content: start;
+  margin-top: 30px;
+}
+
+.accountsheadsection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 200px;
+  margin-top: 20px;
+  padding: 50px;
+  background-color: #693bb8;
+  color: white;
+  border-radius: 20px;
+  
+}
+.addStar{
+    padding: 10px;
+    background-color: transparent;
+    color: white;
+    border: 1px solid white;
+    border-radius: 10px;
+    margin-top: 15px;
+}
+.accountamountdetails {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.estimatesection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 200px;
+  margin-top: 20px;
+  padding: 50px;
+  background-color: #693bb8;
+  color: white;
+  border-radius: 20px;
+}
+
+.estimatelist ol {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  gap: 10px;
+}
+
+.amountlist {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.cardicon {
+  background-color: aliceblue;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cardone,
+.cardtwo,
+.cardthree,
+.cardfour {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 200px;
+  height: 280px;
+  padding: 20px;
+  border-radius: 20px;
+  position: relative;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  font-family: "Inter", sans-serif;
+  background-color: #fff6e6;
+  gap: 8px;
+}
+
+.iconWrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.iconCircle {
+  background-color: #ff7e5f;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconCircleGreen {
+  background-color: #27c27c;
+  composes: iconCircle;
+}
+
+.iconCirclePurple {
+  background-color: #b96cff;
+  composes: iconCircle;
+}
+
+.iconCircleBlue {
+  background-color: #fa5a7d;
+  composes: iconCircle;
+}
+
+.countBadge,
+.countBadgeGreen,
+.countBadgePurple,
+.countBadgeBlue {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 15px;
+  color: white;
+}
+
+.countBadge {
+  background-color: #ffbfa3;
+}
+
+.countBadgeGreen {
+  background-color: #6be49b;
+}
+
+.countBadgePurple {
+  background-color: #d5aaff;
+}
+
+.cardone h3,
+.cardtwo h3,
+.cardthree h3,
+.cardfour h3 {
+  font-size: 20px;
+  margin: 5px 0;
+  color: #1e1e1e;
+}
+
+.cardone h6,
+.cardtwo h6,
+.cardthree h6,
+.cardfour h6 {
+  font-size: 14px;
+  color: #555;
+}
+
+.cardone p,
+.cardtwo p,
+.cardthree p,
+.cardfour p {
+  color: #007bff;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.cardoneTop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background-color: #ff7e5f;
+  z-index: 0;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+
+.cardtwoTop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background-color: #3cd856;
+  z-index: 0;
+}
+
+.cardthreeTop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background-color: #bf83ff;
+  z-index: 0;
+}
+
+.cardfourTop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background-color: #fa5a7d;
+  z-index: 0;
+}
+
+.cardone,
+.cardtwo,
+.cardthree,
+.cardfour {
+  border-radius: 20px;
+  padding: 20px;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.cardone {
+  background-color: #fff4de;
+}
+
+.cardtwo {
+  background-color: #dcfce7;
+}
+
+.cardthree {
+  background-color: #f3e8ff;
+}
+
+.cardfour {
+  background-color: #ffe2e5;
+}
+
+.accountimage {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  /* Adds spacing between sections */
+}
+
+.table {
+  margin-top: 40px;
+  z-index: 1;
+  position: relative;
+  padding-bottom: 30px;
+}
+
+.tabletitle h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.tablesection table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: relative;
+  bottom: 0;
+}
+
+.tablesection thead td {
+  font-weight: 600;
+  padding: 14px 16px;
+  background: #693bb8;
+  color: white;
+}
+.monthyear{
+    padding: 10px;
+}
+.tablesection tbody td {
+  padding: 12px 16px;
+  border-top: 1px solid #eee;
+}
+
+.tablesection td a {
+  color: #6418C3;
+  text-decoration: none;
+}
+
+.tablesection td button:hover {
+  opacity: 0.7;
+}
+.modalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  width: 420px;
+  max-width: 95%;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.modalp{
+    color: #007bff;
+}
+.btnWinners{
+    padding: 10px 15px;
+    border-radius: 5px;
+    background-color: #693bb8;
+    border: none;
+    color: white;
+}
