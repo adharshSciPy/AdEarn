@@ -56,7 +56,7 @@ const imageAd = new mongoose.Schema(
     },
     adRepetition: {
       type: Boolean,
-      default:false
+      default: false,
     },
     adRepeatSchedule: [
       {
@@ -81,6 +81,12 @@ const imageAd = new mongoose.Schema(
       type: [Number],
       default: [],
     },
+    adRejectionReason: { 
+      type: String 
+    },
+    adRejectedTime: {
+       type: Date
+       },
     viewersRewarded: [
       {
         userId: {
@@ -95,8 +101,8 @@ const imageAd = new mongoose.Schema(
         location: {
           type: {
             type: String,
-            enum: ['Point'],
-            default: 'Point',
+            enum: ["Point"],
+            default: "Point",
           },
           coordinates: {
             type: [Number], // [longitude, latitude]
@@ -107,12 +113,11 @@ const imageAd = new mongoose.Schema(
           type: Number,
           required: true,
         },
-      }
+      },
     ],
-
   },
   { timestamps: true }
 );
-imageAd.index({ 'targetRegions.location': '2dsphere' });
+imageAd.index({ "targetRegions.location": "2dsphere" });
 
 export const ImageAd = mongoose.model("ImageAd", imageAd);

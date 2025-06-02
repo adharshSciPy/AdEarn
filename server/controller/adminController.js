@@ -411,6 +411,63 @@ const getSuperAdminWallet = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+const rejectAdById = async (req, res) => {
+  const { adId, reason } = req.body;
+
+  if (!adId) {
+    return res.status(400).json({ message: "adId is required" });
+  }
+
+  try {
+    const ad = await Ad.findById(adId)
+      .populate("imgAdRef")
+      .populate("videoAdRef")
+      .populate("surveyAdRef");
+
+    if (!ad) {
+      return res.status(404).json({ message: "Ad not found" });
+    }
+
+    let updatedAd = null;
+    let adType = "";
+
+    // ✅ Handle image ad rejection
+    if (ad.imgAdRef && !ad.imgAdRef.isAdVerified) {
+      updatedAd = await ImageAd.findByIdAndUpdate(
+        ad.imgAdRef._id,
+        {
+          isAdVerified: false,
+          isAdVisible: false,
+          adRejectionReason: reason || "Rejected by admin",
+          adRejectedTime: new Date(),
+        },
+        { new: true }
+      );
+      adType = "image";
+    }
+
+    // ✅ Optionally add video/survey ad rejection logic
+    /*
+    else if (ad.videoAdRef && !ad.videoAdRef.isAdVerified) {
+      // handle video ad rejection
+    } else if (ad.surveyAdRef && !ad.surveyAdRef.isAdVerified) {
+      // handle survey ad rejection
+    }
+    */
+
+    if (!updatedAd) {
+      return res.status(400).json({ message: "Ad is already verified or invalid ad type" });
+    }
+
+    return res.status(200).json({
+      message: `Ad rejected successfully (${adType} ad)`,
+      updatedAd,
+    });
+  } catch (error) {
+    console.error("Error rejecting ad:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 export {
   registerAdmin,
@@ -425,4 +482,5 @@ export {
   verifyAdById,
   getAdminWallet,
   getSuperAdminWallet,
+  rejectAdById 
 };

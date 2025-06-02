@@ -18,7 +18,7 @@ const adsRouter = Router();
 
 adsRouter.post("/image-ad/:id", adImageUpload, createImageAd);
 adsRouter.post("/video-ad/:id", adVideoUpload, createVideoAd);
-adsRouter.post("/survey-ad", createSurveyAd);
+adsRouter.post("/survey-ad/:id", createSurveyAd);
 adsRouter.get("/ads-to-verify", fetchAdsForVerification);
 adsRouter.get("/verified-ads", fetchVerifiedAds);
 adsRouter.get('/single-verified/:adId', fetchSingleVerifiedAd);

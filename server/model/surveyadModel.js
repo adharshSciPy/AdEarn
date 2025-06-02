@@ -18,11 +18,51 @@ const surveyAdSchema = new mongoose.Schema({
       },
     },
   ],
+userViewsNeeded: {
+  type: Number,
+  required: true,
+},
+totalStarsAllocated: {
+  type: Number,
+  required: true,
+},
+starPayoutPlan: {
+  type: [Number],
+  default: [],
+},
+adPeriod: {
+  type: Number,
+},
+adRepetition: {
+  type: Boolean,
+  default: false,
+},
+targetRegions: [
+  {
+    location: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point',
+      },
+      coordinates: {
+        type: [Number], // [lng, lat]
+        required: true,
+      },
+    },
+    radius: {
+      type: Number,
+      required: true,
+    },
+  }
+],
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: false,
   },
 }, { timestamps: true });
+
+surveyAdSchema.index({ 'targetRegions.location': '2dsphere' });
 
 export const SurveyAd = mongoose.model('SurveyAd', surveyAdSchema);
