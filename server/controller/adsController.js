@@ -194,7 +194,7 @@ const createImageAd = async (req, res) => {
 // ------------------- VIDEO AD -------------------
 
 const createVideoAd = async (req, res) => {
-  const { title, description, videoUrl, userViewsNeeded, adPeriod, locations } = req.body;
+  const { title, description,  userViewsNeeded, adPeriod, locations } = req.body;
   const { id } = req.params;
 
   if (!id) return res.status(400).json({ message: "User ID is required" });
