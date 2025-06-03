@@ -1,6 +1,15 @@
 import mongoose, { Schema } from "mongoose";
+
 const userWallet = new Schema({
   totalStars: {
+    type: Number,
+    default: 0,
+  },
+  couponStars: {
+    type: Number,
+    default: 0,
+  },
+  adWatchStars: {
     type: Number,
     default: 0,
   },
@@ -16,7 +25,7 @@ const userWallet = new Schema({
       },
       paymentId: {
         type: String,
-        // required: true,
+        // optional
       },
       paymentStatus: {
         type: String,
@@ -26,5 +35,13 @@ const userWallet = new Schema({
       },
     },
   ],
+  referralTransactions: [
+    {
+      fromUser: { type: Schema.Types.ObjectId, ref: "User" },
+      starsReceived: { type: Number, required: true },
+      timestamp: { type: Date, default: Date.now },
+    },
+  ],
 });
+
 export const UserWallet = mongoose.model("UserWallet", userWallet);

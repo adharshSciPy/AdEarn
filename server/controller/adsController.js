@@ -1018,6 +1018,8 @@ const viewAd = async (req, res) => {
     }
 
     wallet.totalStars += starsToGive;
+wallet.adWatchStars += starsToGive;
+
 
    const alreadyViewed = user.viewedAds.some(
       (entry) => entry.adId.toString() === ad._id.toString()
