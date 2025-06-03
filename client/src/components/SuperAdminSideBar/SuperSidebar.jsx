@@ -93,10 +93,10 @@ function Sidebar() {
       label: "Star",
       icon: <UserOutlined />,
       children: [
-        { key: "user-star", label: "User Star", path: "/Userstar" },
-        { key: "admin-star", label: "Admin Star", path: "/AdminAds" },
-        { key: "company-star", label: "Company Star", path: "/AdminAds" },
-        { key: "welcome-star", label: "Welcome Star", path: "/AdminAds" },
+        { key: "user-star", label: "User Star", path: "/superadminuserstar" },
+        { key: "admin-star", label: "Admin Star", path: "/superadminadminstar" },
+        { key: "company-star", label: "Company Star", path: "/superadmincompanystar" },
+        { key: "welcome-star", label: "Welcome Star", path: "/superadminwelcomestar" },
         {
           key: "Referal-star",
           label: "Refereal Star",
