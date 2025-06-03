@@ -179,7 +179,7 @@ function Sidebar() {
       icon: <ContainerOutlined />,
       children: [
         { key: "tips", label: "Tips ", path: "/AdminReport" },
-        { key: "notification", label: "Notifications ", path: "/AdminReport" },
+        { key: "notification", label: "Notifications ", path: "/superadminNotification" },
 
       ],
     },
