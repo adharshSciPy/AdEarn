@@ -63,7 +63,7 @@ import AddAdmin from './pages/superadmin/AdminManage/AddAdmin';
 import ManageAdminSuperAdmin from './pages/superadmin/ManageAdmin/ManageAdmin';
 import SubscritionPlan from './pages/superadmin/Subscription/SubscritionPlan';
 import WelcomeBonusDistribution from './pages/superadmin/WelcomeBonusDistribution/WelcomeBonusDistribution';
-
+import SuperAdminReport from './pages/superadmin/Report/Report'
 function App() {
   return (
     <div className="App">
@@ -137,6 +137,8 @@ function App() {
           <Route path='/superadminmanageadmin' element={<ManageAdminSuperAdmin  />} />
           <Route path='/superadminsubscritionplan' element={<SubscritionPlan  />} />
           <Route path='/superadminwelcomedistribution' element={<WelcomeBonusDistribution  />} />
+          <Route path='/superadminreport' element={<SuperAdminReport/>} />
+
 
 
 

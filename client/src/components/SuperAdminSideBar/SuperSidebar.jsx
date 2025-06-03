@@ -162,8 +162,7 @@ function Sidebar() {
       label: "Report & Analytics",
       icon: <ContainerOutlined />,
       children: [
-        { key: "ad-user", label: "Ad user", path: "/AdminReport" },
-        { key: "disabled-user", label: "Disabled User", path: "/AdminReport" },
+        { key: "ad-user", label: "Ad user", path: "/superadminreport" },
       ],
     },
     {
