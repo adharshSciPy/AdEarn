@@ -65,6 +65,15 @@ import WelcomeBonusDistribution from './pages/superadmin/WelcomeBonusDistributio
 import SuperAdminReport from './pages/superadmin/Report/Report'
 import Notification from './pages/superadmin/Notifications/Notification';
 import SuperAdminContestPage from './pages/superadmin/SuperAdminContestPage/SuperAdminContestPage';
+import AdminStar from './pages/superadmin/StarDistribution/AdminStar/AdminStar'
+import Adstar from './pages/superadmin/StarDistribution/AdStar/AdStar'
+import CompanyStar from './pages/superadmin/StarDistribution/CompanyStar/CompanyStar'
+import ContestStar from './pages/superadmin/StarDistribution/ContestStar/ContestStar'
+import CouponStar from './pages/superadmin/StarDistribution/CouponStar/CouponStar'
+import ReferealStar from './pages/superadmin/StarDistribution/ReferalStar/ReferalStar'
+import SubScriptionStar from './pages/superadmin/StarDistribution/SubscriptionStar/SubscriptionStar'
+import Userstar from './pages/superadmin/StarDistribution/UserStar/UserStar';
+import WelcomeStar from './pages/superadmin/StarDistribution/WelcomeStar/WelcomeStar'
 
 
 
@@ -143,6 +152,24 @@ function App() {
           <Route path='/superadminreport' element={<SuperAdminReport />} />
           <Route path='/superadminNotification' element={<Notification />} />
           <Route path='/superadmincontestpage' element={<SuperAdminContestPage/>} />
+          <Route path='/superadminadminstar' element={<AdminStar/>} />
+          <Route path='/superadminadstar' element={<Adstar/>} />
+          <Route path='/superadmincompanystar' element={<CompanyStar/>} />
+          <Route path='/superadminconteststar' element={<ContestStar/>} />
+          <Route path='/superadmincouponstar' element={<CouponStar/>} />
+          <Route path='/superadminreferalstar' element={<ReferealStar/>} />
+          <Route path='/superadminsubscriptionstar' element={<SubScriptionStar/>} />
+          <Route path='/superadminuserstar' element={<Userstar/>} />
+          <Route path='/superadminwelcomestar' element={<WelcomeStar/>} />
+
+
+
+
+
+
+
+
+
 
 
 
