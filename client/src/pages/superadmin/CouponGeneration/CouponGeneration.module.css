@@ -1,0 +1,86 @@
+.UserAccount {
+  display: flex;
+}
+.wrapper {
+  padding: 2rem;
+  font-family: "Segoe UI", sans-serif;
+  width: 100%;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logBtn {
+  border: 1px solid #cdd6f3;
+  padding: 5px 10px;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.container {
+  max-width: 100%;
+  margin: 40px auto;
+  padding: 30px;
+  border: 1px solid #d0d6ff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  font-family: "Segoe UI", sans-serif;
+}
+
+h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.subheading {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+label {
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.cancel {
+  background-color: white;
+  border: 1px solid #ccc;
+  color: #333;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.submit {
+  background-color: #246bfd;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}

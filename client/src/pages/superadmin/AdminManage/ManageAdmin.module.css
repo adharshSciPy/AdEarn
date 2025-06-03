@@ -1,0 +1,21 @@
+.UserAccount {
+  display: flex;
+}
+.wrapper {
+  padding: 2rem;
+  font-family: "Segoe UI", sans-serif;
+  width: 100%;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logBtn {
+  border: 1px solid #cdd6f3;
+  padding: 5px 10px;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
