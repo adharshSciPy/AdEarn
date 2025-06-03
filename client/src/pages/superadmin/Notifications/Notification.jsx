@@ -2,7 +2,8 @@ import React from 'react'
 import styles from "./Notification.module.css"
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar"
 import Header from '../../../components/Header/Header'
-import { Button } from 'antd'
+import { Button, Input } from 'antd'
+const { TextArea } = Input;
 function Notification() {
     return (
         <div className={styles.notificationmain}>
@@ -14,6 +15,12 @@ function Notification() {
                         <div className={styles.notificationhead}>
                             <h1>Notification</h1>
                             <Button>Log</Button>
+                        </div>
+                        <div className={styles.inputnotification}>
+                            <TextArea rows={4} placeholder="Notification" />
+                        </div>
+                        <div className={styles.subbutton}>
+                            <Button>Submit</Button>
                         </div>
                     </div>
                 </div>
