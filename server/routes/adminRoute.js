@@ -1,5 +1,5 @@
 import { Router } from "express";
-import{ registerAdmin,updateAdmin,adminLogin, getAllUsers, fetchKycUploadedUsers, fetchSingleKycUploadUser, getSingleUser, verifyKyc, rejectKyc, verifyAdById, getAdminWallet} from "../controller/adminController.js";
+import{ registerAdmin,updateAdmin,adminLogin, getAllUsers, fetchKycUploadedUsers, fetchSingleKycUploadUser, getSingleUser, verifyKyc, rejectKyc, verifyAdById, getAdminWallet,rejectAdById} from "../controller/adminController.js";
 const adminRouter = Router()
 
 adminRouter.route('/admin-register').post(registerAdmin)
@@ -13,7 +13,7 @@ adminRouter.route('/kyc-approval').post(verifyKyc)
 adminRouter.route('/kyc-rejection').post(rejectKyc)
 adminRouter.route('/verify-ad').post(verifyAdById)
 adminRouter.route('/admin-wallet').get(getAdminWallet)
-
+adminRouter.route('/reject-ad').post(rejectAdById)
 
 
 

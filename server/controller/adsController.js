@@ -194,8 +194,9 @@ const createImageAd = async (req, res) => {
 // ------------------- VIDEO AD -------------------
 
 const createVideoAd = async (req, res) => {
-  const { title, description, videoUrl, userViewsNeeded, adPeriod, locations } = req.body;
+  const { title, description,  userViewsNeeded, adPeriod, locations } = req.body;
   const { id } = req.params;
+  const videoUrl = req.file?.path;
 
   if (!id) return res.status(400).json({ message: "User ID is required" });
   if (!title || !description || !videoUrl || !userViewsNeeded)
@@ -300,16 +301,14 @@ const createVideoAd = async (req, res) => {
 // ------------------- SURVEY AD -------------------
 
 const createSurveyAd = async (req, res) => {
-  const { title, questions, id } = req.body;
+  const { title, questions, userViewsNeeded, adPeriod, locations } = req.body;
+  const { id } = req.params;
 
-  // Input validations
-  if (!id) {
-    return res.status(400).json({ message: "User ID is required" });
-  }
+  if (!id) return res.status(400).json({ message: "User ID is required" });
 
-  if (!title || !Array.isArray(questions) || questions.length === 0) {
+  if (!title || !Array.isArray(questions) || questions.length === 0 || !userViewsNeeded) {
     return res.status(400).json({
-      message: "Survey Ad must have a title and at least one question",
+      message: "Survey Ad must have a title, userViewsNeeded, and at least one question",
     });
   }
 
@@ -321,34 +320,93 @@ const createSurveyAd = async (req, res) => {
     }
   }
 
+  // Parse ad period and repetition flag
+  const parsedAdPeriod = parseFloat(adPeriod);
+  const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
+
+  // Parse and validate locations
+  let targetRegions = [];
   try {
-    // Check if user exists
-    const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    const parsedLocations = typeof locations === "string" ? JSON.parse(locations) : locations;
+    if (!Array.isArray(parsedLocations) || parsedLocations.length === 0) {
+      return res.status(400).json({ message: "At least one location is required" });
     }
 
-    // Create SurveyAd
+    for (const loc of parsedLocations) {
+      if (!loc.coords || !loc.radius) continue;
+      const [latStr, lngStr] = loc.coords.split(",");
+      const latitude = parseFloat(latStr);
+      const longitude = parseFloat(lngStr);
+      const radius = parseFloat(loc.radius);
+
+      if (isNaN(latitude) || isNaN(longitude) || isNaN(radius)) {
+        return res.status(400).json({ message: "Invalid location format" });
+      }
+
+      targetRegions.push({
+        location: {
+          type: "Point",
+          coordinates: [longitude, latitude],
+        },
+        radius,
+      });
+    }
+  } catch (err) {
+    return res.status(400).json({ message: "Invalid location format", error: err.message });
+  }
+
+  try {
+    const user = await User.findById(id).populate("userWalletDetails");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const userWallet = user.userWalletDetails;
+    if (!userWallet) return res.status(400).json({ message: "User wallet not found" });
+
+    // Deduct stars
+    const starsDeductionRate = 0.6;
+    const starsToBeDeducted = userViewsNeeded * starsDeductionRate;
+
+    if (userWallet.totalStars < starsToBeDeducted) {
+      const starsShort = starsToBeDeducted - userWallet.totalStars;
+      return res.status(401).json({ message: `Insufficient stars. You need ${starsShort} more stars to post this ad.` });
+    }
+
+    // Star payout plan (same logic as video ad)
+    const highvalueArray = [5, 4, 3, 2];
+    const highValueStarConversion = userViewsNeeded / 100;
+    const highValueStars = highvalueArray.map(val => val * highValueStarConversion);
+    const highValueTotal = highValueStars.reduce((acc, val) => acc + val, 0);
+    const singleStarsCount = Math.floor(starsToBeDeducted - highValueTotal);
+    const singleStars = Array(singleStarsCount).fill(1);
+    const nullStarsCount = userViewsNeeded - (highValueStars.length + singleStars.length);
+    const nullStars = Array(nullStarsCount).fill(0);
+
+    const starPayoutPlan = [...highValueStars, ...singleStars, ...nullStars];
+
+    userWallet.totalStars -= starsToBeDeducted;
+    await userWallet.save();
+
     const surveyAd = await SurveyAd.create({
       title,
       questions,
       createdBy: user._id,
+      userViewsNeeded,
+      totalStarsAllocated: starsToBeDeducted,
+      starPayoutPlan,
+      adPeriod: adRepetition ? parsedAdPeriod : 0,
+      adRepetition,
+      targetRegions,
     });
 
-    // Create Ad and link SurveyAd
-    const ad = await Ad.create({
-      surveyAdRef: surveyAd._id,
-    });
-
-    // Push new ad to user's ads array
+    const ad = await Ad.create({ surveyAdRef: surveyAd._id });
     user.ads.push(ad._id);
     await user.save();
 
     return res.status(200).json({
-      message: "Survey Ad created and linked successfully",
+      message: "Survey Ad created successfully and stars deducted",
       surveyAd,
       ad,
-      user,
+      remainingStars: userWallet.totalStars,
     });
   } catch (err) {
     console.error("Error creating Survey Ad:", err);
@@ -358,6 +416,7 @@ const createSurveyAd = async (req, res) => {
     });
   }
 };
+
 // fetching all the ads with isVerified:false for verification
 const fetchAdsForVerification = async (req, res) => {
   try {
