@@ -62,6 +62,11 @@ import CouponGeneration from './pages/superadmin/CouponGeneration/CouponGenerati
 import AddAdmin from './pages/superadmin/AdminManage/AddAdmin';
 import SubscritionPlan from './pages/superadmin/Subscription/SubscritionPlan';
 import WelcomeBonusDistribution from './pages/superadmin/WelcomeBonusDistribution/WelcomeBonusDistribution';
+import SuperAdminReport from './pages/superadmin/Report/Report'
+import Notification from './pages/superadmin/Notifications/Notification';
+import SuperAdminContestPage from './pages/superadmin/SuperAdminContestPage/SuperAdminContestPage';
+
+
 
 function App() {
   return (
@@ -131,10 +136,16 @@ function App() {
           <Route path='/Userstar' element={<Userstars />} />
           <Route path='/AdsDistribution' element={<AdsDistribution />} />
           <Route path='/StarDistributiongraph' element={<StarDistributiongraph />} />
-          <Route path='/superadmincoupongeneration' element={<CouponGeneration   />} />
-          <Route path='/superadminaddadmin' element={<AddAdmin/>} />
-          <Route path='/superadminsubscritionplan' element={<SubscritionPlan  />} />
-          <Route path='/superadminwelcomedistribution' element={<WelcomeBonusDistribution  />} />
+          <Route path='/superadmincoupongeneration' element={<CouponGeneration />} />
+          <Route path='/superadminaddadmin' element={<AddAdmin />} />
+          <Route path='/superadminsubscritionplan' element={<SubscritionPlan />} />
+          <Route path='/superadminwelcomedistribution' element={<WelcomeBonusDistribution />} />
+          <Route path='/superadminreport' element={<SuperAdminReport />} />
+          <Route path='/superadminNotification' element={<Notification />} />
+          <Route path='/superadmincontestpage' element={<SuperAdminContestPage/>} />
+
+
+
 
 
 

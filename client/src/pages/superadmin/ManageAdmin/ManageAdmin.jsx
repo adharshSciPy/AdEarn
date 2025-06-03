@@ -15,7 +15,7 @@ function ManageAdmin() {
       <div className={styles.manageadminwrapper}>
         <div className={styles.manageadminheader}>
           <div className={styles.manageadminheaderitem}>Admin</div>
-          <div className={styles.manageadminheaderitem}>Disable/Enable</div>
+          {/* <div className={styles.manageadminheaderitem}>Disable/Enable</div> */}
           <div className={styles.manageadminheaderitem}>Coupons Distributed</div>
           <div className={styles.manageadminheaderitem}>Ads Verified</div>
           <div className={styles.manageadminheaderitem}>Rejected Ads</div>
@@ -27,7 +27,7 @@ function ManageAdmin() {
             <p className={styles.manageadminadminname}>John Doe</p>
           </div>
 
-          <div className={styles.manageadmindataitem}>
+          {/* <div className={styles.manageadmindataitem}>
             <label className={styles.manageadmintoggleswitch}>
               <input
                 type="checkbox"
@@ -36,7 +36,7 @@ function ManageAdmin() {
               />
               <span className={styles.manageadmintoggleslider}></span>
             </label>
-          </div>
+          </div> */}
 
           <div className={styles.manageadmindataitem}>
             <p>1234</p>
@@ -49,22 +49,6 @@ function ManageAdmin() {
             <span className={styles.manageadmindeleteicon} title="Delete">
               🗑️
             </span>
-          </div>
-        </div>
-        <div className={styles.manageadminformsection}>
-          <h4 className={styles.manageadminformheading}>Admin1</h4>
-          <div className={styles.manageadmininputrow}>
-            <div className={styles.manageadmininputgroup}>
-              <label htmlFor="username">Username</label>
-              <input type="text" id="username" placeholder="Enter username" />
-            </div>
-            <div className={styles.manageadmininputgroup}>
-              <label htmlFor="password">Password</label>
-              <input type="password" id="password" placeholder="Enter password" />
-            </div>
-          </div>
-          <div className={styles.submitbutton}>
-            <Button>Submit</Button>
           </div>
         </div>
       </div>

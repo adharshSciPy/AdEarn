@@ -40,7 +40,7 @@ function AddAdmin() {
               placeholder="Admin Name"
             />
 
-            <label>Enter generating coupon count</label>
+            <label>Admin Username</label>
             <input
               type="text"
               name="adminusername"

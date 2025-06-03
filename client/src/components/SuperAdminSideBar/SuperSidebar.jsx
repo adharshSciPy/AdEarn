@@ -126,19 +126,19 @@ function Sidebar() {
       label: "Contest",
       icon: <UserOutlined />,
       children: [
-        { key: "create-contest", label: "Create Contest", path: "/AdminContest" },
+        { key: "create-contest", label: "Create Contest", path: "/superadmincontestpage" },
         { key: "contest-winner", label: "Contest winner", path: "/demo" },
       ],
     },
-    {
-      key: "referal",
-      label: "Referal",
-      icon: <ContainerOutlined />,
-      children: [
-        { key: "referal-bonus", label: "Referal Bonus", path: "/AdminReport" },
-        { key: "star-distribution", label: "Star Distribution", path: "/demo" },
-      ],
-    },
+    // {
+    //   key: "referal",
+    //   label: "Referal",
+    //   icon: <ContainerOutlined />,
+    //   children: [
+    //     { key: "referal-bonus", label: "Referal Bonus", path: "/AdminReport" },
+    //     { key: "star-distribution", label: "Star Distribution", path: "/demo" },
+    //   ],
+    // },
     {
       key: "welcome-bonus",
       label: "Welcome Bonus",
@@ -154,7 +154,7 @@ function Sidebar() {
       icon: <ContainerOutlined />,
       children: [
         { key: "admin-add", label: "Add Admin ", path: "/superadminaddadmin" },
-        { key: "admin-delete", label: " Delete Admin", path: "/demo" },
+        { key: "admin-delete", label: " Delete Admin", path: "/manageadmin" },
       ],
     },
     {
@@ -162,8 +162,7 @@ function Sidebar() {
       label: "Report & Analytics",
       icon: <ContainerOutlined />,
       children: [
-        { key: "ad-user", label: "Ad user", path: "/AdminReport" },
-        { key: "disabled-user", label: "Disabled User", path: "/AdminReport" },
+        { key: "ad-user", label: "Ad user", path: "/superadminreport" },
       ],
     },
     {
