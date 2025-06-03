@@ -100,16 +100,16 @@ function Sidebar() {
         {
           key: "Referal-star",
           label: "Refereal Star",
-          path: "/AdminAds",
+          path: "/superadminreferalstar",
         },
-        { key: "contest-star", label: "Contest Star", path: "/AdminAds" },
-        { key: "coupons-star", label: "Coupons Star", path: "/AdminAds" },
+        { key: "contest-star", label: "Contest Star", path: "/superadminconteststar" },
+        { key: "coupons-star", label: "Coupons Star", path: "/superadmincouponstar" },
         {
           key: "subscription-star",
           label: "Subscription Star",
-          path: "/AdminAds",
+          path: "/superadminsubscriptionstar",
         },
-        { key: "Ads-star", label: "Ads Star", path: "/AdsDistribution" },
+        { key: "Ads-star", label: "Ads Star", path: "/superadminadstar" },
       ],
     },
     
