@@ -23,7 +23,7 @@ adsRouter.get("/ads-to-verify", fetchAdsForVerification);
 adsRouter.get("/verified-ads", fetchVerifiedAds);
 adsRouter.get('/single-verified/:adId', fetchSingleVerifiedAd);
 adsRouter.get('/image-ads/:userId', fetchVerifiedImgAd);
-adsRouter.get('/video-ads', fetchVerifiedVideoAd);
+adsRouter.get('/video-ads/:userId', fetchVerifiedVideoAd);
 adsRouter.post('/view-ads/:userId', viewAd);
 
 

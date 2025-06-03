@@ -271,6 +271,7 @@ const createVideoAd = async (req, res) => {
     await userWallet.save();
 
     // Save video ad
+    const videoUrl = `/videoAdUploads/${req.file.filename}`;
     const videoAd = await VideoAd.create({
       title,
       description,
@@ -283,6 +284,7 @@ const createVideoAd = async (req, res) => {
       starPayoutPlan,
       targetRegions,
     });
+    const ad = await Ad.create({ videoAdRef:videoAd._id });
 
     user.ads.push(videoAd._id);
     await user.save();
@@ -290,6 +292,7 @@ const createVideoAd = async (req, res) => {
     return res.status(200).json({
       message: "Video Ad created successfully and stars deducted",
       videoAd,
+      ad,
       remainingStars: userWallet.totalStars,
     });
   } catch (error) {
@@ -708,21 +711,24 @@ const fetchVerifiedVideoAd = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // ✅ Use stored coordinates from the profile
     const profileCoords = user.locationCoordinates
       ? { lat: user.locationCoordinates.lat, lng: user.locationCoordinates.lng }
       : null;
 
+    // ✅ Validate that at least one location source exists
     if ((!userLat || !userLng) && !profileCoords) {
       return res.status(400).json({
         message: "No valid user geolocation available for location-based ad matching",
       });
     }
 
-    const allVideoAds = await VideoAd.find();
+    const allAds = await Ad.find().populate("videoAdRef");
     const currentDate = new Date();
     const verifiedVideoAds = [];
 
-    for (const videoAd of allVideoAds) {
+    for (const ad of allAds) {
+      const videoAd = ad.videoAdRef;
       if (!videoAd || videoAd.createdBy?.toString() === userId) continue;
 
       const isUserInTargetRegion = videoAd.targetRegions?.some(region => {
@@ -766,7 +772,7 @@ const fetchVerifiedVideoAd = async (req, res) => {
         }
 
         verifiedVideoAds.push({
-          _id: videoAd._id,
+          _id: ad._id,
           videoAd: {
             ...videoAd.toObject(),
             isVerified: videoAd.isAdVerified,
@@ -805,36 +811,119 @@ const fetchVerifiedVideoAd = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
+
 // to fetch verified surveyAd
 const fetchVerifiedSurveyAd = async (req, res) => {
   try {
-    const allAds = await Ad.find().populate("surveyAdRef");
+    const { userId } = req.params;
+    const userLat = parseFloat(req.query.lat);
+    const userLng = parseFloat(req.query.lng);
 
-    const verifiedSurveyAds = allAds.filter(
-      (ads) => ads.surveyAdRef && ads.surveyAdRef.isAdVerified
-    );
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (verifiedSurveyAds.length === 0) {
-      return res.status(404).json({ message: "No verified survey ads found" });
+    const profileCoords = user.locationCoordinates
+      ? { lat: user.locationCoordinates.lat, lng: user.locationCoordinates.lng }
+      : null;
+
+    if ((!userLat || !userLng) && !profileCoords) {
+      return res.status(400).json({
+        message: "No valid user geolocation available for location-based ad matching",
+      });
     }
 
-    const formattedAds = verifiedSurveyAds.map((ads) => ({
-      _id: ads._id,
-      surveyAd: {
-        ...ads.surveyAdRef.toObject(),
-        isVerified: ads.surveyAdRef.isAdVerified,
-      },
-    }));
+    const allAds = await Ad.find().populate("surveyAdRef");
+    const currentDate = new Date();
+    const verifiedSurveyAds = [];
+
+    for (const ad of allAds) {
+      const surveyAd = ad.surveyAdRef;
+      if (!surveyAd || surveyAd.createdBy?.toString() === userId) continue;
+
+      // Check if user is within target region
+      const isUserInTargetRegion = surveyAd.targetRegions?.some(region => {
+        if (!region?.location?.coordinates) return false;
+
+        const [targetLng, targetLat] = region.location.coordinates;
+        const radiusMeters = region.radius * 1000;
+
+        const withinLiveLocation =
+          userLat && userLng &&
+          calculateDistance(userLat, userLng, targetLat, targetLng) <= radiusMeters;
+
+        const withinProfileLocation =
+          profileCoords &&
+          calculateDistance(profileCoords.lat, profileCoords.lng, targetLat, targetLng) <=
+            radiusMeters;
+
+        return withinLiveLocation || withinProfileLocation;
+      });
+
+      if (!isUserInTargetRegion) continue;
+
+      const hasUserCompleted = surveyAd.usersCompleted?.some(
+        entry => entry.userId.toString() === userId
+      );
+
+      const adIsActive =
+        surveyAd.isAdVerified &&
+        surveyAd.isAdVisible &&
+        surveyAd.totalResponses < surveyAd.responseLimit &&
+        (!surveyAd.adExpirationTime || surveyAd.adExpirationTime > currentDate);
+
+      if (adIsActive) {
+        if (!surveyAd.allowRepeat && hasUserCompleted) continue;
+
+        if (surveyAd.allowRepeat) {
+          const userSchedule = surveyAd.repeatSchedule?.find(
+            entry => entry.userId.toString() === userId
+          );
+          if (userSchedule && userSchedule.nextScheduledAt > currentDate) continue;
+        }
+
+        verifiedSurveyAds.push({
+          _id: ad._id,
+          surveyAd: {
+            ...surveyAd.toObject(),
+            isVerified: surveyAd.isAdVerified,
+          },
+        });
+      } else {
+        const updateFields = {};
+        let shouldUpdate = false;
+
+        if (surveyAd.totalResponses >= surveyAd.responseLimit && !surveyAd.isResponsesReached) {
+          updateFields.isResponsesReached = true;
+          shouldUpdate = true;
+        }
+
+        if (surveyAd.adExpirationTime && surveyAd.adExpirationTime <= currentDate && surveyAd.isAdVisible) {
+          updateFields.isAdVisible = false;
+          shouldUpdate = true;
+        }
+
+        if (shouldUpdate) {
+          await SurveyAd.findByIdAndUpdate(surveyAd._id, updateFields);
+        }
+      }
+    }
+
+    if (verifiedSurveyAds.length === 0) {
+      return res.status(404).json({ message: "No verified and eligible survey ads found for your location" });
+    }
 
     return res.status(200).json({
       message: "Verified survey ads fetched successfully",
-      ads: formattedAds,
+      ads: verifiedSurveyAds,
     });
   } catch (error) {
     console.error("Error fetching verified survey ads:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 // to watch ads,star split,view count
 const viewAd = async (req, res) => {
   const { adId } = req.body;
