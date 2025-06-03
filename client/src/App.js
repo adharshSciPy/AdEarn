@@ -60,7 +60,6 @@ import AdsDistribution from './pages/superadmin/AdsDistribution/AdsDistribution'
 import StarDistributiongraph from './pages/superadmin/StarDistributiongraph/StarDistributiongraph'
 import CouponGeneration from './pages/superadmin/CouponGeneration/CouponGeneration';
 import AddAdmin from './pages/superadmin/AdminManage/AddAdmin';
-import ManageAdminSuperAdmin from './pages/superadmin/ManageAdmin/ManageAdmin';
 import SubscritionPlan from './pages/superadmin/Subscription/SubscritionPlan';
 import WelcomeBonusDistribution from './pages/superadmin/WelcomeBonusDistribution/WelcomeBonusDistribution';
 
@@ -134,7 +133,6 @@ function App() {
           <Route path='/StarDistributiongraph' element={<StarDistributiongraph />} />
           <Route path='/superadmincoupongeneration' element={<CouponGeneration   />} />
           <Route path='/superadminaddadmin' element={<AddAdmin/>} />
-          <Route path='/superadminmanageadmin' element={<ManageAdminSuperAdmin  />} />
           <Route path='/superadminsubscritionplan' element={<SubscritionPlan  />} />
           <Route path='/superadminwelcomedistribution' element={<WelcomeBonusDistribution  />} />
 
