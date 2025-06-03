@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import styles from "./contextpage.module.css";
+import styles from "./contestpage.module.css";
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
 
 
-function SuperAdminContextPage() {
+function SuperAdminContestPage() {
       const [formData, setFormData] = useState({
         couponNumber: "",
         couponCount: "",
@@ -27,53 +27,46 @@ function SuperAdminContextPage() {
       <SuperSidebar />
       <div className={styles.wrapper}>
         <div className={styles.header}>
-          <h2>Coupon Generation</h2>
+          <h2>Create Contest</h2>
         </div>
         <div className={styles.container}>
           <form className={styles.form} onSubmit={handleSubmit}>
-            <label>Enter coupon number</label>
+            <label>Enter Contest Name</label>
             <input
               type="text"
-              name="couponNumber"
-              value={formData.couponNumber}
+              name="contestName"
+              value={formData.contestName}
               onChange={handleChange}
-              placeholder="Enter coupon number"
+              placeholder="Enter Contest Name"
             />
 
-            <label>Enter generating coupon count</label>
+            <label>Enter Contest Number</label>
             <input
               type="text"
-              name="couponCount"
-              value={formData.couponCount}
+              name="contestNumber"
+              value={formData.contestNumber}
               onChange={handleChange}
-              placeholder="Enter contest name"
+              placeholder="Enter Contest Number"
             />
 
-            <label>Enter each coupon star count</label>
-            <input
-              type="text"
-              name="starCount"
-              value={formData.starCount}
-              onChange={handleChange}
-              placeholder="Enter star count"
-            />
-
-            <label>Enter date</label>
+            <label>Enter Start Date</label>
             <input
               type="date"
-              name="date"
-              value={formData.date}
+              name="startDate"
+              value={formData.startDate}
               onChange={handleChange}
+              placeholder="Enter Start Date"
             />
 
-            {/* <label>Enter expiry date</label>
-        <input
-          type="date"
-          name="expiryDate"
-          value={formData.expiryDate}
-          onChange={handleChange}
-        /> */}
-
+            <label>Total Users</label>
+            <input
+              type="text"
+              name="totalEntry"
+              value={formData.totalEntry}
+              onChange={handleChange}
+              placeholder="Total Users"
+            />
+            
             <div className={styles.buttons}>
               <button type="button" className={styles.cancel}>
                 Cancel
@@ -89,4 +82,4 @@ function SuperAdminContextPage() {
   )
 }
 
-export default SuperAdminContextPage
+export default SuperAdminContestPage

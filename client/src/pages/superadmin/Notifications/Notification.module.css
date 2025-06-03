@@ -1,0 +1,22 @@
+.notificationmain {
+  height: max-content;
+  padding-bottom: 200px;
+}
+
+.notificationcontainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.notificationform {
+  width: calc(100% - 250px);
+  margin-left: 250px;
+  position: absolute;
+  top: 330px;
+  z-index: 999;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
