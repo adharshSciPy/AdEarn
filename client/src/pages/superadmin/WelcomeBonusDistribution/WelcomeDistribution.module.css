@@ -1,0 +1,197 @@
+.accountsmain {
+  min-height: 100vh;
+  padding-bottom: 200px;
+  margin-top: 20px;
+}
+
+.accountscontainer {
+  display: flex;
+}
+
+.accountsgraph {
+  width: 100%;
+  padding: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.logbutton {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.accountshead {
+  margin-bottom: 20px;
+}
+
+.accountshead h1 {
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.totalamountsection {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 50px;
+}
+
+.accountsheadsection {
+  background-color: #693bb8;
+  color: white;
+  border-radius: 20px;
+  padding: 40px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.accountamountdetails {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.addStar {
+  padding: 10px 20px;
+  background-color: transparent;
+  color: white;
+  border: 1px solid white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.addStar:hover {
+  background-color: white;
+  color: #693bb8;
+}
+
+.container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.table thead {
+  background-color: #f5f5f5;
+}
+
+.table th,
+.table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.userCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.userName {
+  font-weight: 600;
+}
+
+.userSub {
+  font-size: 12px;
+  color: gray;
+}
+
+.applied {
+  color: green;
+  font-weight: 500;
+}
+
+.notApplied {
+  color: red;
+  font-weight: 500;
+}
+
+.star {
+  font-weight: bold;
+  color: #f39c12;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+  background-color: #f0f0f0;
+  font-weight: 600;
+  border-top: 2px solid #ccc;
+}
+
+.loader {
+  text-align: center;
+  padding: 20px;
+  font-size: 14px;
+  color: #888;
+}
+
+/* Modal Styles */
+.modalp {
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.imageUploadBox {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.uploadLabel {
+  padding: 10px 20px;
+  background-color: #693bb8;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.imagePreview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .accountsgraph {
+    margin-left: 0;
+    width: 100%;
+    padding: 20px;
+  }
+
+  .accountsheadsection {
+    flex-direction: column;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  .table th,
+  .table td {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .logbutton {
+    justify-content: center;
+  }
+}

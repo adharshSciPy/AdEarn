@@ -60,7 +60,7 @@ function Sidebar() {
       label: "Users",
       icon: <UserOutlined />,
       children: [
-        { key: "user-account", label: "User Account", path: "/AdminAds" },
+        { key: "user-account", label: "User Account", path: "/superadminadsuser" },
         { key: "deleted-user", label: "Delete User", path: "/demo" },
       ],
     },
@@ -69,23 +69,23 @@ function Sidebar() {
       label: "Accounts",
       icon: <UserOutlined />,
       children: [
-        { key: "user-account", label: "User Account", path: "/AdminAds" },
-        { key: "admin-account", label: "Admin Account", path: "/AdminAds" },
+        { key: "user-account", label: "User Account", path: "/superadminuseraccount" },
+        { key: "admin-account", label: "Admin Account", path: "/superadminadminaccount" },
         { key: "company-account", label: "Company Account", path: "/Companyaccounts" },
-        { key: "welcome-account", label: "Welcome Account", path: "/AdminAds" },
-        {
-          key: "Referal-account",
-          label: "Refereal Account",
-          path: "/AdminAds",
-        },
-        { key: "contest-account", label: "Contest Account", path: "/AdminAds" },
-        { key: "coupons-account", label: "Coupons Account", path: "/AdminAds" },
+        { key: "welcome-account", label: "Welcome Account", path: "/superadminwelcomebonus" },
+        // {
+        //   key: "Referal-account",
+        //   label: "Refereal Account",
+        //   path: "/AdminAds",
+        // },
+        { key: "contest-account", label: "Contest Account", path: "/superadmincontestaccount" },
+        { key: "coupons-account", label: "Coupons Account", path: "/superadmincouponaccount" },
         {
           key: "subscription-account",
           label: "Subscription Account",
-          path: "/AdminAds",
+          path: "/superadminsubscriptionaccount",
         },
-        { key: "Ads-account", label: "Ads Account", path: "/AdminAds" },
+        { key: "Ads-account", label: "Ads Account", path: "/superadminadsaccount" },
       ],
     },
     {
@@ -112,6 +112,15 @@ function Sidebar() {
         { key: "Ads-star", label: "Ads Star", path: "/AdsDistribution" },
       ],
     },
+    
+    {
+      key: "coupongeneration",
+      label: "Coupon Generation",
+      icon: <UserOutlined />,
+      children: [
+        { key: "generate-coupons", label: "Generate Coupons", path: "/superadmincoupongeneration" },
+      ],
+    },
     {
       key: "contest",
       label: "Contest",
@@ -135,7 +144,7 @@ function Sidebar() {
       label: "Welcome Bonus",
       icon: <ContainerOutlined />,
       children: [
-        { key: "welcome-bonus", label: "Welcome Bonus", path: "/AdminReport" },
+        { key: "welcome-bonus", label: "Welcome Bonus", path: "/superadminwelcomedistribution" },
         { key: "star-distribution", label: "Star Distribution", path: "/demo" },
       ],
     },
@@ -144,8 +153,7 @@ function Sidebar() {
       label: "Admin",
       icon: <ContainerOutlined />,
       children: [
-        { key: "admin-add", label: "Add Admin ", path: "/AdminReport" },
-        { key: "admin-edit", label: " Edit Admin", path: "/AdminReport" },
+        { key: "admin-add", label: "Add Admin ", path: "/superadminaddadmin" },
         { key: "admin-delete", label: " Delete Admin", path: "/demo" },
       ],
     },
@@ -163,7 +171,7 @@ function Sidebar() {
       label: "Subscription",
       icon: <ContainerOutlined />,
       children: [
-        { key: "subscription", label: "Subscritions", path: "/AdminReport" },
+        { key: "subscription", label: "Subscritions", path: "/superadminsubscritionplan" },
       ],
     },
     {
@@ -174,14 +182,6 @@ function Sidebar() {
         { key: "tips", label: "Tips ", path: "/AdminReport" },
         { key: "notification", label: "Notifications ", path: "/AdminReport" },
 
-      ],
-    },
-    {
-      key: "settings",
-      label: "Settings",
-      icon: <SettingOutlined />,
-      children: [
-        { key: "settings-all", label: "All Settings", path: "/AdminSettings" },
       ],
     },
   ]);
