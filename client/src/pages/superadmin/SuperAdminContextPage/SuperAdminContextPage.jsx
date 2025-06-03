@@ -1,10 +1,10 @@
-import React,{useState} from "react";
-import styles from "./AddAdmin.module.css"
+import React, { useState } from "react";
+import styles from "./contextpage.module.css";
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
 
 
-function AddAdmin() {
-     const [formData, setFormData] = useState({
+function SuperAdminContextPage() {
+      const [formData, setFormData] = useState({
         couponNumber: "",
         couponCount: "",
         starCount: "",
@@ -23,40 +23,57 @@ function AddAdmin() {
         // You can call your API here
       };
   return (
-    <div className={styles.UserAccount}>
+   <div className={styles.UserAccount}>
       <SuperSidebar />
       <div className={styles.wrapper}>
         <div className={styles.header}>
-          <h2>Create Admin</h2>
+          <h2>Coupon Generation</h2>
         </div>
         <div className={styles.container}>
           <form className={styles.form} onSubmit={handleSubmit}>
-            <label>Admin Name</label>
+            <label>Enter coupon number</label>
             <input
               type="text"
-              name="adminname"
-              value={formData.adname}
+              name="couponNumber"
+              value={formData.couponNumber}
               onChange={handleChange}
-              placeholder="Admin Name"
+              placeholder="Enter coupon number"
             />
 
-            <label>Admin Username</label>
+            <label>Enter generating coupon count</label>
             <input
               type="text"
-              name="adminusername"
-              value={formData.adminusername}
+              name="couponCount"
+              value={formData.couponCount}
               onChange={handleChange}
-              placeholder="Enter Admin Username"
+              placeholder="Enter contest name"
             />
 
-            <label>Admin Password</label>
+            <label>Enter each coupon star count</label>
             <input
               type="text"
-              name="adminpassword"
+              name="starCount"
               value={formData.starCount}
               onChange={handleChange}
-              placeholder="Enter Admin Password"
-            />  
+              placeholder="Enter star count"
+            />
+
+            <label>Enter date</label>
+            <input
+              type="date"
+              name="date"
+              value={formData.date}
+              onChange={handleChange}
+            />
+
+            {/* <label>Enter expiry date</label>
+        <input
+          type="date"
+          name="expiryDate"
+          value={formData.expiryDate}
+          onChange={handleChange}
+        /> */}
+
             <div className={styles.buttons}>
               <button type="button" className={styles.cancel}>
                 Cancel
@@ -69,7 +86,7 @@ function AddAdmin() {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
-export default AddAdmin;
+export default SuperAdminContextPage
