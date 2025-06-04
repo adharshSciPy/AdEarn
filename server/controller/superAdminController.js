@@ -252,5 +252,30 @@ const addBonusToUser = async (req, res) => {
     return res.status(500).json({ message: "Failed to retrieve bonus history", error: error.message });
   }
 };
+const generateCoupons=async(req,res)=>{
+  const{couponCount,perStarCount,generationDate,expiryDate}=req.body;
+  try {
+   const couponsToCreate=[];
+   for (let i=0;i<couponCount;i++){
+     const code = generateRandomCode(10);
+     couponsToCreate.push({
+      code,
+      perStarCount,
+         generationDate: new Date(generationDate),
+        expiryDate: expiryDate ? new Date(expiryDate) : undefined
+     })
+   } 
+   
+    const createdCoupons = await Coupon.insertMany(couponsToCreate);
+     return res.status(201).json({
+      message: "Coupons generated successfully",
+      count: createdCoupons.length,
+      coupons: createdCoupons.map(c => c.code),
+    });
+  } catch (error) {
+        console.error("Error generating coupons:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
 
-export { registerSuperAdmin, superAdminLogin, getAllAdmins, toggleUserStatus,toggleAdminStatus,getSuperAdminWallet,addBonusToUser,getBonusHistory };
+export { registerSuperAdmin, superAdminLogin, getAllAdmins, toggleUserStatus,toggleAdminStatus,getSuperAdminWallet,addBonusToUser,getBonusHistory ,generateCoupons};
