@@ -4,8 +4,23 @@ import path from "path";
 import { Admin } from "../model/adminModel.js";
 import User from "../model/userModel.js";
 import SuperAdminWallet from "../model/superAdminWallet.js";
+import Coupon from "../model/couponModel.js"
 
 import { passwordValidator } from "../utils/passwordValidator.js";
+
+// to generate coupons randomly and store
+
+function generateRandomCode(length) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+
+
 // register super admin
 const registerSuperAdmin = async (req, res) => {
   const { email, password } = req.body;
@@ -127,30 +142,32 @@ const toggleUserStatus = async (req, res) => {
   }
 };
 // to enable or disable Admins(admin.isAdminEnabled:true?Enabled Admin:Disabled User)
-const toggleAdminStatus=async(req,res)=>{
-  const{id}=req.body;
+const toggleAdminStatus = async (req, res) => {
+  const { id } = req.body;
   try {
-    const admin=await Admin.findById(id);
-    if(!admin){
+    const admin = await Admin.findById(id);
+    if (!admin) {
       return res.status(400).json("Admin not found");
-
     }
-    admin.isAdminEnabled=!admin.isAdminEnabled;
+    admin.isAdminEnabled = !admin.isAdminEnabled;
     await admin.save();
-     res.status(200).json({
+    res.status(200).json({
       message: `Admin status updated to ${
         admin.isAdminEnabled ? "Enabled" : "Disabled"
       }`,
       admin,
     });
   } catch (error) {
-     console.error("Error toggling admin status:", error);
+    console.error("Error toggling admin status:", error);
     res.status(500).json({ message: "Server Error" });
   }
-}
+};
 const getSuperAdminWallet = async (req, res) => {
   try {
-    const Swallet = await SuperAdminWallet.findOne().populate('transactions.userId', 'email');
+    const Swallet = await SuperAdminWallet.findOne().populate(
+      "transactions.userId",
+      "email"
+    );
 
     if (!Swallet) {
       return res.status(404).json({ message: "Admin wallet not found" });

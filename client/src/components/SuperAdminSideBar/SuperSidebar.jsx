@@ -93,23 +93,23 @@ function Sidebar() {
       label: "Star",
       icon: <UserOutlined />,
       children: [
-        { key: "user-star", label: "User Star", path: "/Userstar" },
-        { key: "admin-star", label: "Admin Star", path: "/AdminAds" },
-        { key: "company-star", label: "Company Star", path: "/AdminAds" },
-        { key: "welcome-star", label: "Welcome Star", path: "/AdminAds" },
+        { key: "user-star", label: "User Star", path: "/superadminuserstar" },
+        { key: "admin-star", label: "Admin Star", path: "/superadminadminstar" },
+        { key: "company-star", label: "Company Star", path: "/superadmincompanystar" },
+        { key: "welcome-star", label: "Welcome Star", path: "/superadminwelcomestar" },
         {
           key: "Referal-star",
           label: "Refereal Star",
-          path: "/AdminAds",
+          path: "/superadminreferalstar",
         },
-        { key: "contest-star", label: "Contest Star", path: "/AdminAds" },
-        { key: "coupons-star", label: "Coupons Star", path: "/AdminAds" },
+        { key: "contest-star", label: "Contest Star", path: "/superadminconteststar" },
+        { key: "coupons-star", label: "Coupons Star", path: "/superadmincouponstar" },
         {
           key: "subscription-star",
           label: "Subscription Star",
-          path: "/AdminAds",
+          path: "/superadminsubscriptionstar",
         },
-        { key: "Ads-star", label: "Ads Star", path: "/AdsDistribution" },
+        { key: "Ads-star", label: "Ads Star", path: "/superadminadstar" },
       ],
     },
     
@@ -179,7 +179,7 @@ function Sidebar() {
       icon: <ContainerOutlined />,
       children: [
         { key: "tips", label: "Tips ", path: "/AdminReport" },
-        { key: "notification", label: "Notifications ", path: "/AdminReport" },
+        { key: "notification", label: "Notifications ", path: "/superadminNotification" },
 
       ],
     },
