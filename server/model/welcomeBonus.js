@@ -12,7 +12,7 @@ const bonusTransactionSchema = new mongoose.Schema({
   },
   givenBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User', // The superadmin
+    ref: 'SuperAdmin', // The superadmin
     required: true,
   },
   reason: {
@@ -21,4 +21,4 @@ const bonusTransactionSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-export default('BonusTransaction', bonusTransactionSchema);
+export default ('BonusTransaction', bonusTransactionSchema);

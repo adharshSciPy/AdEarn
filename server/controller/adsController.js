@@ -308,26 +308,13 @@ const createSurveyAd = async (req, res) => {
   const { id } = req.params;
 
   if (!id) return res.status(400).json({ message: "User ID is required" });
+  if (!title || !questions || !userViewsNeeded)
+    return res.status(400).json({ message: "Missing required fields" });
 
-  if (!title || !Array.isArray(questions) || questions.length === 0 || !userViewsNeeded) {
-    return res.status(400).json({
-      message: "Survey Ad must have a title, userViewsNeeded, and at least one question",
-    });
-  }
-
-  for (const q of questions) {
-    if (!q.questionText || !Array.isArray(q.options) || q.options.length < 2) {
-      return res.status(400).json({
-        message: "Each question must have questionText and at least 2 options",
-      });
-    }
-  }
-
-  // Parse ad period and repetition flag
   const parsedAdPeriod = parseFloat(adPeriod);
   const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
 
-  // Parse and validate locations
+  // Parse and validate multiple locations
   let targetRegions = [];
   try {
     const parsedLocations = typeof locations === "string" ? JSON.parse(locations) : locations;
@@ -337,6 +324,7 @@ const createSurveyAd = async (req, res) => {
 
     for (const loc of parsedLocations) {
       if (!loc.coords || !loc.radius) continue;
+
       const [latStr, lngStr] = loc.coords.split(",");
       const latitude = parseFloat(latStr);
       const longitude = parseFloat(lngStr);
@@ -365,7 +353,6 @@ const createSurveyAd = async (req, res) => {
     const userWallet = user.userWalletDetails;
     if (!userWallet) return res.status(400).json({ message: "User wallet not found" });
 
-    // Deduct stars
     const starsDeductionRate = 0.6;
     const starsToBeDeducted = userViewsNeeded * starsDeductionRate;
 
@@ -374,21 +361,26 @@ const createSurveyAd = async (req, res) => {
       return res.status(401).json({ message: `Insufficient stars. You need ${starsShort} more stars to post this ad.` });
     }
 
-    // Star payout plan (same logic as video ad)
+    // Create star payout plan
     const highvalueArray = [5, 4, 3, 2];
     const highValueStarConversion = userViewsNeeded / 100;
     const highValueStars = highvalueArray.map(val => val * highValueStarConversion);
     const highValueTotal = highValueStars.reduce((acc, val) => acc + val, 0);
+
     const singleStarsCount = Math.floor(starsToBeDeducted - highValueTotal);
     const singleStars = Array(singleStarsCount).fill(1);
+
     const nullStarsCount = userViewsNeeded - (highValueStars.length + singleStars.length);
     const nullStars = Array(nullStarsCount).fill(0);
 
     const starPayoutPlan = [...highValueStars, ...singleStars, ...nullStars];
 
+    // Deduct stars from wallet
     userWallet.totalStars -= starsToBeDeducted;
     await userWallet.save();
 
+    // Create survey ad
+    const now = new Date();
     const surveyAd = await SurveyAd.create({
       title,
       questions,
@@ -398,11 +390,20 @@ const createSurveyAd = async (req, res) => {
       starPayoutPlan,
       adPeriod: adRepetition ? parsedAdPeriod : 0,
       adRepetition,
+      isAdVisible: true,
+      isViewsReached: false,
       targetRegions,
+      adVerifiedTime: now,
+      adExpirationTime: adRepetition && parsedAdPeriod > 0
+        ? new Date(now.getTime() + parsedAdPeriod * 24 * 60 * 60 * 1000)
+        : null,
     });
 
+    // Create ad reference
     const ad = await Ad.create({ surveyAdRef: surveyAd._id });
-    user.ads.push(ad._id);
+
+    // Link to user
+    user.ads.push(surveyAd._id);
     await user.save();
 
     return res.status(200).json({
@@ -411,14 +412,12 @@ const createSurveyAd = async (req, res) => {
       ad,
       remainingStars: userWallet.totalStars,
     });
-  } catch (err) {
-    console.error("Error creating Survey Ad:", err);
-    return res.status(500).json({
-      message: "Survey Ad creation failed",
-      error: err.message,
-    });
+  } catch (error) {
+    console.error("Error creating survey ad:", error);
+    return res.status(500).json({ message: "Failed to create survey ad", error: error.message });
   }
 };
+
 
 // fetching all the ads with isVerified:false for verification
 const fetchAdsForVerification = async (req, res) => {
