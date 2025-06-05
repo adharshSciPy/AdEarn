@@ -110,6 +110,16 @@ targetRegions: [
     ref: 'User',
     required: false,
   },
+  targetStates:[
+      {
+        type:String
+      }
+    ],
+    targetDistricts:[
+      {
+        type:String
+      }
+    ]
 }, { timestamps: true });
 
 surveyAdSchema.index({ 'targetRegions.location': '2dsphere' });
