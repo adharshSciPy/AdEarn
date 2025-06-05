@@ -718,7 +718,29 @@ const redeemCoupon = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+// to fetch user wise wallet
+const fetchUserWallet=async(req,res)=>{
+const {id:userId}=req.params;
+try {
+  const user=await User.findById(userId).populate("userWalletDetails");
+  if(!user){
+return res.status(400).json({message:"User Not Found"})
+  }
+ if (!user.userWalletDetails) {
+      return res.status(404).json({ message: "User wallet not found" });
+    }
+    const { userWalletDetails, ...userWithoutWallet } = user.toObject();
+      return res.status(200).json({
+      message: "User wallet fetched successfully",
+      wallet: user.userWalletDetails,
+       user: userWithoutWallet,
+    });
 
+} catch (error) {
+   console.error("Error fetching user wallet:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
+}
+}
 
 
 export {
@@ -731,5 +753,6 @@ export {
   getUserByUniqueId,
   starBuy,
   getViewedAds,
-  redeemCoupon
+  redeemCoupon,
+  fetchUserWallet
 };
