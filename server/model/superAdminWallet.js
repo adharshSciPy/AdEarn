@@ -6,11 +6,11 @@ const transactionSchemaSA = new Schema(
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User", // Recipient of the bonus
-      required: true,
+      // required: true,
     },
     starsReceived: {
       type: Number,
-      required: true,
+      // required: true,
     },
     reason: {
       type: String,
@@ -19,9 +19,23 @@ const transactionSchemaSA = new Schema(
     addedBy: {
       type: Schema.Types.ObjectId,
       ref: "SuperAdmin", // Points to SuperAdmin model now
-      required: true,
+      // required: true,
     },
     date: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false }
+);
+const expiredCouponRefundSchema = new Schema(
+  {
+    stars: {
+      type: Number,
+      // required: true,
+    },
+    couponCodes: [String],
+    refundedAt: {
       type: Date,
       default: Date.now,
     },
@@ -37,6 +51,7 @@ const superAdminWalletSchema = new Schema(
       default: 0,
     },
     transactions: [transactionSchemaSA],
+     expiredCouponRefunds: [expiredCouponRefundSchema],
   },
   { timestamps: true }
 );
