@@ -115,7 +115,8 @@
 
 .adcontainerSub {
   display: flex;
-  justify-content: space-between;
+  /* justify-content: space-between; */
+  gap: 20px;
   flex-wrap: wrap;
   margin-bottom: 50px;
 }
@@ -135,6 +136,7 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25); /* subtle depth */
   position: relative;
   color: #fff; /* white text stands out better */
+  cursor: pointer;
 }
 
 .adContentDes {
@@ -174,7 +176,6 @@
 .adCardButton {
   display: flex;
   justify-content: space-between;
-
   margin-top: 10px;
 }
 .adDescription p {
