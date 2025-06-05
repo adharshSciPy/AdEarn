@@ -11,6 +11,10 @@ import superAdminRouter from "./routes/superAdminRoute.js";
 import cron from "node-cron";
 import { runRefundExpiredCoupons}  from "./utils/redeemCoupons.js";
 import mongoose from "mongoose";
+import { Ad } from "./model/AdsModel.js";
+import { ImageAd } from "./model/imageadModel.js";
+import { VideoAd } from "./model/videoadModel.js";
+import { SurveyAd } from "./model/surveyadModel.js";
 
 
 dotenv.config();
@@ -43,6 +47,55 @@ cron.schedule("0 0 * * *", async () => {
     console.error("Cron refund error:", err.message, err.stack);
   }
 });
+// to clear ads from db after 3 days of expiry date is reached
+cron.schedule("30 2 * * *", async () => {
+  const threeDaysAfter = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); 
+  
+  try {
+    const ads = await Ad.find().populate(["imgAdRef", "videoAdRef", "surveyAdRef"]);
+
+    for (const ad of ads) {
+      const { _id, imgAdRef, videoAdRef, surveyAdRef } = ad;
+      let shouldDelete = false;
+
+      // Check Image Ad
+      if (
+        imgAdRef?.adExpirationTime &&
+        new Date(imgAdRef.adExpirationTime).getTime() + 3 * 24 * 60 * 60 * 1000 <= threeDaysAfter.getTime()
+      ) {
+        await ImageAd.findByIdAndDelete(imgAdRef._id);
+        shouldDelete = true;
+      }
+
+      // Check Video Ad
+      if (
+        videoAdRef?.adExpirationTime &&
+        new Date(videoAdRef.adExpirationTime).getTime() + 3 * 24 * 60 * 60 * 1000 <= threeDaysAfter.getTime()
+      ) {
+        await VideoAd.findByIdAndDelete(videoAdRef._id);
+        shouldDelete = true;
+      }
+
+      // Check Survey Ad
+      if (
+        surveyAdRef?.adExpirationTime &&
+        new Date(surveyAdRef.adExpirationTime).getTime() + 3 * 24 * 60 * 60 * 1000 <= threeDaysAfter.getTime()
+      ) {
+        await SurveyAd.findByIdAndDelete(surveyAdRef._id);
+        shouldDelete = true;
+      }
+
+      if (shouldDelete) {
+        await Ad.findByIdAndDelete(_id); // Delete the parent ad if any child ad is deleted
+      }
+    }
+
+    console.log(`[${new Date().toISOString()}] ✅ Expired ads cleaned up`);
+  } catch (err) {
+    console.error(`[${new Date().toISOString()}] ❌ Error cleaning expired ads:`, err.message);
+  }
+});
+
 
 const PORT = process.env.PORT || 8000;
 
