@@ -112,7 +112,7 @@ function Sidebar() {
         { key: "Ads-star", label: "Ads Star", path: "/superadminadstar" },
       ],
     },
-    
+
     {
       key: "coupongeneration",
       label: "Coupon Generation",
@@ -126,6 +126,7 @@ function Sidebar() {
       label: "Contest",
       icon: <UserOutlined />,
       children: [
+        { key: "contest", label: "Contest", path: "/superadmincontest" },
         { key: "create-contest", label: "Create Contest", path: "/superadmincontestpage" },
         { key: "contest-winner", label: "Contest winner", path: "/demo" },
       ],
