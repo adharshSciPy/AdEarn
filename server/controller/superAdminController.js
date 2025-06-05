@@ -278,4 +278,6 @@ const generateCoupons=async(req,res)=>{
   }
 }
 
+
+
 export { registerSuperAdmin, superAdminLogin, getAllAdmins, toggleUserStatus,toggleAdminStatus,getSuperAdminWallet,addBonusToUser,getBonusHistory ,generateCoupons};
