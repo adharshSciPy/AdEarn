@@ -186,7 +186,7 @@ const getSuperAdminWallet = async (req, res) => {
 const addBonusToUser = async (req, res) => {
   try {
     const { userId, stars, reason } = req.body;
-    const superAdminId = req.user._id; // assuming auth middleware adds superadmin to req.user
+    const superAdminId = "682460be76546766e5da1c82";// assuming auth middleware adds superadmin to req.user
 
     if (!userId || !stars) {
       return res.status(400).json({ message: "userId and stars are required." });
@@ -265,6 +265,7 @@ const generateCoupons=async(req,res)=>{
         expiryDate: expiryDate ? new Date(expiryDate) : undefined
      })
    } 
+
    
     const createdCoupons = await Coupon.insertMany(couponsToCreate);
      return res.status(201).json({
