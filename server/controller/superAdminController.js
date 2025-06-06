@@ -244,42 +244,72 @@ const getSuperAdminWallet = async (req, res) => {
   }
 };
 
- const distributeWelcomeBonus = async (newUserId) => {
-  const wallet = await SuperAdminWallet.findOne();
-  if (!wallet || wallet.perUserWelcomeBonus <= 0) {
-    return { success: false, starsGiven: 0, message: "Welcome bonus not set or is 0" };
-  }
+const distributeWelcomeBonus = async (newUserId) => {
+  try {
+    const wallet = await SuperAdminWallet.findOne();
+    if (!wallet || wallet.perUserWelcomeBonus <= 0) {
+      return { success: false, starsGiven: 0, message: "Welcome bonus not set or is 0" };
+    }
 
-  const starsToGive = wallet.perUserWelcomeBonus;
+    const starsToGive = wallet.perUserWelcomeBonus;
 
-  if (wallet.totalStars < starsToGive) {
+    if (wallet.totalStars < starsToGive) {
+      return {
+        success: false,
+        starsGiven: 0,
+        message: "Not enough stars in SuperAdmin wallet",
+      };
+    }
+
+    // Check if user already received the welcome bonus
+    const alreadyGiven = wallet.welcomeBonuses.some(
+      (entry) => entry.userId.toString() === newUserId.toString()
+    );
+
+    if (alreadyGiven) {
+      return {
+        success: false,
+        starsGiven: 0,
+        message: "User has already received the welcome bonus",
+      };
+    }
+
+    const user = await User.findById(newUserId).populate("userWalletDetails");
+    if (!user || !user.userWalletDetails) {
+      return { success: false, starsGiven: 0, message: "User or wallet not found" };
+    }
+
+    // Credit stars to user's wallet
+    user.userWalletDetails.totalStars += starsToGive;
+    await user.userWalletDetails.save();
+
+    // Deduct stars from superadmin wallet
+    wallet.totalStars -= starsToGive;
+
+    // Add to welcomeBonuses instead of transactions
+    wallet.welcomeBonuses.push({
+      userId: newUserId,
+      starsGiven: starsToGive,
+      givenAt: new Date(),
+    });
+
+    await wallet.save();
+
+    return {
+      success: true,
+      starsGiven: starsToGive,
+      message: "Welcome bonus applied successfully",
+    };
+  } catch (error) {
+    console.error("Error distributing welcome bonus:", error);
     return {
       success: false,
       starsGiven: 0,
-      message: "Not enough stars in SuperAdmin wallet",
+      message: "Internal server error",
     };
   }
-
-  const user = await User.findById(newUserId).populate("userWalletDetails");
-  if (!user || !user.userWalletDetails) {
-    return { success: false, starsGiven: 0, message: "User or wallet not found" };
-  }
-
-  user.userWalletDetails.totalStars += starsToGive;
-  await user.userWalletDetails.save();
-
-  wallet.totalStars -= starsToGive;
-  wallet.transactions.push({
-    userId: newUserId,
-    starsReceived: starsToGive,
-    reason: "Welcome Bonus",
-    addedBy: null, // Optional: assign SuperAdmin ID if available
-  });
-
-  await wallet.save();
-
-  return { success: true, starsGiven: starsToGive, message: "Welcome bonus applied" };
 };
+
 const generateCoupons=async(req,res)=>{
   const{couponCount,perStarCount,generationDate,expiryDate}=req.body;
   try {
