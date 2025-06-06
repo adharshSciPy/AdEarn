@@ -172,28 +172,30 @@ const createImageAd = async (req, res) => {
       });
     }
 
-    // Create star payout plan
-    const highvalueArray = [5, 4, 3, 2];
-    const highValueStarConversion = userViewsNeeded / 100;
-    const highValueStars = highvalueArray.map(
-      (val) => val * highValueStarConversion
-    );
-    const highValueTotal = highValueStars.reduce((acc, val) => acc + val, 0);
+  
+// Create star payout plan
+const highvalueArray = [5, 4, 3, 2];
+const highValueRepetitions = Math.floor(userViewsNeeded / 100); 
 
-    const singleStarsCount = Math.floor(
-      starsToBeDeducted - highValueTotal
-    );
-    const singleStars = Array(singleStarsCount).fill(1);
+let highValueStars = [];
+for (const value of highvalueArray) {
+  const repeatedStars = Array(highValueRepetitions).fill(value); 
+  highValueStars.push(...repeatedStars);
+}
 
-    const nullStarsCount =
-      userViewsNeeded - (highValueStars.length + singleStars.length);
-    const nullStars = Array(nullStarsCount).fill(0);
+const highValueTotal = highValueStars.reduce((acc, val) => acc + val, 0);
 
-    const starPayoutPlan = [
-      ...highValueStars,
-      ...singleStars,
-      ...nullStars,
-    ];
+// Remaining stars as 1s
+const singleStarsCount = Math.floor(starsToBeDeducted - highValueTotal);
+const singleStars = Array(singleStarsCount).fill(1);
+
+// Fill with 0s to match view count
+const totalGiven = highValueStars.length + singleStars.length;
+const nullStarsCount = userViewsNeeded - totalGiven;
+const nullStars = Array(nullStarsCount).fill(0);
+
+// Final payout plan
+const starPayoutPlan = [...highValueStars, ...singleStars, ...nullStars];
 
     // Deduct stars from wallet
     userWallet.totalStars -= starsToBeDeducted;
