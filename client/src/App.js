@@ -115,7 +115,7 @@ function App() {
           <Route path='/referalPage' element={<ReferalCode />} />
           <Route path='/form1' element={<Form1 />} />
           <Route path='/form2' element={<Form2 />} />
-          <Route path='/userhome' element={<UserHome />} />
+          <Route path='/userhome/:id' element={<UserHome />} />
           <Route path='/adsmanageruser' element={<Adsmanager />} />
           <Route path='/adstemplate' element={<AdTemplateSelector />} />
           <Route path='/contextpage' element={<ContestPage />} />
@@ -124,7 +124,7 @@ function App() {
           <Route path='/userprofile' element={<UserProfileEditForm />} />
           <Route path='/kycverification' element={<KycVerification />} />
           <Route path='/templateEditor' element={<TemplateEditor />} />
-          <Route path='/adform' element={<AdForm />} />
+          <Route path='/adform/:id' element={<AdForm />} />
           <Route path='/adreportuser' element={<UserReport />} />
           <Route path='/surveyaduser' element={<SurveyAds />} />
 

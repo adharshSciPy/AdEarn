@@ -13,7 +13,7 @@ const checkSubscription = async (req, res, next) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (user.needsToPay()) {
+    if (!user.hasActiveSubscription()) {
       return res.status(403).json({
         message: "Your subscription has expired. Please renew to access this feature.",
       });

@@ -108,6 +108,7 @@ const createImageAd = async (req, res) => {
         const latitude = parseFloat(latStr);
         const longitude = parseFloat(lngStr);
         const radius = parseFloat(loc.radius);
+        // console.log(`Parsed coordinates -> Latitude: ${latitude}, Longitude: ${longitude}`);
 
         if (isNaN(latitude) || isNaN(longitude) || isNaN(radius)) {
           return res
@@ -118,7 +119,7 @@ const createImageAd = async (req, res) => {
         targetRegions.push({
           location: {
             type: "Point",
-            coordinates: [longitude, latitude],
+            coordinates: [latitude, longitude],
           },
           radius,
         });
@@ -172,28 +173,31 @@ const createImageAd = async (req, res) => {
       });
     }
 
-    // Create star payout plan
-    const highvalueArray = [5, 4, 3, 2];
-    const highValueStarConversion = userViewsNeeded / 100;
-    const highValueStars = highvalueArray.map(
-      (val) => val * highValueStarConversion
-    );
-    const highValueTotal = highValueStars.reduce((acc, val) => acc + val, 0);
+  
+// Create star payout plan
+const highvalueArray = [5, 4, 3, 2];
+const highValueRepetitions = Math.floor(userViewsNeeded / 100); // 2 if views = 200
 
-    const singleStarsCount = Math.floor(
-      starsToBeDeducted - highValueTotal
-    );
-    const singleStars = Array(singleStarsCount).fill(1);
+let highValueStars = [];
+for (const value of highvalueArray) {
+  const repeatedStars = Array(highValueRepetitions).fill(value); // e.g. [5,5], [4,4], etc.
+  highValueStars.push(...repeatedStars);
+}
 
-    const nullStarsCount =
-      userViewsNeeded - (highValueStars.length + singleStars.length);
-    const nullStars = Array(nullStarsCount).fill(0);
+const highValueTotal = highValueStars.reduce((acc, val) => acc + val, 0);
 
-    const starPayoutPlan = [
-      ...highValueStars,
-      ...singleStars,
-      ...nullStars,
-    ];
+// Remaining stars as 1s
+const singleStarsCount = Math.floor(starsToBeDeducted - highValueTotal);
+const singleStars = Array(singleStarsCount).fill(1);
+
+// Fill with 0s to match view count
+const totalGiven = highValueStars.length + singleStars.length;
+const nullStarsCount = userViewsNeeded - totalGiven;
+const nullStars = Array(nullStarsCount).fill(0);
+
+// Final payout plan
+const starPayoutPlan = [...highValueStars, ...singleStars, ...nullStars];
+
 
     // Deduct stars from wallet
     userWallet.totalStars -= starsToBeDeducted;
@@ -268,154 +272,6 @@ const createVideoAd = async (req, res) => {
   const parsedAdPeriod = parseFloat(adPeriod);
   const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
 
-  // Parse and validate locations, states, districts
-  let targetRegions = [];
-  let targetStates = [];
-  let targetDistricts = [];
-
-  try {
-    // Parse locations
-    const parsedLocations = typeof locations === "string" ? JSON.parse(locations) : locations;
-
-    if (Array.isArray(parsedLocations)) {
-      for (const loc of parsedLocations) {
-        if (!loc.coords || !loc.radius) continue;
-
-        const [latStr, lngStr] = loc.coords.split(",");
-        const latitude = parseFloat(latStr);
-        const longitude = parseFloat(lngStr);
-        const radius = parseFloat(loc.radius);
-
-        if (isNaN(latitude) || isNaN(longitude) || isNaN(radius)) {
-          return res.status(400).json({ message: "Invalid location format" });
-        }
-
-        targetRegions.push({
-          location: {
-            type: "Point",
-            coordinates: [longitude, latitude],
-          },
-          radius,
-        });
-      }
-    }
-
-    // Parse states
-    targetStates = typeof states === "string" ? JSON.parse(states) : states;
-    if (!Array.isArray(targetStates)) targetStates = [];
-
-    // Parse districts
-    targetDistricts = typeof districts === "string" ? JSON.parse(districts) : districts;
-    if (!Array.isArray(targetDistricts)) targetDistricts = [];
-
-    if (
-      targetRegions.length === 0 &&
-      targetStates.length === 0 &&
-      targetDistricts.length === 0
-    ) {
-      return res.status(400).json({
-        message: "At least one target location (geo, state, or district) is required",
-      });
-    }
-  } catch (err) {
-    return res.status(400).json({ message: "Invalid location format", error: err.message });
-  }
-
-  try {
-    const user = await User.findById(id).populate("userWalletDetails");
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const userWallet = user.userWalletDetails;
-    if (!userWallet) return res.status(400).json({ message: "User wallet not found" });
-
-    const starsDeductionRate = 0.6;
-    const starsToBeDeducted = userViewsNeeded * starsDeductionRate;
-
-    if (userWallet.totalStars < starsToBeDeducted) {
-      const starsShort = starsToBeDeducted - userWallet.totalStars;
-      return res.status(401).json({
-        message: `Insufficient stars. You need ${starsShort} more stars to post this ad.`,
-      });
-    }
-
-    // Create star payout plan
-    const highvalueArray = [5, 4, 3, 2];
-    const highValueStarConversion = userViewsNeeded / 100;
-    const highValueStars = highvalueArray.map(val => val * highValueStarConversion);
-    const highValueTotal = highValueStars.reduce((acc, val) => acc + val, 0);
-
-    const singleStarsCount = Math.floor(starsToBeDeducted - highValueTotal);
-    const singleStars = Array(singleStarsCount).fill(1);
-
-    const nullStarsCount = userViewsNeeded - (highValueStars.length + singleStars.length);
-    const nullStars = Array(nullStarsCount).fill(0);
-
-    const starPayoutPlan = [...highValueStars, ...singleStars, ...nullStars];
-
-    // Deduct stars from wallet
-    userWallet.totalStars -= starsToBeDeducted;
-    await userWallet.save();
-
-    // Save video ad
-    const videoUrl = `/videoAdUploads/${req.file.filename}`;
-    const videoAd = await VideoAd.create({
-      title,
-      description,
-      videoUrl,
-      adPeriod: adRepetition ? parsedAdPeriod : 0,
-      adRepetition,
-      createdBy: user._id,
-      userViewsNeeded,
-      totalStarsAllocated: starsToBeDeducted,
-      starPayoutPlan,
-      targetRegions,
-      targetStates,
-      targetDistricts,
-    });
-
-    const ad = await Ad.create({ videoAdRef: videoAd._id });
-
-    user.ads.push(ad._id);
-    await user.save();
-
-    return res.status(200).json({
-      message: "Video Ad created successfully and stars deducted",
-      videoAd,
-      ad,
-      remainingStars: userWallet.totalStars,
-    });
-  } catch (error) {
-    console.error("Error creating video ad:", error);
-    return res.status(500).json({
-      message: "Failed to create ad",
-      error: error.message,
-    });
-  }
-};
-
-
-// ------------------- SURVEY AD -------------------
-
-const createSurveyAd = async (req, res) => {
-  const {
-    title,
-    questions,
-    userViewsNeeded,
-    adPeriod,
-    locations,
-    states,
-    districts,
-  } = req.body;
-  const { id } = req.params;
-
-  if (!id) return res.status(400).json({ message: "User ID is required" });
-  if (!title || !questions || !userViewsNeeded)
-    return res.status(400).json({ message: "Missing required fields" });
-
-  const parsedAdPeriod = parseFloat(adPeriod);
-  const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
-
-  // Targeting data
   let targetRegions = [];
   let targetStates = [];
   let targetDistricts = [];
@@ -435,13 +291,15 @@ const createSurveyAd = async (req, res) => {
         const radius = parseFloat(loc.radius);
 
         if (isNaN(latitude) || isNaN(longitude) || isNaN(radius)) {
-          return res.status(400).json({ message: "Invalid location format" });
+          return res
+            .status(400)
+            .json({ message: "Invalid location format" });
         }
 
         targetRegions.push({
           location: {
             type: "Point",
-            coordinates: [longitude, latitude],
+            coordinates: [latitude, longitude],
           },
           radius,
         });
@@ -481,8 +339,15 @@ const createSurveyAd = async (req, res) => {
     if (!userWallet)
       return res.status(400).json({ message: "User wallet not found" });
 
-    const starsDeductionRate = 0.6;
-    const starsToBeDeducted = userViewsNeeded * starsDeductionRate;
+    const viewsNeeded = parseInt(userViewsNeeded);
+    if (isNaN(viewsNeeded) || viewsNeeded <= 0) {
+      return res
+        .status(400)
+        .json({ message: "Invalid userViewsNeeded value" });
+    }
+
+    const starsDeductionRate = 2.4;
+    const starsToBeDeducted = viewsNeeded * starsDeductionRate;
 
     if (userWallet.totalStars < starsToBeDeducted) {
       const starsShort = starsToBeDeducted - userWallet.totalStars;
@@ -491,30 +356,192 @@ const createSurveyAd = async (req, res) => {
       });
     }
 
-    // Star payout plan
-    const highvalueArray = [5, 4, 3, 2];
-    const highValueStarConversion = userViewsNeeded / 100;
-    const highValueStars = highvalueArray.map(
-      (val) => val * highValueStarConversion
-    );
-    const highValueTotal = highValueStars.reduce((acc, val) => acc + val, 0);
+    // Star split logic: 40% 3-star, 60% 2-star
+    const total3Stars = Math.floor((starsToBeDeducted * 0.4) / 3);
+    const total2Stars = Math.floor((starsToBeDeducted * 0.6) / 2);
+    const usedStars = total3Stars * 3 + total2Stars * 2;
+    let remainingStars = Math.floor(starsToBeDeducted - usedStars);
+    if (remainingStars < 0) remainingStars = 0;
 
-    const singleStarsCount = Math.floor(
-      starsToBeDeducted - highValueTotal
-    );
-    const singleStars = Array(singleStarsCount).fill(1);
-
-    const nullStarsCount =
-      userViewsNeeded - (highValueStars.length + singleStars.length);
-    const nullStars = Array(nullStarsCount).fill(0);
-
-    const starPayoutPlan = [
-      ...highValueStars,
-      ...singleStars,
-      ...nullStars,
+    const highValueStars = [
+      ...Array(total3Stars).fill(3),
+      ...Array(total2Stars).fill(2),
+      ...Array(remainingStars).fill(1),
     ];
 
-    // Deduct from wallet
+    const totalGiven = highValueStars.length;
+    let nullStarsCount = viewsNeeded - totalGiven;
+    if (nullStarsCount < 0) nullStarsCount = 0;
+
+    const nullStars = Array(nullStarsCount).fill(0);
+
+    const starPayoutPlan = [...highValueStars, ...nullStars];
+
+    // Deduct stars from wallet
+    userWallet.totalStars -= starsToBeDeducted;
+    await userWallet.save();
+
+    const videoUrl = `/videoAdUploads/${req.file.filename}`;
+    const videoAd = await VideoAd.create({
+      title,
+      description,
+      videoUrl,
+      adPeriod: adRepetition ? parsedAdPeriod : 0,
+      adRepetition,
+      createdBy: user._id,
+      userViewsNeeded: viewsNeeded,
+      totalStarsAllocated: starsToBeDeducted,
+      starPayoutPlan,
+      targetRegions,
+      targetStates,
+      targetDistricts,
+    });
+
+    const ad = await Ad.create({ videoAdRef: videoAd._id });
+
+    user.ads.push(ad._id);
+    await user.save();
+
+    return res.status(200).json({
+      message: "Video Ad created successfully and stars deducted",
+      videoAd,
+      ad,
+      remainingStars: userWallet.totalStars,
+    });
+  } catch (error) {
+    console.error("Error creating video ad:", error);
+    return res.status(500).json({
+      message: "Failed to create ad",
+      error: error.message,
+    });
+  }
+};
+
+
+
+// ------------------- SURVEY AD -------------------
+
+const createSurveyAd = async (req, res) => {
+  const {
+    title,
+    questions,
+    userViewsNeeded,
+    adPeriod,
+    locations,
+    states,
+    districts,
+  } = req.body;
+  const { id } = req.params;
+
+  if (!id) return res.status(400).json({ message: "User ID is required" });
+  if (!title || !questions || !userViewsNeeded)
+    return res.status(400).json({ message: "Missing required fields" });
+
+  const parsedAdPeriod = parseFloat(adPeriod);
+  const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
+
+  let targetRegions = [];
+  let targetStates = [];
+  let targetDistricts = [];
+
+  try {
+    const parsedLocations =
+      typeof locations === "string" ? JSON.parse(locations) : locations;
+
+    if (Array.isArray(parsedLocations)) {
+      for (const loc of parsedLocations) {
+        if (!loc.coords || !loc.radius) continue;
+
+        const [latStr, lngStr] = loc.coords.split(",");
+        const latitude = parseFloat(latStr);
+        const longitude = parseFloat(lngStr);
+        const radius = parseFloat(loc.radius);
+
+        if (isNaN(latitude) || isNaN(longitude) || isNaN(radius)) {
+          return res
+            .status(400)
+            .json({ message: "Invalid location format" });
+        }
+
+        targetRegions.push({
+          location: {
+            type: "Point",
+            coordinates: [latitude,longitude],
+          },
+          radius,
+        });
+      }
+    }
+
+    targetStates = typeof states === "string" ? JSON.parse(states) : states;
+    if (!Array.isArray(targetStates)) targetStates = [];
+
+    targetDistricts =
+      typeof districts === "string" ? JSON.parse(districts) : districts;
+    if (!Array.isArray(targetDistricts)) targetDistricts = [];
+
+    if (
+      targetRegions.length === 0 &&
+      targetStates.length === 0 &&
+      targetDistricts.length === 0
+    ) {
+      return res.status(400).json({
+        message:
+          "At least one target location (geo, state, or district) is required",
+      });
+    }
+  } catch (err) {
+    return res.status(400).json({
+      message: "Invalid location format",
+      error: err.message,
+    });
+  }
+
+  try {
+    const user = await User.findById(id).populate("userWalletDetails");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const userWallet = user.userWalletDetails;
+    if (!userWallet)
+      return res.status(400).json({ message: "User wallet not found" });
+
+    const viewsNeeded = parseInt(userViewsNeeded);
+    if (isNaN(viewsNeeded) || viewsNeeded <= 0) {
+      return res
+        .status(400)
+        .json({ message: "Invalid userViewsNeeded value" });
+    }
+
+    const starsDeductionRate = 0.6;
+    const starsToBeDeducted = viewsNeeded * starsDeductionRate;
+
+    if (userWallet.totalStars < starsToBeDeducted) {
+      const starsShort = starsToBeDeducted - userWallet.totalStars;
+      return res.status(401).json({
+        message: `Insufficient stars. You need ${starsShort} more stars to post this ad.`,
+      });
+    }
+
+    // Star split logic: 40% 3-star, 60% 2-star
+    const total3Stars = Math.floor((starsToBeDeducted * 0.4) / 3);
+    const total2Stars = Math.floor((starsToBeDeducted * 0.6) / 2);
+    const usedStars = total3Stars * 3 + total2Stars * 2;
+    let remainingStars = Math.floor(starsToBeDeducted - usedStars);
+    if (remainingStars < 0) remainingStars = 0;
+
+    const highValueStars = [
+      ...Array(total3Stars).fill(3),
+      ...Array(total2Stars).fill(2),
+      ...Array(remainingStars).fill(1),
+    ];
+
+    const totalGiven = highValueStars.length;
+    let nullStarsCount = viewsNeeded - totalGiven;
+    if (nullStarsCount < 0) nullStarsCount = 0;
+
+    const nullStars = Array(nullStarsCount).fill(0);
+    const starPayoutPlan = [...highValueStars, ...nullStars];
+
     userWallet.totalStars -= starsToBeDeducted;
     await userWallet.save();
 
@@ -523,7 +550,7 @@ const createSurveyAd = async (req, res) => {
       title,
       questions,
       createdBy: user._id,
-      userViewsNeeded,
+      userViewsNeeded: viewsNeeded,
       totalStarsAllocated: starsToBeDeducted,
       starPayoutPlan,
       adPeriod: adRepetition ? parsedAdPeriod : 0,
@@ -559,6 +586,61 @@ const createSurveyAd = async (req, res) => {
   }
 };
 
+
+// fetch single unVerifiedAds
+const fetchSingleUnverifiedAd = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const ad = await Ad.findById(id)
+      .populate("imgAdRef")
+      .populate("videoAdRef")
+      .populate("surveyAdRef");
+
+    if (!ad) {
+      return res.status(404).json({ message: "Ad not found" });
+    }
+
+    const isImageAdUnverified = ad.imgAdRef && !ad.imgAdRef.isAdVerified;
+    const isVideoAdUnverified = ad.videoAdRef && !ad.videoAdRef.isAdVerified;
+    const isSurveyAdUnverified = ad.surveyAdRef && !ad.surveyAdRef.isAdVerified;
+
+    // Return 403 if all types are either missing or verified
+    if (!isImageAdUnverified && !isVideoAdUnverified && !isSurveyAdUnverified) {
+      return res.status(403).json({ message: "Ad is already verified" });
+    }
+
+    const formattedAd = {
+      _id: ad._id,
+      imageAd: ad.imgAdRef
+        ? {
+            ...ad.imgAdRef.toObject(),
+            isVerified: ad.imgAdRef.isAdVerified,
+          }
+        : null,
+      videoAd: ad.videoAdRef
+        ? {
+            ...ad.videoAdRef.toObject(),
+            isVerified: ad.videoAdRef.isAdVerified,
+          }
+        : null,
+      surveyAd: ad.surveyAdRef
+        ? {
+            ...ad.surveyAdRef.toObject(),
+            isVerified: ad.surveyAdRef.isAdVerified,
+          }
+        : null,
+    };
+
+    return res.status(200).json({
+      message: "Unverified ad fetched successfully",
+      ad: formattedAd,
+    });
+  } catch (error) {
+    console.error("Error fetching single unverified ad:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 
 // fetching all the ads with isVerified:false for verification
@@ -765,7 +847,7 @@ const fetchVerifiedImgAd = async (req, res) => {
       const isUserInTargetRegion = imgAd.targetRegions?.some(region => {
         if (!region?.location?.coordinates) return false;
 
-        const [targetLng, targetLat] = region.location.coordinates;
+        const [targetLat, targetLng] = region.location.coordinates;
         const radiusMeters = region.radius * 1000;
 
         const withinLiveLocation =
@@ -912,7 +994,7 @@ const fetchVerifiedVideoAd = async (req, res) => {
       const isUserInTargetRegion = videoAd.targetRegions?.some(region => {
         if (!region?.location?.coordinates) return false;
 
-        const [targetLng, targetLat] = region.location.coordinates;
+        const [targetLat, targetLng] = region.location.coordinates;
         const radiusMeters = region.radius * 1000;
 
         const withinLiveLocation =
@@ -1063,7 +1145,7 @@ const fetchVerifiedSurveyAd = async (req, res) => {
       const isUserInTargetRegion = surveyAd.targetRegions?.some(region => {
         if (!region?.location?.coordinates) return false;
 
-        const [targetLng, targetLat] = region.location.coordinates;
+        const [targetLat, targetLng] = region.location.coordinates;
         const radiusMeters = region.radius * 1000;
 
         const withinLiveLocation =
@@ -1309,6 +1391,7 @@ export {
   createSurveyAd,
   fetchAdsForVerification,
   fetchVerifiedAds,
+  fetchSingleUnverifiedAd,
   fetchSingleVerifiedAd,
   fetchVerifiedImgAd,
   fetchVerifiedVideoAd,

@@ -165,7 +165,7 @@ userSchema.methods.generateRefreshToken = function () {
   const payload = { id: this._id };
   const refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET, {
     expiresIn: "7d",
-  });
+  }); 
   return refreshToken;
 };
 // subscription checking

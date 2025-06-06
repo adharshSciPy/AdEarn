@@ -128,7 +128,7 @@ function Sidebar() {
       children: [
         { key: "contest", label: "Contest", path: "/superadmincontest" },
         { key: "create-contest", label: "Create Contest", path: "/superadmincontestpage" },
-        { key: "contest-winner", label: "Contest winner", path: "/demo" },
+        { key: "contest-winner", label: "Contest winner", path: "/superadmincontestwinner" },
       ],
     },
     // {

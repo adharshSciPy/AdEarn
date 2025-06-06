@@ -1,9 +1,14 @@
 import {React,useState} from "react";
 import logo from "../../../assets/Logo.png";
 import styles from "./userlogin.module.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import baseUrl from "../../../baseurl";
+import axios from "axios"
+
 
 function LoginUser() {
+  const navigate=useNavigate()
+
   const[form,setForm]=useState(
     {
       email:"",
@@ -18,9 +23,20 @@ function LoginUser() {
       [name]: value,
     }));
   };
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
 
     e.preventDefault();
+    try {
+      const response=await axios.post(`${baseUrl}/api/v1/user/login`,form)
+      if(response.status===200){
+        const id =response.data.user._id;
+        navigate(`/userhome/${id}`)
+      }
+      
+    } catch (error) {
+      console.log(error);
+      
+    }
 
     console.log("Submitted:", form);
     setForm({

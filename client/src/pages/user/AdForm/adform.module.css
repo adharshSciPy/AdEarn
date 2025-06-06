@@ -167,6 +167,66 @@
   background-color:"transparent";
   border:"1px solid #3563E9"
 }
+.cityTag {
+  display: inline-block;
+  background: #eee;
+  padding: 5px 10px;
+  margin: 5px;
+  border-radius: 20px;
+}
+
+.removeBtn {
+  background: transparent;
+  border: none;
+  margin-left: 8px;
+  cursor: pointer;
+  color: red;
+}
+.AdNameHead {
+  margin: 20px 0;
+}
+
+.previewImg {
+  margin-top: 10px;
+  max-width: 300px;
+  height: auto;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+.popupContainer {
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  padding: 30px;
+  z-index: 1000;
+  animation: popUp 0.3s ease-in-out;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.tickAnimation {
+  font-size: 48px;
+  color: #28a745;
+  animation: scaleUp 0.5s ease-in-out;
+}
+
+@keyframes scaleUp {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+
 @media (max-width:769px) {
   .adFormMain{
     width: 100%;
