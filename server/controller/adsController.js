@@ -79,24 +79,27 @@ const createImageAd = async (req, res) => {
     return res.status(400).json({ message: "User ID is required" });
   }
 
-  if (!req.file) {
-    return res.status(400).json({ message: "Image file is required" });
-  }
-
   if (!title || !description || !userViewsNeeded) {
     return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  // ✅ Extract files correctly
+  const imageFile = req.files?.imageAd?.[0];
+  const audioFile = req.files?.audioAd?.[0];
+
+  if (!imageFile) {
+    return res.status(400).json({ message: "Image file is required" });
   }
 
   const parsedAdPeriod = parseFloat(adPeriod);
   const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
 
-  // Parse and validate locations, states, districts
+  // Parse and validate locations
   let targetRegions = [];
   let targetStates = [];
   let targetDistricts = [];
 
   try {
-    // Parse locations
     const parsedLocations =
       typeof locations === "string" ? JSON.parse(locations) : locations;
 
@@ -108,7 +111,6 @@ const createImageAd = async (req, res) => {
         const latitude = parseFloat(latStr);
         const longitude = parseFloat(lngStr);
         const radius = parseFloat(loc.radius);
-        // console.log(`Parsed coordinates -> Latitude: ${latitude}, Longitude: ${longitude}`);
 
         if (isNaN(latitude) || isNaN(longitude) || isNaN(radius)) {
           return res
@@ -126,16 +128,13 @@ const createImageAd = async (req, res) => {
       }
     }
 
-    // Parse states
     targetStates = typeof states === "string" ? JSON.parse(states) : states;
     if (!Array.isArray(targetStates)) targetStates = [];
 
-    // Parse districts
     targetDistricts =
       typeof districts === "string" ? JSON.parse(districts) : districts;
     if (!Array.isArray(targetDistricts)) targetDistricts = [];
 
-    // Final check: at least one type of targeting
     if (
       targetRegions.length === 0 &&
       targetStates.length === 0 &&
@@ -173,42 +172,37 @@ const createImageAd = async (req, res) => {
       });
     }
 
-  
-// Create star payout plan
-const highvalueArray = [5, 4, 3, 2];
-const highValueRepetitions = Math.floor(userViewsNeeded / 100); // 2 if views = 200
+    // Generate star payout plan
+    const highvalueArray = [5, 4, 3, 2];
+    const highValueRepetitions = Math.floor(userViewsNeeded / 100);
+    let highValueStars = [];
+    for (const value of highvalueArray) {
+      const repeatedStars = Array(highValueRepetitions).fill(value);
+      highValueStars.push(...repeatedStars);
+    }
 
-let highValueStars = [];
-for (const value of highvalueArray) {
-  const repeatedStars = Array(highValueRepetitions).fill(value); // e.g. [5,5], [4,4], etc.
-  highValueStars.push(...repeatedStars);
-}
+    const highValueTotal = highValueStars.reduce((acc, val) => acc + val, 0);
+    const singleStarsCount = Math.floor(starsToBeDeducted - highValueTotal);
+    const singleStars = Array(singleStarsCount).fill(1);
+    const totalGiven = highValueStars.length + singleStars.length;
+    const nullStarsCount = userViewsNeeded - totalGiven;
+    const nullStars = Array(nullStarsCount).fill(0);
+    const starPayoutPlan = [...highValueStars, ...singleStars, ...nullStars];
 
-const highValueTotal = highValueStars.reduce((acc, val) => acc + val, 0);
-
-// Remaining stars as 1s
-const singleStarsCount = Math.floor(starsToBeDeducted - highValueTotal);
-const singleStars = Array(singleStarsCount).fill(1);
-
-// Fill with 0s to match view count
-const totalGiven = highValueStars.length + singleStars.length;
-const nullStarsCount = userViewsNeeded - totalGiven;
-const nullStars = Array(nullStarsCount).fill(0);
-
-// Final payout plan
-const starPayoutPlan = [...highValueStars, ...singleStars, ...nullStars];
-
-
-    // Deduct stars from wallet
+    // Deduct stars
     userWallet.totalStars -= starsToBeDeducted;
     await userWallet.save();
 
+    // Save Ad URLs
+    const imageUrl = `/imgAdUploads/${imageFile.filename}`;
+    const audioUrl = audioFile ? `/imgAdUploads/${audioFile.filename}` : null;
+
     // Save image ad
-    const imageUrl = `/imgAdUploads/${req.file.filename}`;
     const imageAd = await ImageAd.create({
       title,
       description,
       imageUrl,
+      audioUrl,
       adPeriod: adRepetition ? parsedAdPeriod : 0,
       adRepetition,
       createdBy: user._id,
@@ -239,6 +233,7 @@ const starPayoutPlan = [...highValueStars, ...singleStars, ...nullStars];
     });
   }
 };
+
 
 
 
