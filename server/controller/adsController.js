@@ -108,6 +108,7 @@ const createImageAd = async (req, res) => {
         const latitude = parseFloat(latStr);
         const longitude = parseFloat(lngStr);
         const radius = parseFloat(loc.radius);
+        // console.log(`Parsed coordinates -> Latitude: ${latitude}, Longitude: ${longitude}`);
 
         if (isNaN(latitude) || isNaN(longitude) || isNaN(radius)) {
           return res
@@ -118,7 +119,7 @@ const createImageAd = async (req, res) => {
         targetRegions.push({
           location: {
             type: "Point",
-            coordinates: [longitude, latitude],
+            coordinates: [latitude, longitude],
           },
           radius,
         });
@@ -179,7 +180,7 @@ const highValueRepetitions = Math.floor(userViewsNeeded / 100);
 
 let highValueStars = [];
 for (const value of highvalueArray) {
-  const repeatedStars = Array(highValueRepetitions).fill(value); 
+  const repeatedStars = Array(highValueRepetitions).fill(value); // e.g. [5,5], [4,4], etc.
   highValueStars.push(...repeatedStars);
 }
 
@@ -767,7 +768,7 @@ const fetchVerifiedImgAd = async (req, res) => {
       const isUserInTargetRegion = imgAd.targetRegions?.some(region => {
         if (!region?.location?.coordinates) return false;
 
-        const [targetLng, targetLat] = region.location.coordinates;
+        const [targetLat, targetLng] = region.location.coordinates;
         const radiusMeters = region.radius * 1000;
 
         const withinLiveLocation =
@@ -914,7 +915,7 @@ const fetchVerifiedVideoAd = async (req, res) => {
       const isUserInTargetRegion = videoAd.targetRegions?.some(region => {
         if (!region?.location?.coordinates) return false;
 
-        const [targetLng, targetLat] = region.location.coordinates;
+        const [targetLat, targetLng] = region.location.coordinates;
         const radiusMeters = region.radius * 1000;
 
         const withinLiveLocation =
@@ -1065,7 +1066,7 @@ const fetchVerifiedSurveyAd = async (req, res) => {
       const isUserInTargetRegion = surveyAd.targetRegions?.some(region => {
         if (!region?.location?.coordinates) return false;
 
-        const [targetLng, targetLat] = region.location.coordinates;
+        const [targetLat, targetLng] = region.location.coordinates;
         const radiusMeters = region.radius * 1000;
 
         const withinLiveLocation =
