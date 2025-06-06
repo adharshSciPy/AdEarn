@@ -75,6 +75,7 @@ import SubScriptionStar from './pages/superadmin/StarDistribution/SubscriptionSt
 import Userstar from './pages/superadmin/StarDistribution/UserStar/UserStar';
 import WelcomeStar from './pages/superadmin/StarDistribution/WelcomeStar/WelcomeStar'
 import Contest from './pages/superadmin/Contest/Contest';
+import ContestWinner from './pages/superadmin/ContestWinner/ContestWinner';
 
 
 
@@ -163,6 +164,7 @@ function App() {
           <Route path='/superadminuserstar' element={<Userstar />} />
           <Route path='/superadminwelcomestar' element={<WelcomeStar />} />
           <Route path='/superadmincontest' element={<Contest />} />
+          <Route path='/superadmincontestwinner' element={<ContestWinner />} />
 
 
 

@@ -11,6 +11,7 @@ import axios from "axios";
 import mongoose from "mongoose";
 import { Ad } from "../model/AdsModel.js";
 import Coupon from "../model/couponModel.js"
+import { distributeWelcomeBonus } from './superAdminController.js';
 
 // function to create referal code
 const generateReferalCode = async (length = 6) => {
@@ -58,51 +59,73 @@ const formatTo12HourTime = (date) => {
 // register user with otp only
 const registerUser = async (req, res) => {
   const { phoneNumber } = req.body;
+
   try {
     if (!phoneNumber)
       return res.status(400).json({ message: "Phone Number is required" });
+
     const phoneRegex = /^(\+\d{1,3}[- ]?)?\d{10}$/;
     if (!phoneRegex.test(phoneNumber)) {
       return res.status(400).json({ message: "Invalid Phone Number format" });
     }
+
     const existingUser = await User.findOne({ phoneNumber });
     if (existingUser) {
       return res.status(400).json({ message: "Phone Number already exists" });
     }
-    const user = await User.create({
-      phoneNumber,
-    });
+
+    const user = await User.create({ phoneNumber });
+
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: "7d" }
     );
+
     const myReferalCode = await generateReferalCode();
     user.myReferalCode = myReferalCode;
-       const wallet = await UserWallet.create({ totalStars: 0 });
+
+    const wallet = await UserWallet.create({ totalStars: 0 });
     user.userWalletDetails = wallet._id;
-    await user.save();
+
     const uniqueUserId = await generateUniqueUserId();
     user.uniqueUserId = uniqueUserId;
+
     await user.save();
+
+    // ✅ Distribute welcome bonus and catch errors
+    let bonusResult = null;
+    try {
+      bonusResult = await distributeWelcomeBonus(user._id);
+    } catch (bonusErr) {
+      console.error("Welcome bonus distribution failed:", bonusErr.message);
+      bonusResult = { success: false, message: bonusErr.message };
+    }
+
+    // ✅ Populate wallet to include it in response
+    await user.populate('userWalletDetails');
+
     return res.status(200).json({
-      message: "User registered succesfully",
+      message: "User registered successfully",
       user: {
         id: user._id,
         phoneNumber: user.phoneNumber,
         role: user.role,
         myReferalCode: user.myReferalCode,
         uniqueUserId: user.uniqueUserId,
+        wallet: user.userWalletDetails, // 👈 This includes the bonus
       },
       token,
+      bonus: bonusResult,
     });
   } catch (err) {
     console.error("Error during registration:", err);
-    return res
-      .status(500)
-      .json({ message: `Internal Server Error: ${err.message}` });
+    return res.status(500).json({ message: `Internal Server Error: ${err.message}` });
   }
 };
+
+
+
 // edit user
 const editUser = async (req, res) => {
   const { id } = req.params;
