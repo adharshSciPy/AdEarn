@@ -176,7 +176,7 @@ const createImageAd = async (req, res) => {
   
 // Create star payout plan
 const highvalueArray = [5, 4, 3, 2];
-const highValueRepetitions = Math.floor(userViewsNeeded / 100); 
+const highValueRepetitions = Math.floor(userViewsNeeded / 100); // 2 if views = 200
 
 let highValueStars = [];
 for (const value of highvalueArray) {
@@ -197,6 +197,7 @@ const nullStars = Array(nullStarsCount).fill(0);
 
 // Final payout plan
 const starPayoutPlan = [...highValueStars, ...singleStars, ...nullStars];
+
 
     // Deduct stars from wallet
     userWallet.totalStars -= starsToBeDeducted;
