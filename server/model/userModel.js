@@ -46,12 +46,12 @@ const userSchema = new Schema(
       type: String,
     },
     locationCoordinates: {
-  type: {
-    lat: { type: Number },
-    lng: { type: Number },
-  },
-  default: null,
-},
+      type: {
+        lat: { type: Number },
+        lng: { type: Number },
+      },
+      default: null,
+    },
     pinCode: {
       type: Number,
     },
@@ -73,18 +73,20 @@ const userSchema = new Schema(
     profileImg: {
       type: String,
     },
-    isUserEnabled:{
-      type:Boolean,
-      default:true
+    isUserEnabled: {
+      type: Boolean,
+      default: true,
     },
-      lastSeen: {
+    lastSeen: {
       type: String,
       default: null,
     },
-    ads:[{
-type:Schema.Types.ObjectId,
-ref:"Ad"
-    }],
+    ads: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Ad",
+      },
+    ],
     myReferalCode: {
       type: String,
       unique: true,
@@ -106,21 +108,35 @@ ref:"Ad"
       ref: "kyc",
     },
     userWalletDetails: {
-  type: Schema.Types.ObjectId,
-  ref: "UserWallet",
-},
-viewedAds: [
-  {
-    adId: { type: Schema.Types.ObjectId, ref: "Ad" },
-    viewedAt: { type: Date, default: Date.now },
-  }
-],
+      type: Schema.Types.ObjectId,
+      ref: "UserWallet",
+    },
+    viewedAds: [
+      {
+        adId: { type: Schema.Types.ObjectId, ref: "Ad" },
+        viewedAt: { type: Date, default: Date.now },
+      },
+    ],
+    isSubscribed: {
+       type: Boolean,
+        default: true
+       },
     
+  subscriptionStartDate: {
+     type: Date,
+      default: Date.now 
+    },
+    subscriptionEndDate: {
+       type: Date
+       },
   },
   { timestamps: true }
 );
 // password hashing
 userSchema.pre("save", async function (next) {
+   if (this.isNew) {
+    this.subscriptionEndDate = new Date(this.subscriptionStartDate.getTime() + 365 * 24 * 60 * 60 * 1000); // +1 year
+  }
   if (!this.isModified("password")) return next();
   console.log("Password before hashing", this.password);
   try {
@@ -152,5 +168,12 @@ userSchema.methods.generateRefreshToken = function () {
   });
   return refreshToken;
 };
+// subscription checking
+userSchema.methods.hasActiveSubscription = function () {
+  const now = new Date();
+  return this.isSubscribed && this.subscriptionEndDate && now <= this.subscriptionEndDate;
+};
+
+
 
 export default mongoose.model("User", userSchema);
