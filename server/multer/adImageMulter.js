@@ -28,22 +28,30 @@ const storage = multer.diskStorage({
 
 // File filter
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+  const allowedImageTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+  const allowedAudioTypes = ["audio/mpeg", "audio/mp3", "audio/wav"];
+  const allowedTypes = [...allowedImageTypes, ...allowedAudioTypes];
+
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error("Invalid file type. Only JPEG, PNG, GIF, and WEBP images are allowed!"), false);
+    cb(
+      new Error("Invalid file type. Only JPEG, PNG, GIF, WEBP images and MP3/WAV audio are allowed!"),
+      false
+    );
   }
 };
 
-// Multer configuration
-const adImageUpload = multer({
+// Multer configuration (handling both image and audio)
+const adMediaUpload = multer({
   storage: storage,
-  limits: { 
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-    files: 1 // Limit to single file
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB per file
   },
   fileFilter: fileFilter,
-}).single("imageAd"); // Explicitly handle single file
+}).fields([
+  { name: "imageAd", maxCount: 1 },
+  { name: "audioAd", maxCount: 1 },
+]);
 
-export default adImageUpload;
+export default adMediaUpload;

@@ -124,7 +124,12 @@ const imageAd = new mongoose.Schema(
       {
         type:String
       }
-    ]
+    ],
+    audioUrl: {
+  type: String,
+  required: false,
+},
+
   },
   { timestamps: true }
 );

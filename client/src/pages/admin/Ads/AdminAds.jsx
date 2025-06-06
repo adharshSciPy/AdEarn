@@ -1,50 +1,44 @@
-import React, { useState } from 'react'
-import Sidebar from '../../../components/sidebar/Sidebar'
-import Header from '../../../components/Header/Header';
-import styles from "./AdminAds.module.css"
-import { Button, Flex, Progress, Tooltip, Pagination, Select } from 'antd';
-import { useNavigate } from 'react-router-dom';
-
-
-const adsData = Array.from({ length: 30 }, (_, i) => ({
-  id: i + 1,
-  title: `Ads ${i + 1}`,
-  status: i % 3 === 0 ? 'Stopped' : 'Ongoing',
-  approved: true,
-  amount: 500,
-  views: Math.floor(Math.random() * 800),
-  totalViews: 800,
-  startDate: "02/06/2025",
-  endDate: "05/06/2025",
-}));
-
-const adsVerifyData = Array.from({ length: 30 }, (_, i) => ({
-  id: i + 1,
-  date: "02/06/2025",
-  title: `Ads ${i + 1}`,
-  views: Math.floor(Math.random() * 800),
-  totalViews: 800,
-  totalAmount: 500,
-  status: i % 3 === 0 ? 'Stopped' : 'Ongoing',
-  endDate: "2025/06/05",
-  verificationStatus: "Verify Now",
-}));
-
-
+import React, { useEffect, useState } from "react";
+import Sidebar from "../../../components/sidebar/Sidebar";
+import Header from "../../../components/Header/Header";
+import styles from "./AdminAds.module.css";
+import { Button, Flex, Progress, Tooltip, Pagination, Select } from "antd";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import baseUrl from "../../../baseurl";
 
 function AdminAds() {
+  const [unverifiedAds, setunverifiedAds] = useState([]);
+  const [verifiedAd, setVerifiedAd] = useState([]);
 
+  const getunverifiedAds = async () => {
+    try {
+      const response = await axios.get(`${baseUrl}/api/v1/ads/ads-to-verify`);
+      console.log(response);
+      setunverifiedAds(response.data.ads);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const getVerifiedAd = async () => {
+    try {
+      const response = await axios.get(`${baseUrl}/api/v1/ads/verified-ads`);
+      setVerifiedAd(response.data.ads);
+      console.log("verified", response);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
-
 
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
   const handlenavigate = (adId) => {
-    navigate(`/VerifyAds/${adId}`)
-  }
+    navigate(`/VerifyAds/${adId}`);
+  };
 
   const [activeTab, setActiveTab] = useState("Ads");
 
@@ -52,50 +46,47 @@ function AdminAds() {
     setActiveTab(tabName);
   };
 
-  const tabs = [
-    "Ads",
-    "Verify Ads"
-  ];
+  const tabs = ["Ads", "Verify Ads"];
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
-  const filteredAds = adsData.filter(ad => {
-    if (!ad.startDate || !ad.startDate.includes('/')) return false;
+  // const filteredAds = adsData.filter(ad => {
+  //   if (!ad.startDate || !ad.startDate.includes('/')) return false;
 
-    const [day, month, year] = ad.startDate.split('/');
-    return (
-      (!selectedMonth || month === selectedMonth) &&
-      (!selectedYear || year === selectedYear)
-    );
-  });
+  //   const [day, month, year] = ad.startDate.split('/');
+  //   return (
+  //     (!selectedMonth || month === selectedMonth) &&
+  //     (!selectedYear || year === selectedYear)
+  //   );
+  // });
 
+  // const filteredVerifyAds = adsVerifyData.filter(ad => {
+  //   if (!ad.date || !ad.date.includes('/')) return false;
 
+  //   const [day, month, year] = ad.date.split('/');
+  //   return (
+  //     (!selectedMonth || month === selectedMonth) &&
+  //     (!selectedYear || year === selectedYear)
+  //   );
+  // });
 
-  const filteredVerifyAds = adsVerifyData.filter(ad => {
-    if (!ad.date || !ad.date.includes('/')) return false;
+  // const paginatedAds = filteredAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-    const [day, month, year] = ad.date.split('/');
-    return (
-      (!selectedMonth || month === selectedMonth) &&
-      (!selectedYear || year === selectedYear)
-    );
-  });
+  // const paginatedVerifyAds = filteredVerifyAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-
-
-  const paginatedAds = filteredAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  const paginatedVerifyAds = filteredVerifyAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  const onChange = value => {
+  const onChange = (value) => {
     console.log(`selected ${value}`);
   };
-  const onSearch = value => {
-    console.log('search:', value);
+  const onSearch = (value) => {
+    console.log("search:", value);
   };
 
+  useEffect(() => {
+    getunverifiedAds();
+    getVerifiedAd()
+  }, []);
 
   return (
     <div className={styles.adminadsmain}>
@@ -103,7 +94,15 @@ function AdminAds() {
         <Sidebar />
         <Header />
         <div className={styles.Adminads}>
-          <div style={{ width: '100%', maxWidth: '1550px', height: '600px', padding: '30px' }} className={styles.AdsSection}>
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "1550px",
+              height: "600px",
+              padding: "30px",
+            }}
+            className={styles.AdsSection}
+          >
             <nav className={styles.tabMenu}>
               <ul>
                 {tabs.map((tab) => (
@@ -117,7 +116,9 @@ function AdminAds() {
                 ))}
               </ul>
             </nav>
-            <div style={{ display: 'flex', justifyContent: 'end', gap: "20px" }}>
+            <div
+              style={{ display: "flex", justifyContent: "end", gap: "20px" }}
+            >
               <Button>Log</Button>
               <Select
                 showSearch
@@ -126,20 +127,19 @@ function AdminAds() {
                 onChange={(value) => setSelectedMonth(value)}
                 onSearch={onSearch}
                 options={[
-                  { value: '01', label: 'January' },
-                  { value: '02', label: 'February' },
-                  { value: '03', label: 'March' },
-                  { value: '04', label: 'April' },
-                  { value: '05', label: 'May' },
-                  { value: '06', label: 'June' },
-                  { value: '07', label: 'July' },
-                  { value: '08', label: 'August' },
-                  { value: '09', label: 'September' },
-                  { value: '10', label: 'October' },
-                  { value: '11', label: 'November' },
-                  { value: '12', label: 'December' },
+                  { value: "01", label: "January" },
+                  { value: "02", label: "February" },
+                  { value: "03", label: "March" },
+                  { value: "04", label: "April" },
+                  { value: "05", label: "May" },
+                  { value: "06", label: "June" },
+                  { value: "07", label: "July" },
+                  { value: "08", label: "August" },
+                  { value: "09", label: "September" },
+                  { value: "10", label: "October" },
+                  { value: "11", label: "November" },
+                  { value: "12", label: "December" },
                 ]}
-
               />
               <Select
                 showSearch
@@ -154,7 +154,6 @@ function AdminAds() {
                     label: year.toString(),
                   };
                 })}
-
               />
             </div>
             {activeTab === "Ads" && (
@@ -167,53 +166,36 @@ function AdminAds() {
                       <th>Views</th>
                       <th>Total Amount</th>
                       <th>Start Date</th>
-                      <th>End Date</th>
-                      <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedAds.map((ad) => (
-                      <tr key={ad.id}>
-                        <td>{ad.title}<br />Approved</td>
-                        <td>
-                          <Flex gap="small" vertical>
-                            <Tooltip title={`${ad.views} out of ${ad.totalViews} views`}>
-                              <Progress
-                                percent={100}
-                                success={{ percent: (ad.views / ad.totalViews) * 100, strokeColor: '#FCB859' }}
-                                strokeWidth={5}
-                                strokeColor="#2B2B36"
-                                showInfo={false}
-                              />
-                            </Tooltip>
-                          </Flex>
-                        </td>
-                        <td>&#8377; {ad.amount}</td>
-                        <td>{ad.startDate}</td>
-                        <td>{ad.endDate}</td>
-                        <td>
-                          <span className={ad.status === "Ongoing" ? styles.statusOngoing : styles.statusStopped}>
-                            {ad.status}
-                          </span>
-                        </td>
+                    {verifiedAd.map((ad,index) => (
+                      <tr key={index}>
+                        <td>{ad.imageAd?.title || ""}</td>
+                        <td>{ad.imageAd?.userViewsNeeded || ""}</td>
+                        <td>{ad.imageAd?.totalStarsAllocated} </td>
+                        <td>{ad.imageAd?.createdAt}</td>
+                        
                       </tr>
                     ))}
                   </tbody>
                 </table>
                 <div className={styles.pagination}>
-                  <Pagination
-                    current={currentPage}
-                    pageSize={pageSize}
-                    total={filteredAds.length}
-                    onChange={handlePageChange}
-                  />
+                    {/* <Pagination
+                      current={currentPage}
+                      pageSize={pageSize}
+                      total={filteredAds.length}
+                      onChange={handlePageChange}
+                    /> */}
                 </div>
               </section>
             )}
 
             {activeTab === "Verify Ads" && (
               <section className={styles.payoutTableSection}>
-                <h1 style={{ fontSize: "25px", padding: '10px' }}>Verify Ads</h1>
+                <h1 style={{ fontSize: "25px", padding: "10px" }}>
+                  Verify Ads
+                </h1>
                 <table className={styles.payoutTable}>
                   <thead>
                     <tr>
@@ -221,71 +203,44 @@ function AdminAds() {
                       <th>Ads</th>
                       <th>Views</th>
                       <th>Total amount</th>
-                      <th>Status</th>
-                      <th>End Date</th>
                       <th>Ads Verification</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedVerifyAds.map((ad) => (
-                      <tr key={ad.id}>
-                        <td>{ad.date}</td>
-                        <td>
-                          {ad.title}<br />
-                          Approved
-                        </td>
-                        <td>
-                          <Flex gap="small" vertical>
-                            <Tooltip title={`${ad.views} out of ${ad.totalViews} views`}>
-                              <Progress
-                                percent={100}
-                                success={{ percent: (ad.views / ad.totalViews) * 100, strokeColor: '#FCB859' }}
-                                strokeWidth={5}
-                                strokeColor="#2B2B36"
-                                showInfo={false}
-                              />
-                            </Tooltip>
-                          </Flex>
-                        </td>
-                        <td>&#8377; {ad.totalAmount}</td>
-                        <td>
-                          <span className={ad.status === "Ongoing" ? styles.statusOngoing : styles.statusStopped}>
-                            {ad.status === "Ongoing" ? "Started" : "Stopped"}
-                          </span>
-                        </td>
-                        <td>{ad.endDate}</td>
+                    {unverifiedAds.map((ad, index) => (
+                      <tr key={index}>
+                        <td>{ad.imageAd?.createdAt || "No Title"}</td>
+                        <td>{ad.imageAd?.title || ""}</td>
+                        <td>{ad.imageAd?.userViewsNeeded || ""}</td>
+                        <td>&#8377; {ad.imageAd?.totalStarsAllocated || ""}</td>
+
                         <td>
                           <button
                             className={styles.redeemBtn}
-                            onClick={() => handlenavigate(ad.id)}
+                            onClick={() => handlenavigate(ad._id)}
                           >
-                            {'Verify Now'}
+                            {"Verify Now"}
                           </button>
                         </td>
                       </tr>
                     ))}
-
                   </tbody>
                 </table>
                 <div className={styles.pagination}>
-                  <Pagination
-                    current={currentPage}
-                    pageSize={pageSize}
-                    total={filteredVerifyAds.length}
-                    onChange={handlePageChange}
-                  />
+                  {/* <Pagination
+                      current={currentPage}
+                      pageSize={pageSize}
+                      total={filteredVerifyAds.length}
+                      onChange={handlePageChange}
+                    /> */}
                 </div>
               </section>
             )}
           </div>
         </div>
-
-
-
-
       </div>
     </div>
-  )
+  );
 }
 
-export default AdminAds
+export default AdminAds;
