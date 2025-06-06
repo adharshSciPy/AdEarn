@@ -1,5 +1,12 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
+import { useParams } from "react-router-dom";
 import Select from "react-select";
+import baseUrl from "../../../baseurl";
+// import successAnimation from "./success.json";
+import Lottie from "lottie-react";
+import successAnimation from "../../../assets/sucess.json"
+import { useNavigate } from "react-router-dom";
+
 import {
   MapContainer,
   TileLayer,
@@ -14,7 +21,7 @@ import "leaflet/dist/leaflet.css";
 import styles from "./adform.module.css";
 import tickAd from "../../../assets/tickAd.png";
 import Navbar from "../NavBar/Navbar";
-
+import axios from "axios";
 // Fix leaflet's default icon issue
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -455,11 +462,12 @@ const stateCityMap = {
 };
 
 function AdForm() {
-  const [isSingleTime, setIsSingleTime] = useState(true); // default to single time
+  const { id } = useParams();
   const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+
   const [singleTime, setSingleTime] = useState(false);
   const [multipleTime, setMultipleTime] = useState(false);
-  const [city, setCity] = useState([]);
   const [timeOptions, setTimeOptions] = useState({
     "3hrs": false,
     "6hrs": false,
@@ -467,9 +475,9 @@ function AdForm() {
     "24hrs": false,
     "48hrs": false,
   });
-
+  const [image, setImage] = useState(null);
   const [form, setForm] = useState({
-    state: "",
+    state: [],
     city: [],
     viewPlan: "",
     adName: "",
@@ -506,24 +514,9 @@ function AdForm() {
   };
   const rawCities = stateCityMap[form.state] || [];
 
-  const cityOptions = [
-    { label: "All", value: "All" },
-    ...rawCities.map((city) => ({ label: city, value: city })),
-  ];
-  const handleCityChange = (selected) => {
-    if (!selected) {
-      setForm({ ...form, city: [] });
-      return;
-    }
-
-    const selectedValues = selected.map((opt) => opt.value);
-
-    if (selectedValues.includes("All")) {
-      setForm({ ...form, city: rawCities });
-    } else {
-      setForm({ ...form, city: selectedValues });
-    }
-  };
+  const cityOptions = form.state.flatMap((state) =>
+    (stateCityMap[state] || []).map((city) => ({ value: city, label: city }))
+  );
 
   const removeCity = (cityToRemove) => {
     setForm((prev) => ({
@@ -553,16 +546,11 @@ function AdForm() {
       setSubmitError("Please select Ad Category");
       return false;
     }
-    if (positions.length === 0) {
-      setSubmitError("Please select at least one location pin");
-      return false;
-    }
-    if (!form.state) {
-      setSubmitError("Please select your State");
-      return false;
-    }
-    if (!form.city) {
-      setSubmitError("Please select your City");
+    const isMapSelected = positions.length > 0;
+    const isRegionSelected = form.state.length > 0 && form.city.length > 0;
+
+    if (!isMapSelected && !isRegionSelected) {
+      setSubmitError("Please select at least one location using map or region");
       return false;
     }
     if (!singleTime && !multipleTime) {
@@ -623,51 +611,97 @@ function AdForm() {
     setLoading(true);
     setSubmitError("");
     setSubmitSuccess("");
+    const locationPayload = positions.map((p) => ({
+      coords: `${p.lng},${p.lat}`,
+      radius: p.radiusKm,
+    }));
+    const formData = new FormData();
 
-    const payload = {
-      title: form.adName,
-      description: form.adCategory,
-      locations: positions,
-      state: form.state,
-      adPeriod: singleTime ? 0 : selectedTimeSlots,
-      userViewsNeeded: form.viewPlan,
-      city: form.city,
-    };
+    formData.append("title", form.adName);
+    formData.append("description", form.adCategory);
+    formData.append("userViewsNeeded", form.viewPlan);
 
-    console.log("Submit payload:", payload);
+    // Array of positions (e.g., { coords: "8.5,76.9", radius: "5" })
+    formData.append("locations", JSON.stringify(locationPayload));
+    // Arrays of states and districts
+    formData.append("states", JSON.stringify(form.state));
+    // if array
+    formData.append("districts", JSON.stringify(form.city || []));
+    // if array
+    formData.append("imageAd", image);
+    formData.append(
+      "adPeriod",
+      JSON.stringify(singleTime ? 0 : selectedTimeSlots)
+    );
 
-    // Uncomment and adjust the below fetch when backend API is ready
-    /*
     try {
-      const response = await fetch("https://your-backend-api.com/api/ads", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await axios.post(
+        `${baseUrl}/api/v1/ads/image-ad/${id}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      if (response.status === 200) {
+        console.log(response);
 
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
+        setForm({
+          adName: "",
+          adCategory: "",
+          state: [],
+          city: [],
+          viewPlan: "",
+        });
+        if (fileInputRef.current) {
+          fileInputRef.current.value = null;
+        }
+        setPreview(null);
+        setPositions([]);
+        setSingleTime(false);
+        setMultipleTime(false);
+        setSelectedTimeSlots([]);
+        setSearchInput("");
+        setTimeOptions({
+          "3hrs": false,
+          "6hrs": false,
+          "12hrs": false,
+          "24hrs": false,
+          "48hrs": false,
+        }); // adjust keys as per your time options
+        setShowSuccessPopup(true);
+        setTimeout(() => {
+          setShowSuccessPopup(false);
+          navigate(`/userhome/${id}`)
+        }, 2000);
       }
-
-      const result = await response.json();
-      setSubmitSuccess("Ad saved successfully!");
-      console.log("Submit response:", result);
     } catch (error) {
-      setSubmitError("Failed to save Ad: " + error.message);
-    } finally {
-      setLoading(false);
+      console.log(error);
     }
-    */
-
-    // Simulate success response for now
     setTimeout(() => {
       setSubmitSuccess("Ad saved successfully!");
       setLoading(false);
     }, 1000);
   };
+  const [preview, setPreview] = useState(null);
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setImage(file);
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleStateChange = (selected) => {
+    const selectedStates = selected ? selected.map((opt) => opt.value) : [];
+    setForm({ ...form, state: selectedStates, city: [] }); // clear cities when states change
+  };
+  const isMapSelected = positions.length > 0;
+  const isRegionSelected = form.state.length > 0;
+  const fileInputRef = useRef(null);
+  const navigate = useNavigate()
   return (
     <>
       <Navbar />
@@ -717,7 +751,13 @@ function AdForm() {
         </div>
 
         {/* Map and Location search */}
-        <div className={styles.container}>
+        <div
+          className={styles.container}
+          style={{
+            pointerEvents: isRegionSelected ? "none" : "auto",
+            opacity: isRegionSelected ? 0.6 : 1,
+          }}
+        >
           <h3 style={{ paddingBottom: "20px" }}>Select Location</h3>
           <MapContainer
             center={[8.5241, 76.9366]}
@@ -804,7 +844,14 @@ function AdForm() {
         </div>
 
         {/* Region Selection */}
-        <div className={styles.adName} style={{ marginTop: "30px" }}>
+        <div
+          className={styles.adName}
+          style={{
+            marginTop: "30px",
+            pointerEvents: isMapSelected ? "none" : "auto",
+            opacity: isMapSelected ? 0.6 : 1,
+          }}
+        >
           <div className={styles.labelContainer}>
             <div className={styles.labelImg}>
               <img src={tickAd} alt="tick" />
@@ -814,23 +861,43 @@ function AdForm() {
             </div>
           </div>
 
-          <div className={styles.labelContainer} style={{ marginTop: "30px" }}>
+          <div
+            className={styles.labelContainer}
+            style={{ marginTop: "30px", flexDirection: "column" }}
+          >
             <div className={styles.AdNameHead}>
               <p>State</p>
-              <select
+              <Select
+                isMulti
+                options={Object.keys(stateCityMap).map((state) => ({
+                  value: state,
+                  label: state,
+                }))}
+                value={Object.keys(stateCityMap)
+                  .filter((state) => form.state.includes(state))
+                  .map((state) => ({ value: state, label: state }))}
+                onChange={handleStateChange}
                 className={styles.selectOption}
-                required
-                value={form.state}
-                onChange={handleChange}
-                name="state"
-              >
-                <option value="">Select Your State</option>
-                {Object.keys(stateCityMap).map((state) => (
-                  <option key={state} value={state}>
-                    {state}
-                  </option>
-                ))}
-              </select>
+              />
+            </div>
+            <div className={styles.selectedStates}>
+              {form.state.map((s, index) => (
+                <span key={index} className={styles.cityTag}>
+                  {s}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        state: prev.state.filter((state) => state !== s),
+                      }))
+                    }
+                    className={styles.removeBtn}
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
             </div>
           </div>
 
@@ -847,7 +914,9 @@ function AdForm() {
                   form.city.includes(opt.value)
                 )}
                 onChange={(selected) => {
-                  const selectedCities = selected.map((opt) => opt.value);
+                  const selectedCities = selected
+                    ? selected.map((opt) => opt.value)
+                    : [];
                   setForm({ ...form, city: selectedCities });
                 }}
                 className={styles.selectOption}
@@ -966,7 +1035,29 @@ function AdForm() {
             </div>
           </div>
         </div>
-
+        <div className={styles.adName}>
+          <div className={styles.labelContainer}>
+            <div className={styles.labelImg}>
+              <img src={tickAd} alt="tick" />
+            </div>
+            <div className={styles.AdNameHead}>
+              <h2>Your Ad Photo</h2>
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+              {preview && (
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className={styles.previewImg}
+                />
+              )}
+            </div>
+          </div>
+        </div>
         {/* View Required */}
         <div className={styles.adName}>
           <div className={styles.labelContainer}>
@@ -1018,6 +1109,16 @@ function AdForm() {
             </button>
           </div>
         </div>
+        {showSuccessPopup && (
+          <div className={styles.popupContainer}>
+            <Lottie
+              animationData={successAnimation}
+              loop={false}
+              autoplay
+              style={{ width: 150, height: 150 }}
+            />
+          </div>
+        )}
       </div>
     </>
   );

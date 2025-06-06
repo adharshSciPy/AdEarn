@@ -1,15 +1,25 @@
-import mongoose,{Schema} from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
+// Sub-document schema for each transaction entry
 const transactionSchemaSA = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
+      ref: "User", // Recipient of the bonus
+      // required: true,
     },
     starsReceived: {
       type: Number,
-      required: true,
+      // required: true,
+    },
+    reason: {
+      type: String,
+      default: "Bonus", // e.g., Welcome Bonus, Manual Top-up, etc.
+    },
+    addedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "SuperAdmin", // Points to SuperAdmin model now
+      // required: true,
     },
     date: {
       type: Date,
@@ -18,7 +28,22 @@ const transactionSchemaSA = new Schema(
   },
   { _id: false }
 );
+const expiredCouponRefundSchema = new Schema(
+  {
+    stars: {
+      type: Number,
+      // required: true,
+    },
+    couponCodes: [String],
+    refundedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false }
+);
 
+// Main schema for Super Admin’s wallet
 const superAdminWalletSchema = new Schema(
   {
     totalStars: {
@@ -26,12 +51,9 @@ const superAdminWalletSchema = new Schema(
       default: 0,
     },
     transactions: [transactionSchemaSA],
+     expiredCouponRefunds: [expiredCouponRefundSchema],
   },
   { timestamps: true }
 );
 
-export default mongoose.model('SuperAdminWallet', superAdminWalletSchema);
-
-
-
-
+export default mongoose.model("SuperAdminWallet", superAdminWalletSchema);

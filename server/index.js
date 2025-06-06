@@ -8,6 +8,9 @@ import adsRouter from "./routes/adsRoute.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import superAdminRouter from "./routes/superAdminRoute.js";
+import cron from "node-cron";
+import { runRefundExpiredCoupons}  from "./utils/redeemCoupons.js";
+import mongoose from "mongoose";
 
 
 dotenv.config();
@@ -29,6 +32,18 @@ app.use('/api/v1/ads',adsRouter)
 app.use('/videoAdUploads', express.static(path.join(__dirname, 'Uploads/videoAdUploads')));
 
 app.use('/api/v1/super-admin',superAdminRouter)
+
+// to automatically fetch expired coupns
+cron.schedule("0 0 * * *", async () => {
+//   console.log(`[${new Date().toISOString()}] Running 5-minute expired coupon refund job...`);
+  try {
+    const result = await runRefundExpiredCoupons();
+    // console.log("Cron refund result:", result);
+  } catch (err) {
+    console.error("Cron refund error:", err.message, err.stack);
+  }
+});
+
 const PORT = process.env.PORT || 8000;
 
 connectDb()

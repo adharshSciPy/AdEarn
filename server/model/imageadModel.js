@@ -115,6 +115,16 @@ const imageAd = new mongoose.Schema(
         },
       },
     ],
+    targetStates:[
+      {
+        type:String
+      }
+    ],
+    targetDistricts:[
+      {
+        type:String
+      }
+    ]
   },
   { timestamps: true }
 );

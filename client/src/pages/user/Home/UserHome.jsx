@@ -1,5 +1,5 @@
 import { React, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../../components/sidebar/Sidebar";
 import styles from "./userhome.module.css";
 import logo from "../../../assets/Logo.png";
@@ -8,6 +8,7 @@ import axios from "axios";
 import baseUrl from "../../../baseurl";
 
 function UserHome() {
+  const navigate=useNavigate()
   const [imageAdData, setImageAd] = useState([]);
   const { id } = useParams();
 
@@ -46,7 +47,9 @@ function UserHome() {
     console.log(response);
     
   };
-
+const handleClick = () => {
+    navigate(`/adform/${id}`); // replace with your route
+  };
   return (
     <div>
       <Navbar />
@@ -68,7 +71,7 @@ function UserHome() {
                       </p>
                     </div>
                     <div className={styles.firstMainbutton}>
-                      <button>Place Ads</button>
+                      <button onClick={handleClick}>Place Ads</button>
                     </div>
                   </div>
 
@@ -118,7 +121,7 @@ function UserHome() {
                 </div>
               </div>
             </div>
-            {/* <div className={styles.adContainerMain}>
+             <div className={styles.adContainerMain}>
               <div className={styles.imageAdHead}>
                 <h2>Video Ads</h2>
               </div>
@@ -306,7 +309,7 @@ function UserHome() {
                   <button>See All</button>
                 </div>
               </div>
-            </div> */}
+            </div> 
           </div>
         </div>
       </div>

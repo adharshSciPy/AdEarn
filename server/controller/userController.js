@@ -10,6 +10,7 @@ import SuperAdminWallet from "../model/superAdminWallet.js";
 import axios from "axios";
 import mongoose from "mongoose";
 import { Ad } from "../model/AdsModel.js";
+import Coupon from "../model/couponModel.js"
 
 // function to create referal code
 const generateReferalCode = async (length = 6) => {
@@ -461,17 +462,16 @@ const starBuy = async (req, res) => {
     const adminShare = totalStarsGenerated * 0.1;
     const referredUserShare = totalStarsGenerated * 0.1;
 
-   const user = await User.findById(id)
-  .populate("userWalletDetails")
-  .populate("referedBy");
-
+    const user = await User.findById(id)
+      .populate("userWalletDetails")
+      .populate("referedBy");
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const wallet = user.userWalletDetails;
     if (!wallet) return res.status(404).json({ message: "User wallet not found" });
 
-  
+    // Update user's wallet
     wallet.totalStars += Math.floor(userShare);
     wallet.starBought.push({
       starsNeeded: Math.floor(userShare),
@@ -479,31 +479,52 @@ const starBuy = async (req, res) => {
     });
     await wallet.save();
 
-  
     if (user.referedBy) {
       const referredUser = await User.findById(user.referedBy).populate("userWalletDetails");
+
       if (referredUser?.userWalletDetails) {
-        referredUser.userWalletDetails.totalStars += Math.floor(referredUserShare);
-        referredUser.userWalletDetails.starBought.push({
+        const referredWallet = referredUser.userWalletDetails;
+
+        referredWallet.totalStars += Math.floor(referredUserShare);
+        referredWallet.starBought.push({
           starsNeeded: Math.floor(referredUserShare),
           paymentStatus: "completed",
         });
-        await referredUser.userWalletDetails.save();
+
+        // ✅ Add to referralTransactions
+        referredWallet.referralTransactions.push({
+          fromUser: user._id,
+          starsReceived: Math.floor(referredUserShare),
+        });
+
+        await referredWallet.save();
+
+        referredUser.referalCredits += Math.floor(referredUserShare);
+        await referredUser.save();
       }
     } else {
       // No referral – assign to first registered user
       const firstUser = await User.findOne().sort({ createdAt: 1 }).populate("userWalletDetails");
+
       if (firstUser?.userWalletDetails) {
-        firstUser.userWalletDetails.totalStars += Math.floor(referredUserShare);
-        firstUser.userWalletDetails.starBought.push({
+        const firstWallet = firstUser.userWalletDetails;
+
+        firstWallet.totalStars += Math.floor(referredUserShare);
+        firstWallet.starBought.push({
           starsNeeded: Math.floor(referredUserShare),
           paymentStatus: "completed",
         });
-        await firstUser.userWalletDetails.save();
+
+        // ✅ Add to referralTransactions (from current user)
+        firstWallet.referralTransactions.push({
+          fromUser: user._id,
+          starsReceived: Math.floor(referredUserShare),
+        });
+
+        await firstWallet.save();
       }
     }
 
-    
     let adminWallet = await AdminWallet.findOne();
     if (!adminWallet) {
       adminWallet = new AdminWallet({
@@ -522,7 +543,6 @@ const starBuy = async (req, res) => {
     }
     await adminWallet.save();
 
-    
     let superAdminWallet = await SuperAdminWallet.findOne();
     if (!superAdminWallet) {
       superAdminWallet = new SuperAdminWallet({
@@ -541,11 +561,10 @@ const starBuy = async (req, res) => {
     }
     await superAdminWallet.save();
 
-    
     return res.status(200).json({
       message: "Star purchase successful",
-      starsRequested: starsNeeded,
-      totalStarsGenerated,
+      starsRequested: starsNeeded.toString(),
+      totalStarsGenerated: Math.floor(totalStarsGenerated),
       userShare: Math.floor(userShare),
       adminShare: Math.floor(adminShare),
       superAdminShare: Math.floor(superAdminShare),
@@ -558,6 +577,7 @@ const starBuy = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 // to post ads using stars or amount with automated views 
 // const adPost=async(req,res)=>{
 //   const{id}=req.params;
@@ -644,6 +664,83 @@ const getViewedAds = async (req, res) => {
     return res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+const redeemCoupon = async (req, res) => {
+  const { couponCode } = req.body;
+  const userId = req.params.id;
+
+  try {
+    const coupon = await Coupon.findOne({ code: couponCode });
+
+    if (!coupon) {
+      return res.status(404).json({ message: "Invalid coupon code" });
+    }
+
+    if (coupon.isClaimed) {
+      return res.status(400).json({ message: "Coupon already claimed" });
+    }
+
+    if (coupon.expiryDate && coupon.expiryDate < new Date()) {
+      return res.status(400).json({ message: "Coupon has expired" });
+    }
+
+    // Find the user
+    const user = await User.findById(userId).populate("userWalletDetails");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Ensure wallet exists
+    let wallet = user.userWalletDetails;
+    if (!wallet) {
+      wallet = new UserWallet();
+      await wallet.save();
+      user.userWalletDetails = wallet._id;
+      await user.save();
+    }
+
+    // Update wallet stars
+    wallet.totalStars += coupon.perStarCount;
+    wallet.couponStars += coupon.perStarCount;
+    await wallet.save();
+
+    // Mark coupon as claimed
+    coupon.isClaimed = true;
+    await coupon.save();
+
+    return res.status(200).json({
+      message: "Coupon redeemed successfully",
+      starsAdded: coupon.perStarCount,
+      totalStars: wallet.totalStars,
+      couponStars: wallet.couponStars,
+    });
+  } catch (error) {
+    console.error("Error redeeming coupon:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+// to fetch user wise wallet
+const fetchUserWallet=async(req,res)=>{
+const {id:userId}=req.params;
+try {
+  const user=await User.findById(userId).populate("userWalletDetails");
+  if(!user){
+return res.status(400).json({message:"User Not Found"})
+  }
+ if (!user.userWalletDetails) {
+      return res.status(404).json({ message: "User wallet not found" });
+    }
+    const { userWalletDetails, ...userWithoutWallet } = user.toObject();
+      return res.status(200).json({
+      message: "User wallet fetched successfully",
+      wallet: user.userWalletDetails,
+       user: userWithoutWallet,
+    });
+
+} catch (error) {
+   console.error("Error fetching user wallet:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
+}
+}
 
 
 export {
@@ -655,5 +752,7 @@ export {
   addKyc,
   getUserByUniqueId,
   starBuy,
-  getViewedAds
+  getViewedAds,
+  redeemCoupon,
+  fetchUserWallet
 };

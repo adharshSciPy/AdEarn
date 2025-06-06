@@ -1,5 +1,5 @@
 import  Router  from "express";
-import { addKyc, editUser, getUserByUniqueId, getViewedAds, registerUser, starBuy, uploadProfilePicture, userLogin, userLogout, } from "../controller/userController.js";
+import { addKyc, editUser, fetchUserWallet, getUserByUniqueId, getViewedAds, redeemCoupon, registerUser, starBuy, uploadProfilePicture, userLogin, userLogout, } from "../controller/userController.js";
 import uploadUserImg from "../multer/userImgMulter.js";
 import userKyc from "../multer/kycVerificationMulter.js";
 const userRouter = Router()
@@ -12,6 +12,10 @@ userRouter.route('/kyc-verification/:id').post(userKyc, addKyc);
 userRouter.route('/by-uniqueid').get(getUserByUniqueId);
 userRouter.route('/buy-stars/:id').post(starBuy);
 userRouter.route('/viewed-ads/:id').get(getViewedAds);
+userRouter.route('/redeem-coupon/:id').post(redeemCoupon);
+userRouter.route('/user-wallet/:id').get(fetchUserWallet);
+
+
 
 
 

@@ -22,6 +22,46 @@ userViewsNeeded: {
   type: Number,
   required: true,
 },
+isViewsReached: {
+      type: Boolean,
+      default: false,
+    },
+    // boolean state to check to display ads to user .(only if isViewsReached : false&&isAdsVisible :true &&isAdsVerified:true)
+    isAdVisible: {
+      type: Boolean,
+      default: true,
+    },
+    adVerifiedTime: {
+      type: Date,
+      // required:true
+    },
+    adExpirationTime: {
+      type: Date,
+      // required:true
+    },
+    adPeriod: {
+      type: Number,
+      // required: true,
+    },
+    adRepetition: {
+      type: Boolean,
+      default:false
+    },
+    adRepeatSchedule: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        viewsRepatitionCount: {
+          type: Number,
+          default: 0,
+        },
+        nextScheduledAt: {
+          type: Date,
+        },
+      },
+    ],
 totalStarsAllocated: {
   type: Number,
   required: true,
@@ -37,6 +77,15 @@ adRepetition: {
   type: Boolean,
   default: false,
 },
+viewersRewarded: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        starsGiven: Number,
+      },
+    ],
 targetRegions: [
   {
     location: {
@@ -61,6 +110,16 @@ targetRegions: [
     ref: 'User',
     required: false,
   },
+  targetStates:[
+      {
+        type:String
+      }
+    ],
+    targetDistricts:[
+      {
+        type:String
+      }
+    ]
 }, { timestamps: true });
 
 surveyAdSchema.index({ 'targetRegions.location': '2dsphere' });
