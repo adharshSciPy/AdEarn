@@ -1,44 +1,44 @@
-import React, { useEffect, useState } from 'react'
-import Sidebar from '../../../components/sidebar/Sidebar'
-import Header from '../../../components/Header/Header';
-import styles from "./AdminAds.module.css"
-import { Button, Flex, Progress, Tooltip, Pagination, Select } from 'antd';
-import { useNavigate } from 'react-router-dom';
-import axios from "axios"
-import baseUrl from '../../../baseurl';
-
-
-
-
+import React, { useEffect, useState } from "react";
+import Sidebar from "../../../components/sidebar/Sidebar";
+import Header from "../../../components/Header/Header";
+import styles from "./AdminAds.module.css";
+import { Button, Flex, Progress, Tooltip, Pagination, Select } from "antd";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import baseUrl from "../../../baseurl";
 
 function AdminAds() {
-  const [unverifiedAds,setunverifiedAds]=useState([])
- 
-  const getunverifiedAds= async()=>{
-     try {
-      const response=await axios.get(`${baseUrl}/api/v1/ads/ads-to-verify`)
+  const [unverifiedAds, setunverifiedAds] = useState([]);
+  const [verifiedAd, setVerifiedAd] = useState([]);
+
+  const getunverifiedAds = async () => {
+    try {
+      const response = await axios.get(`${baseUrl}/api/v1/ads/ads-to-verify`);
       console.log(response);
-      setunverifiedAds(response.data.ads)
-      
-     } catch (error) {
+      setunverifiedAds(response.data.ads);
+    } catch (error) {
       console.log(error);
-      
-     }
-  }
-  console.log("this",unverifiedAds);
-
-
+    }
+  };
+  const getVerifiedAd = async () => {
+    try {
+      const response = await axios.get(`${baseUrl}/api/v1/ads/verified-ads`);
+      setVerifiedAd(response.data.ads);
+      console.log("verified", response);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
-
 
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
   const handlenavigate = (adId) => {
-    navigate(`/VerifyAds/${adId}`)
-  }
+    navigate(`/VerifyAds/${adId}`);
+  };
 
   const [activeTab, setActiveTab] = useState("Ads");
 
@@ -46,10 +46,7 @@ function AdminAds() {
     setActiveTab(tabName);
   };
 
-  const tabs = [
-    "Ads",
-    "Verify Ads"
-  ];
+  const tabs = ["Ads", "Verify Ads"];
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -65,8 +62,6 @@ function AdminAds() {
   //   );
   // });
 
-
-
   // const filteredVerifyAds = adsVerifyData.filter(ad => {
   //   if (!ad.date || !ad.date.includes('/')) return false;
 
@@ -77,22 +72,21 @@ function AdminAds() {
   //   );
   // });
 
+  // const paginatedAds = filteredAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
+  // const paginatedVerifyAds = filteredVerifyAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-    // const paginatedAds = filteredAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-    // const paginatedVerifyAds = filteredVerifyAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  const onChange = value => {
+  const onChange = (value) => {
     console.log(`selected ${value}`);
   };
-  const onSearch = value => {
-    console.log('search:', value);
+  const onSearch = (value) => {
+    console.log("search:", value);
   };
 
-useEffect(()=>{
-  getunverifiedAds()
-},[])
+  useEffect(() => {
+    getunverifiedAds();
+    getVerifiedAd()
+  }, []);
 
   return (
     <div className={styles.adminadsmain}>
@@ -100,7 +94,15 @@ useEffect(()=>{
         <Sidebar />
         <Header />
         <div className={styles.Adminads}>
-          <div style={{ width: '100%', maxWidth: '1550px', height: '600px', padding: '30px' }} className={styles.AdsSection}>
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "1550px",
+              height: "600px",
+              padding: "30px",
+            }}
+            className={styles.AdsSection}
+          >
             <nav className={styles.tabMenu}>
               <ul>
                 {tabs.map((tab) => (
@@ -114,7 +116,9 @@ useEffect(()=>{
                 ))}
               </ul>
             </nav>
-            <div style={{ display: 'flex', justifyContent: 'end', gap: "20px" }}>
+            <div
+              style={{ display: "flex", justifyContent: "end", gap: "20px" }}
+            >
               <Button>Log</Button>
               <Select
                 showSearch
@@ -123,20 +127,19 @@ useEffect(()=>{
                 onChange={(value) => setSelectedMonth(value)}
                 onSearch={onSearch}
                 options={[
-                  { value: '01', label: 'January' },
-                  { value: '02', label: 'February' },
-                  { value: '03', label: 'March' },
-                  { value: '04', label: 'April' },
-                  { value: '05', label: 'May' },
-                  { value: '06', label: 'June' },
-                  { value: '07', label: 'July' },
-                  { value: '08', label: 'August' },
-                  { value: '09', label: 'September' },
-                  { value: '10', label: 'October' },
-                  { value: '11', label: 'November' },
-                  { value: '12', label: 'December' },
+                  { value: "01", label: "January" },
+                  { value: "02", label: "February" },
+                  { value: "03", label: "March" },
+                  { value: "04", label: "April" },
+                  { value: "05", label: "May" },
+                  { value: "06", label: "June" },
+                  { value: "07", label: "July" },
+                  { value: "08", label: "August" },
+                  { value: "09", label: "September" },
+                  { value: "10", label: "October" },
+                  { value: "11", label: "November" },
+                  { value: "12", label: "December" },
                 ]}
-
               />
               <Select
                 showSearch
@@ -151,10 +154,9 @@ useEffect(()=>{
                     label: year.toString(),
                   };
                 })}
-
               />
             </div>
-            {/* {activeTab === "Ads" && (
+            {activeTab === "Ads" && (
               <section className={styles.payoutTableSection}>
                 <h1 style={{ fontSize: "25px", padding: '10px' }}>Current Ads</h1>
                 <table className={styles.payoutTable}>
@@ -164,42 +166,36 @@ useEffect(()=>{
                       <th>Views</th>
                       <th>Total Amount</th>
                       <th>Start Date</th>
-                      <th>End Date</th>
-                      <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedAds.map((ad) => (
-                      <tr key={ad.id}>
-                        <td>{ad.imageAd.title || ""}<br />Approved</td>
-                        <td>
-                        </td>
-                        <td>&#8377; {ad.amount}</td>
-                        <td>{ad.startDate}</td>
-                        <td>{ad.endDate}</td>
-                        <td>
-                          <span className={ad.status === "Ongoing" ? styles.statusOngoing : styles.statusStopped}>
-                            {ad.status}
-                          </span>
-                        </td>
+                    {verifiedAd.map((ad,index) => (
+                      <tr key={index}>
+                        <td>{ad.imageAd?.title || ""}</td>
+                        <td>{ad.imageAd?.userViewsNeeded || ""}</td>
+                        <td>{ad.imageAd?.totalStarsAllocated} </td>
+                        <td>{ad.imageAd?.createdAt}</td>
+                        
                       </tr>
                     ))}
                   </tbody>
                 </table>
                 <div className={styles.pagination}>
-                    <Pagination
+                    {/* <Pagination
                       current={currentPage}
                       pageSize={pageSize}
                       total={filteredAds.length}
                       onChange={handlePageChange}
-                    />
+                    /> */}
                 </div>
               </section>
-            )} */}
+            )}
 
             {activeTab === "Verify Ads" && (
               <section className={styles.payoutTableSection}>
-                <h1 style={{ fontSize: "25px", padding: '10px' }}>Verify Ads</h1>
+                <h1 style={{ fontSize: "25px", padding: "10px" }}>
+                  Verify Ads
+                </h1>
                 <table className={styles.payoutTable}>
                   <thead>
                     <tr>
@@ -211,30 +207,27 @@ useEffect(()=>{
                     </tr>
                   </thead>
                   <tbody>
-                    {unverifiedAds.map((ad,index) => (
+                    {unverifiedAds.map((ad, index) => (
                       <tr key={index}>
                         <td>{ad.imageAd?.createdAt || "No Title"}</td>
-                        <td>
-                          {ad.imageAd?.title || ""}
-                        </td>
+                        <td>{ad.imageAd?.title || ""}</td>
                         <td>{ad.imageAd?.userViewsNeeded || ""}</td>
                         <td>&#8377; {ad.imageAd?.totalStarsAllocated || ""}</td>
-                       
+
                         <td>
                           <button
                             className={styles.redeemBtn}
                             onClick={() => handlenavigate(ad._id)}
                           >
-                            {'Verify Now'}
+                            {"Verify Now"}
                           </button>
                         </td>
                       </tr>
                     ))}
-
                   </tbody>
                 </table>
                 <div className={styles.pagination}>
-                    {/* <Pagination
+                  {/* <Pagination
                       current={currentPage}
                       pageSize={pageSize}
                       total={filteredVerifyAds.length}
@@ -245,13 +238,9 @@ useEffect(()=>{
             )}
           </div>
         </div>
-
-
-
-
       </div>
     </div>
-  )
+  );
 }
 
-export default AdminAds
+export default AdminAds;
