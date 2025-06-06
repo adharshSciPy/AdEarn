@@ -1,38 +1,32 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Sidebar from '../../../components/sidebar/Sidebar'
 import Header from '../../../components/Header/Header';
 import styles from "./AdminAds.module.css"
 import { Button, Flex, Progress, Tooltip, Pagination, Select } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import axios from "axios"
+import baseUrl from '../../../baseurl';
 
 
-const adsData = Array.from({ length: 30 }, (_, i) => ({
-  id: i + 1,
-  title: `Ads ${i + 1}`,
-  status: i % 3 === 0 ? 'Stopped' : 'Ongoing',
-  approved: true,
-  amount: 500,
-  views: Math.floor(Math.random() * 800),
-  totalViews: 800,
-  startDate: "02/06/2025",
-  endDate: "05/06/2025",
-}));
-
-const adsVerifyData = Array.from({ length: 30 }, (_, i) => ({
-  id: i + 1,
-  date: "02/06/2025",
-  title: `Ads ${i + 1}`,
-  views: Math.floor(Math.random() * 800),
-  totalViews: 800,
-  totalAmount: 500,
-  status: i % 3 === 0 ? 'Stopped' : 'Ongoing',
-  endDate: "2025/06/05",
-  verificationStatus: "Verify Now",
-}));
 
 
 
 function AdminAds() {
+  const [unverifiedAds,setunverifiedAds]=useState([])
+ 
+  const getunverifiedAds= async()=>{
+     try {
+      const response=await axios.get(`${baseUrl}/api/v1/ads/ads-to-verify`)
+      console.log(response);
+      setunverifiedAds(response.data.ads)
+      
+     } catch (error) {
+      console.log(error);
+      
+     }
+  }
+  console.log("this",unverifiedAds);
+
 
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
@@ -61,33 +55,33 @@ function AdminAds() {
     setCurrentPage(page);
   };
 
-  const filteredAds = adsData.filter(ad => {
-    if (!ad.startDate || !ad.startDate.includes('/')) return false;
+  // const filteredAds = adsData.filter(ad => {
+  //   if (!ad.startDate || !ad.startDate.includes('/')) return false;
 
-    const [day, month, year] = ad.startDate.split('/');
-    return (
-      (!selectedMonth || month === selectedMonth) &&
-      (!selectedYear || year === selectedYear)
-    );
-  });
-
-
-
-  const filteredVerifyAds = adsVerifyData.filter(ad => {
-    if (!ad.date || !ad.date.includes('/')) return false;
-
-    const [day, month, year] = ad.date.split('/');
-    return (
-      (!selectedMonth || month === selectedMonth) &&
-      (!selectedYear || year === selectedYear)
-    );
-  });
+  //   const [day, month, year] = ad.startDate.split('/');
+  //   return (
+  //     (!selectedMonth || month === selectedMonth) &&
+  //     (!selectedYear || year === selectedYear)
+  //   );
+  // });
 
 
 
-  const paginatedAds = filteredAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  // const filteredVerifyAds = adsVerifyData.filter(ad => {
+  //   if (!ad.date || !ad.date.includes('/')) return false;
 
-  const paginatedVerifyAds = filteredVerifyAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  //   const [day, month, year] = ad.date.split('/');
+  //   return (
+  //     (!selectedMonth || month === selectedMonth) &&
+  //     (!selectedYear || year === selectedYear)
+  //   );
+  // });
+
+
+
+    // const paginatedAds = filteredAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+    // const paginatedVerifyAds = filteredVerifyAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const onChange = value => {
     console.log(`selected ${value}`);
@@ -96,6 +90,9 @@ function AdminAds() {
     console.log('search:', value);
   };
 
+useEffect(()=>{
+  getunverifiedAds()
+},[])
 
   return (
     <div className={styles.adminadsmain}>
@@ -157,7 +154,7 @@ function AdminAds() {
 
               />
             </div>
-            {activeTab === "Ads" && (
+            {/* {activeTab === "Ads" && (
               <section className={styles.payoutTableSection}>
                 <h1 style={{ fontSize: "25px", padding: '10px' }}>Current Ads</h1>
                 <table className={styles.payoutTable}>
@@ -174,19 +171,8 @@ function AdminAds() {
                   <tbody>
                     {paginatedAds.map((ad) => (
                       <tr key={ad.id}>
-                        <td>{ad.title}<br />Approved</td>
+                        <td>{ad.imageAd.title || ""}<br />Approved</td>
                         <td>
-                          <Flex gap="small" vertical>
-                            <Tooltip title={`${ad.views} out of ${ad.totalViews} views`}>
-                              <Progress
-                                percent={100}
-                                success={{ percent: (ad.views / ad.totalViews) * 100, strokeColor: '#FCB859' }}
-                                strokeWidth={5}
-                                strokeColor="#2B2B36"
-                                showInfo={false}
-                              />
-                            </Tooltip>
-                          </Flex>
                         </td>
                         <td>&#8377; {ad.amount}</td>
                         <td>{ad.startDate}</td>
@@ -201,15 +187,15 @@ function AdminAds() {
                   </tbody>
                 </table>
                 <div className={styles.pagination}>
-                  <Pagination
-                    current={currentPage}
-                    pageSize={pageSize}
-                    total={filteredAds.length}
-                    onChange={handlePageChange}
-                  />
+                    <Pagination
+                      current={currentPage}
+                      pageSize={pageSize}
+                      total={filteredAds.length}
+                      onChange={handlePageChange}
+                    />
                 </div>
               </section>
-            )}
+            )} */}
 
             {activeTab === "Verify Ads" && (
               <section className={styles.payoutTableSection}>
@@ -221,43 +207,23 @@ function AdminAds() {
                       <th>Ads</th>
                       <th>Views</th>
                       <th>Total amount</th>
-                      <th>Status</th>
-                      <th>End Date</th>
                       <th>Ads Verification</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedVerifyAds.map((ad) => (
-                      <tr key={ad.id}>
-                        <td>{ad.date}</td>
+                    {unverifiedAds.map((ad,index) => (
+                      <tr key={index}>
+                        <td>{ad.imageAd?.createdAt || "No Title"}</td>
                         <td>
-                          {ad.title}<br />
-                          Approved
+                          {ad.imageAd?.title || ""}
                         </td>
-                        <td>
-                          <Flex gap="small" vertical>
-                            <Tooltip title={`${ad.views} out of ${ad.totalViews} views`}>
-                              <Progress
-                                percent={100}
-                                success={{ percent: (ad.views / ad.totalViews) * 100, strokeColor: '#FCB859' }}
-                                strokeWidth={5}
-                                strokeColor="#2B2B36"
-                                showInfo={false}
-                              />
-                            </Tooltip>
-                          </Flex>
-                        </td>
-                        <td>&#8377; {ad.totalAmount}</td>
-                        <td>
-                          <span className={ad.status === "Ongoing" ? styles.statusOngoing : styles.statusStopped}>
-                            {ad.status === "Ongoing" ? "Started" : "Stopped"}
-                          </span>
-                        </td>
-                        <td>{ad.endDate}</td>
+                        <td>{ad.imageAd?.userViewsNeeded || ""}</td>
+                        <td>&#8377; {ad.imageAd?.totalStarsAllocated || ""}</td>
+                       
                         <td>
                           <button
                             className={styles.redeemBtn}
-                            onClick={() => handlenavigate(ad.id)}
+                            onClick={() => handlenavigate(ad._id)}
                           >
                             {'Verify Now'}
                           </button>
@@ -268,12 +234,12 @@ function AdminAds() {
                   </tbody>
                 </table>
                 <div className={styles.pagination}>
-                  <Pagination
-                    current={currentPage}
-                    pageSize={pageSize}
-                    total={filteredVerifyAds.length}
-                    onChange={handlePageChange}
-                  />
+                    {/* <Pagination
+                      current={currentPage}
+                      pageSize={pageSize}
+                      total={filteredVerifyAds.length}
+                      onChange={handlePageChange}
+                    /> */}
                 </div>
               </section>
             )}

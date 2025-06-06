@@ -1,12 +1,31 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import styles from "./VerifyAds.module.css"
 import Sidebar from '../../../components/sidebar/Sidebar'
 import Header from '../../../components/Header/Header'
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { Button } from 'antd';
+import axios from "axios"
+import { useParams } from 'react-router-dom';
+import baseUrl from '../../../baseurl';
+
 
 function VerifyAds() {
+  const {adId}=useParams()
+
+  const getVerifyAd=async()=>{
+    try {
+    const response= await axios.get(`${baseUrl}/api/v1/verify-ad`,adId)
+      console.log("adsveri",response);
+      
+    } catch (error) {
+      console.log(error);
+      
+    }
+  }
+  useEffect(()=>{
+    getVerifyAd()
+  })
   return (
     <div className={styles.verifyadsmain}>
       <div className={styles.verifyadscontainer}>
