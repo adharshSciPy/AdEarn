@@ -587,6 +587,60 @@ const createSurveyAd = async (req, res) => {
 };
 
 
+// fetch single unVerifiedAds
+const fetchSingleUnverifiedAd = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const ad = await Ad.findById(id)
+      .populate("imgAdRef")
+      .populate("videoAdRef")
+      .populate("surveyAdRef");
+
+    if (!ad) {
+      return res.status(404).json({ message: "Ad not found" });
+    }
+
+    const isImageAdUnverified = ad.imgAdRef && !ad.imgAdRef.isAdVerified;
+    const isVideoAdUnverified = ad.videoAdRef && !ad.videoAdRef.isAdVerified;
+    const isSurveyAdUnverified = ad.surveyAdRef && !ad.surveyAdRef.isAdVerified;
+
+    // Return 403 if all types are either missing or verified
+    if (!isImageAdUnverified && !isVideoAdUnverified && !isSurveyAdUnverified) {
+      return res.status(403).json({ message: "Ad is already verified" });
+    }
+
+    const formattedAd = {
+      _id: ad._id,
+      imageAd: ad.imgAdRef
+        ? {
+            ...ad.imgAdRef.toObject(),
+            isVerified: ad.imgAdRef.isAdVerified,
+          }
+        : null,
+      videoAd: ad.videoAdRef
+        ? {
+            ...ad.videoAdRef.toObject(),
+            isVerified: ad.videoAdRef.isAdVerified,
+          }
+        : null,
+      surveyAd: ad.surveyAdRef
+        ? {
+            ...ad.surveyAdRef.toObject(),
+            isVerified: ad.surveyAdRef.isAdVerified,
+          }
+        : null,
+    };
+
+    return res.status(200).json({
+      message: "Unverified ad fetched successfully",
+      ad: formattedAd,
+    });
+  } catch (error) {
+    console.error("Error fetching single unverified ad:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 
 // fetching all the ads with isVerified:false for verification
@@ -1337,6 +1391,7 @@ export {
   createSurveyAd,
   fetchAdsForVerification,
   fetchVerifiedAds,
+  fetchSingleUnverifiedAd,
   fetchSingleVerifiedAd,
   fetchVerifiedImgAd,
   fetchVerifiedVideoAd,
