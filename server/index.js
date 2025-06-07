@@ -37,28 +37,94 @@ app.use('/videoAdUploads', express.static(path.join(__dirname, 'Uploads/videoAdU
 
 app.use('/api/v1/super-admin',superAdminRouter)
 
-// to automatically fetch expired coupns
-cron.schedule("0 0 * * *", async () => {
-//   console.log(`[${new Date().toISOString()}] Running 5-minute expired coupon refund job...`);
-  try {
-    const result = await runRefundExpiredCoupons();
-    // console.log("Cron refund result:", result);
-  } catch (err) {
-    console.error("Cron refund error:", err.message, err.stack);
-  }
-});
-// to clear ads from db after 3 days of expiry date is reached
-cron.schedule("30 2 * * *", async () => {
-  const threeDaysAfter = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); 
+// // to automatically fetch expired coupns
+// cron.schedule("0 0 * * *", async () => {
+// //   console.log(`[${new Date().toISOString()}] Running 5-minute expired coupon refund job...`);
+//   try {
+//     const result = await runRefundExpiredCoupons();
+//     // console.log("Cron refund result:", result);
+//   } catch (err) {
+//     console.error("Cron refund error:", err.message, err.stack);
+//   }
+// });
+// // to clear ads from db after 3 days of expiry date is reached
+// cron.schedule("30 2 * * *", async () => {
+//   const threeDaysAfter = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); 
   
+//   try {
+//     const ads = await Ad.find().populate(["imgAdRef", "videoAdRef", "surveyAdRef"]);
+
+//     for (const ad of ads) {
+//       const { _id, imgAdRef, videoAdRef, surveyAdRef } = ad;
+//       let shouldDelete = false;
+
+//       // Check Image Ad
+//       if (
+//         imgAdRef?.adExpirationTime &&
+//         new Date(imgAdRef.adExpirationTime).getTime() + 3 * 24 * 60 * 60 * 1000 <= threeDaysAfter.getTime()
+//       ) {
+//         await ImageAd.findByIdAndDelete(imgAdRef._id);
+//         shouldDelete = true;
+//       }
+
+//       // Check Video Ad
+//       if (
+//         videoAdRef?.adExpirationTime &&
+//         new Date(videoAdRef.adExpirationTime).getTime() + 3 * 24 * 60 * 60 * 1000 <= threeDaysAfter.getTime()
+//       ) {
+//         await VideoAd.findByIdAndDelete(videoAdRef._id);
+//         shouldDelete = true;
+//       }
+
+//       // Check Survey Ad
+//       if (
+//         surveyAdRef?.adExpirationTime &&
+//         new Date(surveyAdRef.adExpirationTime).getTime() + 3 * 24 * 60 * 60 * 1000 <= threeDaysAfter.getTime()
+//       ) {
+//         await SurveyAd.findByIdAndDelete(surveyAdRef._id);
+//         shouldDelete = true;
+//       }
+
+//       if (shouldDelete) {
+//         await Ad.findByIdAndDelete(_id); // Delete the parent ad if any child ad is deleted
+//       }
+//     }
+
+//     console.log(`[${new Date().toISOString()}] ✅ Expired ads cleaned up`);
+//   } catch (err) {
+//     console.error(`[${new Date().toISOString()}] ❌ Error cleaning expired ads:`, err.message);
+//   }
+// });
+// // to check daily whether the user is subscribed or not
+// // Run daily
+// cron.schedule("0 0 * * *", async () => {
+//   const now = new Date();
+//   await User.updateMany(
+//     { isSubscribed: true, subscriptionEndDate: { $lt: now } },
+//     { $set: { isSubscribed: false } }
+//   );
+//   console.log("Expired subscriptions updated");
+// });
+cron.schedule("0 0 * * *", async () => {
+  console.log(`[${new Date().toISOString()}] 🕓 Running daily maintenance job...`);
+
   try {
+    // 1. Run expired coupon refunds
+    await runRefundExpiredCoupons();
+    console.log("✅ Expired coupon refund completed");
+  } catch (err) {
+    console.error("❌ Coupon refund error:", err.message);
+  }
+
+  try {
+    // 2. Clean expired ads
+    const threeDaysAfter = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
     const ads = await Ad.find().populate(["imgAdRef", "videoAdRef", "surveyAdRef"]);
 
     for (const ad of ads) {
       const { _id, imgAdRef, videoAdRef, surveyAdRef } = ad;
       let shouldDelete = false;
 
-      // Check Image Ad
       if (
         imgAdRef?.adExpirationTime &&
         new Date(imgAdRef.adExpirationTime).getTime() + 3 * 24 * 60 * 60 * 1000 <= threeDaysAfter.getTime()
@@ -67,7 +133,6 @@ cron.schedule("30 2 * * *", async () => {
         shouldDelete = true;
       }
 
-      // Check Video Ad
       if (
         videoAdRef?.adExpirationTime &&
         new Date(videoAdRef.adExpirationTime).getTime() + 3 * 24 * 60 * 60 * 1000 <= threeDaysAfter.getTime()
@@ -76,7 +141,6 @@ cron.schedule("30 2 * * *", async () => {
         shouldDelete = true;
       }
 
-      // Check Survey Ad
       if (
         surveyAdRef?.adExpirationTime &&
         new Date(surveyAdRef.adExpirationTime).getTime() + 3 * 24 * 60 * 60 * 1000 <= threeDaysAfter.getTime()
@@ -86,14 +150,28 @@ cron.schedule("30 2 * * *", async () => {
       }
 
       if (shouldDelete) {
-        await Ad.findByIdAndDelete(_id); // Delete the parent ad if any child ad is deleted
+        await Ad.findByIdAndDelete(_id);
       }
     }
 
-    console.log(`[${new Date().toISOString()}] ✅ Expired ads cleaned up`);
+    console.log("✅ Expired ads cleaned up");
   } catch (err) {
-    console.error(`[${new Date().toISOString()}] ❌ Error cleaning expired ads:`, err.message);
+    console.error("❌ Error cleaning expired ads:", err.message);
   }
+
+  try {
+    // 3. Update expired subscriptions
+    const now = new Date();
+    await User.updateMany(
+      { isSubscribed: true, subscriptionEndDate: { $lt: now } },
+      { $set: { isSubscribed: false } }
+    );
+    console.log("✅ Expired subscriptions updated");
+  } catch (err) {
+    console.error("❌ Subscription update error:", err.message);
+  }
+
+  console.log(`[${new Date().toISOString()}] ✅ Daily maintenance job complete`);
 });
 
 

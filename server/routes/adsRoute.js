@@ -14,11 +14,13 @@ import {
 } from "../controller/adsController.js";
 import adMediaUpload from "../multer/adImageMulter.js"
 import adVideoUpload from "../multer/adVideoMulter.js"
+import authMiddleware from "../auth/authMiddleware.js";
+import checkSubscription from "../utils/checkSubscription.js";
 
 const adsRouter = Router();
 
 
-adsRouter.post("/image-ad/:id", adMediaUpload, createImageAd);
+adsRouter.post("/image-ad/:id",authMiddleware,checkSubscription, adMediaUpload, createImageAd);
 adsRouter.post("/video-ad/:id", adVideoUpload, createVideoAd);
 adsRouter.post("/survey-ad/:id", createSurveyAd);
 adsRouter.get("/ads-to-verify", fetchAdsForVerification);

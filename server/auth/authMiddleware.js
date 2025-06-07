@@ -10,6 +10,8 @@ const authMiddleware = (req, res, next) => {
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     req.user = decoded; // { id, email } from your generateAccessToken
       console.log("Decoded token payload:", decoded);
+      console.log("Now:", new Date().toISOString());
+
     next();
   } catch (err) {
     return res.status(401).json({ message: "Invalid token" });
