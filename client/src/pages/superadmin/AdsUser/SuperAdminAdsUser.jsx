@@ -4,6 +4,8 @@ import { Modal, Switch } from "antd";
 import { DeleteOutlined, HolderOutlined } from "@ant-design/icons";
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
 import Header from '../../../components/Header/Header'
+import baseUrl from "../../../baseurl"
+import axios from 'axios'
 
 
 const users = Array.from({ length: 100 }, (_, i) => ({
@@ -19,6 +21,10 @@ const users = Array.from({ length: 100 }, (_, i) => ({
 const USERS_PER_LOAD = 20;
 
 function SuperAdminAdsUser() {
+  const [allUsers, setAllUsers] = useState([]);         // From API
+  const [filteredUsers, setFilteredUsers] = useState([]); // Filtered by tab
+
+
   const [activeTab, setActiveTab] = useState("All Users");
   const [visibleUsers, setVisibleUsers] = useState([]);
   const [loadedCount, setLoadedCount] = useState(1);
@@ -27,23 +33,47 @@ function SuperAdminAdsUser() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
-  const filteredUsers = users.filter((user) => {
+  const filteredusers = users.filter((user) => {
     if (activeTab === "Ads Users") return user.adsViewed > 0;
     if (activeTab === "Disabled Users") return user.blacklisted;
     return true;
   });
 
   useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const { data } = await axios.get(`${baseUrl}/api/v1/admin/all-users`);
+        setAllUsers(data.users || []);
+      } catch (err) {
+        console.error("Error fetching users:", err);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+
+  useEffect(() => {
     setLoadedCount(1);
-    setVisibleUsers(filteredUsers.slice(0, USERS_PER_LOAD));
-  }, [activeTab]);
+    let users = [...allUsers];
+
+    if (activeTab === "Ads Users") {
+      users = users.filter(user => Array.isArray(user.ads) && user.ads.length > 0);
+    } else if (activeTab === "Disabled Users") {
+      users = users.filter(user => user.isUserEnabled === false);
+    }
+
+    setFilteredUsers(users);
+    setVisibleUsers(users.slice(0, USERS_PER_LOAD));
+  }, [activeTab, allUsers]);
+
+
 
   const handleScroll = () => {
     const container = containerRef.current;
     if (!container) return;
     const nearBottom =
-      container.scrollTop + container.clientHeight >=
-      container.scrollHeight - 20;
+      container.scrollTop + container.clientHeight >= container.scrollHeight - 20;
     if (nearBottom && loadedCount * USERS_PER_LOAD < filteredUsers.length) {
       const nextCount = loadedCount + 1;
       const nextUsers = filteredUsers.slice(0, nextCount * USERS_PER_LOAD);
@@ -70,7 +100,7 @@ function SuperAdminAdsUser() {
   return (
     <div className={styles.adsuser}>
       <SuperSidebar />
-      <Header/>
+      <Header />
       <div
         className={styles.container}
         ref={containerRef}
@@ -117,9 +147,8 @@ function SuperAdminAdsUser() {
           {["All Users", "Ads Users", "Disabled Users"].map((tab) => (
             <div
               key={tab}
-              className={`${styles.tabButton} ${
-                activeTab === tab ? styles.activeTab : ""
-              }`}
+              className={`${styles.tabButton} ${activeTab === tab ? styles.activeTab : ""
+                }`}
               onClick={() => setActiveTab(tab)}
             >
               <HolderOutlined />
