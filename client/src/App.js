@@ -37,8 +37,7 @@ import TemplateEditor from './pages/user/adTemplateEditor/TemplateEditor';
 import AdForm from './pages/user/AdForm/AdForm'
 import UserReport from "./pages/user/ReportPage/ReportPageUser"
 import SurveyAds from "./pages/user/SurveyAds/Surveyads"
-
-
+import AdsPreview from "./pages/user/AdPreview/Adpreview"
 
 
 
@@ -127,6 +126,8 @@ function App() {
           <Route path='/adform/:id' element={<AdForm />} />
           <Route path='/adreportuser' element={<UserReport />} />
           <Route path='/surveyaduser' element={<SurveyAds />} />
+          <Route path='/adspreview/:id' element={<AdsPreview />} />
+
 
 
 
