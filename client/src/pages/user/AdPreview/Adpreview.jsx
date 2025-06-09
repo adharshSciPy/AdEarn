@@ -2,58 +2,86 @@ import React, { useEffect, useState } from "react";
 import styles from "./AdPreview.module.css";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
-import { Button } from "antd";
+import { Modal, Button } from "antd";
 import axios from "axios";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import baseUrl from "../../../baseurl";
-import { Modal } from "antd";
+import ScratchCom from "./ScratchComponent/ScratchCom";
 
-function VerifyAds() {
-    const {id,adId}=useParams()
-    
-  const [unverifiedAd, setUnVerifiedAd] = useState();
-  const [selectedAd, setSelectedAd] = useState(null);
-  const [reason, setReason] = useState("");
+function AdPreview() {
+  const { id, adId } = useParams();
+  const [unverifiedAd, setUnVerifiedAd] = useState(null);
+  const [reward, setReward] = useState({});
+  const [showScratchModal, setShowScratchModal] = useState(false);
+  const [scratchCompleted, setScratchCompleted] = useState(false);
+
+  // Fetch ad details immediately
   const getAddDetails = async () => {
-    console.log("ids",id,adId);
-    
+    try {
+      const response = await axios.get(
+        `${baseUrl}/api/v1/ads/single-verified/${adId}`
+      );
+      setUnVerifiedAd(response.data.ad);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Fetch reward after scratch completed
+  const getAddContribution = async () => {
     try {
       const response = await axios.post(
         `${baseUrl}/api/v1/ads/view-ads/${id}/${adId}`
       );
-      setUnVerifiedAd(response.data.ad);
+      setReward(response.data);
+      console.log(response.data);
+      
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
+  // Show scratch card modal after 6 seconds
   useEffect(() => {
     getAddDetails();
-  }, []);
+    const timer = setTimeout(() => setShowScratchModal(true), 6000);
+    return () => clearTimeout(timer);
+  }, [adId, id]);
+
+  // Handler after scratch card is completed
+  const handleScratchComplete = async () => {
+    setScratchCompleted(true);
+    await getAddContribution();
+  };
+
+  // Close modal handler
+  const handleModalClose = () => {
+    setShowScratchModal(false);
+    setScratchCompleted(false);
+  };
 
   return (
     <div className={styles.verifyadsmain}>
       <div className={styles.verifyadscontainer}>
         <div className={styles.adscontainer}>
           <div
-            style={{
-              width: "100%",
-              height: "maxContent"
-            }}
+            style={{ width: "100%", height: "maxContent" }}
             className={styles.adsimage}
           >
-            <h1 style={{padding:"20px"}}>Ads Preview</h1>
+            <h1 style={{ padding: "20px" }}>Ads Preview</h1>
             <div className={styles.adspreview}>
               <div className={styles.previewone}>
-                <img
-                  className={styles.image}
-                  src={`${baseUrl}${unverifiedAd?.imageAd.imageUrl}`}
-                  alt=""
-                />
+                {unverifiedAd?.imageAd?.imageUrl && (
+                  <img
+                    className={styles.image}
+                    src={`${baseUrl}${unverifiedAd.imageAd.imageUrl}`}
+                    alt="Ad"
+                  />
+                )}
               </div>
               <div className={styles.previewtwo}>
                 <div
-                className={styles.bar}
+                  className={styles.bar}
                   style={{
                     position: "relative",
                     width: 200,
@@ -68,8 +96,6 @@ function VerifyAds() {
                       textColor: "#fff",
                     })}
                   />
-
-                  {/* Centered Custom Text */}
                   <div
                     style={{
                       position: "absolute",
@@ -85,11 +111,10 @@ function VerifyAds() {
                       Total views
                     </div>
                     <div style={{ fontSize: 32, fontWeight: "bold" }}>
-                      {unverifiedAd?.imageAd.userViewsNeeded}
+                      {unverifiedAd?.imageAd?.userViewsNeeded}
                     </div>
                   </div>
                 </div>
-
                 <div className={styles.adsitems}>
                   <div className={styles.listitems}>
                     <div>
@@ -101,7 +126,7 @@ function VerifyAds() {
                       <p>Total Views</p>
                     </div>
                     <div>
-                      <p>{unverifiedAd?.imageAd.userViewsNeeded}</p>
+                      <p>{unverifiedAd?.imageAd?.userViewsNeeded}</p>
                     </div>
                   </div>
                   <div className={styles.listitems}>
@@ -109,16 +134,19 @@ function VerifyAds() {
                       <p>Total stars</p>
                     </div>
                     <div>
-                      <p>{unverifiedAd?.imageAd.totalStarsAllocated}</p>
+                      <p>{unverifiedAd?.imageAd?.totalStarsAllocated}</p>
                     </div>
                   </div>
-                  
                   <div className={styles.listitems}>
                     <div>
                       <p>Start Date</p>
                     </div>
                     <div>
-                      <p>{unverifiedAd?.imageAd.createdAt}</p>
+                      <p>
+                        {new Date(
+                          unverifiedAd?.imageAd?.createdAt
+                        ).toLocaleDateString()}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -131,7 +159,7 @@ function VerifyAds() {
                     <h1>Ad Heading</h1>
                   </div>
                   <div>
-                    <p>{unverifiedAd?.imageAd.title}</p>
+                    <p>{unverifiedAd?.imageAd?.title}</p>
                   </div>
                 </div>
                 <div className={styles.adsnametext}>
@@ -139,7 +167,7 @@ function VerifyAds() {
                     <h1>Ads Category</h1>
                   </div>
                   <div>
-                    <p>{unverifiedAd?.imageAd.description}</p>
+                    <p>{unverifiedAd?.imageAd?.description}</p>
                   </div>
                 </div>
               </div>
@@ -147,8 +175,33 @@ function VerifyAds() {
           </div>
         </div>
       </div>
+
+      {/* Single Modal to handle scratch and reward */}
+      <Modal
+        open={showScratchModal}
+        footer={null}
+        closable={scratchCompleted}
+        centered
+        onCancel={handleModalClose}
+        width={380}
+        bodyStyle={{ textAlign: "center" }}
+      >
+        <h2 style={{ marginBottom: 12, color: "#ff9900" }}>
+          Scratch to Reveal Your Reward!
+        </h2>
+        <ScratchCom onComplete={handleScratchComplete} reward={reward} />
+        {scratchCompleted && (
+          <Button
+            type="primary"
+            onClick={handleModalClose}
+            style={{ marginTop: 16 }}
+          >
+            Close
+          </Button>
+        )}
+      </Modal>
     </div>
   );
 }
 
-export default VerifyAds;
+export default AdPreview;

@@ -24,9 +24,7 @@
 }
 
 .previewone {
-  background-color: #ff7a42;
   width: 70%;
-  height: 600px;
   border-radius: 20px;
   overflow: hidden;
 }
@@ -34,7 +32,7 @@
 .previewtwo {
   background: linear-gradient(to right, #fcc188, #7042d2, #2e008e);
   width: 30%;
-  height: 600px;
+  height: auto;
   border-radius: 20px;
   display: flex;
   flex-direction: column;
@@ -81,8 +79,7 @@
   justify-content: center;
   background-color: #5d32b9;
   border-radius: 20px;
-  width: 100%;
-  max-width: 1500px;
+  width: 95%;
   margin: 0 auto;
   padding: 20px;
   color: white;
