@@ -42,6 +42,10 @@ const userWallet = new Schema({
       timestamp: { type: Date, default: Date.now },
     },
   ],
+    welcomeBonus: {
+      type: Number,
+      default: 0,
+  },
 });
 
 export const UserWallet = mongoose.model("UserWallet", userWallet);

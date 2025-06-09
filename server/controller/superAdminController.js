@@ -6,6 +6,7 @@ import User from "../model/userModel.js";
 import SuperAdminWallet from "../model/superAdminWallet.js";
 import Coupon from "../model/couponModel.js"
 import WelcomeBonusSetting from '../model/WelcomeBonusSetting.js';
+import ContestEntry from "../model/contestEntrySchema.js";
 
 import { passwordValidator } from "../utils/passwordValidator.js";
 
@@ -193,7 +194,8 @@ const getSuperAdminWallet = async (req, res) => {
   }
 
   try {
-    let setting = await WelcomeBonusSetting.findOne();
+    let setting = await WelcomeBonusSet
+    ting.findOne();
 
     if (!setting) {
       setting = new WelcomeBonusSetting({
@@ -217,53 +219,35 @@ const getSuperAdminWallet = async (req, res) => {
     return res.status(500).json({ message: "Server error", error: err.message });
   }
 };
- const getBonusHistory = async (req, res) => {
-  try {
-    const wallet = await SuperAdminWallet.findOne().populate([
-      {
-        path: "transactions.userId",
-        select: "name email",
-      },
-      {
-        path: "transactions.addedBy",
-        select: "name email",
-      },
-    ]);
-
-    if (!wallet) {
-      return res.status(404).json({ message: "SuperAdmin wallet not found" });
-    }
-
-    return res.status(200).json({
-      message: "Bonus history retrieved successfully",
-      bonusHistory: wallet.transactions,
-    });
-  } catch (error) {
-    console.error("Error retrieving bonus history:", error);
-    return res.status(500).json({ message: "Failed to retrieve bonus history", error: error.message });
-  }
-};
-
 const distributeWelcomeBonus = async (newUserId) => {
   try {
-    const wallet = await SuperAdminWallet.findOne();
-    if (!wallet || wallet.perUserWelcomeBonus <= 0) {
-      return { success: false, starsGiven: 0, message: "Welcome bonus not set or is 0" };
-    }
+    const setting = await WelcomeBonusSetting.findOne();
 
-    const starsToGive = wallet.perUserWelcomeBonus;
-
-    if (wallet.totalStars < starsToGive) {
+    if (!setting || !setting.isEnabled || setting.perUserBonus <= 0) {
       return {
         success: false,
         starsGiven: 0,
-        message: "Not enough stars in SuperAdmin wallet",
+        message: "Welcome bonus is disabled or not set",
       };
     }
 
-    // Check if user already received the welcome bonus
-    const alreadyGiven = wallet.welcomeBonuses.some(
-      (entry) => entry.userId.toString() === newUserId.toString()
+    const starsToGive = setting.perUserBonus;
+
+    const wallet = await SuperAdminWallet.findOne();
+    if (
+      !wallet ||
+      !wallet.welcomeBonusWallet ||
+      wallet.welcomeBonusWallet.remainingStars < starsToGive
+    ) {
+      return {
+        success: false,
+        starsGiven: 0,
+        message: "Not enough welcome bonus stars in SuperAdmin wallet",
+      };
+    }
+
+    const alreadyGiven = wallet.welcomeBonusWallet.given.some(
+      (entry) => entry.userId && entry.userId.toString() === newUserId.toString()
     );
 
     if (alreadyGiven) {
@@ -276,18 +260,33 @@ const distributeWelcomeBonus = async (newUserId) => {
 
     const user = await User.findById(newUserId).populate("userWalletDetails");
     if (!user || !user.userWalletDetails) {
-      return { success: false, starsGiven: 0, message: "User or wallet not found" };
+      return {
+        success: false,
+        starsGiven: 0,
+        message: "User or wallet not found",
+      };
     }
 
-    // Credit stars to user's wallet
+    // ✅ Credit stars
     user.userWalletDetails.totalStars += starsToGive;
+
+    // ✅ Store welcome bonus info inside user's wallet
+    user.userWalletDetails.welcomeBonus =  starsToGive ;
+
     await user.userWalletDetails.save();
 
-    // Deduct stars from superadmin wallet
-    wallet.totalStars -= starsToGive;
+    // ✅ Deduct from SuperAdmin wallet
+    wallet.welcomeBonusWallet.remainingStars -= starsToGive;
 
-    // Add to welcomeBonuses instead of transactions
-    wallet.welcomeBonuses.push({
+    // ✅ Push log entry
+    wallet.welcomeBonusWallet.logs.push({
+      reason: "Welcome Bonus",
+      starsAdded: -starsToGive,
+      date: new Date(),
+    });
+
+    // ✅ Record in given list
+    wallet.welcomeBonusWallet.given.push({
       userId: newUserId,
       starsGiven: starsToGive,
       givenAt: new Date(),
@@ -307,6 +306,40 @@ const distributeWelcomeBonus = async (newUserId) => {
       starsGiven: 0,
       message: "Internal server error",
     };
+  }
+};
+
+ const createContest = async (req, res) => {
+  try {
+    const { contestName, contestNumber, startDate, endDate, entryStars, result } = req.body;
+
+    // Basic validation
+    if (!contestName || !contestNumber || !startDate || !endDate || !entryStars) {
+      return res.status(400).json({ message: "All required fields must be filled" });
+    }
+
+    // Check for existing contestNumber
+    const existing = await ContestEntry.findOne({ contestNumber });
+    if (existing) {
+      return res.status(400).json({ message: "Contest number already exists" });
+    }
+
+    const contest = new ContestEntry({
+      contestName,
+      contestNumber,
+      startDate,
+      endDate,
+      entryStars,
+      totalEntries: 0, // default
+      result: result || "Pending"
+    });
+
+    await contest.save();
+    return res.status(201).json({ message: "Contest created successfully", contest });
+
+  } catch (error) {
+    console.error("Error creating contest:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
@@ -336,7 +369,52 @@ const generateCoupons=async(req,res)=>{
     return res.status(500).json({ message: "Internal server error" });
   }
 }
+ const topUpWelcomeBonusStars = async (req, res) => {
+  const { stars, source } = req.body;
+
+  if (!stars || stars <= 0) {
+    return res.status(400).json({ message: "Stars must be a positive number" });
+  }
+
+  try {
+    const wallet = await SuperAdminWallet.findOne();
+
+    if (!wallet) {
+      return res.status(404).json({ message: "SuperAdmin wallet not found" });
+    }
+
+    // Initialize structure if missing
+    if (!wallet.welcomeBonusWallet) {
+      wallet.welcomeBonusWallet = {
+        totalReceived: 0,
+        remainingStars: 0,
+        logs: []
+      };
+    }
+
+    // Update values
+    wallet.welcomeBonusWallet.totalReceived += stars;
+    wallet.welcomeBonusWallet.remainingStars += stars;
+    wallet.welcomeBonusWallet.logs.push({
+      starsAdded: stars,
+      addedAt: new Date(),
+      source: source || "Manual Top-up"
+    });
+
+    await wallet.save();
+
+    return res.status(200).json({
+      message: "Welcome bonus wallet topped up successfully",
+      welcomeBonusWallet: wallet.welcomeBonusWallet,
+    });
+
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server error",
+      error: err.message,
+    });
+  }
+};
 
 
-
-export { registerSuperAdmin, superAdminLogin, getAllAdmins, toggleUserStatus,toggleAdminStatus,getSuperAdminWallet,setWelcomeBonusAmount,getBonusHistory ,generateCoupons,distributeWelcomeBonus};
+export { registerSuperAdmin, superAdminLogin, getAllAdmins, toggleUserStatus,toggleAdminStatus,getSuperAdminWallet,setWelcomeBonusAmount,generateCoupons,distributeWelcomeBonus,topUpWelcomeBonusStars,createContest};

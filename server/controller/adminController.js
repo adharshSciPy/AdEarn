@@ -448,12 +448,12 @@ const rejectAdById = async (req, res) => {
 
     // ✅ Optionally add video/survey ad rejection logic
     /*
-    else if (ad.videoAdRef && !ad.videoAdRef.isAdVerified) {
-      // handle video ad rejection
-    } else if (ad.surveyAdRef && !ad.surveyAdRef.isAdVerified) {
-      // handle survey ad rejection
-    }
-    */
+    // else if (ad.videoAdRef && !ad.videoAdRef.isAdVerified) {
+    //   // handle video ad rejection
+    // } else if (ad.surveyAdRef && !ad.surveyAdRef.isAdVerified) {
+    //   // handle survey ad rejection
+    // }
+    // */
 
     if (!updatedAd) {
       return res.status(400).json({ message: "Ad is already verified or invalid ad type" });

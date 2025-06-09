@@ -93,16 +93,16 @@ const registerUser = async (req, res) => {
 
     await user.save();
 
-    // ✅ Distribute welcome bonus and catch errors
-    let bonusResult = null;
+    // ✅ Distribute welcome bonus
+    let bonusResult = { success: false, starsGiven: 0, message: "Not applied" };
     try {
       bonusResult = await distributeWelcomeBonus(user._id);
     } catch (bonusErr) {
       console.error("Welcome bonus distribution failed:", bonusErr.message);
-      bonusResult = { success: false, message: bonusErr.message };
+      bonusResult = { success: false, starsGiven: 0, message: bonusErr.message };
     }
 
-    // ✅ Populate wallet to include it in response
+    // ✅ Populate wallet with updated stars
     await user.populate('userWalletDetails');
 
     return res.status(200).json({
@@ -113,16 +113,20 @@ const registerUser = async (req, res) => {
         role: user.role,
         myReferalCode: user.myReferalCode,
         uniqueUserId: user.uniqueUserId,
-        wallet: user.userWalletDetails, // 👈 This includes the bonus
+        wallet: {
+          totalStars: user.userWalletDetails.totalStars,
+          walletId: user.userWalletDetails._id,
+        },
       },
       token,
-      bonus: bonusResult,
+      bonus: bonusResult, // 👈 Bonus info with starsGiven
     });
   } catch (err) {
     console.error("Error during registration:", err);
     return res.status(500).json({ message: `Internal Server Error: ${err.message}` });
   }
 };
+
 
 
 

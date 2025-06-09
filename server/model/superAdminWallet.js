@@ -41,6 +41,60 @@ const expiredCouponRefundSchema = new Schema(
   { _id: false }
 );
 
+// Schema for welcome bonus records
+const welcomeBonusRecordSchema = new Schema(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    starsGiven: {
+      type: Number,
+    },
+    givenAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false }
+);
+
+// Schema for welcome bonus top-ups from external source
+const welcomeBonusTopUpLogSchema = new Schema(
+  {
+    starsAdded: {
+      type: Number,
+      required: true,
+    },
+    addedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    source: {
+      type: String,
+      default: "External",
+    },
+  },
+  { _id: false }
+);
+
+// Wrapper schema for welcome bonus wallet
+const welcomeBonusWalletSchema = new Schema(
+  {
+    totalReceived: {
+      type: Number,
+      default: 0,
+    },
+    remainingStars: {
+      type: Number,
+      default: 0,
+    },
+    given: [welcomeBonusRecordSchema],
+    logs: [welcomeBonusTopUpLogSchema],
+  },
+  { _id: false }
+);
+
 // SuperAdmin Wallet schema
 const superAdminWalletSchema = new Schema(
   {
@@ -50,10 +104,11 @@ const superAdminWalletSchema = new Schema(
     },
     perUserWelcomeBonus: {
       type: Number,
-      default: 0, // This value is set manually by superadmin
+      default: 0,
     },
     transactions: [transactionSchemaSA],
     expiredCouponRefunds: [expiredCouponRefundSchema],
+    welcomeBonusWallet: welcomeBonusWalletSchema, // ✅ added structured wallet
   },
   { timestamps: true }
 );

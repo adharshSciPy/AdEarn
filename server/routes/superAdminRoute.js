@@ -8,7 +8,8 @@ import {
   getSuperAdminWallet,
   generateCoupons,
   setWelcomeBonusAmount,
-  getBonusHistory
+  createContest,
+  topUpWelcomeBonusStars 
 } from "../controller/superAdminController.js";
 const superAdminRouter = Router();
 superAdminRouter.route("/register").post(registerSuperAdmin);
@@ -18,8 +19,8 @@ superAdminRouter.route("/toggle-user-status").post(toggleUserStatus);
 superAdminRouter.route("/toggle-admin-status").post(toggleAdminStatus);
 superAdminRouter.route("/superadmin-wallet").get(getSuperAdminWallet);
 superAdminRouter.route("/generate-coupons").post(generateCoupons);
-superAdminRouter.route("/bonus-history").get( getBonusHistory);
 superAdminRouter.route('/set-welcome-bonus').post(setWelcomeBonusAmount);
-
+superAdminRouter.route('/topup-welcome-stars').post(topUpWelcomeBonusStars);
+superAdminRouter.route('/create-contest').post(createContest);
 
 export default superAdminRouter;
