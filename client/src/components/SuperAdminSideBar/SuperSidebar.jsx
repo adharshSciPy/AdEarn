@@ -60,7 +60,7 @@ function Sidebar() {
       label: "Users",
       icon: <UserOutlined />,
       children: [
-        { key: "user-account", label: "User Account", path: "/superadminadsuser" },
+        { key: "user-section", label: "User Account", path: "/superadminadsuser" },
         { key: "deleted-user", label: "Delete User", path: "/demo" },
       ],
     },
