@@ -1253,10 +1253,10 @@ const fetchVerifiedSurveyAd = async (req, res) => {
 
 // to watch ads,star split,view count
 const viewAd = async (req, res) => {
-  const {userId,adId} = req.params;
+  const {id,adId} = req.params;
 
   try {
-    const user = await User.findById(userId).populate("userWalletDetails");
+    const user = await User.findById(id).populate("userWalletDetails");
     if (!user) return res.status(400).json({ message: "User not found" });
 
     const ad = await Ad.findById(adId)
@@ -1284,11 +1284,11 @@ const viewAd = async (req, res) => {
 
     // Check if user already rewarded
     const previouslyRewarded = adObj.viewersRewarded.find(
-      (entry) => entry.userId.toString() === userId
+      (entry) => entry.id.toString() === id
     );
 
     const userRepeat = adObj.adRepeatSchedule.find(
-      (entry) => entry.userId.toString() === userId
+      (entry) => entry.userId.toString() === id
     );
 
     // If repetition is off and user already viewed

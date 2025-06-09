@@ -26,14 +26,11 @@ adsRouter.post("/survey-ad/:id", createSurveyAd);
 adsRouter.get("/ads-to-verify", fetchAdsForVerification);
 adsRouter.get("/verified-ads", fetchVerifiedAds);
 adsRouter.get("/unverified-ads/:id", fetchSingleUnverifiedAd);
-
 adsRouter.get('/single-verified/:adId', fetchSingleVerifiedAd);
 adsRouter.get('/image-ads/:userId', fetchVerifiedImgAd);
 adsRouter.get('/video-ads/:userId', fetchVerifiedVideoAd);
 adsRouter.get('/survey-ads/:userId', fetchVerifiedSurveyAd);
-
-
-adsRouter.post('/view-ads/:userId/:adId', viewAd);
+adsRouter.post('/view-ads/:id/:adId', viewAd);
 
 
 
