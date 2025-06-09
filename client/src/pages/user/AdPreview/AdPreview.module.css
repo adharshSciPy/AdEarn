@@ -1,6 +1,6 @@
 .verifyadsmain {
   height: max-content;
-  padding-bottom: 200px;
+  padding-bottom: 50px;
 }
 
 .verifyadscontainer {
@@ -9,17 +9,7 @@
   justify-content: center;
 }
 
-.adscontainer {
-  width: calc(100% - 250px);
-  margin-left: 250px;
-  position: absolute;
-  top: 330px;
-  z-index: 999;
-  height: 40px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+
 .image{
   width: 100%;
   height: 100%;
@@ -30,19 +20,21 @@
   flex-direction: row;
   justify-content: space-around;
   padding: 30px;
+  gap: 10px;
 }
 
 .previewone {
   background-color: #ff7a42;
-  width: 700px;
-  height: 700px;
+  width: 70%;
+  height: 600px;
   border-radius: 20px;
+  overflow: hidden;
 }
 
 .previewtwo {
   background: linear-gradient(to right, #fcc188, #7042d2, #2e008e);
-  width: 400px;
-  height: 700px;
+  width: 30%;
+  height: 600px;
   border-radius: 20px;
   display: flex;
   flex-direction: column;
@@ -127,4 +119,24 @@
     display: flex;
     flex-wrap: wrap;
   }
+}
+@media (max-width: 1020px) {
+.verifyadsmain {
+    padding-bottom:20px ;
+}
+    .adspreview{
+        flex-direction: column;
+        padding:10px;
+    }
+    .previewone{
+        width: 100%;
+    }
+    .previewtwo{
+        width: 100%;
+        height: max-content;
+    }
+    .bar{
+        display: none;
+    }
+
 }

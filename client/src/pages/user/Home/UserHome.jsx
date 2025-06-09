@@ -25,7 +25,7 @@ function UserHome() {
 
   const getVideoAdData = async () => {
     try {
-      const response = await axios.get(``);
+      const response = await axios.get();
       console.log(response);
     } catch (error) {
       console.log(error);
@@ -43,9 +43,7 @@ function UserHome() {
     getImageAdData();
   }, []);
   const viewAd = async (adId) => {
-    const response = await axios.post(`${baseUrl}/api/v1/ads/view-ads/${id}`,{adId:adId});
-    console.log(response);
-    
+    navigate(`/adspreview/${id}`) 
   };
 const handleClick = () => {
     navigate(`/adform/${id}`); // replace with your route

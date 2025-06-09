@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
-import styles from "./VerifyAds.module.css";
-import Sidebar from "../../../components/sidebar/Sidebar";
-import Header from "../../../components/Header/Header";
+import styles from "./AdPreview.module.css";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { Button } from "antd";
@@ -11,14 +9,11 @@ import baseUrl from "../../../baseurl";
 import { Modal } from "antd";
 
 function VerifyAds() {
+    const {adId}=useParams()
   const [unverifiedAd, setUnVerifiedAd] = useState();
-  const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedAd, setSelectedAd] = useState(null);
-  const [IsModalVisibleReject, setIsModalVisibleReject] = useState(false);
   const [reason, setReason] = useState("");
-  const { adId } = useParams();
-  const navigate = useNavigate();
-  const getUnVerifyAd = async () => {
+  const getAddDetails = async () => {
     try {
       const response = await axios.get(
         `${baseUrl}/api/v1/ads/unverified-ads/${adId}`
@@ -30,59 +25,21 @@ function VerifyAds() {
   };
 
   useEffect(() => {
-    getUnVerifyAd();
+    // getUnVerifyAd();
   }, []);
-  const handleVerify = (id) => {
-    setSelectedAd(id);
-    setIsModalVisible(true);
-  };
-  const handleReject = (id) => {
-   setSelectedAd(id);
-    setIsModalVisibleReject(true);
-};
-  const handleApprove = async () => {
-    try {
-      const response = await axios.post(`${baseUrl}/api/v1/admin/verify-ad`, {
-        adId: selectedAd,
-      });
-      if (response.status === 200) {
-        navigate("/AdminAds");
-      }
-      console.log(response);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  const handleRejection=async()=>{
-    try {
-      const response = await axios.post(`${baseUrl}/api/v1/admin/reject-ad`, {
-        adId: selectedAd,
-        reason:reason
-      });
-      if (response.status === 200) {
-        navigate("/AdminAds");
-      }
-      console.log(response);
-    } catch (error) {
-      console.log(error);
-    }
-  }
+
   return (
     <div className={styles.verifyadsmain}>
       <div className={styles.verifyadscontainer}>
-        <Sidebar />
-        <Header />
         <div className={styles.adscontainer}>
           <div
             style={{
               width: "100%",
-              maxWidth: "1550px",
-              height: "600px",
-              padding: "30px",
+              height: "maxContent"
             }}
             className={styles.adsimage}
           >
-            <h1>Ads Preview</h1>
+            <h1 style={{padding:"20px"}}>Ads Preview</h1>
             <div className={styles.adspreview}>
               <div className={styles.previewone}>
                 <img
@@ -93,6 +50,7 @@ function VerifyAds() {
               </div>
               <div className={styles.previewtwo}>
                 <div
+                className={styles.bar}
                   style={{
                     position: "relative",
                     width: 200,
@@ -151,14 +109,7 @@ function VerifyAds() {
                       <p>{unverifiedAd?.imageAd.totalStarsAllocated}</p>
                     </div>
                   </div>
-                  <div className={styles.listitems}>
-                    <div>
-                      <p>Ads Status</p>
-                    </div>
-                    <div>
-                      <p>Not Verified</p>
-                    </div>
-                  </div>
+                  
                   <div className={styles.listitems}>
                     <div>
                       <p>Start Date</p>
@@ -190,64 +141,9 @@ function VerifyAds() {
                 </div>
               </div>
             </div>
-
-            <div className={styles.approvalbuttons}>
-              <Button
-                style={{ backgroundColor: "#5d32b9", color: "white" }}
-                onClick={() => handleReject(unverifiedAd?._id)}
-              >
-                Reject
-              </Button>
-              <Button
-                style={{ color: "#5d32b9" }}
-                onClick={() => handleVerify(unverifiedAd?._id)}
-              >
-                Approve
-              </Button>
-            </div>
           </div>
         </div>
       </div>
-      <Modal
-        title="Verify Ad ?"
-        visible={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setIsModalVisible(false)}>
-            Cancel
-          </Button>,
-          <Button
-            key="approve"
-            type="primary"
-            onClick={() => handleApprove(selectedAd)}
-          >
-            Approve
-          </Button>,
-        ]}
-      ></Modal>
-      <Modal
-        title="Reason for Ad Rejection?"
-        visible={IsModalVisibleReject}
-        onCancel={() => setIsModalVisibleReject(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setIsModalVisibleReject(false)}>
-            Cancel
-          </Button>,
-          <Button
-            key="Reject"
-            type="primary"
-            onClick={() => handleRejection(selectedAd)}
-          >
-            Reject
-          </Button>,
-        ]}
-      >
-        <textarea
-          style={{ width: "100%", minHeight: "100px", padding: "10px" }}
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-        />
-      </Modal>
     </div>
   );
 }
