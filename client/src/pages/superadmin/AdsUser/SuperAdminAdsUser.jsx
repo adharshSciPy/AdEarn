@@ -7,22 +7,12 @@ import Header from '../../../components/Header/Header'
 import baseUrl from "../../../baseurl"
 import axios from 'axios'
 
-
-const users = Array.from({ length: 100 }, (_, i) => ({
-  id: i + 1,
-  name: `User ${i + 1}`,
-  fullName: `Full Name ${i + 1}`,
-  lastSeen: i % 3 === 0 ? "Today" : i % 3 === 1 ? "Yesterday" : "2 days ago",
-  stars: 100 + i,
-  adsViewed: i % 2 === 0 ? 10 : 0,
-  blacklisted: i % 5 === 0,
-}));
-
 const USERS_PER_LOAD = 20;
 
 function SuperAdminAdsUser() {
-  const [allUsers, setAllUsers] = useState([]);         // From API
-  const [filteredUsers, setFilteredUsers] = useState([]); // Filtered by tab
+  const [allUsers, setAllUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [userStars, setUserStars] = useState({});
 
 
   const [activeTab, setActiveTab] = useState("All Users");
@@ -33,17 +23,29 @@ function SuperAdminAdsUser() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
-  const filteredusers = users.filter((user) => {
-    if (activeTab === "Ads Users") return user.adsViewed > 0;
-    if (activeTab === "Disabled Users") return user.blacklisted;
-    return true;
-  });
-
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const { data } = await axios.get(`${baseUrl}/api/v1/admin/all-users`);
-        setAllUsers(data.users || []);
+        const users = data.users || [];
+        setAllUsers(users);
+        console.log("users", data)
+
+        // After fetching users, fetch stars for each user:
+        const starsData = {};
+        await Promise.all(
+          users.map(async (user) => {
+            const userid = user._id;
+            try {
+              const walletres = await axios.get(`${baseUrl}/api/v1/user/user-wallet/${userid}`);
+              console.log("wal", walletres.data.wallet.totalStars)
+              starsData[userid] = walletres.data.wallet.totalStars || 0;
+            } catch (err) {
+              starsData[userid] = 0; // fallback
+            }
+          })
+        );
+        setUserStars(starsData);
       } catch (err) {
         console.error("Error fetching users:", err);
       }
@@ -176,17 +178,17 @@ function SuperAdminAdsUser() {
                   className={styles.avatar}
                 />
                 <div>
-                  <strong>{user.name}</strong>
-                  <p>{user.fullName}</p>
+                  <strong>{user.firstName}</strong>
+                  <p>{user.lastName}</p>
                 </div>
               </div>
               <div>{user.lastSeen}</div>
-              <div>{user.stars}</div>
-              <div>{user.adsViewed}</div>
+              <div>{userStars[user._id] ?? 0}</div>
+              <div>{user.viewedAds.length}</div>
               <div
                 className={user.blacklisted ? styles.listed : styles.notListed}
               >
-                {user.blacklisted ? "Listed" : "Not Listed"}
+                {user.isUserEnabled ? "Listed" : "Not Listed"}
               </div>
               <div className={styles.actions}>
                 {activeTab === "Disabled Users" ? (
