@@ -126,7 +126,7 @@ function App() {
           <Route path='/adform/:id' element={<AdForm />} />
           <Route path='/adreportuser' element={<UserReport />} />
           <Route path='/surveyaduser' element={<SurveyAds />} />
-          <Route path='/adspreview/:id' element={<AdsPreview />} />
+          <Route path='/adspreview/:id/:adId' element={<AdsPreview />} />
 
 
 

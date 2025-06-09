@@ -9,14 +9,17 @@ import baseUrl from "../../../baseurl";
 import { Modal } from "antd";
 
 function VerifyAds() {
-    const {adId}=useParams()
+    const {id,adId}=useParams()
+    
   const [unverifiedAd, setUnVerifiedAd] = useState();
   const [selectedAd, setSelectedAd] = useState(null);
   const [reason, setReason] = useState("");
   const getAddDetails = async () => {
+    console.log("ids",id,adId);
+    
     try {
-      const response = await axios.get(
-        `${baseUrl}/api/v1/ads/unverified-ads/${adId}`
+      const response = await axios.post(
+        `${baseUrl}/api/v1/ads/view-ads/${id}/${adId}`
       );
       setUnVerifiedAd(response.data.ad);
     } catch (error) {
@@ -25,7 +28,7 @@ function VerifyAds() {
   };
 
   useEffect(() => {
-    // getUnVerifyAd();
+    getAddDetails();
   }, []);
 
   return (
