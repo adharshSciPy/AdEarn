@@ -2,6 +2,9 @@ import  Router  from "express";
 import { addKyc, editUser, fetchUserWallet, getUserByUniqueId, getViewedAds, redeemCoupon, registerUser, starBuy, uploadProfilePicture, userLogin, userLogout, } from "../controller/userController.js";
 import uploadUserImg from "../multer/userImgMulter.js";
 import userKyc from "../multer/kycVerificationMulter.js";
+import authMiddleware from "../auth/authMiddleware.js";
+import checkSubscription from "../utils/checkSubscription.js";
+
 const userRouter = Router()
 userRouter.route('/register').post(registerUser);
 userRouter.route('/update/:id').patch(editUser);

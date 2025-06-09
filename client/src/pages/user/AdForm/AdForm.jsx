@@ -570,7 +570,9 @@ function AdForm() {
   };
 
   // Search location/pincode with debounce
-
+const handleClick=()=>{
+navigate(`/userhome/${id}`)
+}
   const searchPlace = async (query) => {
     setLoading(true);
     try {
@@ -612,7 +614,7 @@ function AdForm() {
     setSubmitError("");
     setSubmitSuccess("");
     const locationPayload = positions.map((p) => ({
-      coords: `${p.lng},${p.lat}`,
+      coords: `${p.lat},${p.lng}`,
       radius: p.radiusKm,
     }));
     const formData = new FormData();
@@ -1095,7 +1097,7 @@ function AdForm() {
         {/* Buttons */}
         <div className={styles.buttondiv}>
           <div>
-            <button className={styles.backButton}>Back</button>
+            <button className={styles.backButton} onClick={handleClick}>Back</button>
             <button
               style={{
                 backgroundColor: "#3563E9",

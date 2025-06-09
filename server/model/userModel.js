@@ -171,7 +171,8 @@ userSchema.methods.generateRefreshToken = function () {
 // subscription checking
 userSchema.methods.hasActiveSubscription = function () {
   const now = new Date();
-  return this.isSubscribed && this.subscriptionEndDate && now <= this.subscriptionEndDate;
+return this.isSubscribed && this.subscriptionEndDate && now <= this.subscriptionEndDate;
+
 };
 
 
