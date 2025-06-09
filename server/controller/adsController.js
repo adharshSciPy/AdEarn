@@ -1258,8 +1258,7 @@ const fetchVerifiedSurveyAd = async (req, res) => {
 
 // to watch ads,star split,view count
 const viewAd = async (req, res) => {
-  const { adId } = req.body;
-  const { userId } = req.params;
+  const {userId,adId} = req.params;
 
   try {
     const user = await User.findById(userId).populate("userWalletDetails");

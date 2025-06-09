@@ -31,7 +31,7 @@ adsRouter.get('/video-ads/:userId', fetchVerifiedVideoAd);
 adsRouter.get('/survey-ads/:userId', fetchVerifiedSurveyAd);
 
 
-adsRouter.post('/view-ads/:userId', viewAd);
+adsRouter.post('/view-ads/:userId/:adId', viewAd);
 
 
 

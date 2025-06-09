@@ -6,6 +6,7 @@ import User from "../model/userModel.js";
 import SuperAdminWallet from "../model/superAdminWallet.js";
 import Coupon from "../model/couponModel.js"
 import WelcomeBonusSetting from '../model/WelcomeBonusSetting.js';
+import ContestEntry from "../model/contestEntrySchema.js";
 
 import { passwordValidator } from "../utils/passwordValidator.js";
 
@@ -308,6 +309,39 @@ const distributeWelcomeBonus = async (newUserId) => {
   }
 };
 
+ const createContest = async (req, res) => {
+  try {
+    const { contestName, contestNumber, startDate, endDate, entryStars, result } = req.body;
+
+    // Basic validation
+    if (!contestName || !contestNumber || !startDate || !endDate || !entryStars) {
+      return res.status(400).json({ message: "All required fields must be filled" });
+    }
+
+    // Check for existing contestNumber
+    const existing = await ContestEntry.findOne({ contestNumber });
+    if (existing) {
+      return res.status(400).json({ message: "Contest number already exists" });
+    }
+
+    const contest = new ContestEntry({
+      contestName,
+      contestNumber,
+      startDate,
+      endDate,
+      entryStars,
+      totalEntries: 0, // default
+      result: result || "Pending"
+    });
+
+    await contest.save();
+    return res.status(201).json({ message: "Contest created successfully", contest });
+
+  } catch (error) {
+    console.error("Error creating contest:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 const generateCoupons=async(req,res)=>{
   const{couponCount,perStarCount,generationDate,expiryDate}=req.body;
@@ -383,4 +417,4 @@ const generateCoupons=async(req,res)=>{
 };
 
 
-export { registerSuperAdmin, superAdminLogin, getAllAdmins, toggleUserStatus,toggleAdminStatus,getSuperAdminWallet,setWelcomeBonusAmount,generateCoupons,distributeWelcomeBonus,topUpWelcomeBonusStars};
+export { registerSuperAdmin, superAdminLogin, getAllAdmins, toggleUserStatus,toggleAdminStatus,getSuperAdminWallet,setWelcomeBonusAmount,generateCoupons,distributeWelcomeBonus,topUpWelcomeBonusStars,createContest};
