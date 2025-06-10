@@ -652,12 +652,21 @@ const fetchAdsForVerification = async (req, res) => {
       return res.status(400).json({ message: "No Ads found" });
     }
 
-    // Filter only ads where any one of the refs is not verified
+    // Filter only ads where any one of the refs is unverified, not rejected, and isAdRejected is false
     const unverifiedAds = allAds.filter((ad) => {
       return (
-        (ad.imgAdRef && !ad.imgAdRef.isAdVerified) ||
-        (ad.videoAdRef && !ad.videoAdRef.isAdVerified) ||
-        (ad.surveyAdRef && !ad.surveyAdRef.isAdVerified)
+        (ad.imgAdRef &&
+          ad.imgAdRef.isAdVerified === false &&
+          !ad.imgAdRef.adRejectedTime &&
+          ad.imgAdRef.isAdRejected === false) ||
+        (ad.videoAdRef &&
+          ad.videoAdRef.isAdVerified === false &&
+          !ad.videoAdRef.adRejectedTime &&
+          ad.videoAdRef.isAdRejected === false) ||
+        (ad.surveyAdRef &&
+          ad.surveyAdRef.isAdVerified === false &&
+          !ad.surveyAdRef.adRejectedTime &&
+          ad.surveyAdRef.isAdRejected === false)
       );
     });
 
@@ -668,24 +677,36 @@ const fetchAdsForVerification = async (req, res) => {
     const adsWithVerificationStatus = unverifiedAds.map((ad) => {
       return {
         _id: ad._id,
-        imageAd: ad.imgAdRef
-          ? {
-              ...ad.imgAdRef.toObject(),
-              isVerified: ad.imgAdRef.isAdVerified,
-            }
-          : null,
-        videoAd: ad.videoAdRef
-          ? {
-              ...ad.videoAdRef.toObject(),
-              isVerified: ad.videoAdRef.isAdVerified,
-            }
-          : null,
-        surveyAd: ad.surveyAdRef
-          ? {
-              ...ad.surveyAdRef.toObject(),
-              isVerified: ad.surveyAdRef.isAdVerified,
-            }
-          : null,
+        imageAd:
+          ad.imgAdRef &&
+          !ad.imgAdRef.isAdVerified &&
+          !ad.imgAdRef.adRejectedTime &&
+          ad.imgAdRef.isAdRejected === false
+            ? {
+                ...ad.imgAdRef.toObject(),
+                isVerified: ad.imgAdRef.isAdVerified,
+              }
+            : null,
+        videoAd:
+          ad.videoAdRef &&
+          !ad.videoAdRef.isAdVerified &&
+          !ad.videoAdRef.adRejectedTime &&
+          ad.videoAdRef.isAdRejected === false
+            ? {
+                ...ad.videoAdRef.toObject(),
+                isVerified: ad.videoAdRef.isAdVerified,
+              }
+            : null,
+        surveyAd:
+          ad.surveyAdRef &&
+          !ad.surveyAdRef.isAdVerified &&
+          !ad.surveyAdRef.adRejectedTime &&
+          ad.surveyAdRef.isAdRejected === false
+            ? {
+                ...ad.surveyAdRef.toObject(),
+                isVerified: ad.surveyAdRef.isAdVerified,
+              }
+            : null,
       };
     });
 
