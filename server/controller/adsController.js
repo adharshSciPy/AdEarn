@@ -1306,7 +1306,7 @@ const viewAd = async (req, res) => {
     );
 
     const userRepeat = adObj.adRepeatSchedule.find(
-      (entry) => entry.userId.toString() === id
+      (entry) => entry.id.toString() === id
     );
 
     // If repetition is off and user already viewed
