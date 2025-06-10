@@ -113,12 +113,12 @@
 }
 
 .listed {
-  color: red;
+  color: green;
   font-weight: 500;
 }
 
 .notListed {
-  color: green;
+  color: red;
   font-weight: 500;
 }
 
@@ -130,7 +130,7 @@
 }
 
 .deleteIcon {
-  color: #555;
+  color: red;
   cursor: pointer;
 }
 .monthYear {

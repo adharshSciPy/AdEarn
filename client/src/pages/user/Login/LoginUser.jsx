@@ -4,11 +4,13 @@ import styles from "./userlogin.module.css";
 import { Link, useNavigate } from "react-router-dom";
 import baseUrl from "../../../baseurl";
 import axios from "axios"
+import { setUser } from "../../../components/features/slice";
+import { useDispatch } from 'react-redux';
 
 
 function LoginUser() {
   const navigate=useNavigate()
-
+ const dispatch = useDispatch();
   const[form,setForm]=useState(
     {
       email:"",
@@ -31,6 +33,11 @@ function LoginUser() {
       if(response.status===200){
         const id =response.data.user._id;
         navigate(`/userhome/${id}`)
+        dispatch(setUser({
+        id: response.data.user._id,
+        token: response.data.accessToken,
+        role:response.data.role,
+      }));
       }
       
     } catch (error) {
