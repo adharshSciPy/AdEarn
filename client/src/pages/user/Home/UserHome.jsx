@@ -43,7 +43,7 @@ function UserHome() {
     getImageAdData();
   }, []);
   const viewAd = async (adId) => {
-    navigate(`/adspreview/${id}`) 
+    navigate(`/adspreview/${id}/${adId}`) 
   };
 const handleClick = () => {
     navigate(`/adform/${id}`); // replace with your route
