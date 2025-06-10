@@ -1,0 +1,108 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  width: 350px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.title {
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  color: #1e40af;
+  margin-bottom: 16px;
+}
+
+.cardContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  background: #4c1d95;
+  color: white;
+  border-radius: 12px;
+  padding: 16px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-image: url("../../assets/homeBackground.png");
+  height: max-content;
+  height: 120px;
+
+}
+
+.card:hover {
+  background: #5b21b6;
+}
+
+.active {
+  border: 2px solid #3b82f6;
+  background: #ede9fe;
+  color: #1e1b4b;
+  background-image: url("../../assets/homeBackground.png");
+
+}
+
+.radio {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.cardLabel {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.cardText {
+  font-size: 14px;
+}
+
+.buttonRow {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.cancelButton {
+  background: #e5e7eb;
+  color: #374151;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.cancelButton:hover {
+  background: #d1d5db;
+}
+
+.createButton {
+  background: #2563eb;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.createButton:hover {
+  background: #1d4ed8;
+}

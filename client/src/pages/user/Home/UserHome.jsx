@@ -6,12 +6,13 @@ import logo from "../../../assets/Logo.png";
 import Navbar from "../NavBar/Navbar";
 import axios from "axios";
 import baseUrl from "../../../baseurl";
+import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
 
 function UserHome() {
-  const navigate=useNavigate()
+  const navigate = useNavigate();
   const [imageAdData, setImageAd] = useState([]);
   const { id } = useParams();
-
+  const [showPopup, setShowPopup] = useState(false);
   const getImageAdData = async () => {
     try {
       const response = await axios.get(`${baseUrl}/api/v1/ads/image-ads/${id}`);
@@ -43,14 +44,15 @@ function UserHome() {
     getImageAdData();
   }, []);
   const viewAd = async (adId) => {
-    navigate(`/adspreview/${id}/${adId}`) 
+    navigate(`/adspreview/${id}/${adId}`);
   };
-const handleClick = () => {
+  const handleClick = () => {
     navigate(`/adform/${id}`); // replace with your route
   };
   return (
     <div>
       <Navbar />
+      <CreateAdPopup isOpen={showPopup} onClose={() => setShowPopup(false)} />
       <div className={styles.mainContainer}>
         <div className={styles.homeMainContainer}>
           {/* <Sidebar/> */}
@@ -69,7 +71,7 @@ const handleClick = () => {
                       </p>
                     </div>
                     <div className={styles.firstMainbutton}>
-                      <button onClick={handleClick}>Place Ads</button>
+                      <button onClick={() => setShowPopup(true)}>Place Ads</button>
                     </div>
                   </div>
 
@@ -119,7 +121,7 @@ const handleClick = () => {
                 </div>
               </div>
             </div>
-             <div className={styles.adContainerMain}>
+            <div className={styles.adContainerMain}>
               <div className={styles.imageAdHead}>
                 <h2>Video Ads</h2>
               </div>
@@ -307,7 +309,7 @@ const handleClick = () => {
                   <button>See All</button>
                 </div>
               </div>
-            </div> 
+            </div>
           </div>
         </div>
       </div>
