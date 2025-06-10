@@ -23,6 +23,9 @@ function SuperAdminAdsUser() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [userToDelete, setUserToDelete] = useState();
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -96,9 +99,9 @@ function SuperAdminAdsUser() {
     setIsModalVisible(false);
     try {
       const userId = selectedUser._id;
-
+      
       const response = await axios.post(`${baseUrl}/api/v1/super-admin/toggle-user-status`, {
-        id: userId,
+        id: { userId }
       });
 
       const updatedUser = response.data.user;
@@ -144,6 +147,33 @@ function SuperAdminAdsUser() {
     }
   };
 
+
+  const handleDeleteClick = (user) => {
+    setUserToDelete(user);
+    setIsDeleteModalVisible(true);
+  };
+
+  const handleDelete = async () => {
+    try {
+      
+      const userId = userToDelete
+      console.log("idzaaid", userId)
+      const response=await axios.delete(`${baseUrl}/api/v1/super-admin/delete-user`,{
+        data: { id: userId }
+      })
+      console.log(response);
+      
+      const updatedUsers = allUsers.filter((u) => u._id !== userId);
+      setAllUsers(updatedUsers);
+      setIsDeleteModalVisible(false);
+    } catch (error) {
+      console.log("Error while delete", error)
+    }
+  }
+
+  const cancelDelete = () => {
+    setIsDeleteModalVisible(false);
+  };
 
 
 
@@ -251,7 +281,8 @@ function SuperAdminAdsUser() {
                       checked={!user.isUserEnabled}
                       onChange={() => handleToggleUserStatus(user)}
                       defaultChecked />
-                    <DeleteOutlined className={styles.deleteIcon} />
+                    <DeleteOutlined className={styles.deleteIcon}
+                      onClick={() => handleDeleteClick(user._id)} />
                   </>
                 )}
               </div>
@@ -272,6 +303,20 @@ function SuperAdminAdsUser() {
             <strong>{selectedUser?.fullName}</strong>?
           </p>
         </Modal>
+        <Modal
+          title="Confirm Deletion"
+          open={isDeleteModalVisible}
+          onOk={handleDelete}
+          onCancel={cancelDelete}
+          okText="Yes, Delete"
+          cancelText="Cancel"
+        >
+          <p>
+            Are you sure you want to delete{" "}
+            <strong>{userToDelete?.firstName} {userToDelete?.lastName}</strong>?
+          </p>
+        </Modal>
+
       </div>
     </div>
   );

@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import styles from "./contestpage.module.css";
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
-import Header from "../../../components/Header/Header"
-
+import Header from "../../../components/Header/Header";
 
 function SuperAdminContestPage() {
   const [formData, setFormData] = useState({
@@ -11,6 +10,13 @@ function SuperAdminContestPage() {
     starCount: "",
     date: "",
     expiryDate: "",
+    contestName: "",
+    contestNumber: "",
+    startDate: "",
+    endDate: "",
+    entryStars: "",
+    totalEntry: "",
+    resultMode: "",
   });
 
   const handleChange = (e) => {
@@ -25,7 +31,7 @@ function SuperAdminContestPage() {
   };
 
   const [winners, setWinners] = useState([
-    { label: "1st winner", value: "", file: null }
+    { label: "1st winner", value: "", file: null },
   ]);
 
   const numberToOrdinal = (n) => {
@@ -33,7 +39,6 @@ function SuperAdminContestPage() {
       v = n % 100;
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
   };
-
 
   const handleInputChange = (index, value) => {
     const updated = [...winners];
@@ -66,8 +71,6 @@ function SuperAdminContestPage() {
       { label: "4th winner", value: "", file: null },
     ]);
   };
-
-
 
   return (
     <div className={styles.UserAccount}>
@@ -133,18 +136,43 @@ function SuperAdminContestPage() {
               placeholder="Total Entry"
             />
 
-            <label>Result</label>
-            <input
-              type="text"
-              name="result"
-              value={formData.result}
-              onChange={handleChange}
-              placeholder="Result"
-            />
+            <label>Winner Selection</label>
+            <div className={styles.radioGroup}>
+              <div style={{ display: "flex", alignItems: "center",gap:"5px"  }}>
+                <input
+                    type="radio"
+                    name="resultMode"
+                    value="automatic"
+                    checked={formData.resultMode === "automatic"}
+                    onChange={handleChange}
+                  />
+                <label>
+                  
+                  Automatic
+                </label>
+                
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center",gap:"5px" }}>
+                <input
+                    type="radio"
+                    name="resultMode"
+                    value="manual"
+                    checked={formData.resultMode === "manual"}
+                    onChange={handleChange}
+                  />
+                <label>
+                  
+                  Manual
+                </label>
+              </div>
+            </div>
 
             <div className={styles.prizecontainer}>
               <h3>Price distribution</h3>
-              <p className={styles.note}>*image size must be width : 10cm, height : 8cm</p>
+              <p className={styles.note}>
+                *image size must be width : 10cm, height : 8cm
+              </p>
               {winners.map((winner, index) => (
                 <div className={styles.winnerrow} key={index}>
                   <span className={styles.label}>{winner.label}</span>
@@ -154,7 +182,9 @@ function SuperAdminContestPage() {
                     <input
                       type="file"
                       hidden
-                      onChange={(e) => handleFileChange(index, e.target.files[0])}
+                      onChange={(e) =>
+                        handleFileChange(index, e.target.files[0])
+                      }
                     />
                   </label>
                 </div>
@@ -176,7 +206,7 @@ function SuperAdminContestPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default SuperAdminContestPage
+export default SuperAdminContestPage;

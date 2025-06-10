@@ -6,9 +6,12 @@ import { useSelector } from "react-redux";
 import axios from "axios";
 import baseUrl from "../../../baseurl";
 import { useNavigate } from "react-router-dom";
+import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
+
 
 const WalletPage = () => {
   const [activeTab, setActiveTab] = useState("Payouts");
+    const [showPopup, setShowPopup] = useState(false);
   const [stars, setStars] = useState("");
   const [walletDetails, setWalletDetails] = useState([]);
   const [showBuyStarsModal, setShowBuyStarsModal] = useState(false);
@@ -41,9 +44,9 @@ const WalletPage = () => {
   useEffect(() => {
     getUserWalletDetails();
   });
-  const handleClick = () => {
-    navigate(`/adform/${userId}`); // replace with your route
-  };
+  // const handleClick = () => {
+  //   navigate(`/adform/${userId}`); // replace with your route
+  // };
   const paymentClick = async () => {
     try {
       const response = await axios.post(
@@ -62,6 +65,8 @@ const WalletPage = () => {
   return (
     <>
       <Navbar />
+      <CreateAdPopup isOpen={showPopup} onClose={() => setShowPopup(false)} />
+
       <div className={styles.walletContainer}>
         <div className={styles.contentsContainer}>
           <div className={styles.firstContent}>
@@ -77,7 +82,7 @@ const WalletPage = () => {
                   </p>
                 </div>
                 <div className={styles.firstMainbutton}>
-                  <button onClick={handleClick}>Place Ads</button>
+                  <button onClick={() => setShowPopup(true)}>Place Ads</button>
                 </div>
               </div>
 

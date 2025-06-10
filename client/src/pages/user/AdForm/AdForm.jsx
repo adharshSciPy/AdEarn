@@ -1096,7 +1096,7 @@ navigate(`/userhome/${id}`)
 
         {/* Buttons */}
         <div className={styles.buttondiv}>
-          <div>
+          <div className={styles.mobdiv}>
             <button className={styles.backButton} onClick={handleClick}>Back</button>
             <button
               style={{

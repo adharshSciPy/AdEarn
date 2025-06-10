@@ -1,36 +1,34 @@
 .container {
-  padding:  30px;
+  padding: 30px;
   background-color: white;
   border-radius: 20px;
 }
-.adName{
-  padding:  30px;
+.adName {
+  padding: 30px;
   background-color: white;
   border-radius: 20px;
   margin-bottom: 30px;
 }
-.selectOption{
-  padding: 10px ;
+.selectOption {
+  padding: 10px;
   margin-top: 10px;
   width: 100%;
-  border-radius: 10px
+  border-radius: 10px;
 }
-.adFormMain{
+.adFormMain {
   width: 95%;
   margin: auto;
-  background-color: #D6E4FD;
+  background-color: #d6e4fd;
   padding: 50px;
-
 }
 .heading {
   margin-top: 20px;
   font-size: 1.2rem;
   font-weight: bold;
 }
-.mapSection{
+.mapSection {
   padding: 0px 30px;
   background-color: white;
-
 }
 .controls {
   margin: 10px 0;
@@ -127,45 +125,44 @@
   color: #2d3748;
   font-weight: 500;
 }
-.labelImg{
+.labelImg {
   height: 30px;
   width: 30px;
-
 }
-.labelImg img{
+.labelImg img {
   height: 100%;
   width: 100%;
   object-fit: cover;
 }
-.labelContainer{
+.labelContainer {
   display: flex;
   gap: 10px;
 }
-.AdNameHead{
-  color: #3D5278;
+.AdNameHead {
+  color: #3d5278;
   width: 100%;
 }
-.AdInput{
- padding: 15px 12px;
+.AdInput {
+  padding: 15px 12px;
   border-radius: 6px;
   border: 1px solid #ccc;
   width: 100%;
   margin-top: 10px;
 }
-.buttondiv{
+.buttondiv {
   margin-top: 100px;
   display: flex;
   justify-content: end;
 }
-.buttondiv button{
+.buttondiv button {
   font-size: 20px;
   padding: 10px 30px;
   border-radius: 10px;
 }
-.backButton{
-  margin-right:30px;
-  background-color:"transparent";
-  border:"1px solid #3563E9"
+.backButton {
+  margin-right: 30px;
+  background-color: "transparent";
+  border: "1px solid #3563E9";
 }
 .cityTag {
   display: inline-block;
@@ -226,29 +223,35 @@
   }
 }
 
-
-@media (max-width:769px) {
-  .adFormMain{
+@media (max-width: 769px) {
+  .adFormMain {
     width: 100%;
     padding: 10px;
+    padding-bottom: 50px;
   }
-  .adName{
+  .adName {
     padding: 20px;
   }
-  .container{
+  .container {
     padding: 20px 10px;
   }
-  .buttondiv{
+  .buttondiv {
     margin-top: 20px;
     justify-content: center;
-
+    padding-bottom: 40px;
   }
-  .buttondiv button{
+  .buttondiv button {
     width: 100%;
     font-size: 20px;
   }
-.backButton{
-  margin-right: 0px;
-  margin-bottom: 30px;
+  .backButton {
+    margin-right: 0px;
+    margin-bottom: 30px;
+  }
+ 
 }
+@media (max-width: 569px) {
+  .labelImg{
+    display: none;
+  }
 }
