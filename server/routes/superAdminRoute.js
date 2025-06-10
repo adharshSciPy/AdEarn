@@ -9,7 +9,9 @@ import {
   generateCoupons,
   setWelcomeBonusAmount,
   createContest,
-  topUpWelcomeBonusStars 
+  topUpWelcomeBonusStars ,
+  topUpCompanyRewardStars,
+  patchSuperAdminWallet
 } from "../controller/superAdminController.js";
 const superAdminRouter = Router();
 superAdminRouter.route("/register").post(registerSuperAdmin);
@@ -22,5 +24,6 @@ superAdminRouter.route("/generate-coupons").post(generateCoupons);
 superAdminRouter.route('/set-welcome-bonus').post(setWelcomeBonusAmount);
 superAdminRouter.route('/topup-welcome-stars').post(topUpWelcomeBonusStars);
 superAdminRouter.route('/create-contest').post(createContest);
-
+superAdminRouter.route('/topup-company-stars').post(topUpCompanyRewardStars);
+superAdminRouter.route('/patch-wallet').patch(patchSuperAdminWallet);
 export default superAdminRouter;

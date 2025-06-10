@@ -26,6 +26,20 @@ const contestEntrySchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  maxParticipants: {
+  type: Number,
+  default: null, // optional
+},
+currentParticipants: {
+  type: Number,
+  default: 0,
+},
+status: {
+  type: String,
+  enum: ["Active", "Ended"],
+  default: "Active",
+},
+
   result: {
     type: String, // or use an ObjectId reference if result is a separate document
     default: "Pending"

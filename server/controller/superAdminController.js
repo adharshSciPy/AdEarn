@@ -415,6 +415,106 @@ const generateCoupons=async(req,res)=>{
     });
   }
 };
+const topUpCompanyRewardStars = async (req, res) => {
+  try {
+    const { starsReceived, sourceCompany } = req.body;
+
+    if (!starsReceived || !sourceCompany) {
+      return res.status(400).json({
+        message: "Both 'starsReceived' and 'sourceCompany' are required.",
+      });
+    }
+
+    const wallet = await SuperAdminWallet.findOne();
+
+    if (!wallet) {
+      return res.status(404).json({ message: "SuperAdmin wallet not found" });
+    }
+
+    // ✅ Initialize companyRewardWallet if undefined
+    if (!wallet.companyRewardWallet) {
+      wallet.companyRewardWallet = {
+        totalReceived: 0,
+        remainingStars: 0,
+        companyDeposits: [],
+        givenToWinners: [],
+      };
+    }
+
+    // ✅ Proceed to update
+    wallet.companyRewardWallet.totalReceived += starsReceived;
+    wallet.companyRewardWallet.remainingStars += starsReceived;
+
+    wallet.companyRewardWallet.companyDeposits.push({
+      starsReceived,
+      sourceCompany,
+    });
+
+    await wallet.save();
+
+    return res.status(200).json({
+      message: "Company reward stars topped up successfully",
+      remainingStars: wallet.companyRewardWallet.remainingStars,
+    });
+  } catch (error) {
+    console.error("Top-up error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+const patchSuperAdminWallet = async (req, res) => {
+  try {
+    const wallet = await SuperAdminWallet.findOne();
+
+    if (!wallet) {
+      return res.status(404).json({ message: "No SuperAdminWallet found" });
+    }
+
+    let updated = false;
+
+    // Add companyRewardWallet if missing
+    if (!wallet.companyRewardWallet) {
+      wallet.companyRewardWallet = {
+        totalReceived: 0,
+        remainingStars: 0,
+        companyDeposits: [],
+        givenToWinners: [],
+      };
+      updated = true;
+    }
+
+    // Add contestEntryWallet if missing
+    if (!wallet.contestEntryWallet) {
+      wallet.contestEntryWallet = {
+        totalReceived: 0,
+        totalEntries: 0,
+        collectedFromUsers: [],
+      };
+      updated = true;
+    }
+
+    // Add default welcomeBonusWallet if missing (just in case)
+    if (!wallet.welcomeBonusWallet) {
+      wallet.welcomeBonusWallet = {
+        totalReceived: 0,
+        remainingStars: 0,
+        given: [],
+        logs: [],
+      };
+      updated = true;
+    }
+
+    if (updated) {
+      await wallet.save();
+      return res.status(200).json({ message: "Wallet patched successfully" });
+    } else {
+      return res.status(200).json({ message: "All required fields already exist" });
+    }
+
+  } catch (err) {
+    console.error("Error patching wallet:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 
-export { registerSuperAdmin, superAdminLogin, getAllAdmins, toggleUserStatus,toggleAdminStatus,getSuperAdminWallet,setWelcomeBonusAmount,generateCoupons,distributeWelcomeBonus,topUpWelcomeBonusStars,createContest};
+export { registerSuperAdmin, superAdminLogin, getAllAdmins, toggleUserStatus,toggleAdminStatus,getSuperAdminWallet,setWelcomeBonusAmount,generateCoupons,distributeWelcomeBonus,topUpWelcomeBonusStars,createContest,topUpCompanyRewardStars,patchSuperAdminWallet};
