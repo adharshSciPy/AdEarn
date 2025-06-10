@@ -24,7 +24,7 @@ function SuperAdminAdsUser() {
   const [selectedUser, setSelectedUser] = useState(null);
 
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
+  const [userToDelete, setUserToDelete] = useState();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -99,7 +99,7 @@ function SuperAdminAdsUser() {
     setIsModalVisible(false);
     try {
       const userId = selectedUser._id;
-
+      
       const response = await axios.post(`${baseUrl}/api/v1/super-admin/toggle-user-status`, {
         id: { userId }
       });
@@ -159,7 +159,7 @@ function SuperAdminAdsUser() {
       const userId = userToDelete
       console.log("idzaaid", userId)
       const response=await axios.delete(`${baseUrl}/api/v1/super-admin/delete-user`,{
-        id: userId
+        data: { id: userId }
       })
       console.log(response);
       
