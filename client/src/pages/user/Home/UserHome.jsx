@@ -14,51 +14,40 @@ function UserHome() {
   const [videAdData, setVideoAd] = useState([]);
   const { id } = useParams();
   const [showPopup, setShowPopup] = useState(false);
+
   const getImageAdData = async () => {
     try {
       const response = await axios.get(`${baseUrl}/api/v1/ads/image-ads/${id}`);
       setImageAd(response.data.ads);
-      console.log(response.data.ads);
     } catch (error) {
       console.log(error);
     }
   };
-  console.log("jhaii", imageAdData[0]?.imageAd.description);
 
   const getVideoAdData = async () => {
     try {
       const response = await axios.get(`${baseUrl}/api/v1/ads/video-ads/${id}`);
       setVideoAd(response.data.ads);
-      console.log(response);
     } catch (error) {
       console.log(error);
     }
   };
-  const getSurveuData = async () => {
-    try {
-      const response = await axios.get(``);
-      console.log(response);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+
   useEffect(() => {
     getImageAdData();
     getVideoAdData();
   }, []);
+
   const viewAd = async (adId) => {
     navigate(`/adspreview/${id}/${adId}`);
   };
-  const handleClick = () => {
-    navigate(`/adform/${id}`); // replace with your route
-  };
+
   return (
     <div>
       <Navbar />
       <CreateAdPopup isOpen={showPopup} onClose={() => setShowPopup(false)} />
       <div className={styles.mainContainer}>
         <div className={styles.homeMainContainer}>
-          {/* <Sidebar/> */}
           <div className={styles.homeContainer}>
             <div className={styles.contentsContainer}>
               <div className={styles.firstContent}>
@@ -79,7 +68,6 @@ function UserHome() {
                       </button>
                     </div>
                   </div>
-
                   <div className={styles.firstMainrightContainer}>
                     <div className={styles.firstImageContainer}>
                       <div className={styles.firstImageContainerMain}></div>
@@ -88,12 +76,13 @@ function UserHome() {
                 </div>
               </div>
             </div>
+            {/* IMAGE ADS */}
             <div className={styles.adContainerMain}>
               <div className={styles.imageAdHead}>
                 <h2>Image Ads</h2>
               </div>
               <div className={styles.adcontainerSub}>
-                {imageAdData.map((item, index) => (
+                {imageAdData.slice(0, 4).map((item, index) => (
                   <div
                     className={styles.adCard}
                     key={index}
@@ -120,18 +109,18 @@ function UserHome() {
                     <div className={styles.adCardBackground}></div>
                   </div>
                 ))}
-
                 <div className={styles.seeAllContainer}>
                   <button>See All</button>
                 </div>
               </div>
             </div>
+            {/* VIDEO ADS */}
             <div className={styles.adContainerMain}>
               <div className={styles.imageAdHead}>
                 <h2>Video Ads</h2>
               </div>
               <div className={styles.adcontainerSub}>
-                {videAdData.map((item, index) => (
+                {videAdData.slice(0, 4).map((item, index) => (
                   <div
                     className={styles.adCard}
                     key={index}
@@ -158,169 +147,46 @@ function UserHome() {
                     <div className={styles.adCardBackground}></div>
                   </div>
                 ))}
-                <div className={styles.adCard}>
-                  <div className={styles.adHeading}>
-                    <p>Addprimary text</p>
-                  </div>
-                  <div className={styles.adContentDes}>
-                    <div className={styles.adCardbottom}>
-                      <div className={styles.adEarnLogoCont}>
-                        <img src={logo} alt="" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className={styles.adCardButton}>
-                    <div className={styles.watchAd}>
-                      <Link className={styles.watchAdLink}>Watch Ad</Link>
-                    </div>
-                    <div className={styles.adStar}>
-                      5<span style={{ color: "red" }}>⭐</span>
-                    </div>
-                  </div>
-                  <div className={styles.adCardBackground}></div>
-                </div>
-                <div className={styles.adCard}>
-                  <div className={styles.adHeading}>
-                    <p>Addprimary text</p>
-                  </div>
-                  <div className={styles.adContentDes}>
-                    <div className={styles.adCardbottom}>
-                      <div className={styles.adEarnLogoCont}>
-                        <img src={logo} alt="" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className={styles.adCardButton}>
-                    <div className={styles.watchAd}>
-                      <Link className={styles.watchAdLink}>Watch Ad</Link>
-                    </div>
-                    <div className={styles.adStar}>
-                      5<span style={{ color: "red" }}>⭐</span>
-                    </div>
-                  </div>
-                  <div className={styles.adCardBackground}></div>
-                </div>
-                <div className={styles.adCard}>
-                  <div className={styles.adHeading}>
-                    <p>Addprimary text</p>
-                  </div>
-                  <div className={styles.adContentDes}>
-                    <div className={styles.adCardbottom}>
-                      <div className={styles.adEarnLogoCont}>
-                        <img src={logo} alt="" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className={styles.adCardButton}>
-                    <div className={styles.watchAd}>
-                      <Link className={styles.watchAdLink}>Watch Ad</Link>
-                    </div>
-                    <div className={styles.adStar}>
-                      5<span style={{ color: "red" }}>⭐</span>
-                    </div>
-                  </div>
-                  <div className={styles.adCardBackground}></div>
-                </div>
                 <div className={styles.seeAllContainer}>
                   <button>See All</button>
                 </div>
               </div>
             </div>
+            {/* SURVEY ADS: replace with real data if available */}
             <div className={styles.adContainerMain}>
               <div className={styles.imageAdHead}>
                 <h2>Surveys</h2>
               </div>
               <div className={styles.adcontainerSub}>
-                <div className={styles.adCard}>
-                  <div className={styles.adHeading}>
-                    <p>Addprimary text</p>
-                  </div>
-                  <div className={styles.adContentDes}>
-                    <div className={styles.adCardbottom}>
-                      <div className={styles.adEarnLogoCont}>
-                        <img src={logo} alt="" />
+                {[1, 2, 3, 4].map((_, idx) => (
+                  <div className={styles.adCard} key={idx}>
+                    <div className={styles.adHeading}>
+                      <p>Addprimary text</p>
+                    </div>
+                    <div className={styles.adContentDes}>
+                      <div className={styles.adCardbottom}>
+                        <div className={styles.adEarnLogoCont}>
+                          <img src={logo} alt="" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className={styles.adCardButton}>
-                    <div className={styles.watchAd}>
-                      <Link className={styles.watchAdLink}>Watch Ad</Link>
-                    </div>
-                    <div className={styles.adStar}>
-                      5<span style={{ color: "red" }}>⭐</span>
-                    </div>
-                  </div>
-
-                  <div className={styles.adCardBackground}></div>
-                </div>
-                <div className={styles.adCard}>
-                  <div className={styles.adHeading}>
-                    <p>Addprimary text</p>
-                  </div>
-                  <div className={styles.adContentDes}>
-                    <div className={styles.adCardbottom}>
-                      <div className={styles.adEarnLogoCont}>
-                        <img src={logo} alt="" />
+                    <div className={styles.adCardButton}>
+                      <div className={styles.watchAd}>
+                        <Link className={styles.watchAdLink}>Watch Ad</Link>
+                      </div>
+                      <div className={styles.adStar}>
+                        5<span style={{ color: "red" }}>⭐</span>
                       </div>
                     </div>
+                    <div className={styles.adCardBackground}></div>
                   </div>
-                  <div className={styles.adCardButton}>
-                    <div className={styles.watchAd}>
-                      <Link className={styles.watchAdLink}>Watch Ad</Link>
-                    </div>
-                    <div className={styles.adStar}>
-                      5<span style={{ color: "red" }}>⭐</span>
-                    </div>
-                  </div>
-                  <div className={styles.adCardBackground}></div>
-                </div>
-                <div className={styles.adCard}>
-                  <div className={styles.adHeading}>
-                    <p>Addprimary text</p>
-                  </div>
-                  <div className={styles.adContentDes}>
-                    <div className={styles.adCardbottom}>
-                      <div className={styles.adEarnLogoCont}>
-                        <img src={logo} alt="" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className={styles.adCardButton}>
-                    <div className={styles.watchAd}>
-                      <Link className={styles.watchAdLink}>Watch Ad</Link>
-                    </div>
-                    <div className={styles.adStar}>
-                      5<span style={{ color: "red" }}>⭐</span>
-                    </div>
-                  </div>
-                  <div className={styles.adCardBackground}></div>
-                </div>
-                <div className={styles.adCard}>
-                  <div className={styles.adHeading}>
-                    <p>Addprimary text</p>
-                  </div>
-                  <div className={styles.adContentDes}>
-                    <div className={styles.adCardbottom}>
-                      <div className={styles.adEarnLogoCont}>
-                        <img src={logo} alt="" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className={styles.adCardButton}>
-                    <div className={styles.watchAd}>
-                      <Link className={styles.watchAdLink}>Watch Ad</Link>
-                    </div>
-                    <div className={styles.adStar}>
-                      5<span style={{ color: "red" }}>⭐</span>
-                    </div>
-                  </div>
-                  <div className={styles.adCardBackground}></div>
-                </div>
+                ))}
                 <div className={styles.seeAllContainer}>
                   <button>See All</button>
                 </div>
               </div>
             </div>
+            {/* END */}
           </div>
         </div>
       </div>
