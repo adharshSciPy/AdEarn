@@ -11,6 +11,7 @@ import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
 function UserHome() {
   const navigate = useNavigate();
   const [imageAdData, setImageAd] = useState([]);
+  const [videAdData, setVideoAd] = useState([]);
   const { id } = useParams();
   const [showPopup, setShowPopup] = useState(false);
   const getImageAdData = async () => {
@@ -26,7 +27,8 @@ function UserHome() {
 
   const getVideoAdData = async () => {
     try {
-      const response = await axios.get();
+      const response = await axios.get(`${baseUrl}/api/v1/ads/video-ads/${id}`);
+      setVideoAd(response.data.ads);
       console.log(response);
     } catch (error) {
       console.log(error);
@@ -42,6 +44,7 @@ function UserHome() {
   };
   useEffect(() => {
     getImageAdData();
+    getVideoAdData();
   }, []);
   const viewAd = async (adId) => {
     navigate(`/adspreview/${id}/${adId}`);
@@ -71,7 +74,9 @@ function UserHome() {
                       </p>
                     </div>
                     <div className={styles.firstMainbutton}>
-                      <button onClick={() => setShowPopup(true)}>Place Ads</button>
+                      <button onClick={() => setShowPopup(true)}>
+                        Place Ads
+                      </button>
                     </div>
                   </div>
 
@@ -126,27 +131,33 @@ function UserHome() {
                 <h2>Video Ads</h2>
               </div>
               <div className={styles.adcontainerSub}>
-                <div className={styles.adCard}>
-                  <div className={styles.adHeading}>
-                    <p>Addprimary text</p>
-                  </div>
-                  <div className={styles.adContentDes}>
-                    <div className={styles.adCardbottom}>
-                      <div className={styles.adEarnLogoCont}>
-                        <img src={logo} alt="" />
+                {videAdData.map((item, index) => (
+                  <div
+                    className={styles.adCard}
+                    key={index}
+                    onClick={() => viewAd(item._id)}
+                  >
+                    <div className={styles.adHeading}>
+                      <p>{item?.videoAd?.title || "nil"}</p>
+                    </div>
+                    <div className={styles.adContentDes}>
+                      <div className={styles.adCardbottom}>
+                        <div className={styles.adEarnLogoCont}>
+                          <img src={logo} alt="" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className={styles.adCardButton}>
-                    <div className={styles.watchAd}>
-                      <Link className={styles.watchAdLink}>Watch Ad</Link>
+                    <div className={styles.adCardButton}>
+                      <div className={styles.watchAd}>
+                        <Link className={styles.watchAdLink}>Watch Ad</Link>
+                      </div>
+                      <div className={styles.adStar}>
+                        5<span style={{ color: "red" }}>⭐</span>
+                      </div>
                     </div>
-                    <div className={styles.adStar}>
-                      5<span style={{ color: "red" }}>⭐</span>
-                    </div>
+                    <div className={styles.adCardBackground}></div>
                   </div>
-                  <div className={styles.adCardBackground}></div>
-                </div>
+                ))}
                 <div className={styles.adCard}>
                   <div className={styles.adHeading}>
                     <p>Addprimary text</p>

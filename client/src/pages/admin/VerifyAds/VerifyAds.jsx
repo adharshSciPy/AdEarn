@@ -24,6 +24,7 @@ function VerifyAds() {
         `${baseUrl}/api/v1/ads/unverified-ads/${adId}`
       );
       setUnVerifiedAd(response.data.ad);
+      console.log(response);
     } catch (error) {
       console.log(error);
     }
@@ -37,9 +38,9 @@ function VerifyAds() {
     setIsModalVisible(true);
   };
   const handleReject = (id) => {
-   setSelectedAd(id);
+    setSelectedAd(id);
     setIsModalVisibleReject(true);
-};
+  };
   const handleApprove = async () => {
     try {
       const response = await axios.post(`${baseUrl}/api/v1/admin/verify-ad`, {
@@ -53,11 +54,11 @@ function VerifyAds() {
       console.log(error);
     }
   };
-  const handleRejection=async()=>{
+  const handleRejection = async () => {
     try {
       const response = await axios.post(`${baseUrl}/api/v1/admin/reject-ad`, {
         adId: selectedAd,
-        reason:reason
+        reason: reason,
       });
       if (response.status === 200) {
         navigate("/AdminAds");
@@ -66,7 +67,7 @@ function VerifyAds() {
     } catch (error) {
       console.log(error);
     }
-  }
+  };
   return (
     <div className={styles.verifyadsmain}>
       <div className={styles.verifyadscontainer}>
@@ -85,11 +86,19 @@ function VerifyAds() {
             <h1>Ads Preview</h1>
             <div className={styles.adspreview}>
               <div className={styles.previewone}>
-                <img
-                  className={styles.image}
-                  src={`${baseUrl}${unverifiedAd?.imageAd.imageUrl}`}
-                  alt=""
-                />
+                {unverifiedAd?.videoAd?.videoUrl ? (
+                  <video
+                    className={styles.image}
+                    src={`${baseUrl}${unverifiedAd.videoAd.videoUrl}`}
+                    controls
+                  />
+                ) : (
+                  <img
+                    className={styles.image}
+                    src={`${baseUrl}${unverifiedAd?.imageAd?.imageUrl || ""}`}
+                    alt=""
+                  />
+                )}
               </div>
               <div className={styles.previewtwo}>
                 <div
@@ -124,7 +133,11 @@ function VerifyAds() {
                       Total views
                     </div>
                     <div style={{ fontSize: 32, fontWeight: "bold" }}>
-                      {unverifiedAd?.imageAd.userViewsNeeded}
+                      {unverifiedAd?.imageAd?.userViewsNeeded ? (
+                        <p>{unverifiedAd?.imageAd?.userViewsNeeded}</p>
+                      ) : unverifiedAd?.videoAd?.userViewsNeeded ? (
+                        <p>{unverifiedAd?.videoAd?.userViewsNeeded}</p>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -140,7 +153,11 @@ function VerifyAds() {
                       <p>Total Views</p>
                     </div>
                     <div>
-                      <p>{unverifiedAd?.imageAd.userViewsNeeded}</p>
+                      {unverifiedAd?.imageAd?.userViewsNeeded ? (
+                        <p>{unverifiedAd?.imageAd?.userViewsNeeded}</p>
+                      ) : unverifiedAd?.videoAd?.userViewsNeeded ? (
+                        <p>{unverifiedAd?.videoAd?.userViewsNeeded}</p>
+                      ) : null}
                     </div>
                   </div>
                   <div className={styles.listitems}>
@@ -148,7 +165,11 @@ function VerifyAds() {
                       <p>Total stars</p>
                     </div>
                     <div>
-                      <p>{unverifiedAd?.imageAd.totalStarsAllocated}</p>
+                      {unverifiedAd?.imageAd?.totalStarsAllocated ? (
+                        <p>{unverifiedAd?.imageAd?.totalStarsAllocated}</p>
+                      ) : unverifiedAd?.videoAd?.totalStarsAllocated ? (
+                        <p>{unverifiedAd?.videoAd?.totalStarsAllocated}</p>
+                      ) : null}
                     </div>
                   </div>
                   <div className={styles.listitems}>
@@ -164,7 +185,11 @@ function VerifyAds() {
                       <p>Start Date</p>
                     </div>
                     <div>
-                      <p>{unverifiedAd?.imageAd.createdAt}</p>
+                      {unverifiedAd?.imageAd?.createdAt ? (
+                        <p>{unverifiedAd?.imageAd?.createdAt}</p>
+                      ) : unverifiedAd?.videoAd?.createdAt ? (
+                        <p>{unverifiedAd?.videoAd?.createdAt}</p>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -177,7 +202,11 @@ function VerifyAds() {
                     <h1>Ad Heading</h1>
                   </div>
                   <div>
-                    <p>{unverifiedAd?.imageAd.title}</p>
+                    {unverifiedAd?.imageAd?.title ? (
+                      <p>{unverifiedAd?.imageAd?.title}</p>
+                    ) : unverifiedAd?.videoAd?.title ? (
+                      <p>{unverifiedAd?.videoAd?.title}</p>
+                    ) : null}
                   </div>
                 </div>
                 <div className={styles.adsnametext}>
@@ -185,7 +214,11 @@ function VerifyAds() {
                     <h1>Ads Category</h1>
                   </div>
                   <div>
-                    <p>{unverifiedAd?.imageAd.description}</p>
+                    {unverifiedAd?.imageAd?.description ? (
+                      <p>{unverifiedAd?.imageAd?.description}</p>
+                    ) : unverifiedAd?.videoAd?.description ? (
+                      <p>{unverifiedAd?.videoAd?.description}</p>
+                    ) : null}
                   </div>
                 </div>
               </div>

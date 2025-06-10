@@ -35,7 +35,6 @@ function AdPreview() {
       );
       setReward(response.data);
       console.log(response.data);
-      
     } catch (error) {
       console.error(error);
     }
@@ -71,11 +70,17 @@ function AdPreview() {
             <h1 style={{ padding: "20px" }}>Ads Preview</h1>
             <div className={styles.adspreview}>
               <div className={styles.previewone}>
-                {unverifiedAd?.imageAd?.imageUrl && (
+                {unverifiedAd?.videoAd?.videoUrl ? (
+                  <video
+                    className={styles.image}
+                    src={`${baseUrl}${unverifiedAd.videoAd.videoUrl}`}
+                    controls
+                  />
+                ) : (
                   <img
                     className={styles.image}
-                    src={`${baseUrl}${unverifiedAd.imageAd.imageUrl}`}
-                    alt="Ad"
+                    src={`${baseUrl}${unverifiedAd?.imageAd?.imageUrl || ""}`}
+                    alt=""
                   />
                 )}
               </div>
@@ -126,7 +131,11 @@ function AdPreview() {
                       <p>Total Views</p>
                     </div>
                     <div>
-                      <p>{unverifiedAd?.imageAd?.userViewsNeeded}</p>
+                      {unverifiedAd?.imageAd?.userViewsNeeded ? (
+                        <p>{unverifiedAd?.imageAd?.userViewsNeeded}</p>
+                      ) : unverifiedAd?.videoAd?.userViewsNeeded ? (
+                        <p>{unverifiedAd?.videoAd?.userViewsNeeded}</p>
+                      ) : null}
                     </div>
                   </div>
                   <div className={styles.listitems}>
@@ -134,7 +143,11 @@ function AdPreview() {
                       <p>Total stars</p>
                     </div>
                     <div>
-                      <p>{unverifiedAd?.imageAd?.totalStarsAllocated}</p>
+                       {unverifiedAd?.imageAd?.totalStarsAllocated ? (
+                        <p>{unverifiedAd?.imageAd?.totalStarsAllocated}</p>
+                      ) : unverifiedAd?.videoAd?.totalStarsAllocated ? (
+                        <p>{unverifiedAd?.videoAd?.totalStarsAllocated}</p>
+                      ) : null}
                     </div>
                   </div>
                   <div className={styles.listitems}>
@@ -142,11 +155,20 @@ function AdPreview() {
                       <p>Start Date</p>
                     </div>
                     <div>
-                      <p>
+                      {unverifiedAd?.imageAd?.createdAt ? (
+                        <p>
                         {new Date(
                           unverifiedAd?.imageAd?.createdAt
                         ).toLocaleDateString()}
                       </p>
+                      ) : unverifiedAd?.videoAd?.createdAt ? (
+                       <p>
+                        {new Date(
+                          unverifiedAd?.videoAd?.createdAt
+                        ).toLocaleDateString()}
+                      </p>
+                      ) : null}
+                      
                     </div>
                   </div>
                 </div>
@@ -159,7 +181,11 @@ function AdPreview() {
                     <h1>Ad Heading</h1>
                   </div>
                   <div>
-                    <p>{unverifiedAd?.imageAd?.title}</p>
+                     {unverifiedAd?.imageAd?.title ? (
+                      <p>{unverifiedAd?.imageAd?.title}</p>
+                    ) : unverifiedAd?.videoAd?.title ? (
+                      <p>{unverifiedAd?.videoAd?.title}</p>
+                    ) : null}
                   </div>
                 </div>
                 <div className={styles.adsnametext}>
@@ -167,7 +193,11 @@ function AdPreview() {
                     <h1>Ads Category</h1>
                   </div>
                   <div>
-                    <p>{unverifiedAd?.imageAd?.description}</p>
+                    {unverifiedAd?.imageAd?.description ? (
+                      <p>{unverifiedAd?.imageAd?.description}</p>
+                    ) : unverifiedAd?.videoAd?.description ? (
+                      <p>{unverifiedAd?.videoAd?.description}</p>
+                    ) : null}
                   </div>
                 </div>
               </div>

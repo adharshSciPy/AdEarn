@@ -21,7 +21,7 @@ const CreateAdPopup = ({ isOpen, onClose }) => {
         navigate(`/adform/${userId}`);
         break;
       case "video":
-        navigate("/create-video-ad");
+        navigate(`/videoform/${userId}`);
         break;
       case "survey":
         navigate("/create-survey-ad");
