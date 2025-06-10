@@ -8,6 +8,7 @@ import Coupon from "../model/couponModel.js"
 import WelcomeBonusSetting from '../model/WelcomeBonusSetting.js';
 import ContestEntry from "../model/contestEntrySchema.js";
 
+
 import { passwordValidator } from "../utils/passwordValidator.js";
 
 // to generate coupons randomly and store
@@ -515,6 +516,75 @@ const patchSuperAdminWallet = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+ const registerUserToContest = async (req, res) => {
+  const { userId, contestNumber, starsUsed } = req.body;
 
+  try {
+    if (!userId || !contestNumber || !starsUsed) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
 
-export { registerSuperAdmin, superAdminLogin, getAllAdmins, toggleUserStatus,toggleAdminStatus,getSuperAdminWallet,setWelcomeBonusAmount,generateCoupons,distributeWelcomeBonus,topUpWelcomeBonusStars,createContest,topUpCompanyRewardStars,patchSuperAdminWallet};
+    const contest = await ContestEntry.findOne({ contestNumber });
+    if (!contest) return res.status(404).json({ message: "Contest not found" });
+
+    // ❌ If already ended
+    const now = new Date();
+    if (contest.status === "Ended" || now > contest.endDate) {
+      contest.status = "Ended";
+      await contest.save();
+      return res.status(400).json({ message: "Contest has ended" });
+    }
+
+    // ❌ Max participants
+    if (
+      contest.maxParticipants &&
+      contest.currentParticipants >= contest.maxParticipants
+    ) {
+      contest.status = "Ended";
+      await contest.save();
+      return res.status(400).json({ message: "Max participants reached" });
+    }
+
+    // ✅ Update contest entry
+    contest.currentParticipants += 1;
+    contest.totalEntries += 1;
+
+    if (
+      contest.maxParticipants &&
+      contest.currentParticipants >= contest.maxParticipants
+    ) {
+      contest.status = "Ended";
+    }
+
+    await contest.save();
+
+    // ✅ Update SuperAdmin Wallet
+    const wallet = await SuperAdminWallet.findOne();
+    if (!wallet) return res.status(404).json({ message: "Wallet not found" });
+
+    wallet.contestEntryWallet.collectedFromUsers.push({
+      userId,
+      starsUsed,
+      contestId: contest._id,
+    });
+
+    wallet.contestEntryWallet.totalReceived += starsUsed;
+    wallet.contestEntryWallet.totalEntries += 1;
+
+    // Optional: Deduct from totalStars
+    wallet.totalStars -= starsUsed;
+
+    await wallet.save();
+
+    return res.status(200).json({
+      message: "User registered successfully",
+      contestStatus: contest.status,
+      contestEntryWallet: wallet.contestEntryWallet,
+    });
+  } catch (error) {
+    console.error("Contest Registration Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+export { registerSuperAdmin, superAdminLogin, getAllAdmins, toggleUserStatus,toggleAdminStatus,getSuperAdminWallet,setWelcomeBonusAmount,generateCoupons,distributeWelcomeBonus,topUpWelcomeBonusStars,createContest,topUpCompanyRewardStars,patchSuperAdminWallet,registerUserToContest};
