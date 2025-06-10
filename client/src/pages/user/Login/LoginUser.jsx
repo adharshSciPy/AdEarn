@@ -1,4 +1,4 @@
-import {React,useState} from "react";
+import { React, useState } from "react";
 import logo from "../../../assets/Logo.png";
 import styles from "./userlogin.module.css";
 import { Link, useNavigate } from "react-router-dom";
@@ -9,13 +9,13 @@ import { useDispatch } from 'react-redux';
 
 
 function LoginUser() {
-  const navigate=useNavigate()
- const dispatch = useDispatch();
-  const[form,setForm]=useState(
+  const navigate = useNavigate()
+  const dispatch = useDispatch();
+  const [form, setForm] = useState(
     {
-      email:"",
-      password:""
-  
+      email: "",
+      password: ""
+
     }
   )
   const handleChange = (e) => {
@@ -25,24 +25,24 @@ function LoginUser() {
       [name]: value,
     }));
   };
-  const handleSubmit = async(e) => {
+  const handleSubmit = async (e) => {
 
     e.preventDefault();
     try {
-      const response=await axios.post(`${baseUrl}/api/v1/user/login`,form)
-      if(response.status===200){
-        const id =response.data.user._id;
+      const response = await axios.post(`${baseUrl}/api/v1/user/login`, form)
+      if (response.status === 200) {
+        const id = response.data.user._id;
         navigate(`/userhome/${id}`)
         dispatch(setUser({
-        id: response.data.user._id,
-        token: response.data.accessToken,
-        role:response.data.role,
-      }));
+          id: response.data.user._id,
+          token: response.data.accessToken,
+          role: response.data.role,
+        }));
       }
-      
+
     } catch (error) {
       console.log(error);
-      
+
     }
 
     console.log("Submitted:", form);
@@ -71,7 +71,7 @@ function LoginUser() {
                     <p>This is a demo content</p>
                   </div>
                   <div className={styles.formContainer}>
-                  <form className="form" onSubmit={handleSubmit}>
+                    <form className="form" onSubmit={handleSubmit}>
                       <div>
                         <label htmlFor="email1" className={styles.label}>
                           Your email
