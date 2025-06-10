@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import path from "path";
 import { passwordValidator } from "../utils/passwordValidator.js";
 import { Admin } from "../model/adminModel.js";
+import superAdminModel from "../model/superAdminModel.js"
 import AdminWallet from "../model/adminwalletModel.js"
 import {UserWallet} from "../model/userWallet.js"
 import SuperAdminWallet from "../model/superAdminWallet.js";
@@ -12,6 +13,9 @@ import mongoose from "mongoose";
 import { Ad } from "../model/AdsModel.js";
 import Coupon from "../model/couponModel.js"
 import { distributeWelcomeBonus } from './superAdminController.js';
+import  Notification  from "../model/notificationsModel.js";
+import  {sendNotification } from "../utils/sendNotifications.js";
+
 
 // function to create referal code
 const generateReferalCode = async (length = 6) => {
@@ -55,6 +59,13 @@ const formatTo12HourTime = (date) => {
     hour12: true,
   });
 };
+
+const USER_ROLE=process.env.USER_ROLE;
+const ADMIN_ROLE=process.env.ADMIN_ROLE;
+const SUPER_ADMIN_ROLE=process.env.SUPER_ADMIN_ROLE;
+
+
+
 
 // register user with otp only
 const registerUser = async (req, res) => {
@@ -473,6 +484,7 @@ const getUserByUniqueId = async (req, res) => {
 const starBuy = async (req, res) => {
   const { id } = req.params;
   const { starsNeeded } = req.body;
+  const { io, connectedUsers } = req;
 
   if (!starsNeeded || starsNeeded <= 0) {
     return res.status(400).json({ message: "Invalid starsNeeded value" });
@@ -482,7 +494,7 @@ const starBuy = async (req, res) => {
     const conversionRate = 4;
     const percentageToUser = 60;
 
-    const totalStarsGenerated = starsNeeded * (100 / percentageToUser); 
+    const totalStarsGenerated = starsNeeded * (100 / percentageToUser);
     const rupeesToPay = totalStarsGenerated / conversionRate;
     const userShare = starsNeeded;
     const superAdminShare = totalStarsGenerated * 0.2;
@@ -498,7 +510,7 @@ const starBuy = async (req, res) => {
     const wallet = user.userWalletDetails;
     if (!wallet) return res.status(404).json({ message: "User wallet not found" });
 
-    // Update user's wallet
+    // ✅ Update user wallet
     wallet.totalStars += Math.floor(userShare);
     wallet.starBought.push({
       starsNeeded: Math.floor(userShare),
@@ -506,6 +518,7 @@ const starBuy = async (req, res) => {
     });
     await wallet.save();
 
+    // ✅ Referral logic
     if (user.referedBy) {
       const referredUser = await User.findById(user.referedBy).populate("userWalletDetails");
 
@@ -517,8 +530,6 @@ const starBuy = async (req, res) => {
           starsNeeded: Math.floor(referredUserShare),
           paymentStatus: "completed",
         });
-
-        // ✅ Add to referralTransactions
         referredWallet.referralTransactions.push({
           fromUser: user._id,
           starsReceived: Math.floor(referredUserShare),
@@ -530,7 +541,6 @@ const starBuy = async (req, res) => {
         await referredUser.save();
       }
     } else {
-      // No referral – assign to first registered user
       const firstUser = await User.findOne().sort({ createdAt: 1 }).populate("userWalletDetails");
 
       if (firstUser?.userWalletDetails) {
@@ -541,8 +551,6 @@ const starBuy = async (req, res) => {
           starsNeeded: Math.floor(referredUserShare),
           paymentStatus: "completed",
         });
-
-        // ✅ Add to referralTransactions (from current user)
         firstWallet.referralTransactions.push({
           fromUser: user._id,
           starsReceived: Math.floor(referredUserShare),
@@ -552,6 +560,7 @@ const starBuy = async (req, res) => {
       }
     }
 
+    // ✅ Admin wallet
     let adminWallet = await AdminWallet.findOne();
     if (!adminWallet) {
       adminWallet = new AdminWallet({
@@ -570,6 +579,7 @@ const starBuy = async (req, res) => {
     }
     await adminWallet.save();
 
+    // ✅ Super admin wallet
     let superAdminWallet = await SuperAdminWallet.findOne();
     if (!superAdminWallet) {
       superAdminWallet = new SuperAdminWallet({
@@ -588,6 +598,61 @@ const starBuy = async (req, res) => {
     }
     await superAdminWallet.save();
 
+    // ✅ Get admins and superadmin
+    const adminUsers = await Admin.find({ adminRole: ADMIN_ROLE });
+    const superAdminUser = await superAdminModel.findOne({ role: SUPER_ADMIN_ROLE });
+
+    // ✅ Prepare notifications
+    const adminNotifications = adminUsers.map((admin) => ({
+      receiverId: admin._id,
+      receiverRole: ADMIN_ROLE,
+      message: `You received ${Math.floor(adminShare)} stars from ${user.firstName} ${user.lastName}'s purchase.`,
+    }));
+
+    await Notification.insertMany([
+      {
+        receiverId: user._id,
+        receiverRole: USER_ROLE,
+        message: `You successfully purchased ${Math.floor(userShare)} stars.`,
+      },
+      ...adminNotifications,
+      {
+        receiverId: superAdminUser?._id,
+        receiverRole: SUPER_ADMIN_ROLE,
+        message: `You received ${Math.floor(superAdminShare)} stars from ${user.firstName} ${user.lastName}'s purchase.`,
+      },
+    ]);
+
+    // ✅ Send real-time notifications
+    
+   const notificationsToSend = [
+  sendNotification(user._id, USER_ROLE, `You successfully purchased ${Math.floor(userShare)} stars.`, io, connectedUsers),
+  ...adminUsers.map((admin) => {
+    console.log("Admin socket target ID:", admin._id.toString());
+    console.log("Connected Users:", connectedUsers);
+    console.log("Socket ID found:", connectedUsers.get(admin._id.toString()));
+
+    return sendNotification(
+      admin._id,
+      ADMIN_ROLE,
+      `You received ${Math.floor(adminShare)} stars from ${user.firstName} ${user.lastName}'s purchase. (UserId: ${user._id})`,
+      io,
+      connectedUsers
+    );
+  }),
+  sendNotification(
+    superAdminUser?._id,
+    SUPER_ADMIN_ROLE,
+    `You received ${Math.floor(superAdminShare)} stars from ${user.firstName} ${user.lastName}'s purchase. (UserId: ${user._id})`,
+    io,
+    connectedUsers
+  ),
+];
+
+
+    await Promise.all(notificationsToSend);
+
+    // ✅ Return response
     return res.status(200).json({
       message: "Star purchase successful",
       starsRequested: starsNeeded.toString(),
@@ -604,6 +669,7 @@ const starBuy = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 // to post ads using stars or amount with automated views 
 // const adPost=async(req,res)=>{
