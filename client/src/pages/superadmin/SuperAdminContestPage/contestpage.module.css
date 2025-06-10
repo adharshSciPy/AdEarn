@@ -148,3 +148,8 @@ input {
   border-radius: 6px;
   cursor: pointer;
 }
+.radioGroup {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
