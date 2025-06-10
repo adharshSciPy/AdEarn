@@ -8,6 +8,12 @@ import { ImageAd } from "../model/imageadModel.js";
 import { VideoAd } from "../model/videoadModel.js";
 import { SurveyAd } from "../model/surveyadModel.js";
 import AdminWallet from "../model/adminwalletModel.js";
+import  Notification  from "../model/notificationsModel.js";
+import  {sendNotification } from "../utils/sendNotifications.js";
+
+const USER_ROLE=process.env.USER_ROLE;
+const ADMIN_ROLE=process.env.ADMIN_ROLE;
+const SUPER_ADMIN_ROLE=process.env.SUPER_ADMIN_ROLE;
 
 const registerAdmin = async (req, res) => {
   const { phoneNumber, password } = req.body;
@@ -162,23 +168,46 @@ const getSingleUser = async (req, res) => {
 };
 // to fetch users who have requested for Kyc verification
 const fetchKycUploadedUsers = async (req, res) => {
+  // const { io, connectedUsers } = req;
+
   try {
+    // 1. Find users who uploaded KYC
     const fetchKycUsers = await User.find({
       kycDetails: { $exists: true, $ne: null },
     });
+
     if (!fetchKycUsers || fetchKycUsers.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "No pending verification requests" });
+      return res.status(400).json({ message: "No pending verification requests" });
     }
-    return res
-      .status(200)
-      .json({
-        message: "Users who have requested for kyc verification",
-        data: fetchKycUsers,
-      });
+
+    // 2. Get all admin users
+    // const adminUsers = await Admin.find({ adminRole: ADMIN_ROLE });
+
+    // // 3. Prepare notifications
+    // const message = `New KYC verification request(s) submitted.`;
+    // const adminNotifications = adminUsers.map((admin) => ({
+    //   receiverId: admin._id,
+    //   receiverRole: ADMIN_ROLE,
+    //   message,
+    // }));
+
+    // 4. Save notifications to DB
+    // await Notification.insertMany(adminNotifications);
+
+    // // 5. Send real-time notifications via socket.io
+    // const notifyAdmins = adminUsers.map((admin) =>
+    //   sendNotification(admin._id, ADMIN_ROLE, message, io, connectedUsers)
+    // );
+    // await Promise.all(notifyAdmins);
+
+    // 6. Respond
+    return res.status(200).json({
+      message: "Admins notified of KYC requests",
+      totalPendingUsers: fetchKycUsers.length,
+      data: fetchKycUsers,
+    });
   } catch (error) {
-    console.error("Error fetching users:", error);
+    console.error("Error in fetchKycUploadedUsers:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -210,36 +239,44 @@ const fetchSingleKycUploadUser = async (req, res) => {
 // kyc verification
 const verifyKyc = async (req, res) => {
   const { id } = req.body;
+  const { io, connectedUsers } = req;
 
   try {
     const user = await User.findById(id);
-
     if (!user) {
-      return res
-        .status(400)
-        .json({ message: "No user found. Please check the ID." });
+      return res.status(400).json({ message: "No user found. Please check the ID." });
     }
 
     if (!user.kycDetails) {
-      return res
-        .status(400)
-        .json({ message: "User has not submitted KYC details." });
+      return res.status(400).json({ message: "User has not submitted KYC details." });
     }
 
+    const existingKyc = await kyc.findById(user.kycDetails);
+    if (!existingKyc) {
+      return res.status(404).json({ message: "KYC document not found." });
+    }
+
+
+    if (existingKyc.kycStatus === "approved") {
+      return res.status(400).json({ message: "User KYC is already approved." });
+    }
+
+    
     const updatedKyc = await kyc.findByIdAndUpdate(
       user.kycDetails,
       { kycStatus: "approved" },
       { new: true }
     );
 
-    if (!updatedKyc) {
-      return res.status(404).json({ message: "KYC document not found." });
-    }
+    // ✅ Send DB + real-time notification
+    const message = "Your KYC has been approved!";
+    await sendNotification(user._id, USER_ROLE, message, io, connectedUsers);
 
     return res.status(200).json({
       message: "KYC approved successfully.",
       kyc: updatedKyc,
     });
+
   } catch (error) {
     console.error("Error verifying KYC:", error);
     return res.status(500).json({ message: "Internal Server Error" });
@@ -247,31 +284,50 @@ const verifyKyc = async (req, res) => {
 };
 // kyc rejection
 const rejectKyc = async (req, res) => {
-  const { id } = req.body;
+  const { id, rejectionReason } = req.body;
+  const { io, connectedUsers } = req;
+
+  if (!rejectionReason || rejectionReason.trim() === "") {
+    return res.status(400).json({ message: "Rejection reason is required." });
+  }
+
   try {
     const user = await User.findById(id);
     if (!user) {
-      return res
-        .status(400)
-        .json({ message: "No user found. Please check the ID." });
+      return res.status(400).json({ message: "No user found. Please check the ID." });
     }
+
     if (!user.kycDetails) {
-      return res
-        .status(400)
-        .json({ message: "User has not submitted KYC details." });
+      return res.status(400).json({ message: "User has not submitted KYC details." });
     }
-    const updatedKyc = await kyc.findByIdAndUpdate(
-      user.kycDetails,
-      { kycStatus: "rejected" },
-      { new: true }
-    );
-    if (!updatedKyc) {
+
+    const existingKyc = await kyc.findById(user.kycDetails);
+    if (!existingKyc) {
       return res.status(404).json({ message: "KYC document not found." });
     }
+
+    if (existingKyc.kycStatus === "rejected") {
+      return res.status(400).json({ message: "User KYC is already rejected." });
+    }
+
+    const updatedKyc = await kyc.findByIdAndUpdate(
+      user.kycDetails,
+      {
+        kycStatus: "rejected",
+        rejectionReason: rejectionReason.trim(),
+      },
+      { new: true }
+    );
+
+    const message = `Your KYC has been rejected. Reason: ${rejectionReason}`;
+    await sendNotification(user._id, USER_ROLE, message, io, connectedUsers);
+
     return res.status(200).json({
-      message: "Your request for kyc verification has been rejected.",
+      message: "KYC rejected successfully.",
+      rejectionReason,
       kyc: updatedKyc,
     });
+
   } catch (error) {
     console.error("Error rejecting KYC:", error);
     return res.status(500).json({ message: "Internal Server Error" });
