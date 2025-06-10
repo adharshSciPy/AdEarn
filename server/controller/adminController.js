@@ -337,6 +337,7 @@ const rejectKyc = async (req, res) => {
 // to verify ads
 const verifyAdById = async (req, res) => {
   const { adId } = req.body;
+  const { io, connectedUsers } = req;
 
   if (!adId) {
     return res.status(400).json({ message: "adId is required" });
@@ -353,10 +354,14 @@ const verifyAdById = async (req, res) => {
     }
 
     let updatedAd = null;
+    let createdBy = null;
+    let adType = "";
+    let adTitle = "";
+    let adPostedTime = "";
 
-    if (ad.imgAdRef && !ad.imgAdRef.isAdVerified) {
-      const verifiedTime = new Date();
-      const views = ad.imgAdRef.userViewsNeeded;
+    const verifiedTime = new Date();
+
+    const calculateExpirationDate = (views) => {
       let expirationDate = new Date(verifiedTime);
       if (views >= 100 && views <= 900) {
         expirationDate.setMonth(expirationDate.getMonth() + 3);
@@ -365,6 +370,13 @@ const verifyAdById = async (req, res) => {
       } else if (views >= 10000) {
         expirationDate.setMonth(expirationDate.getMonth() + 9);
       }
+      return expirationDate;
+    };
+
+    if (ad.imgAdRef && !ad.imgAdRef.isAdVerified) {
+      const views = ad.imgAdRef.userViewsNeeded;
+      const expirationDate = calculateExpirationDate(views);
+
       updatedAd = await ImageAd.findByIdAndUpdate(
         ad.imgAdRef._id,
         {
@@ -374,57 +386,78 @@ const verifyAdById = async (req, res) => {
         },
         { new: true }
       );
+
+      createdBy = ad.imgAdRef.createdBy;
+      adType = "Image Ad";
+      adTitle = ad.imgAdRef.title;
+      adPostedTime = ad.imgAdRef.createdAt;
+
     } else if (ad.videoAdRef && !ad.videoAdRef.isAdVerified) {
-       const verifiedTime = new Date();
       const views = ad.videoAdRef.userViewsNeeded;
-      let expirationDate = new Date(verifiedTime);
-      if (views >= 100 && views <= 900) {
-        expirationDate.setMonth(expirationDate.getMonth() + 3);
-      } else if (views >= 1000 && views <= 9000) {
-        expirationDate.setMonth(expirationDate.getMonth() + 6);
-      } else if (views >= 10000) {
-        expirationDate.setMonth(expirationDate.getMonth() + 9);
-      }
+      const expirationDate = calculateExpirationDate(views);
+
       updatedAd = await VideoAd.findByIdAndUpdate(
         ad.videoAdRef._id,
-        { isAdVerified: true ,
+        {
+          isAdVerified: true,
           adVerifiedTime: verifiedTime,
           adExpirationTime: expirationDate,
         },
         { new: true }
       );
+
+      createdBy = ad.videoAdRef.createdBy;
+      adType = "Video Ad";
+      adTitle = ad.videoAdRef.title;
+      adPostedTime = ad.videoAdRef.createdAt;
+
     } else if (ad.surveyAdRef && !ad.surveyAdRef.isAdVerified) {
-        const verifiedTime = new Date();
       const views = ad.surveyAdRef.userViewsNeeded;
-      let expirationDate = new Date(verifiedTime);
-      if (views >= 100 && views <= 900) {
-        expirationDate.setMonth(expirationDate.getMonth() + 3);
-      } else if (views >= 1000 && views <= 9000) {
-        expirationDate.setMonth(expirationDate.getMonth() + 6);
-      } else if (views >= 10000) {
-        expirationDate.setMonth(expirationDate.getMonth() + 9);
-      }
+      const expirationDate = calculateExpirationDate(views);
+
       updatedAd = await SurveyAd.findByIdAndUpdate(
         ad.surveyAdRef._id,
-        { isAdVerified: true,
+        {
+          isAdVerified: true,
           adVerifiedTime: verifiedTime,
           adExpirationTime: expirationDate,
-         },
+        },
         { new: true }
       );
+
+      createdBy = ad.surveyAdRef.createdBy;
+      adType = "Survey Ad";
+      adTitle = ad.surveyAdRef.title;
+      adPostedTime = ad.surveyAdRef.createdAt;
+
     } else {
       return res.status(200).json({ message: "Ad is already verified" });
+    }
+
+    // 🔔 Send notification to creator
+    if (createdBy) {
+      const formattedTime = new Date(adPostedTime).toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        dateStyle: "medium",
+        timeStyle: "short"
+      });
+
+      const message = `Your ${adType} titled "${adTitle}" posted on ${formattedTime} has been verified successfully!`;
+      await sendNotification(createdBy, USER_ROLE, message, io, connectedUsers);
     }
 
     return res.status(200).json({
       message: "Ad verified successfully",
       updatedAd,
     });
+
   } catch (error) {
     console.error("Error verifying ad:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
 const getAdminWallet = async (req, res) => {
   try {
     const wallet = await AdminWallet.findOne().populate(
@@ -469,6 +502,7 @@ const getSuperAdminWallet = async (req, res) => {
 };
 const rejectAdById = async (req, res) => {
   const { adId, reason } = req.body;
+  const { io, connectedUsers } = req;
 
   if (!adId) {
     return res.status(400).json({ message: "adId is required" });
@@ -485,45 +519,98 @@ const rejectAdById = async (req, res) => {
     }
 
     let updatedAd = null;
+    let createdBy = null;
     let adType = "";
+    let adTitle = "";
+    let adPostedTime = "";
+    const rejectionReason = reason || "Rejected by admin";
 
-    // ✅ Handle image ad rejection
+    const rejectedTime = new Date();
+
+    // ✅ Handle Image Ad
     if (ad.imgAdRef && !ad.imgAdRef.isAdVerified) {
       updatedAd = await ImageAd.findByIdAndUpdate(
         ad.imgAdRef._id,
         {
           isAdVerified: false,
           isAdVisible: false,
-          adRejectionReason: reason || "Rejected by admin",
-          adRejectedTime: new Date(),
+           isAdRejected: true,
+          adRejectionReason: rejectionReason,
+          adRejectedTime: rejectedTime,
         },
         { new: true }
       );
-      adType = "image";
+      adType = "Image Ad";
+      createdBy = ad.imgAdRef.createdBy;
+      adTitle = ad.imgAdRef.title;
+      adPostedTime = ad.imgAdRef.createdAt;
     }
 
-    // ✅ Optionally add video/survey ad rejection logic
-    /*
-    // else if (ad.videoAdRef && !ad.videoAdRef.isAdVerified) {
-    //   // handle video ad rejection
-    // } else if (ad.surveyAdRef && !ad.surveyAdRef.isAdVerified) {
-    //   // handle survey ad rejection
-    // }
-    // */
+    // ✅ Handle Video Ad
+    else if (ad.videoAdRef && !ad.videoAdRef.isAdVerified) {
+      updatedAd = await VideoAd.findByIdAndUpdate(
+        ad.videoAdRef._id,
+        {
+          isAdVerified: false,
+          isAdVisible: false,
+           isAdRejected: true,
+          adRejectionReason: rejectionReason,
+          adRejectedTime: rejectedTime,
+        },
+        { new: true }
+      );
+      adType = "Video Ad";
+      createdBy = ad.videoAdRef.createdBy;
+      adTitle = ad.videoAdRef.title;
+      adPostedTime = ad.videoAdRef.createdAt;
+    }
+
+    // ✅ Handle Survey Ad
+    else if (ad.surveyAdRef && !ad.surveyAdRef.isAdVerified) {
+      updatedAd = await SurveyAd.findByIdAndUpdate(
+        ad.surveyAdRef._id,
+        {
+          isAdVerified: false,
+          isAdVisible: false,
+           isAdRejected: true,
+          adRejectionReason: rejectionReason,
+          adRejectedTime: rejectedTime,
+        },
+        { new: true }
+      );
+      adType = "Survey Ad";
+      createdBy = ad.surveyAdRef.createdBy;
+      adTitle = ad.surveyAdRef.title;
+      adPostedTime = ad.surveyAdRef.createdAt;
+    }
 
     if (!updatedAd) {
       return res.status(400).json({ message: "Ad is already verified or invalid ad type" });
     }
 
+    // 🔔 Send rejection notification to the creator
+    if (createdBy) {
+      const formattedTime = new Date(adPostedTime).toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        dateStyle: "medium",
+        timeStyle: "short"
+      });
+
+      const message = `Your ${adType} titled "${adTitle}" posted on ${formattedTime} has been rejected. Reason: ${rejectionReason}`;
+      await sendNotification(createdBy, USER_ROLE, message, io, connectedUsers);
+    }
+
     return res.status(200).json({
-      message: `Ad rejected successfully (${adType} ad)`,
+      message: `Ad rejected successfully (${adType})`,
       updatedAd,
     });
+
   } catch (error) {
     console.error("Error rejecting ad:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 export {
   registerAdmin,
