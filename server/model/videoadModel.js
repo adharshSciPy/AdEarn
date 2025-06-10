@@ -1,26 +1,3 @@
-// import mongoose from 'mongoose';
-
-// const videoAdSchema = new mongoose.Schema({
-//   title: {
-//     type: String,
-//     required: true,
-//   },
-//   description: {
-//     type: String,
-//     required: true,
-//   },
-//   videoUrl: {
-//     type: String,
-//     required: true,
-//   },
-//   createdBy: {
-//     type: mongoose.Schema.Types.ObjectId,
-//     ref: 'User',
-//     required: false,
-//   },
-// }, { timestamps: true });
-
-// export const VideoAd = mongoose.model('VideoAd', videoAdSchema);
 import mongoose from "mongoose";
 import { type } from "os";
 
@@ -79,7 +56,7 @@ const videoAd = new mongoose.Schema(
     },
     adRepetition: {
       type: Boolean,
-      default:false
+      default: false
     },
     adRepeatSchedule: [
       {
@@ -103,6 +80,17 @@ const videoAd = new mongoose.Schema(
     starPayoutPlan: {
       type: [Number],
       default: [],
+    },
+    // Added ad rejection fields
+    isAdRejected: {
+      type: Boolean,
+      default: false
+    },
+    adRejectionReason: { 
+      type: String 
+    },
+    adRejectedTime: {
+      type: Date
     },
     viewersRewarded: [
       {
@@ -132,19 +120,25 @@ const videoAd = new mongoose.Schema(
         },
       }
     ],
-  targetStates:[
+    targetStates: [
       {
-        type:String
+        type: String
       }
     ],
-    targetDistricts:[
+    targetDistricts: [
       {
-        type:String
+        type: String
       }
-    ]
+    ],
+    // Added audioUrl field to match ImageAd schema
+    audioUrl: {
+      type: String,
+      required: false,
+    },
   },
   { timestamps: true }
 );
+
 videoAd.index({ 'targetRegions.location': '2dsphere' });
 
 export const VideoAd = mongoose.model("VideoAd", videoAd);
