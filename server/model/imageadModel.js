@@ -83,7 +83,7 @@ const imageAd = new mongoose.Schema(
     },
     isAdRejected:{
 type:Boolean,
-default:true
+default:false
     },
     adRejectionReason: { 
       type: String 

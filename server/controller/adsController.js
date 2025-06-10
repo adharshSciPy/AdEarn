@@ -644,71 +644,55 @@ const fetchSingleUnverifiedAd = async (req, res) => {
 const fetchAdsForVerification = async (req, res) => {
   try {
     const allAds = await Ad.find()
-      .populate("imgAdRef")
-      .populate("videoAdRef")
-      .populate("surveyAdRef");
+      .populate({
+        path: "imgAdRef",
+        match: { 
+          isAdVerified: false,
+          isAdRejected: false,
+          adRejectedTime: { $exists: false }
+        }
+      })
+      .populate({
+        path: "videoAdRef",
+        match: { 
+          isAdVerified: false,
+          isAdRejected: false,
+          adRejectedTime: { $exists: false }
+        }
+      })
+      .populate({
+        path: "surveyAdRef",
+        match: { 
+          isAdVerified: false,
+          isAdRejected: false,
+          adRejectedTime: { $exists: false }
+        }
+      });
 
-    if (!allAds || allAds.length === 0) {
-      return res.status(400).json({ message: "No Ads found" });
+    // Filter out ads where all refs are null (due to population matching)
+    const validAds = allAds.filter(ad => 
+      ad.imgAdRef || ad.videoAdRef || ad.surveyAdRef
+    );
+
+    if (validAds.length === 0) {
+      return res.status(404).json({ message: "No unverified and non-rejected ads found" });
     }
 
-    // Filter only ads where any one of the refs is unverified, not rejected, and isAdRejected is false
-    const unverifiedAds = allAds.filter((ad) => {
-      return (
-        (ad.imgAdRef &&
-          ad.imgAdRef.isAdVerified === false &&
-          !ad.imgAdRef.adRejectedTime &&
-          ad.imgAdRef.isAdRejected === false) ||
-        (ad.videoAdRef &&
-          ad.videoAdRef.isAdVerified === false &&
-          !ad.videoAdRef.adRejectedTime &&
-          ad.videoAdRef.isAdRejected === false) ||
-        (ad.surveyAdRef &&
-          ad.surveyAdRef.isAdVerified === false &&
-          !ad.surveyAdRef.adRejectedTime &&
-          ad.surveyAdRef.isAdRejected === false)
-      );
-    });
-
-    if (unverifiedAds.length === 0) {
-      return res.status(404).json({ message: "No unverified ads found" });
-    }
-
-    const adsWithVerificationStatus = unverifiedAds.map((ad) => {
-      return {
-        _id: ad._id,
-        imageAd:
-          ad.imgAdRef &&
-          !ad.imgAdRef.isAdVerified &&
-          !ad.imgAdRef.adRejectedTime &&
-          ad.imgAdRef.isAdRejected === false
-            ? {
-                ...ad.imgAdRef.toObject(),
-                isVerified: ad.imgAdRef.isAdVerified,
-              }
-            : null,
-        videoAd:
-          ad.videoAdRef &&
-          !ad.videoAdRef.isAdVerified &&
-          !ad.videoAdRef.adRejectedTime &&
-          ad.videoAdRef.isAdRejected === false
-            ? {
-                ...ad.videoAdRef.toObject(),
-                isVerified: ad.videoAdRef.isAdVerified,
-              }
-            : null,
-        surveyAd:
-          ad.surveyAdRef &&
-          !ad.surveyAdRef.isAdVerified &&
-          !ad.surveyAdRef.adRejectedTime &&
-          ad.surveyAdRef.isAdRejected === false
-            ? {
-                ...ad.surveyAdRef.toObject(),
-                isVerified: ad.surveyAdRef.isAdVerified,
-              }
-            : null,
-      };
-    });
+    const adsWithVerificationStatus = validAds.map((ad) => ({
+      _id: ad._id,
+      imageAd: ad.imgAdRef ? {
+        ...ad.imgAdRef.toObject(),
+        isVerified: ad.imgAdRef.isAdVerified
+      } : null,
+      videoAd: ad.videoAdRef ? {
+        ...ad.videoAdRef.toObject(),
+        isVerified: ad.videoAdRef.isAdVerified
+      } : null,
+      surveyAd: ad.surveyAdRef ? {
+        ...ad.surveyAdRef.toObject(),
+        isVerified: ad.surveyAdRef.isAdVerified
+      } : null,
+    }));
 
     res.status(200).json({ ads: adsWithVerificationStatus });
   } catch (error) {
