@@ -4,6 +4,7 @@ import uploadUserImg from "../multer/userImgMulter.js";
 import userKyc from "../multer/kycVerificationMulter.js";
 import authMiddleware from "../auth/authMiddleware.js";
 import checkSubscription from "../utils/checkSubscription.js";
+import {registerUserToContest} from "../controller/superAdminController.js"
 
 const userRouter = Router()
 userRouter.route('/register').post(registerUser);
@@ -17,7 +18,7 @@ userRouter.route('/buy-stars/:id').post(starBuy);
 userRouter.route('/viewed-ads/:id').get(getViewedAds);
 userRouter.route('/redeem-coupon/:id').post(redeemCoupon);
 userRouter.route('/user-wallet/:id').get(fetchUserWallet);
-userRouter.route('/user-wallet/:id').post(registerUserToContest);
+userRouter.route('/contest/register').post(registerUserToContest);
 
 
 

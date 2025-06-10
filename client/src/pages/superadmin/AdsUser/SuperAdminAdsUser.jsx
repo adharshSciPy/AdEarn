@@ -87,17 +87,65 @@ function SuperAdminAdsUser() {
   const showActivateModal = (user) => {
     setSelectedUser(user);
     setIsModalVisible(true);
+
   };
 
-  const handleActivate = () => {
+  const handleActivate = async () => {
     // Replace this with backend update if needed
     console.log("Activated:", selectedUser);
     setIsModalVisible(false);
+    try {
+      const userId = selectedUser._id;
+
+      const response = await axios.post(`${baseUrl}/api/v1/super-admin/toggle-user-status`, {
+        id: userId,
+      });
+
+      const updatedUser = response.data.user;
+
+      // Update state
+      const updatedUsers = allUsers.map((u) =>
+        u._id === userId ? { ...u, isUserEnabled: updatedUser.isUserEnabled } : u
+      );
+
+      setAllUsers(updatedUsers);
+      setIsModalVisible(false);
+    } catch (error) {
+      console.error("Error activating user", error);
+    }
   };
 
   const handleCancel = () => {
     setIsModalVisible(false);
   };
+
+  const handleToggleUserStatus = async (user) => {
+    try {
+      const userId = user._id
+      const response = await axios.post(`${baseUrl}/api/v1/super-admin/toggle-user-status`, {
+        id: userId,
+      });
+
+      const updatedUser = response.data.user;
+
+      // Update local state with new user status
+      const updatedUsers = allUsers.map((u) =>
+        u._id === userId ? { ...u, isUserEnabled: updatedUser.isUserEnabled } : u
+      );
+
+      setAllUsers(updatedUsers);
+
+      // Optional: show toast notification
+      // message.success(response.data.message);
+
+    } catch (error) {
+      console.error("Error updating user status", error);
+      // message.error("Failed to update user status");
+    }
+  };
+
+
+
 
   return (
     <div className={styles.adsuser}>
@@ -136,14 +184,14 @@ function SuperAdminAdsUser() {
 
         <h1 className={styles.title}>Ads Users</h1>
 
-        <div className={styles.monthYear}>
+        {/* <div className={styles.monthYear}>
           <select>
             <option>Month</option>
           </select>
           <select>
             <option>Year</option>
           </select>
-        </div>
+        </div> */}
 
         <div className={styles.tabs}>
           {["All Users", "Ads Users", "Disabled Users"].map((tab) => (
@@ -166,7 +214,6 @@ function SuperAdminAdsUser() {
             <div>Total stars</div>
             <div>Ads Viewed</div>
             <div>Black listed</div>
-            <div>Actions</div>
           </div>
 
           {visibleUsers.map((user) => (
@@ -186,9 +233,9 @@ function SuperAdminAdsUser() {
               <div>{userStars[user._id] ?? 0}</div>
               <div>{user.viewedAds.length}</div>
               <div
-                className={user.blacklisted ? styles.listed : styles.notListed}
+                className={user.isUserEnabled ? styles.listed : styles.notListed}
               >
-                {user.isUserEnabled ? "Listed" : "Not Listed"}
+                {user.isUserEnabled ? "Enable" : "Disable"}
               </div>
               <div className={styles.actions}>
                 {activeTab === "Disabled Users" ? (
@@ -200,7 +247,10 @@ function SuperAdminAdsUser() {
                   </button>
                 ) : (
                   <>
-                    <Switch size="small" defaultChecked />
+                    <Switch size="small"
+                      checked={!user.isUserEnabled}
+                      onChange={() => handleToggleUserStatus(user)}
+                      defaultChecked />
                     <DeleteOutlined className={styles.deleteIcon} />
                   </>
                 )}

@@ -11,7 +11,8 @@ import {
   createContest,
   topUpWelcomeBonusStars ,
   topUpCompanyRewardStars,
-  patchSuperAdminWallet
+  patchSuperAdminWallet,
+  deleteUser
 } from "../controller/superAdminController.js";
 const superAdminRouter = Router();
 superAdminRouter.route("/register").post(registerSuperAdmin);
@@ -26,4 +27,6 @@ superAdminRouter.route('/topup-welcome-stars').post(topUpWelcomeBonusStars);
 superAdminRouter.route('/create-contest').post(createContest);
 superAdminRouter.route('/topup-company-stars').post(topUpCompanyRewardStars);
 superAdminRouter.route('/patch-wallet').patch(patchSuperAdminWallet);
+superAdminRouter.route('/delete-user').delete(deleteUser);
+
 export default superAdminRouter;

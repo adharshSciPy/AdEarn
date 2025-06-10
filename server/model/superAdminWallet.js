@@ -163,21 +163,29 @@ const userEntrySchema = new Schema(
   },
   { _id: false }
 );
-
-const contestEntryWalletSchema = new Schema(
+const deletedUserStarsSchema = new Schema(
   {
-    totalReceived: {
-      type: Number,
-      default: 0,
-    },
-    totalEntries: {
-      type: Number,
-      default: 0,
-    },
-    collectedFromUsers: [userEntrySchema],
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
+    starsTransferred: { type: Number, required: true },
+    timestamp: { type: Date, default: Date.now },
   },
   { _id: false }
 );
+const contestEntryWalletSchema = new Schema(
+  {
+    totalReceived: { type: Number, default: 0 },
+    totalEntries: { type: Number, default: 0 },
+    collectedFromUsers: [
+      {
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        starsUsed: Number,
+        contestId: { type: mongoose.Schema.Types.ObjectId, ref: "ContestEntry" },
+      },
+    ],
+  },
+  { _id: false }
+);
+
 
 // ✅ Final Schema with integrated wallets
 
@@ -193,11 +201,13 @@ const superAdminWalletSchema = new Schema(
     },
     transactions: [transactionSchemaSA],
     expiredCouponRefunds: [expiredCouponRefundSchema],
+     deletedUserStars: [deletedUserStarsSchema],
     welcomeBonusWallet: welcomeBonusWalletSchema,
 
     // ✅ New fields below
     companyRewardWallet: companyRewardWalletSchema,
     contestEntryWallet: contestEntryWalletSchema,
+    userEntry: userEntrySchema
   },
   { timestamps: true }
 );

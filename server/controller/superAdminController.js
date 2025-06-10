@@ -4,25 +4,24 @@ import path from "path";
 import { Admin } from "../model/adminModel.js";
 import User from "../model/userModel.js";
 import SuperAdminWallet from "../model/superAdminWallet.js";
-import Coupon from "../model/couponModel.js"
-import WelcomeBonusSetting from '../model/WelcomeBonusSetting.js';
+import Coupon from "../model/couponModel.js";
+import WelcomeBonusSetting from "../model/WelcomeBonusSetting.js";
 import ContestEntry from "../model/contestEntrySchema.js";
-
-
+// import userEntrySchema from "../model/superAdminWallet.js"
+import { UserWallet } from "../model/userWallet.js";
+import kyc from "../model/kycModel.js";
 import { passwordValidator } from "../utils/passwordValidator.js";
 
 // to generate coupons randomly and store
 
 function generateRandomCode(length) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = '';
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = "";
   for (let i = 0; i < length; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
 }
-
-
 
 // register super admin
 const registerSuperAdmin = async (req, res) => {
@@ -187,7 +186,7 @@ const getSuperAdminWallet = async (req, res) => {
   }
 };
 
- const setWelcomeBonusAmount = async (req, res) => {
+const setWelcomeBonusAmount = async (req, res) => {
   const { amount, isEnabled } = req.body;
 
   if (amount < 0) {
@@ -195,14 +194,14 @@ const getSuperAdminWallet = async (req, res) => {
   }
 
   try {
-    let setting = await WelcomeBonusSet
+    let setting = await WelcomeBonusSet;
     ting.findOne();
 
     if (!setting) {
       setting = new WelcomeBonusSetting({
         perUserBonus: amount,
         isEnabled: isEnabled !== undefined ? isEnabled : true,
-        updatedBy: req.superAdminId || null
+        updatedBy: req.superAdminId || null,
       });
     } else {
       setting.perUserBonus = amount;
@@ -217,7 +216,9 @@ const getSuperAdminWallet = async (req, res) => {
       setting,
     });
   } catch (err) {
-    return res.status(500).json({ message: "Server error", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err.message });
   }
 };
 const distributeWelcomeBonus = async (newUserId) => {
@@ -248,7 +249,8 @@ const distributeWelcomeBonus = async (newUserId) => {
     }
 
     const alreadyGiven = wallet.welcomeBonusWallet.given.some(
-      (entry) => entry.userId && entry.userId.toString() === newUserId.toString()
+      (entry) =>
+        entry.userId && entry.userId.toString() === newUserId.toString()
     );
 
     if (alreadyGiven) {
@@ -272,7 +274,7 @@ const distributeWelcomeBonus = async (newUserId) => {
     user.userWalletDetails.totalStars += starsToGive;
 
     // ✅ Store welcome bonus info inside user's wallet
-    user.userWalletDetails.welcomeBonus =  starsToGive ;
+    user.userWalletDetails.welcomeBonus = starsToGive;
 
     await user.userWalletDetails.save();
 
@@ -310,13 +312,28 @@ const distributeWelcomeBonus = async (newUserId) => {
   }
 };
 
- const createContest = async (req, res) => {
+const createContest = async (req, res) => {
   try {
-    const { contestName, contestNumber, startDate, endDate, entryStars, result } = req.body;
+    const {
+      contestName,
+      contestNumber,
+      startDate,
+      endDate,
+      entryStars,
+      result,
+    } = req.body;
 
     // Basic validation
-    if (!contestName || !contestNumber || !startDate || !endDate || !entryStars) {
-      return res.status(400).json({ message: "All required fields must be filled" });
+    if (
+      !contestName ||
+      !contestNumber ||
+      !startDate ||
+      !endDate ||
+      !entryStars
+    ) {
+      return res
+        .status(400)
+        .json({ message: "All required fields must be filled" });
     }
 
     // Check for existing contestNumber
@@ -332,45 +349,45 @@ const distributeWelcomeBonus = async (newUserId) => {
       endDate,
       entryStars,
       totalEntries: 0, // default
-      result: result || "Pending"
+      result: result || "Pending",
     });
 
     await contest.save();
-    return res.status(201).json({ message: "Contest created successfully", contest });
-
+    return res
+      .status(201)
+      .json({ message: "Contest created successfully", contest });
   } catch (error) {
     console.error("Error creating contest:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
-const generateCoupons=async(req,res)=>{
-  const{couponCount,perStarCount,generationDate,expiryDate}=req.body;
+const generateCoupons = async (req, res) => {
+  const { couponCount, perStarCount, generationDate, expiryDate } = req.body;
   try {
-   const couponsToCreate=[];
-   for (let i=0;i<couponCount;i++){
-     const code = generateRandomCode(10);
-     couponsToCreate.push({
-      code,
-      perStarCount,
-         generationDate: new Date(generationDate),
-        expiryDate: expiryDate ? new Date(expiryDate) : undefined
-     })
-   } 
+    const couponsToCreate = [];
+    for (let i = 0; i < couponCount; i++) {
+      const code = generateRandomCode(10);
+      couponsToCreate.push({
+        code,
+        perStarCount,
+        generationDate: new Date(generationDate),
+        expiryDate: expiryDate ? new Date(expiryDate) : undefined,
+      });
+    }
 
-   
     const createdCoupons = await Coupon.insertMany(couponsToCreate);
-     return res.status(201).json({
+    return res.status(201).json({
       message: "Coupons generated successfully",
       count: createdCoupons.length,
-      coupons: createdCoupons.map(c => c.code),
+      coupons: createdCoupons.map((c) => c.code),
     });
   } catch (error) {
-        console.error("Error generating coupons:", error);
+    console.error("Error generating coupons:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
-}
- const topUpWelcomeBonusStars = async (req, res) => {
+};
+const topUpWelcomeBonusStars = async (req, res) => {
   const { stars, source } = req.body;
 
   if (!stars || stars <= 0) {
@@ -389,7 +406,7 @@ const generateCoupons=async(req,res)=>{
       wallet.welcomeBonusWallet = {
         totalReceived: 0,
         remainingStars: 0,
-        logs: []
+        logs: [],
       };
     }
 
@@ -399,7 +416,7 @@ const generateCoupons=async(req,res)=>{
     wallet.welcomeBonusWallet.logs.push({
       starsAdded: stars,
       addedAt: new Date(),
-      source: source || "Manual Top-up"
+      source: source || "Manual Top-up",
     });
 
     await wallet.save();
@@ -408,7 +425,6 @@ const generateCoupons=async(req,res)=>{
       message: "Welcome bonus wallet topped up successfully",
       welcomeBonusWallet: wallet.welcomeBonusWallet,
     });
-
   } catch (err) {
     return res.status(500).json({
       message: "Server error",
@@ -508,15 +524,16 @@ const patchSuperAdminWallet = async (req, res) => {
       await wallet.save();
       return res.status(200).json({ message: "Wallet patched successfully" });
     } else {
-      return res.status(200).json({ message: "All required fields already exist" });
+      return res
+        .status(200)
+        .json({ message: "All required fields already exist" });
     }
-
   } catch (err) {
     console.error("Error patching wallet:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 };
- const registerUserToContest = async (req, res) => {
+const registerUserToContest = async (req, res) => {
   const { userId, contestNumber, starsUsed } = req.body;
 
   try {
@@ -524,31 +541,41 @@ const patchSuperAdminWallet = async (req, res) => {
       return res.status(400).json({ message: "Missing fields" });
     }
 
-    const contest = await ContestEntry.findOne({ contestNumber });
-    if (!contest) return res.status(404).json({ message: "Contest not found" });
-
-    // ❌ If already ended
     const now = new Date();
-    if (contest.status === "Ended" || now > contest.endDate) {
-      contest.status = "Ended";
-      await contest.save();
+
+    // ✅ Fetch contest
+    const contest = await ContestEntry.findOne({ contestNumber });
+    if (!contest) {
+      return res.status(404).json({ message: "Contest not found" });
+    }
+
+    // ✅ If contest already ended
+    if (contest.status === "Ended") {
       return res.status(400).json({ message: "Contest has ended" });
     }
 
-    // ❌ Max participants
+    // ✅ If current date > endDate, auto-end contest
+    if (now > contest.endDate) {
+      contest.status = "Ended";
+      await contest.save();
+      return res.status(400).json({ message: "Contest has expired" });
+    }
+
+    // ✅ If max participants reached, auto-end contest
     if (
       contest.maxParticipants &&
       contest.currentParticipants >= contest.maxParticipants
     ) {
       contest.status = "Ended";
       await contest.save();
-      return res.status(400).json({ message: "Max participants reached" });
+      return res.status(400).json({ message: "Contest is full" });
     }
 
-    // ✅ Update contest entry
+    // ✅ Proceed with registration
     contest.currentParticipants += 1;
     contest.totalEntries += 1;
 
+    // ✅ End contest if after this addition it reaches limit
     if (
       contest.maxParticipants &&
       contest.currentParticipants >= contest.maxParticipants
@@ -558,9 +585,19 @@ const patchSuperAdminWallet = async (req, res) => {
 
     await contest.save();
 
-    // ✅ Update SuperAdmin Wallet
+    // ✅ Update SuperAdmin wallet
     const wallet = await SuperAdminWallet.findOne();
-    if (!wallet) return res.status(404).json({ message: "Wallet not found" });
+    if (!wallet) {
+      return res.status(404).json({ message: "SuperAdmin wallet not found" });
+    }
+
+    if (!wallet.contestEntryWallet) {
+      wallet.contestEntryWallet = {
+        totalReceived: 0,
+        totalEntries: 0,
+        collectedFromUsers: [],
+      };
+    }
 
     wallet.contestEntryWallet.collectedFromUsers.push({
       userId,
@@ -571,7 +608,7 @@ const patchSuperAdminWallet = async (req, res) => {
     wallet.contestEntryWallet.totalReceived += starsUsed;
     wallet.contestEntryWallet.totalEntries += 1;
 
-    // Optional: Deduct from totalStars
+    // Optional: Deduct from global stars
     wallet.totalStars -= starsUsed;
 
     await wallet.save();
@@ -583,8 +620,84 @@ const patchSuperAdminWallet = async (req, res) => {
     });
   } catch (error) {
     console.error("Contest Registration Error:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
+  }
+};
+// to delete users
+
+const deleteUser = async (req, res) => {
+  const { id } = req.body;
+
+  try {
+    if (!id) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Fetch user's wallet
+    const userWallet = await UserWallet.findById(user.userWalletDetails);
+    const userStars = userWallet?.totalStars || 0;
+
+    // Find Super Admin Wallet (assuming only one exists)
+    const superAdminWallet = await SuperAdminWallet.findOne();
+    if (!superAdminWallet) {
+      return res.status(500).json({ message: "Super Admin Wallet not found" });
+    }
+
+    // Create or push to deletedUserStars array
+    if (!superAdminWallet.deletedUserStars) {
+      superAdminWallet.deletedUserStars = [];
+    }
+
+    superAdminWallet.deletedUserStars.push({
+      userId: user._id,
+      starsTransferred: userStars,
+      timestamp: new Date(),
+    });
+
+    // Transfer stars to SuperAdminWallet
+    superAdminWallet.totalStars += userStars;
+    await superAdminWallet.save();
+
+    // Delete associated data
+    if (user.kycDetails) {
+      await kyc.findByIdAndDelete(user.kycDetails);
+    }
+
+    if (userWallet) {
+      await UserWallet.findByIdAndDelete(user.userWalletDetails);
+    }
+
+    await User.findByIdAndDelete(id);
+
+    return res.status(200).json({ message: "User deleted and stars transferred successfully" });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-export { registerSuperAdmin, superAdminLogin, getAllAdmins, toggleUserStatus,toggleAdminStatus,getSuperAdminWallet,setWelcomeBonusAmount,generateCoupons,distributeWelcomeBonus,topUpWelcomeBonusStars,createContest,topUpCompanyRewardStars,patchSuperAdminWallet,registerUserToContest};
+
+export {
+  registerSuperAdmin,
+  superAdminLogin,
+  getAllAdmins,
+  toggleUserStatus,
+  toggleAdminStatus,
+  getSuperAdminWallet,
+  setWelcomeBonusAmount,
+  generateCoupons,
+  distributeWelcomeBonus,
+  topUpWelcomeBonusStars,
+  createContest,
+  topUpCompanyRewardStars,
+  patchSuperAdminWallet,
+  registerUserToContest,
+  deleteUser
+};

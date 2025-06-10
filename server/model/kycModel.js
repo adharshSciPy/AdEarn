@@ -56,7 +56,11 @@ kycStatus: {
     type: String,
     enum: ["pending", "approved", "rejected"],
     default: "pending"
-  }
+  },
+  rejectionReason: {
+  type: String,
+  default: null,
+},
 
 })
 export default mongoose.model("kyc",kycSchema)

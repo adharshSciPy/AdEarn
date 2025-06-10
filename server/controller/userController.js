@@ -371,6 +371,8 @@ const addKyc = async (req, res) => {
     ifscCode,
   } = req.body;
 
+  const { io, connectedUsers } = req;
+
   // Validate required fields
   const requiredFields = {
     fullName,
@@ -454,7 +456,17 @@ const addKyc = async (req, res) => {
       await user.save();
     }
 
-    res.status(201).json({
+    // Notify all admins
+    const adminUsers = await Admin.find({ adminRole: ADMIN_ROLE });
+    const message = `${user.firstName} ${user.lastName || ""} has submitted a KYC request.`;
+
+    // ✅ Only use sendNotification (do NOT insert manually)
+    const notifyAdmins = adminUsers.map((admin) =>
+      sendNotification(admin._id, ADMIN_ROLE, message, io, connectedUsers)
+    );
+    await Promise.all(notifyAdmins);
+
+    return res.status(200).json({
       message: "KYC submitted successfully",
       kycDetails: kycDetails,
     });
@@ -463,6 +475,7 @@ const addKyc = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 const getUserByUniqueId = async (req, res) => {
   const { id } = req.body;
   try {
@@ -598,57 +611,36 @@ const starBuy = async (req, res) => {
     }
     await superAdminWallet.save();
 
-    // ✅ Get admins and superadmin
+    // ✅ Get admins and super admin
     const adminUsers = await Admin.find({ adminRole: ADMIN_ROLE });
     const superAdminUser = await superAdminModel.findOne({ role: SUPER_ADMIN_ROLE });
 
-    // ✅ Prepare notifications
-    const adminNotifications = adminUsers.map((admin) => ({
-      receiverId: admin._id,
-      receiverRole: ADMIN_ROLE,
-      message: `You received ${Math.floor(adminShare)} stars from ${user.firstName} ${user.lastName}'s purchase.`,
-    }));
-
-    await Notification.insertMany([
-      {
-        receiverId: user._id,
-        receiverRole: USER_ROLE,
-        message: `You successfully purchased ${Math.floor(userShare)} stars.`,
-      },
-      ...adminNotifications,
-      {
-        receiverId: superAdminUser?._id,
-        receiverRole: SUPER_ADMIN_ROLE,
-        message: `You received ${Math.floor(superAdminShare)} stars from ${user.firstName} ${user.lastName}'s purchase.`,
-      },
-    ]);
-
-    // ✅ Send real-time notifications
-    
-   const notificationsToSend = [
-  sendNotification(user._id, USER_ROLE, `You successfully purchased ${Math.floor(userShare)} stars.`, io, connectedUsers),
-  ...adminUsers.map((admin) => {
-    console.log("Admin socket target ID:", admin._id.toString());
-    console.log("Connected Users:", connectedUsers);
-    console.log("Socket ID found:", connectedUsers.get(admin._id.toString()));
-
-    return sendNotification(
-      admin._id,
-      ADMIN_ROLE,
-      `You received ${Math.floor(adminShare)} stars from ${user.firstName} ${user.lastName}'s purchase. (UserId: ${user._id})`,
-      io,
-      connectedUsers
-    );
-  }),
-  sendNotification(
-    superAdminUser?._id,
-    SUPER_ADMIN_ROLE,
-    `You received ${Math.floor(superAdminShare)} stars from ${user.firstName} ${user.lastName}'s purchase. (UserId: ${user._id})`,
-    io,
-    connectedUsers
-  ),
-];
-
+    // ✅ Send ONLY real-time notifications (will handle DB insert too)
+    const notificationsToSend = [
+      sendNotification(
+        user._id,
+        USER_ROLE,
+        `You successfully purchased ${Math.floor(userShare)} stars.`,
+        io,
+        connectedUsers
+      ),
+      ...adminUsers.map((admin) =>
+        sendNotification(
+          admin._id,
+          ADMIN_ROLE,
+          `You received ${Math.floor(adminShare)} stars from ${user.firstName} ${user.lastName}'s purchase. (UserId: ${user._id})`,
+          io,
+          connectedUsers
+        )
+      ),
+      sendNotification(
+        superAdminUser?._id,
+        SUPER_ADMIN_ROLE,
+        `You received ${Math.floor(superAdminShare)} stars from ${user.firstName} ${user.lastName}'s purchase. (UserId: ${user._id})`,
+        io,
+        connectedUsers
+      ),
+    ];
 
     await Promise.all(notificationsToSend);
 
@@ -669,6 +661,7 @@ const starBuy = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 
 // to post ads using stars or amount with automated views 

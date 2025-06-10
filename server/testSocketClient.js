@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 
 const socket = io("http://localhost:8000");
 
-const userId = "682ab2653d30856b564e93a8"; // Replace with a real user ID
+const userId = "684278176aa29209301b8e98"; // Replace with a real user ID
 
 socket.on("connect", () => {
   console.log("🟢 Connected as test client:", socket.id);
