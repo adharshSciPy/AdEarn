@@ -184,14 +184,14 @@ function SuperAdminAdsUser() {
 
         <h1 className={styles.title}>Ads Users</h1>
 
-        <div className={styles.monthYear}>
+        {/* <div className={styles.monthYear}>
           <select>
             <option>Month</option>
           </select>
           <select>
             <option>Year</option>
           </select>
-        </div>
+        </div> */}
 
         <div className={styles.tabs}>
           {["All Users", "Ads Users", "Disabled Users"].map((tab) => (
