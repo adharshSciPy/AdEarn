@@ -136,6 +136,9 @@
 .balanceAmount {
   font-size: 2em;
   padding-left: 40px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .buyButton {

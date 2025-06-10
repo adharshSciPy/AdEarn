@@ -1,22 +1,19 @@
 import mongoose, { Schema } from "mongoose";
 
-// Transaction schema: each bonus provided
 const transactionSchemaSA = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
-      ref: "User", // Recipient of the bonus
+      ref: "User",
     },
-    starsReceived: {
-      type: Number,
-    },
+    starsReceived: Number,
     reason: {
       type: String,
-      default: "Bonus", // Welcome Bonus, Manual Top-up, etc.
+      default: "Bonus",
     },
     addedBy: {
       type: Schema.Types.ObjectId,
-      ref: "SuperAdmin", // Who gave the bonus
+      ref: "SuperAdmin",
     },
     date: {
       type: Date,
@@ -26,12 +23,9 @@ const transactionSchemaSA = new Schema(
   { _id: false }
 );
 
-// Schema for expired coupon refunds
 const expiredCouponRefundSchema = new Schema(
   {
-    stars: {
-      type: Number,
-    },
+    stars: Number,
     couponCodes: [String],
     refundedAt: {
       type: Date,
@@ -41,16 +35,13 @@ const expiredCouponRefundSchema = new Schema(
   { _id: false }
 );
 
-// Schema for welcome bonus records
 const welcomeBonusRecordSchema = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
     },
-    starsGiven: {
-      type: Number,
-    },
+    starsGiven: Number,
     givenAt: {
       type: Date,
       default: Date.now,
@@ -59,7 +50,6 @@ const welcomeBonusRecordSchema = new Schema(
   { _id: false }
 );
 
-// Schema for welcome bonus top-ups from external source
 const welcomeBonusTopUpLogSchema = new Schema(
   {
     starsAdded: {
@@ -78,7 +68,6 @@ const welcomeBonusTopUpLogSchema = new Schema(
   { _id: false }
 );
 
-// Wrapper schema for welcome bonus wallet
 const welcomeBonusWalletSchema = new Schema(
   {
     totalReceived: {
@@ -95,7 +84,103 @@ const welcomeBonusWalletSchema = new Schema(
   { _id: false }
 );
 
-// SuperAdmin Wallet schema
+// ✅ NEW SCHEMAS ONLY — DO NOT TOUCH ABOVE
+
+const companyDepositSchema = new Schema(
+  {
+    starsReceived: {
+      type: Number,
+      required: true,
+    },
+    sourceCompany: {
+      type: String,
+      required: true,
+    },
+    date: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false }
+);
+
+const rewardGivenSchema = new Schema(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    starsGiven: {
+      type: Number,
+      required: true,
+    },
+    contestId: {
+      type: Schema.Types.ObjectId,
+      ref: "Contest",
+    },
+    date: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false }
+);
+
+const companyRewardWalletSchema = new Schema(
+  {
+    totalReceived: {
+      type: Number,
+      default: 0,
+    },
+    remainingStars: {
+      type: Number,
+      default: 0,
+    },
+    companyDeposits: [companyDepositSchema],
+    givenToWinners: [rewardGivenSchema],
+  },
+  { _id: false }
+);
+
+const userEntrySchema = new Schema(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    starsUsed: {
+      type: Number,
+      required: true,
+    },
+    contestId: {
+      type: Schema.Types.ObjectId,
+      ref: "Contest",
+    },
+    date: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false }
+);
+
+const contestEntryWalletSchema = new Schema(
+  {
+    totalReceived: {
+      type: Number,
+      default: 0,
+    },
+    totalEntries: {
+      type: Number,
+      default: 0,
+    },
+    collectedFromUsers: [userEntrySchema],
+  },
+  { _id: false }
+);
+
+// ✅ Final Schema with integrated wallets
+
 const superAdminWalletSchema = new Schema(
   {
     totalStars: {
@@ -108,7 +193,11 @@ const superAdminWalletSchema = new Schema(
     },
     transactions: [transactionSchemaSA],
     expiredCouponRefunds: [expiredCouponRefundSchema],
-    welcomeBonusWallet: welcomeBonusWalletSchema, // ✅ added structured wallet
+    welcomeBonusWallet: welcomeBonusWalletSchema,
+
+    // ✅ New fields below
+    companyRewardWallet: companyRewardWalletSchema,
+    contestEntryWallet: contestEntryWalletSchema,
   },
   { timestamps: true }
 );

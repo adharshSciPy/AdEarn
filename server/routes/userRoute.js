@@ -17,6 +17,7 @@ userRouter.route('/buy-stars/:id').post(starBuy);
 userRouter.route('/viewed-ads/:id').get(getViewedAds);
 userRouter.route('/redeem-coupon/:id').post(redeemCoupon);
 userRouter.route('/user-wallet/:id').get(fetchUserWallet);
+userRouter.route('/user-wallet/:id').post(registerUserToContest);
 
 
 
