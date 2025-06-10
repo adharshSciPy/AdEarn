@@ -34,8 +34,9 @@ function LoginUser() {
         const id =response.data.user._id;
         navigate(`/userhome/${id}`)
         dispatch(setUser({
-        user: response.data.user,
-        token: response.data.token,
+        id: response.data.user._id,
+        token: response.data.accessToken,
+        role:response.data.role,
       }));
       }
       

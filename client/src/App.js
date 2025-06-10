@@ -118,7 +118,7 @@ function App() {
           <Route path='/adsmanageruser' element={<Adsmanager />} />
           <Route path='/adstemplate' element={<AdTemplateSelector />} />
           <Route path='/contextpage' element={<ContestPage />} />
-          <Route path='/walletpage' element={<WalletPage />} />
+          <Route path='/walletpage/:id' element={<WalletPage />} />
           <Route path='/referalpageuser' element={<RefaralPage />} />
           <Route path='/userprofile' element={<UserProfileEditForm />} />
           <Route path='/kycverification' element={<KycVerification />} />
