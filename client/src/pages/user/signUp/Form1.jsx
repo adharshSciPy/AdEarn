@@ -1,12 +1,15 @@
 import { React, useState } from "react";
 import logo from "../../../assets/Logo.png";
 import styles from "./form1.module.css";
+import baseUrl from "../../../baseurl";
+import axios from "axios";
 
 function Form1() {
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
     gender: "",
+    maritalStatus: "",
     state: "",
     city: "",
     pincode: "",
@@ -20,14 +23,23 @@ function Form1() {
       [name]: value,
     }));
   };
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    console.log("Submitted:", form);
+    const userId = '683edc32b29c143dd749401d'
+    try {
+      const response = await axios.patch(`${baseUrl}/api/v1/user/update/${userId}`, form)
+      if (response.status === 200) {
+        console.log("Submitted Successfully")
+        console.log("vannu", response)
+      }
+    } catch (error) {
+      console.log(error)
+    }
     setForm({
       firstName: "",
       lastName: "",
       gender: "",
+      maritalStatus: "",
       state: "",
       city: "",
       pincode: "",
@@ -39,9 +51,8 @@ function Form1() {
       <button
         key={option}
         type="button"
-        className={`${styles.optionSingleButton} ${
-          selectedOption === option ? styles.selected : ""
-        }`}
+        className={`${styles.optionSingleButton} ${selectedOption === option ? styles.selected : ""
+          }`}
         onClick={() => setSelectedOption(option)}
       >
         {option}
@@ -452,9 +463,9 @@ function Form1() {
                   <div className={styles.headingMain}>
                     <h2>Welcome Back</h2>
                   </div>
-                  <div className={styles.paraContent}>
+                  {/* <div className={styles.paraContent}>
                     <p>This is a demo content</p>
-                  </div>
+                  </div> */}
                   <div className={styles.formContainer}>
                     <form className="form" onSubmit={handleSubmit}>
                       <div>
@@ -511,6 +522,24 @@ function Form1() {
                             )}
                           </div>
                         </div>
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="LastName"
+                          className={styles.label}
+                          style={{ marginTop: "20px" }}
+                        >
+                          Marital Status
+                        </label>
+                        <input
+                          id="maritalStatus"
+                          name="maritalStatus"
+                          required
+                          className={styles.input}
+                          placeholder="Enter Your maritalStatus"
+                          value={form.maritalStatus}
+                          onChange={handleChange}
+                        />
                       </div>
                       <div>
                         <label
