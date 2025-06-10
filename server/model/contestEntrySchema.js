@@ -26,13 +26,13 @@ const contestEntrySchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  maxParticipants: {
+maxParticipants: {
   type: Number,
-  default: null, // optional
+  required: true
 },
 currentParticipants: {
   type: Number,
-  default: 0,
+  default: 0
 },
 status: {
   type: String,

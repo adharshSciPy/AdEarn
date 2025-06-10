@@ -1,32 +1,55 @@
-import {React,useState} from "react";
+import { React, useState } from "react";
 import logo from "../../../assets/Logo.png";
 import styles from "./emailreg.module.css";
+import { Link, useNavigate } from "react-router-dom";
+import baseUrl from "../../../baseurl";
+import axios from "axios"
+import { setUser } from "../../../components/features/slice";
+import { useDispatch } from 'react-redux';
 
 function EmailReg() {
-  const[form,setForm]=useState(
-      {
-        email:"",
-        password:""
-    
+  const navigate = useNavigate()
+  const dispatch = useDispatch();
+  const [form, setForm] = useState(
+    {
+      email: "",
+      password: ""
+
+    }
+  )
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+  const handleSubmit = async (e) => {
+
+    e.preventDefault();
+
+    try {
+      const response = await axios.post(`${baseUrl}/api/v1/user/login`, form)
+      if (response.status === 200) {
+        const id = response.data.user._id;
+        navigate(`/userhome/${id}`)
+        dispatch(setUser({
+          id: response.data.user._id,
+          token: response.data.accessToken,
+          role: response.data.role,
+        }));
       }
-    )
-    const handleChange = (e) => {
-      const { name, value } = e.target;
-      setForm((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    };
-    const handleSubmit = (e) => {
-  
-      e.preventDefault();
-  
-      console.log("Submitted:", form);
-      setForm({
-        email: "",
-        password: ""
-      });
-    };
+
+    } catch (error) {
+      console.log(error);
+
+    }
+
+    setForm({
+      email: "",
+      password: ""
+    });
+  };
   return (
     <div>
       <div className={styles.containerOneUser}>
@@ -90,7 +113,7 @@ function EmailReg() {
                     </form>
                   </div>
 
-                  
+
                 </div>
               </div>
             </div>

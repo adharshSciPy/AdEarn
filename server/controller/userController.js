@@ -156,10 +156,12 @@ const editUser = async (req, res) => {
     location,
     pinCode,
     fieldOfIntrest,
+    subcategory,  
     maritalStatus,
     highestEducation,
     profession,
     employedIn,
+    city,        
   } = req.body;
   try {
     if (!id) {
@@ -245,15 +247,17 @@ const editUser = async (req, res) => {
     };
     if (pinCode) user.pinCode = pinCode;
     if (fieldOfIntrest) user.fieldOfInterest = fieldOfIntrest;
+    if (subcategory) user.subcategory = subcategory;  // Added subcategory update
     if (maritalStatus) user.maritalStatus = maritalStatus;
     if (highestEducation) user.highestEducation = highestEducation;
     if (profession) user.profession = profession;
     if (employedIn) user.employedIn = employedIn;
+    if (city) user.city = city;  // Added city update
 
     await user.save();
 
     user.password = undefined;
-    return res.status(200).json({ message: "User edited Succefully", user });
+    return res.status(200).json({ message: "User edited Successfully", user });
   } catch (error) {
     console.error("Error updating user:", error);
     return res.status(500).json({

@@ -320,23 +320,14 @@ const createContest = async (req, res) => {
       startDate,
       endDate,
       entryStars,
-      result,
+      maxParticipants, // ✅ Add this
+      result
     } = req.body;
 
-    // Basic validation
-    if (
-      !contestName ||
-      !contestNumber ||
-      !startDate ||
-      !endDate ||
-      !entryStars
-    ) {
-      return res
-        .status(400)
-        .json({ message: "All required fields must be filled" });
+    if (!contestName || !contestNumber || !startDate || !endDate || !entryStars) {
+      return res.status(400).json({ message: "All required fields must be filled" });
     }
 
-    // Check for existing contestNumber
     const existing = await ContestEntry.findOne({ contestNumber });
     if (existing) {
       return res.status(400).json({ message: "Contest number already exists" });
@@ -348,19 +339,21 @@ const createContest = async (req, res) => {
       startDate,
       endDate,
       entryStars,
-      totalEntries: 0, // default
-      result: result || "Pending",
+      maxParticipants,                 // ✅ Store it in DB
+      currentParticipants: 0,         // ✅ Important for tracking
+      totalEntries: 0,
+      result: result || "Pending"
     });
 
     await contest.save();
-    return res
-      .status(201)
-      .json({ message: "Contest created successfully", contest });
+    return res.status(201).json({ message: "Contest created successfully", contest });
+
   } catch (error) {
     console.error("Error creating contest:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 
 const generateCoupons = async (req, res) => {
   const { couponCount, perStarCount, generationDate, expiryDate } = req.body;
@@ -543,25 +536,35 @@ const registerUserToContest = async (req, res) => {
 
     const now = new Date();
 
-    // ✅ Fetch contest
+    // Fetch contest
     const contest = await ContestEntry.findOne({ contestNumber });
     if (!contest) {
       return res.status(404).json({ message: "Contest not found" });
     }
 
-    // ✅ If contest already ended
+    // Check if user is already registered
+    const wallet = await SuperAdminWallet.findOne({
+      "contestEntryWallet.collectedFromUsers.userId": userId,
+      "contestEntryWallet.collectedFromUsers.contestId": contest._id
+    });
+    
+    if (wallet) {
+      return res.status(400).json({ message: "User already registered for this contest" });
+    }
+
+    // If contest already ended
     if (contest.status === "Ended") {
       return res.status(400).json({ message: "Contest has ended" });
     }
 
-    // ✅ If current date > endDate, auto-end contest
+    // If current date > endDate, auto-end contest
     if (now > contest.endDate) {
       contest.status = "Ended";
       await contest.save();
       return res.status(400).json({ message: "Contest has expired" });
     }
 
-    // ✅ If max participants reached, auto-end contest
+    // If max participants reached, auto-end contest
     if (
       contest.maxParticipants &&
       contest.currentParticipants >= contest.maxParticipants
@@ -571,11 +574,11 @@ const registerUserToContest = async (req, res) => {
       return res.status(400).json({ message: "Contest is full" });
     }
 
-    // ✅ Proceed with registration
+    // Proceed with registration
     contest.currentParticipants += 1;
     contest.totalEntries += 1;
 
-    // ✅ End contest if after this addition it reaches limit
+    // End contest if after this addition it reaches limit
     if (
       contest.maxParticipants &&
       contest.currentParticipants >= contest.maxParticipants
@@ -585,38 +588,38 @@ const registerUserToContest = async (req, res) => {
 
     await contest.save();
 
-    // ✅ Update SuperAdmin wallet
-    const wallet = await SuperAdminWallet.findOne();
-    if (!wallet) {
+    // Update SuperAdmin wallet
+    const adminWallet = await SuperAdminWallet.findOne();
+    if (!adminWallet) {
       return res.status(404).json({ message: "SuperAdmin wallet not found" });
     }
 
-    if (!wallet.contestEntryWallet) {
-      wallet.contestEntryWallet = {
+    if (!adminWallet.contestEntryWallet) {
+      adminWallet.contestEntryWallet = {
         totalReceived: 0,
         totalEntries: 0,
         collectedFromUsers: [],
       };
     }
 
-    wallet.contestEntryWallet.collectedFromUsers.push({
+    adminWallet.contestEntryWallet.collectedFromUsers.push({
       userId,
       starsUsed,
       contestId: contest._id,
     });
 
-    wallet.contestEntryWallet.totalReceived += starsUsed;
-    wallet.contestEntryWallet.totalEntries += 1;
+    adminWallet.contestEntryWallet.totalReceived += starsUsed;
+    adminWallet.contestEntryWallet.totalEntries += 1;
 
     // Optional: Deduct from global stars
-    wallet.totalStars -= starsUsed;
+    adminWallet.totalStars -= starsUsed;
 
-    await wallet.save();
+    await adminWallet.save();
 
     return res.status(200).json({
       message: "User registered successfully",
       contestStatus: contest.status,
-      contestEntryWallet: wallet.contestEntryWallet,
+      contestEntryWallet: adminWallet.contestEntryWallet,
     });
   } catch (error) {
     console.error("Contest Registration Error:", error);

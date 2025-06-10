@@ -9,8 +9,7 @@ function Form2() {
     gender: "",
     fieldOfInterest: "",
     subCategory: "",
-    pincode: "",
-    location: "",
+    
   });
   const handleChange = (e) => {
     const { name, value } = e.target;
