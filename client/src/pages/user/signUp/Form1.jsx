@@ -30,7 +30,7 @@ function Form1() {
       const response = await axios.patch(`${baseUrl}/api/v1/user/update/${userId}`, form)
       if (response.status === 200) {
         console.log("Submitted Successfully")
-        console.log("vannu", response)
+        console.log("form1", response)
       }
     } catch (error) {
       console.log(error)

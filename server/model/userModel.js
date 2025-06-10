@@ -6,7 +6,7 @@ import { type } from "os";
 dotenv.config();
 
 const userRole = process.env.USER_ROLE;
-// console.log("user role",process.env.USER_ROLE)
+
 const userSchema = new Schema(
   {
     role: {
@@ -26,7 +26,6 @@ const userSchema = new Schema(
     password: {
       type: String,
     },
-
     firstName: {
       type: String,
     },
@@ -40,6 +39,9 @@ const userSchema = new Schema(
       type: String,
     },
     district: {
+      type: String,
+    },
+    city: {  
       type: String,
     },
     location: {
@@ -56,6 +58,9 @@ const userSchema = new Schema(
       type: Number,
     },
     fieldOfInterest: {
+      type: Array,
+    },
+    subcategory: {  
       type: Array,
     },
     maritalStatus: {
@@ -118,23 +123,23 @@ const userSchema = new Schema(
       },
     ],
     isSubscribed: {
-       type: Boolean,
-        default: true
-       },
-    
-  subscriptionStartDate: {
-     type: Date,
+      type: Boolean,
+      default: true
+    },
+    subscriptionStartDate: {
+      type: Date,
       default: Date.now 
     },
     subscriptionEndDate: {
-       type: Date
-       },
+      type: Date
+    },
   },
   { timestamps: true }
 );
+
 // password hashing
 userSchema.pre("save", async function (next) {
-   if (this.isNew) {
+  if (this.isNew) {
     this.subscriptionEndDate = new Date(this.subscriptionStartDate.getTime() + 365 * 24 * 60 * 60 * 1000); // +1 year
   }
   if (!this.isModified("password")) return next();
@@ -148,10 +153,12 @@ userSchema.pre("save", async function (next) {
     next(error);
   }
 });
+
 // password comparing
 userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
+
 // generating token
 userSchema.methods.generateAcessToken = function () {
   const payload = { id: this._id, email: this.email };
@@ -160,6 +167,7 @@ userSchema.methods.generateAcessToken = function () {
   });
   return accessToken;
 };
+
 // refreshing token
 userSchema.methods.generateRefreshToken = function () {
   const payload = { id: this._id };
@@ -168,13 +176,11 @@ userSchema.methods.generateRefreshToken = function () {
   }); 
   return refreshToken;
 };
+
 // subscription checking
 userSchema.methods.hasActiveSubscription = function () {
   const now = new Date();
-return this.isSubscribed && this.subscriptionEndDate && now <= this.subscriptionEndDate;
-
+  return this.isSubscribed && this.subscriptionEndDate && now <= this.subscriptionEndDate;
 };
-
-
 
 export default mongoose.model("User", userSchema);

@@ -14,7 +14,7 @@ function AdminAds() {
   const getunverifiedAds = async () => {
     try {
       const response = await axios.get(`${baseUrl}/api/v1/ads/ads-to-verify`);
-      console.log(response);
+      console.log("vtoer",response);
       setunverifiedAds(response.data.ads);
     } catch (error) {
       console.log(error);
@@ -171,11 +171,10 @@ function AdminAds() {
                   <tbody>
                     {verifiedAd.map((ad,index) => (
                       <tr key={index}>
-                        <td>{ad.imageAd?.title || ""}</td>
-                        <td>{ad.imageAd?.userViewsNeeded || ""}</td>
-                        <td>{ad.imageAd?.totalStarsAllocated} </td>
-                        <td>{ad.imageAd?.createdAt}</td>
-                        
+                        <td>{ad.imageAd?.title?(<p>{ad.imageAd?.title}</p>):(ad?.videoAd?.title?(<p>{ad.videoAd?.title}</p>):null)}</td>
+                        <td>{ad.imageAd?.userViewsNeeded?(<p>{ad.imageAd?.userViewsNeeded}</p>):(ad?.videoAd?.userViewsNeeded?(<p>{ad.videoAd?.userViewsNeeded}</p>):null)}</td>
+                        <td>{ad.imageAd?.totalStarsAllocated?(<p>{ad.imageAd?.totalStarsAllocated}</p>):(ad?.videoAd?.totalStarsAllocated?(<p>{ad.videoAd?.totalStarsAllocated}</p>):null)}</td>
+                        <td>{ad.imageAd?.createdAt?(<p>{ad.imageAd?.createdAt}</p>):(ad?.videoAd?.createdAt?(<p>{ad.videoAd?.createdAt}</p>):null)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -209,10 +208,10 @@ function AdminAds() {
                   <tbody>
                     {unverifiedAds.map((ad, index) => (
                       <tr key={index}>
-                        <td>{ad.imageAd?.createdAt || "No Title"}</td>
-                        <td>{ad.imageAd?.title || ""}</td>
-                        <td>{ad.imageAd?.userViewsNeeded || ""}</td>
-                        <td>&#8377; {ad.imageAd?.totalStarsAllocated || ""}</td>
+                        <td>{ad.imageAd?.createdAt?(<p>{ad.imageAd?.createdAt}</p>):(ad?.videoAd?.createdAt?(<p>{ad.videoAd?.createdAt}</p>):null)}</td>
+                        <td>{ad.imageAd?.title?(<p>{ad.imageAd?.title}</p>):(ad?.videoAd?.title?(<p>{ad.videoAd?.title}</p>):null)}</td>
+                        <td>{ad.imageAd?.userViewsNeeded?(<p>{ad.imageAd?.userViewsNeeded}</p>):(ad?.videoAd?.userViewsNeeded?(<p>{ad.videoAd?.userViewsNeeded}</p>):null)}</td>
+                        <td>{ad.imageAd?.totalStarsAllocated?(<p>{ad.imageAd?.totalStarsAllocated}</p>):(ad?.videoAd?.totalStarsAllocated?(<p>{ad.videoAd?.totalStarsAllocated}</p>):null)}</td>
 
                         <td>
                           <button

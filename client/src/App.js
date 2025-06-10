@@ -38,7 +38,7 @@ import AdForm from './pages/user/AdForm/AdForm'
 import UserReport from "./pages/user/ReportPage/ReportPageUser"
 import SurveyAds from "./pages/user/SurveyAds/Surveyads"
 import AdsPreview from "./pages/user/AdPreview/Adpreview"
-
+import VideoAdForm from './pages/user/VideoAdForm/VideoAdForm';
 
 
 import SuperadminDash from './pages/superadmin/Dashboard/SuperadminDash';
@@ -124,6 +124,8 @@ function App() {
           <Route path='/kycverification' element={<KycVerification />} />
           <Route path='/templateEditor' element={<TemplateEditor />} />
           <Route path='/adform/:id' element={<AdForm />} />
+          <Route path='/videoform/:id' element={<VideoAdForm />} />
+
           <Route path='/adreportuser' element={<UserReport />} />
           <Route path='/surveyaduser' element={<SurveyAds />} />
           <Route path='/adspreview/:id/:adId' element={<AdsPreview />} />
