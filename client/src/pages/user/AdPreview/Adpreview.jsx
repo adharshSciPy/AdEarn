@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import styles from "./AdPreview.module.css";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
@@ -15,7 +15,12 @@ function AdPreview() {
   const [showScratchModal, setShowScratchModal] = useState(false);
   const [scratchCompleted, setScratchCompleted] = useState(false);
 
-  // Fetch ad details immediately
+  // For video timer management
+  const videoTimerRef = useRef(null);
+  const [videoAdReady, setVideoAdReady] = useState(false);
+  const [videoLogicApplied, setVideoLogicApplied] = useState(false);
+
+  // Fetch ad details
   const getAddDetails = async () => {
     try {
       const response = await axios.get(
@@ -40,12 +45,27 @@ function AdPreview() {
     }
   };
 
-  // Show scratch card modal after 6 seconds
+  // Fetch ad on mount/ad change
   useEffect(() => {
     getAddDetails();
-    const timer = setTimeout(() => setShowScratchModal(true), 6000);
-    return () => clearTimeout(timer);
+    setShowScratchModal(false);
+    setScratchCompleted(false);
+    setVideoLogicApplied(false);
+    setVideoAdReady(false);
+    if (videoTimerRef.current) {
+      clearTimeout(videoTimerRef.current);
+      videoTimerRef.current = null;
+    }
   }, [adId, id]);
+
+  // Show scratch card for image ad after 6 seconds
+  useEffect(() => {
+    if (!unverifiedAd) return;
+    if (unverifiedAd.imageAd?.imageUrl) {
+      const timer = setTimeout(() => setShowScratchModal(true), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [unverifiedAd]);
 
   // Handler after scratch card is completed
   const handleScratchComplete = async () => {
@@ -57,7 +77,50 @@ function AdPreview() {
   const handleModalClose = () => {
     setShowScratchModal(false);
     setScratchCompleted(false);
+    setVideoLogicApplied(false);
+    setVideoAdReady(false);
+    if (videoTimerRef.current) {
+      clearTimeout(videoTimerRef.current);
+      videoTimerRef.current = null;
+    }
   };
+
+  // VIDEO LOGIC
+  const handleVideoLoaded = (e) => {
+    setVideoAdReady(true);
+  };
+
+  const handleVideoPlay = (e) => {
+    if (!videoAdReady || videoLogicApplied) return;
+    const video = e.target;
+    const duration = video.duration;
+    // Apply only once per ad view
+    setVideoLogicApplied(true);
+    // If duration >= 30s, show scratch after 30s of playing
+    if (duration >= 30) {
+      videoTimerRef.current = setTimeout(() => {
+        setShowScratchModal(true);
+      }, 30000);
+    }
+    // If <30s, wait for onEnded to show scratch card
+    // (handled in handleVideoEnded)
+  };
+
+  const handleVideoEnded = (e) => {
+    const video = e.target;
+    if (video.duration < 30) {
+      setShowScratchModal(true);
+    }
+  };
+
+  // On unmount/cleanup, clear timers
+  useEffect(() => {
+    return () => {
+      if (videoTimerRef.current) {
+        clearTimeout(videoTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className={styles.verifyadsmain}>
@@ -75,6 +138,9 @@ function AdPreview() {
                     className={styles.image}
                     src={`${baseUrl}${unverifiedAd.videoAd.videoUrl}`}
                     controls
+                    onLoadedMetadata={handleVideoLoaded}
+                    onPlay={handleVideoPlay}
+                    onEnded={handleVideoEnded}
                   />
                 ) : (
                   <img
@@ -116,7 +182,8 @@ function AdPreview() {
                       Total views
                     </div>
                     <div style={{ fontSize: 32, fontWeight: "bold" }}>
-                      {unverifiedAd?.imageAd?.userViewsNeeded}
+                      {unverifiedAd?.imageAd?.userViewsNeeded ??
+                        unverifiedAd?.videoAd?.userViewsNeeded}
                     </div>
                   </div>
                 </div>
@@ -143,7 +210,7 @@ function AdPreview() {
                       <p>Total stars</p>
                     </div>
                     <div>
-                       {unverifiedAd?.imageAd?.totalStarsAllocated ? (
+                      {unverifiedAd?.imageAd?.totalStarsAllocated ? (
                         <p>{unverifiedAd?.imageAd?.totalStarsAllocated}</p>
                       ) : unverifiedAd?.videoAd?.totalStarsAllocated ? (
                         <p>{unverifiedAd?.videoAd?.totalStarsAllocated}</p>
@@ -157,18 +224,17 @@ function AdPreview() {
                     <div>
                       {unverifiedAd?.imageAd?.createdAt ? (
                         <p>
-                        {new Date(
-                          unverifiedAd?.imageAd?.createdAt
-                        ).toLocaleDateString()}
-                      </p>
+                          {new Date(
+                            unverifiedAd?.imageAd?.createdAt
+                          ).toLocaleDateString()}
+                        </p>
                       ) : unverifiedAd?.videoAd?.createdAt ? (
-                       <p>
-                        {new Date(
-                          unverifiedAd?.videoAd?.createdAt
-                        ).toLocaleDateString()}
-                      </p>
+                        <p>
+                          {new Date(
+                            unverifiedAd?.videoAd?.createdAt
+                          ).toLocaleDateString()}
+                        </p>
                       ) : null}
-                      
                     </div>
                   </div>
                 </div>
@@ -181,7 +247,7 @@ function AdPreview() {
                     <h1>Ad Heading</h1>
                   </div>
                   <div>
-                     {unverifiedAd?.imageAd?.title ? (
+                    {unverifiedAd?.imageAd?.title ? (
                       <p>{unverifiedAd?.imageAd?.title}</p>
                     ) : unverifiedAd?.videoAd?.title ? (
                       <p>{unverifiedAd?.videoAd?.title}</p>
