@@ -18,108 +18,117 @@ const surveyAdSchema = new mongoose.Schema({
       },
     },
   ],
-userViewsNeeded: {
-  type: Number,
-  required: true,
-},
-isViewsReached: {
-      type: Boolean,
-      default: false,
+  userViewsNeeded: {
+    type: Number,
+    required: true,
+  },
+  isViewsReached: {
+    type: Boolean,
+    default: false,
+  },
+  isAdVisible: {
+    type: Boolean,
+    default: true,
+  },
+  isAdVerified: {
+    type: Boolean,
+    default: false,
+  },
+  // Added ad rejection fields
+  isAdRejected: {
+    type: Boolean,
+    default: false
+  },
+  adRejectionReason: { 
+    type: String 
+  },
+  adRejectedTime: {
+    type: Date
+  },
+  adVerifiedTime: {
+    type: Date,
+  },
+  adExpirationTime: {
+    type: Date,
+  },
+  adPeriod: {
+    type: Number,
+  },
+  adRepetition: {
+    type: Boolean,
+    default: false
+  },
+  adRepeatSchedule: [
+    {
+      userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      viewsRepatitionCount: {
+        type: Number,
+        default: 0,
+      },
+      nextScheduledAt: {
+        type: Date,
+      },
     },
-    // boolean state to check to display ads to user .(only if isViewsReached : false&&isAdsVisible :true &&isAdsVerified:true)
-    isAdVisible: {
-      type: Boolean,
-      default: true,
+  ],
+  totalStarsAllocated: {
+    type: Number,
+    required: true,
+  },
+  starPayoutPlan: {
+    type: [Number],
+    default: [],
+  },
+  // Added audioUrl field for consistency
+  audioUrl: {
+    type: String,
+    required: false,
+  },
+  viewersRewarded: [
+    {
+      userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      starsGiven: Number,
     },
-    adVerifiedTime: {
-      type: Date,
-      // required:true
-    },
-    adExpirationTime: {
-      type: Date,
-      // required:true
-    },
-    adPeriod: {
-      type: Number,
-      // required: true,
-    },
-    adRepetition: {
-      type: Boolean,
-      default:false
-    },
-    adRepeatSchedule: [
-      {
-        userId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
+  ],
+  targetRegions: [
+    {
+      location: {
+        type: {
+          type: String,
+          enum: ['Point'],
+          default: 'Point',
         },
-        viewsRepatitionCount: {
-          type: Number,
-          default: 0,
-        },
-        nextScheduledAt: {
-          type: Date,
+        coordinates: {
+          type: [Number], // [lng, lat]
+          required: true,
         },
       },
-    ],
-totalStarsAllocated: {
-  type: Number,
-  required: true,
-},
-starPayoutPlan: {
-  type: [Number],
-  default: [],
-},
-adPeriod: {
-  type: Number,
-},
-adRepetition: {
-  type: Boolean,
-  default: false,
-},
-viewersRewarded: [
-      {
-        userId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-        },
-        starsGiven: Number,
-      },
-    ],
-targetRegions: [
-  {
-    location: {
-      type: {
-        type: String,
-        enum: ['Point'],
-        default: 'Point',
-      },
-      coordinates: {
-        type: [Number], // [lng, lat]
+      radius: {
+        type: Number,
         required: true,
       },
-    },
-    radius: {
-      type: Number,
-      required: true,
-    },
-  }
-],
+    }
+  ],
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: false,
   },
-  targetStates:[
-      {
-        type:String
-      }
-    ],
-    targetDistricts:[
-      {
-        type:String
-      }
-    ]
+  targetStates: [
+    {
+      type: String
+    }
+  ],
+  targetDistricts: [
+    {
+      type: String
+    }
+  ]
 }, { timestamps: true });
 
 surveyAdSchema.index({ 'targetRegions.location': '2dsphere' });
