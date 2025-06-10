@@ -1,15 +1,17 @@
 import { React, useState } from "react";
 import logo from "../../../assets/Logo.png";
 import styles from "./form2.module.css";
+import axios from 'axios'
+import baseUrl from "../../../baseurl";
 
 function Form2() {
   const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    gender: "",
-    fieldOfInterest: "",
-    subCategory: "",
-    
+    fieldOfIntrest: "",
+    subcategory: "",
+    highestEducation: "",
+    profession: "",
+    employedIn: ""
+
   });
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -98,7 +100,7 @@ function Form2() {
       "ResumeBuilding",
       "Internships",
     ],
-    MobilePhones:[
+    MobilePhones: [
       "Android",
       "iOS",
       "MobileReviews",
@@ -128,29 +130,36 @@ function Form2() {
       "BusinessNews",
       "ProductManageme",
     ],
-    Travel:[
-        "DomesticDestinations",
-        "InternationalTrips",
-        "TravelTips",
-        "AdventureTravel",
-        "Hotels&Stays",
-        "Food&Culture",
-        "BudgetTravel",
-        "TravelVlogs"
+    Travel: [
+      "DomesticDestinations",
+      "InternationalTrips",
+      "TravelTips",
+      "AdventureTravel",
+      "Hotels&Stays",
+      "Food&Culture",
+      "BudgetTravel",
+      "TravelVlogs"
     ]
   };
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log("Submitted:", form);
+    const userId = '683edc32b29c143dd749401d'
+    try {
+      const response = await axios.patch(`${baseUrl}/api/v1/user/update/${userId}`, form)
+      if (response.status === 200) {
+        console.log("Submitted Successfully")
+        console.log("form 2", response)
+      }
+    } catch (error) {
+      console.log(error)
+    }
     setForm({
-      firstName: "",
-      lastName: "",
-      gender: "",
-      state: "",
-      city: "",
-      pincode: "",
-      location: "",
+      fieldOfIntrest: "",
+      subcategory: "",
+      highestEducation: "",
+      profession: "",
+      employedIn: ""
     });
   };
   const renderOptionButtons = (options, selectedOption, setSelectedOption) =>
@@ -158,9 +167,8 @@ function Form2() {
       <button
         key={option}
         type="button"
-        className={`${styles.optionSingleButton} ${
-          selectedOption === option ? styles.selected : ""
-        }`}
+        className={`${styles.optionSingleButton} ${selectedOption === option ? styles.selected : ""
+          }`}
         onClick={() => setSelectedOption(option)}
       >
         {option}
@@ -200,9 +208,9 @@ function Form2() {
                           <select
                             className={styles.input}
                             required
-                            value={form.fieldOfInterest || ""}
+                            value={form.fieldOfIntrest || ""}
                             onChange={handleChange}
-                            name="fieldOfInterest"
+                            name="fieldOfIntrest"
                           >
                             <option>Select Your option</option>
                             <option value="Entertainment">Entertainment</option>
@@ -232,13 +240,13 @@ function Form2() {
                         <select
                           className={styles.input}
                           required
-                          name="subCategory"
-                          value={form.subCategory}
+                          name="subcategory"
+                          value={form.subcategory}
                           onChange={handleChange}
                           style={{ marginBottom: "10px" }}
                         >
                           <option value="">Select Sub Category</option>
-                          {(subCategoryList[form.fieldOfInterest] || []).map(
+                          {(subCategoryList[form.fieldOfIntrest] || []).map(
                             (subCategory) => (
                               <option key={subCategory} value={subCategory}>
                                 {subCategory}
@@ -248,31 +256,45 @@ function Form2() {
                         </select>
                       </div>
                       <div>
-                        <label htmlFor="pincode" className={styles.label}>
-                          Pincode
+                        <label htmlFor="highestEducation" className={styles.label}>
+                          Education
                         </label>
                         <input
                           style={{ marginBottom: "10px" }}
                           id="pincode"
-                          name="pincode"
-                          placeholder="pincode"
+                          name="highestEducation"
+                          placeholder="Education"
                           required
                           className={styles.input}
-                          value={form.pincode}
+                          value={form.highestEducation}
                           onChange={handleChange}
                         />
                       </div>
                       <div>
-                        <label htmlFor="location" className={styles.label}>
-                          Location
+                        <label htmlFor="profession" className={styles.label}>
+                          Profession
                         </label>
                         <input
                           id="location"
-                          name="location"
-                          placeholder="location"
+                          name="profession"
+                          placeholder="profession"
                           required
                           className={styles.input}
-                          value={form.location}
+                          value={form.profession}
+                          onChange={handleChange}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="employedIn" className={styles.label}>
+                          Employed In
+                        </label>
+                        <input
+                          id="location"
+                          name="employedIn"
+                          placeholder="employedIn"
+                          required
+                          className={styles.input}
+                          value={form.employedIn}
                           onChange={handleChange}
                         />
                       </div>
