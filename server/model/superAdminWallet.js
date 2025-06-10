@@ -163,7 +163,14 @@ const userEntrySchema = new Schema(
   },
   { _id: false }
 );
-
+const deletedUserStarsSchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
+    starsTransferred: { type: Number, required: true },
+    timestamp: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
 const contestEntryWalletSchema = new Schema(
   {
     totalReceived: { type: Number, default: 0 },
@@ -194,6 +201,7 @@ const superAdminWalletSchema = new Schema(
     },
     transactions: [transactionSchemaSA],
     expiredCouponRefunds: [expiredCouponRefundSchema],
+     deletedUserStars: [deletedUserStarsSchema],
     welcomeBonusWallet: welcomeBonusWalletSchema,
 
     // ✅ New fields below
