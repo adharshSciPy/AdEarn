@@ -3,6 +3,8 @@ import { VideoAd } from "../model/videoadModel.js";
 import { SurveyAd } from "../model/surveyadModel.js";
 import User from "../model/userModel.js";
 import { Ad } from "../model/AdsModel.js";
+import mongoose from 'mongoose';
+
 // function generateStarPayoutPlan(views, totalStars) {
 //   const payout = Array(views).fill(0);
 //   const weights = [5, 4, 3, 2, 1];
@@ -1253,18 +1255,31 @@ const fetchVerifiedSurveyAd = async (req, res) => {
 
 // to watch ads,star split,view count
 const viewAd = async (req, res) => {
-  const {id,adId} = req.params;
+  const { id, adId } = req.params;
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
   try {
-    const user = await User.findById(id).populate("userWalletDetails");
-    if (!user) return res.status(400).json({ message: "User not found" });
+    // Fetch user with session
+    const user = await User.findById(id)
+      .populate("userWalletDetails")
+      .session(session);
+    if (!user) {
+      await session.abortTransaction();
+      return res.status(400).json({ message: "User not found" });
+    }
 
+    // Fetch ad with all references and session
     const ad = await Ad.findById(adId)
       .populate("imgAdRef")
       .populate("videoAdRef")
-      .populate("surveyAdRef");
+      .populate("surveyAdRef")
+      .session(session);
 
-    if (!ad) return res.status(404).json({ message: "Ad not found" });
+    if (!ad) {
+      await session.abortTransaction();
+      return res.status(404).json({ message: "Ad not found" });
+    }
 
     // Identify which ad type it is
     const adTypes = [
@@ -1277,14 +1292,17 @@ const viewAd = async (req, res) => {
     const adType = adTypes.find(({ ref }) => ref && ref.isAdVerified)?.type;
 
     if (!adObj) {
-      return res.status(403).json({ message: "Ad is not verified or not found in any category" });
+      await session.abortTransaction();
+      return res.status(403).json({ 
+        message: "Ad is not verified or not found in any category" 
+      });
     }
 
     const now = new Date();
 
     // Check if user already rewarded
     const previouslyRewarded = adObj.viewersRewarded.find(
-      (entry) => entry.id.toString() === id
+      (entry) => entry.userId.toString() === id
     );
 
     const userRepeat = adObj.adRepeatSchedule.find(
@@ -1293,22 +1311,27 @@ const viewAd = async (req, res) => {
 
     // If repetition is off and user already viewed
     if (!adObj.adRepetition && previouslyRewarded) {
-      return res.status(409).json({ message: "User has already viewed this ad" });
+      await session.abortTransaction();
+      return res.status(409).json({ 
+        message: "User has already viewed this ad" 
+      });
     }
 
     // If repetition is on but time not reached
-    if (adObj.adRepetition) {
-      if (userRepeat && userRepeat.nextScheduledAt > now) {
-        const waitTime = (userRepeat.nextScheduledAt - now) / 1000 / 60;
-        return res.status(429).json({
-          message: `Ad will be available again in ${Math.ceil(waitTime)} minute(s)`,
-        });
-      }
+    if (adObj.adRepetition && userRepeat && userRepeat.nextScheduledAt > now) {
+      await session.abortTransaction();
+      const waitTime = (userRepeat.nextScheduledAt - now) / 1000 / 60;
+      return res.status(429).json({
+        message: `Ad will be available again in ${Math.ceil(waitTime)} minute(s)`,
+      });
     }
 
     // If no rewards left
     if (adObj.starPayoutPlan.length === 0) {
-      return res.status(410).json({ message: "All rewards have been claimed" });
+      await session.abortTransaction();
+      return res.status(410).json({ 
+        message: "All rewards have been claimed" 
+      });
     }
 
     // Reward the user
@@ -1322,6 +1345,7 @@ const viewAd = async (req, res) => {
     adObj.viewersRewarded.push({
       userId: user._id,
       starsGiven: starsToGive,
+      rewardedAt: now,
     });
 
     if (adObj.adRepetition) {
@@ -1340,25 +1364,35 @@ const viewAd = async (req, res) => {
 
     const wallet = user.userWalletDetails;
     if (!wallet) {
-      return res.status(500).json({ message: "User wallet not found" });
+      await session.abortTransaction();
+      return res.status(500).json({ 
+        message: "User wallet not found" 
+      });
     }
 
     wallet.totalStars += starsToGive;
-wallet.adWatchStars += starsToGive;
+    wallet.adWatchStars += starsToGive;
+    wallet.lastUpdated = now;
 
-
-   const alreadyViewed = user.viewedAds.some(
+    const alreadyViewed = user.viewedAds.some(
       (entry) => entry.adId.toString() === ad._id.toString()
     );
 
     if (!alreadyViewed) {
       user.viewedAds.push({
         adId: ad._id,
-        viewedAt: new Date(),
+        viewedAt: now,
       });
     }
 
-    await Promise.all([adObj.save(), wallet.save(), user.save()]);
+    // Save all changes within the transaction
+    await Promise.all([
+      adObj.save({ session }),
+      wallet.save({ session }),
+      user.save({ session }),
+    ]);
+
+    await session.commitTransaction();
 
     return res.status(200).json({
       message: `${adType} Ad viewed successfully and stars rewarded`,
@@ -1366,16 +1400,40 @@ wallet.adWatchStars += starsToGive;
       currentViewCount: adObj.totalViewCount,
       remainingPayouts: adObj.starPayoutPlan.length,
       isViewsReached: adObj.isViewsReached,
+      nextAvailableAt: adObj.adRepetition 
+        ? new Date(now.getTime() + adObj.adPeriod * 60 * 60 * 1000).toISOString()
+        : null,
     });
 
   } catch (error) {
+    await session.abortTransaction();
+    
     console.error("Error viewing ad:", error);
+    
+    if (error.name === 'VersionError') {
+      return res.status(409).json({
+        message: "The ad was modified by another operation. Please try again.",
+        code: "VERSION_CONFLICT",
+      });
+    }
+    
+    if (error.name === 'DocumentNotFoundError') {
+      return res.status(404).json({
+        message: "The ad or user was not found. It may have been deleted.",
+        code: "DOCUMENT_NOT_FOUND",
+      });
+    }
+
     return res.status(500).json({
       message: "Error viewing ad",
       error: error.message,
+      code: "INTERNAL_SERVER_ERROR",
     });
+  } finally {
+    session.endSession();
   }
 };
+
 
 // 
 

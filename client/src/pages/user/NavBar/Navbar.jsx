@@ -6,13 +6,17 @@ import market from "../../../assets/marketing.png";
 import home from "../../../assets/home.png";
 import profile from "../../../assets/cardbackground.jpg";
 import navIcon from "../../../assets/navIcon.svg";
+import { useNavigate } from "react-router-dom";
+import baseUrl from "../../../baseurl";
+
+
 
 function Navbar() {
   const [activeTab, setActiveTab] = useState("home");
-
+  const navigate=useNavigate()
   const navItems = [
     { icon: home, label: "home" },
-    { icon: wallet, label: "wallet" },
+    { icon: wallet, label: "/walletpage" },
     { icon: market, label: "market1" },
     { icon: market, label: "market2" },
     { icon: market, label: "market3" },
@@ -21,6 +25,7 @@ function Navbar() {
 
   const handleBottomNavClick = (label) => {
     setActiveTab(label);
+    navigate(`${label}`)
     console.log(`Clicked: ${label}`);
     // You can navigate using React Router here if needed
   };
@@ -37,7 +42,9 @@ function Navbar() {
 
           <div className={styles.iconsContainer}>
             {navItems.map((item, index) => (
-              <div className={styles.iconContainer} key={index}>
+              <div className={styles.iconContainer} key={index} onClick={()=>{handleBottomNavClick(item.label)}}
+              
+              >
                 <img src={item.icon} alt={item.label} />
               </div>
             ))}
