@@ -17,31 +17,42 @@ function UserHome() {
 
   const getImageAdData = async () => {
   try {
-    const getPosition = () =>
-      new Promise((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject)
-      );
+    let lat = null;
+    let lng = null;
 
-    const position = await getPosition();
-    const lat = position.coords.latitude;
-    const lng = position.coords.longitude;
-    console.log("post",position);
-     // or get it from context/state
+    // Try to get location if permitted
+    try {
+      const getPosition = () =>
+        new Promise((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject)
+        );
+      const position = await getPosition();
+      lat = position.coords.latitude;
+      lng = position.coords.longitude;
+    } catch (locationError) {
+      console.log("Location access denied or failed:", locationError.message);
+      // Proceed without lat/lng
+    }
 
-    const response = await axios.get(
-      `${baseUrl}/api/v1/ads/image-ads/${id}?lat=${lat}&lng=${lng}`
-    );
+    // Build URL conditionally
+    let url = `${baseUrl}/api/v1/ads/image-ads/${id}`;
+    if (lat && lng) {
+      url += `?lat=${lat}&lng=${lng}`;
+    }
 
-    setImageAd(response.data.ads);
+    const response = await axios.get(url);
+    console.log("url",url);
     
+    setImageAd(response.data.ads);
   } catch (error) {
     if (error.response) {
       console.log("API error:", error.response.data.message);
     } else {
-      console.log("Error getting location or data:", error.message);
+      console.log("Error fetching ad data:", error.message);
     }
   }
 };
+
 
 
   const getVideoAdData = async () => {
@@ -102,7 +113,7 @@ function UserHome() {
                 <h2>Image Ads</h2>
               </div>
               <div className={styles.adcontainerSub}>
-                {imageAdData.slice(0, 4).map((item, index) => (
+                {imageAdData.slice(0,4).map((item, index) => (
                   <div
                     className={styles.adCard}
                     key={index}

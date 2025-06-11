@@ -876,6 +876,39 @@ const fetchAllMyAds = async (req, res) => {
   }
 };
 
+// to display single ad posted by the user 
+const fetchMySingleAd = async (req, res) => {
+  const { userId, adId } = req.params;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if adId belongs to the user
+    if (!user.ads.includes(adId)) {
+      return res.status(403).json({ message: "Unauthorized to view this ad" });
+    }
+
+    const ad = await Ad.findById(adId)
+      .populate("imgAdRef")
+      .populate("videoAdRef")
+      .populate("surveyAdRef");
+
+    if (!ad) {
+      return res.status(404).json({ message: "Ad not found" });
+    }
+
+    return res.status(200).json({
+      message: "Ad fetched successfully",
+      ad
+    });
+  } catch (error) {
+    console.error("Error fetching single ad:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
 
 export {
@@ -890,5 +923,6 @@ export {
   getViewedAds,
   redeemCoupon,
   fetchUserWallet,
-  fetchAllMyAds
+  fetchAllMyAds,
+  fetchMySingleAd
 };

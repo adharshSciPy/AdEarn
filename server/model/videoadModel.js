@@ -131,10 +131,15 @@ const videoAd = new mongoose.Schema(
       }
     ],
     // Added audioUrl field to match ImageAd schema
-    audioUrl: {
-      type: String,
-      required: false,
-    },
+    // audioUrl: {
+    //   type: String,
+    //   required: false,
+    // },
+    // user can turn on and off ads after admin verified
+        isAdOn: {
+          type: Boolean,
+          default: true,
+        },
   },
   { timestamps: true }
 );

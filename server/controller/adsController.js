@@ -974,7 +974,7 @@ const fetchVerifiedImgAd = async (req, res) => {
 };
 
 // to fetch verified imageAd based on repation if any periodic fetchng and only if the view count is not reached
-const fetchVerifiedVideoAd = async (req, res) => {
+const fetchVerifiedVideoAd = async (req, res) => {  
   try {
     const { userId } = req.params;
     const userLat = parseFloat(req.query.lat);
@@ -1074,6 +1074,7 @@ const fetchVerifiedVideoAd = async (req, res) => {
       const adIsActive =
         videoAd.isAdVerified &&
         videoAd.isAdVisible &&
+        videoAd.isAdOn &&
         videoAd.totalViewCount < videoAd.userViewsNeeded &&
         (!videoAd.adExpirationTime || videoAd.adExpirationTime > currentDate);
 
@@ -1240,6 +1241,7 @@ const fetchVerifiedSurveyAd = async (req, res) => {
       const adIsActive =
         surveyAd.isAdVerified &&
         surveyAd.isAdVisible &&
+        surveyAd.isAdOn &&
         surveyAd.totalResponses < surveyAd.responseLimit &&
         (!surveyAd.adExpirationTime || surveyAd.adExpirationTime > currentDate);
 
