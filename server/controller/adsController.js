@@ -1525,6 +1525,91 @@ const toggleAds = async (req, res) => {
     return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+// to edit imageAds
+ const editImageAd = async (req, res) => {
+  const { adId } = req.params;
+  const {
+    title,
+    description,
+    adPeriod,
+    locations,
+    states,
+    districts,
+  } = req.body;
+
+  try {
+    const imageAd = await ImageAd.findById(adId);
+    if (!imageAd) {
+      return res.status(404).json({ message: "Image ad not found" });
+    }
+
+    // Update editable fields
+    if (title) imageAd.title = title;
+    if (description) imageAd.description = description;
+    // if (userViewsNeeded) imageAd.userViewsNeeded = userViewsNeeded;
+    if (adPeriod) {
+      const parsedAdPeriod = parseFloat(adPeriod);
+      imageAd.adPeriod = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0 ? parsedAdPeriod : 0;
+      imageAd.adRepetition = parsedAdPeriod > 0;
+    }
+
+    // Update targeting info
+    try {
+      let parsedLocations = typeof locations === "string" ? JSON.parse(locations) : locations;
+      if (Array.isArray(parsedLocations)) {
+        const targetRegions = [];
+
+        for (const loc of parsedLocations) {
+          if (!loc.coords || !loc.radius) continue;
+
+          const [latStr, lngStr] = loc.coords.split(",");
+          const latitude = parseFloat(latStr);
+          const longitude = parseFloat(lngStr);
+          const radius = parseFloat(loc.radius);
+
+          if (!isNaN(latitude) && !isNaN(longitude) && !isNaN(radius)) {
+            targetRegions.push({
+              location: {
+                type: "Point",
+                coordinates: [latitude, longitude],
+              },
+              radius,
+            });
+          }
+        }
+
+        imageAd.targetRegions = targetRegions;
+      }
+
+      const parsedStates = typeof states === "string" ? JSON.parse(states) : states;
+      if (Array.isArray(parsedStates)) {
+        imageAd.targetStates = parsedStates;
+      }
+
+      const parsedDistricts = typeof districts === "string" ? JSON.parse(districts) : districts;
+      if (Array.isArray(parsedDistricts)) {
+        imageAd.targetDistricts = parsedDistricts;
+      }
+    } catch (err) {
+      return res.status(400).json({ message: "Invalid location format", error: err.message });
+    }
+
+    // Toggle isAdVerified to false if it was true
+    if (imageAd.isAdVerified === true) {
+      imageAd.isAdVerified = false;
+    }
+
+    await imageAd.save();
+
+    return res.status(200).json({
+      message: "Image Ad updated successfully.Ad is sent to admin for verification",
+      updatedAd: imageAd,
+    });
+  } catch (error) {
+    console.error("Error updating image ad:", error);
+    return res.status(500).json({ message: "Failed to update ad", error: error.message });
+  }
+};
 
 
 export {
@@ -1540,4 +1625,5 @@ export {
   fetchVerifiedSurveyAd,
   viewAd,
   toggleAds,
+  editImageAd
 };
