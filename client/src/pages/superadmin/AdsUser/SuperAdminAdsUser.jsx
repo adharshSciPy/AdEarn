@@ -99,9 +99,9 @@ function SuperAdminAdsUser() {
     setIsModalVisible(false);
     try {
       const userId = selectedUser._id;
-      
+
       const response = await axios.post(`${baseUrl}/api/v1/super-admin/toggle-user-status`, {
-        id: { userId }
+        id: userId
       });
 
       const updatedUser = response.data.user;
@@ -155,14 +155,14 @@ function SuperAdminAdsUser() {
 
   const handleDelete = async () => {
     try {
-      
+
       const userId = userToDelete
       console.log("idzaaid", userId)
-      const response=await axios.delete(`${baseUrl}/api/v1/super-admin/delete-user`,{
+      const response = await axios.delete(`${baseUrl}/api/v1/super-admin/delete-user`, {
         data: { id: userId }
       })
       console.log(response);
-      
+
       const updatedUsers = allUsers.filter((u) => u._id !== userId);
       setAllUsers(updatedUsers);
       setIsDeleteModalVisible(false);
