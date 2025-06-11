@@ -851,21 +851,31 @@ const fetchAllMyAds = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const user = await User.findById(userId).populate("ads"); 
-
+  
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const userAds = user.ads;
-    // console.log("ads", userAds);
+    // 2. Fetch all Ads that belong to the user and populate references
+    const userAds = await Ad.find({ _id: { $in: user.ads } })
+      .populate("imgAdRef")
+      .populate("videoAdRef")
+      .populate("surveyAdRef");
 
-    return res.status(200).json({ ads: userAds });
+    return res.status(200).json({
+      message: "Ads fetched successfully",
+      data: {
+        count: userAds.length,
+        ads: userAds
+      }
+    });
   } catch (error) {
     console.error("Error fetching user ads:", error);
     return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 
 export {
