@@ -846,6 +846,26 @@ return res.status(400).json({message:"User Not Found"})
     return res.status(500).json({ message: "Server error", error: error.message });
 }
 }
+// to display the ads posted by the user...
+const fetchAllMyAds = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await User.findById(userId).populate("ads"); 
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const userAds = user.ads;
+    // console.log("ads", userAds);
+
+    return res.status(200).json({ ads: userAds });
+  } catch (error) {
+    console.error("Error fetching user ads:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
 
 export {
@@ -859,5 +879,6 @@ export {
   starBuy,
   getViewedAds,
   redeemCoupon,
-  fetchUserWallet
+  fetchUserWallet,
+  fetchAllMyAds
 };
