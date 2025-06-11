@@ -1,4 +1,4 @@
-import { React, useState } from "react";
+import { React, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import styles from "./adsmanager.module.css";
 import edit from "../../../assets/edit.png";
@@ -7,43 +7,53 @@ import report from "../../../assets/report.png";
 import Delete from "../../../assets/delete.png";
 import generatePdf from "../Pdfgenerator/PdfGenerator"
 import Navbar from "../NavBar/Navbar";
+import axios from "axios"
+import baseUrl from "../../../baseurl";
+import { useSelector } from "react-redux";
 
 function Adsmanager() {
   const [toggleStates, setToggleStates] = useState({});
-  const handleToggle = (id) => {
+  const [userads, setUserads] = useState([])
+  const userId = useSelector((state) => state.user.id)
+
+
+  const handleToggle = async (adId) => {
+    try {
+      console.log("rowid", adId)
+      const response = await axios.post(`${baseUrl}/api/v1/ads/toggle-ad`, { adId })
+      console.log("response", response)
+    } catch (error) {
+      console.log(error)
+    }
+
     setToggleStates((prevState) => ({
       ...prevState,
-      [id]: !prevState[id],
+      [adId]: !prevState[adId],
     }));
   };
 
-  const tableData = [
-    {
-      id: 1,
-      name: "John Doe",
-      age: 28,
-      email: "videoAd",
-      phone: "100",
-      address: "2000",
-      city: "New York",
-      state: "300",
-      country: "ongoing",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      age: 32,
-      email: "Imagead",
-      phone: "1000",
-      address: "2500",
-      city: "Los Angeles",
-      state: "200",
-      country: "outgoing",
-    },
-  ];
+
+  useEffect(() => {
+    const fetchAds = async () => {
+      try {
+        console.log("id store", userId)
+        const response = await axios.get(`${baseUrl}/api/v1/user/my-all-ads/${userId}`)
+        setUserads(response.data.data.ads)
+        console.log("resres", response)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    fetchAds()
+  }, [])
+
+
+
+
   return (
     <div>
-      <Navbar/>
+      <Navbar />
       <div className={styles.mainContainer}>
         <div className={styles.homeMainContainer}>
           {/* <Sidebar/> */}
@@ -138,91 +148,74 @@ function Adsmanager() {
                       </tr>
                     </thead>
                     <tbody>
-                      {tableData.map((row) => (
-                        <tr key={row.id}>
-                          <td>
-                            <input type="checkbox" className={styles.tick} />
-                          </td>
-                          <td className={styles.tdBorder}>
-                            <div
-                              className={`${styles.switchContainer} ${
-                                toggleStates[row.id] ? styles.on : ""
-                              }`}
-                              onClick={() => handleToggle(row.id)}
-                            >
+                      {userads.map((row) => {
+                        // Detect ad type and title from dynamic reference
+                        let adType = "Unknown";
+                        let adTitle = "Untitled";
+                        let totalReach = "Unknown";
+                        let totalViews = "Unknown"
+
+                        if (row.imgAdRef) {
+                          adType = "Image Ad";
+                          adTitle = row.imgAdRef.title || "Untitled";
+                          totalReach = row.imgAdRef.userViewsNeeded || "Unknown";
+                          totalViews = row.imgAdRef.totalViewCount || "0";
+                        } else if (row.videoAdRef) {
+                          adType = "Video Ad";
+                          adTitle = row.videoAdRef.title || "Untitled";
+                          totalReach = row.videoAdRef.userViewsNeeded || "Unknown"
+                          totalViews = row.videoAdRef.totalViewCount || "0";
+                        } else if (row.surveyAdRef) {
+                          adType = "Survey Ad";
+                          adTitle = row.surveyAdRef.title || "Untitled";
+                          totalReach = row.surveyAdRef.userViewsNeeded || "Unknown"
+                          totalViews = row.surveyAdRef.totalViewCount || "0";
+                        }
+
+                        return (
+                          <tr key={row._id}>
+                            <td>
+                              <input type="checkbox" className={styles.tick} />
+                            </td>
+                            <td className={styles.tdBorder}>
                               <div
-                                className={`${styles.switchButton} ${
-                                  toggleStates[row.id] ? styles.on : ""
-                                }`}
-                              ></div>
-                            </div>
-                          </td>
-                          <td className={styles.tdBorder}>
-                            <div className={styles.tdMainContainer}>
-                              <div className={styles.topTd}>
-                                <p>{row.name}</p>
-                                <button
-                                  style={{ display: "flex" }}
-                                  className={styles.tdButton}
-                                >
-                                  <span
-                                    style={{
-                                      height: "12px",
-                                      width: "10px",
-                                      marginLeft: "5px",
-                                    }}
-                                  >
-                                    <img
-                                      className={styles.img}
-                                      src={edit}
-                                      alt=""
-                                    />
-                                  </span>
-                                </button>
+                                className={`${styles.switchContainer} ${toggleStates[row._id] ? styles.on : ""
+                                  }`}
+                                onClick={() => handleToggle(row._id)}
+                              >
+                                <div
+                                  className={`${styles.switchButton} ${toggleStates[row._id] ? styles.on : ""
+                                    }`}
+                                ></div>
                               </div>
-                              <div className={styles.bottomTd}>
-                                <button className={styles.tdButton}>
-                                  <p>Duplicate</p>
-                                  <span
-                                    style={{
-                                      height: "12px",
-                                      width: "8px",
-                                      marginLeft: "5px",
-                                    }}
-                                  >
-                                    <img
-                                      className={styles.img}
-                                      src={Duplicate}
-                                      alt=""
-                                    />
-                                  </span>
-                                </button>
-                              </div>
-                            </div>
-                          </td>
-                          <td>{row.email}</td>
-                          <td>{row.phone}</td>
-                          <td>{row.address}</td>
-                          <td>
-                            <button
-                              className={styles.downloadLink}
-                              onClick={() => generatePdf(row)}
+                            </td>
+                            <td>{adTitle}</td>
+                            <td>{adType}</td>
+                            <td>{totalReach}</td>
+                            <td>{totalViews}</td>
+                            <td>
+                              <button
+                                className={styles.downloadLink}
+                                onClick={() => generatePdf(row)}
+                              >
+                                Download
+                              </button>
+                            </td>
+                            <td
+                              style={{
+                                color: row?.imgAdRef?.isAdVerified ? "green" : "red",
+                                fontWeight: "bold",
+                                textAlign: "center",
+                              }}
                             >
-                              Download
-                            </button>
-                          </td>
-                          <td
-                            style={{
-                              color: toggleStates[row.id] ? "green" : "red",
-                              fontWeight: "bold",
-                              textAlign: "center",
-                            }}
-                          >
-                            {toggleStates[row.id] ? "Ongoing" : "paused"}
-                          </td>
-                        </tr>
-                      ))}
+                              {row?.imgAdRef?.isAdVerified ? "Ongoing" : "Pending"}
+                            </td>
+
+                          </tr>
+                        );
+                      })}
                     </tbody>
+
                   </table>
                 </div>
               </div>
