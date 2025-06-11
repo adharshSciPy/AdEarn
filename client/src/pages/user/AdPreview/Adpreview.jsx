@@ -4,7 +4,7 @@ import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { Modal, Button } from "antd";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import baseUrl from "../../../baseurl";
 import ScratchCom from "./ScratchComponent/ScratchCom";
 
@@ -14,7 +14,7 @@ function AdPreview() {
   const [reward, setReward] = useState({});
   const [showScratchModal, setShowScratchModal] = useState(false);
   const [scratchCompleted, setScratchCompleted] = useState(false);
-
+  const navigate=useNavigate()
   // For video timer management
   const videoTimerRef = useRef(null);
   const [videoAdReady, setVideoAdReady] = useState(false);
@@ -75,6 +75,7 @@ function AdPreview() {
 
   // Close modal handler
   const handleModalClose = () => {
+    navigate(`/userhome/${id}`)
     setShowScratchModal(false);
     setScratchCompleted(false);
     setVideoLogicApplied(false);

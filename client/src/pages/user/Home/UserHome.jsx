@@ -110,7 +110,7 @@ function UserHome() {
                   </div>
                 ))}
                 <div className={styles.seeAllContainer}>
-                  <button>See All</button>
+                  <button onClick={()=> navigate("/ads/image")}>See All</button>
                 </div>
               </div>
             </div>
@@ -148,7 +148,7 @@ function UserHome() {
                   </div>
                 ))}
                 <div className={styles.seeAllContainer}>
-                  <button>See All</button>
+                  <button onClick={()=> navigate("/ads/video")}>See All</button>
                 </div>
               </div>
             </div>
@@ -182,7 +182,7 @@ function UserHome() {
                   </div>
                 ))}
                 <div className={styles.seeAllContainer}>
-                  <button>See All</button>
+                  <button onClick={()=> navigate("/ads/survey")}>See All</button>
                 </div>
               </div>
             </div>

@@ -1265,7 +1265,6 @@ const viewAd = async (req, res) => {
   session.startTransaction();
 
   try {
-    // Fetch user with session
     const user = await User.findById(id)
       .populate("userWalletDetails")
       .session(session);
@@ -1274,7 +1273,6 @@ const viewAd = async (req, res) => {
       return res.status(400).json({ message: "User not found" });
     }
 
-    // Fetch ad with all references and session
     const ad = await Ad.findById(adId)
       .populate("imgAdRef")
       .populate("videoAdRef")
@@ -1286,7 +1284,6 @@ const viewAd = async (req, res) => {
       return res.status(404).json({ message: "Ad not found" });
     }
 
-    // Identify which ad type it is
     const adTypes = [
       { ref: ad.imgAdRef, type: "Image" },
       { ref: ad.videoAdRef, type: "Video" },
@@ -1298,48 +1295,47 @@ const viewAd = async (req, res) => {
 
     if (!adObj) {
       await session.abortTransaction();
-      return res.status(403).json({ 
-        message: "Ad is not verified or not found in any category" 
+      return res.status(403).json({
+        message: "Ad is not verified or not found in any category"
       });
     }
 
     const now = new Date();
 
-    // Check if user already rewarded
     const previouslyRewarded = adObj.viewersRewarded.find(
       (entry) => entry.userId.toString() === id
     );
 
+    // Check for user's repeat schedule (latest, since we now ensure only one entry)
     const userRepeat = adObj.adRepeatSchedule.find(
-      (entry) => entry.id.toString() === id
+      (entry) => entry.userId.toString() === id
     );
 
-    // If repetition is off and user already viewed
+    // If repetition is off and user already rewarded
     if (!adObj.adRepetition && previouslyRewarded) {
       await session.abortTransaction();
-      return res.status(409).json({ 
-        message: "User has already viewed this ad" 
+      return res.status(409).json({
+        message: "User has already viewed this ad"
       });
     }
 
-    // If repetition is on but time not reached
+    // If repetition is on and the user is not yet eligible again
     if (adObj.adRepetition && userRepeat && userRepeat.nextScheduledAt > now) {
-      await session.abortTransaction();
       const waitTime = (userRepeat.nextScheduledAt - now) / 1000 / 60;
+      await session.abortTransaction();
       return res.status(429).json({
         message: `Ad will be available again in ${Math.ceil(waitTime)} minute(s)`,
       });
     }
 
-    // If no rewards left
     if (adObj.starPayoutPlan.length === 0) {
       await session.abortTransaction();
-      return res.status(410).json({ 
-        message: "All rewards have been claimed" 
+      return res.status(410).json({
+        message: "All rewards have been claimed"
       });
     }
 
-    // Reward the user
+    // Rewarding
     const starsToGive = adObj.starPayoutPlan.shift();
     adObj.totalViewCount += 1;
 
@@ -1355,9 +1351,14 @@ const viewAd = async (req, res) => {
 
     if (adObj.adRepetition) {
       const nextScheduledAt = new Date(now.getTime() + adObj.adPeriod * 60 * 60 * 1000);
-      if (userRepeat) {
-        userRepeat.viewsRepatitionCount += 1;
-        userRepeat.nextScheduledAt = nextScheduledAt;
+
+      const existingIndex = adObj.adRepeatSchedule.findIndex(
+        (entry) => entry.userId.toString() === user._id.toString()
+      );
+
+      if (existingIndex !== -1) {
+        adObj.adRepeatSchedule[existingIndex].viewsRepatitionCount += 1;
+        adObj.adRepeatSchedule[existingIndex].nextScheduledAt = nextScheduledAt;
       } else {
         adObj.adRepeatSchedule.push({
           userId: user._id,
@@ -1370,8 +1371,8 @@ const viewAd = async (req, res) => {
     const wallet = user.userWalletDetails;
     if (!wallet) {
       await session.abortTransaction();
-      return res.status(500).json({ 
-        message: "User wallet not found" 
+      return res.status(500).json({
+        message: "User wallet not found"
       });
     }
 
@@ -1390,7 +1391,6 @@ const viewAd = async (req, res) => {
       });
     }
 
-    // Save all changes within the transaction
     await Promise.all([
       adObj.save({ session }),
       wallet.save({ session }),
@@ -1405,23 +1405,23 @@ const viewAd = async (req, res) => {
       currentViewCount: adObj.totalViewCount,
       remainingPayouts: adObj.starPayoutPlan.length,
       isViewsReached: adObj.isViewsReached,
-      nextAvailableAt: adObj.adRepetition 
+      nextAvailableAt: adObj.adRepetition
         ? new Date(now.getTime() + adObj.adPeriod * 60 * 60 * 1000).toISOString()
         : null,
     });
 
   } catch (error) {
     await session.abortTransaction();
-    
+
     console.error("Error viewing ad:", error);
-    
+
     if (error.name === 'VersionError') {
       return res.status(409).json({
         message: "The ad was modified by another operation. Please try again.",
         code: "VERSION_CONFLICT",
       });
     }
-    
+
     if (error.name === 'DocumentNotFoundError') {
       return res.status(404).json({
         message: "The ad or user was not found. It may have been deleted.",
@@ -1438,6 +1438,7 @@ const viewAd = async (req, res) => {
     session.endSession();
   }
 };
+
 
 
 // 

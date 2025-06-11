@@ -1,5 +1,5 @@
 import  Router  from "express";
-import { addKyc, editUser, fetchUserWallet, getUserByUniqueId, getViewedAds, redeemCoupon, registerUser, starBuy, uploadProfilePicture, userLogin, userLogout, } from "../controller/userController.js";
+import { addKyc, editUser, fetchAllMyAds, fetchUserWallet, getUserByUniqueId, getViewedAds, redeemCoupon, registerUser, starBuy, uploadProfilePicture, userLogin, userLogout, } from "../controller/userController.js";
 import uploadUserImg from "../multer/userImgMulter.js";
 import userKyc from "../multer/kycVerificationMulter.js";
 import authMiddleware from "../auth/authMiddleware.js";
@@ -19,6 +19,7 @@ userRouter.route('/viewed-ads/:id').get(getViewedAds);
 userRouter.route('/redeem-coupon/:id').post(redeemCoupon);
 userRouter.route('/user-wallet/:id').get(fetchUserWallet);
 userRouter.route('/contest/register').post(registerUserToContest);
+userRouter.route('/my-all-ads/:userId').get(fetchAllMyAds)
 
 
 

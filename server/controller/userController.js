@@ -463,10 +463,10 @@ const addKyc = async (req, res) => {
     // Notify all admins
     const adminUsers = await Admin.find({ adminRole: ADMIN_ROLE });
     const message = `${user.firstName} ${user.lastName || ""} has submitted a KYC request.`;
-
+    const link=`/VerifyKYC/${user._id}`
     // ✅ Only use sendNotification (do NOT insert manually)
     const notifyAdmins = adminUsers.map((admin) =>
-      sendNotification(admin._id, ADMIN_ROLE, message, io, connectedUsers)
+      sendNotification(admin._id, ADMIN_ROLE, message, io, connectedUsers,link)
     );
     await Promise.all(notifyAdmins);
 
@@ -527,7 +527,7 @@ const starBuy = async (req, res) => {
     const wallet = user.userWalletDetails;
     if (!wallet) return res.status(404).json({ message: "User wallet not found" });
 
-    // ✅ Update user wallet
+    // Update user wallet
     wallet.totalStars += Math.floor(userShare);
     wallet.starBought.push({
       starsNeeded: Math.floor(userShare),
@@ -535,7 +535,9 @@ const starBuy = async (req, res) => {
     });
     await wallet.save();
 
-    // ✅ Referral logic
+    let referredUserNotification = null;
+
+    // Referral logic
     if (user.referedBy) {
       const referredUser = await User.findById(user.referedBy).populate("userWalletDetails");
 
@@ -556,6 +558,15 @@ const starBuy = async (req, res) => {
 
         referredUser.referalCredits += Math.floor(referredUserShare);
         await referredUser.save();
+
+        // Create notification for referred user
+        referredUserNotification = sendNotification(
+          referredUser._id,
+          USER_ROLE,
+          `You received ${Math.floor(referredUserShare)} stars as referral bonus from ${user.firstName}'s purchase!`,
+          io,
+          connectedUsers
+        );
       }
     } else {
       const firstUser = await User.findOne().sort({ createdAt: 1 }).populate("userWalletDetails");
@@ -577,7 +588,7 @@ const starBuy = async (req, res) => {
       }
     }
 
-    // ✅ Admin wallet
+    // Admin wallet
     let adminWallet = await AdminWallet.findOne();
     if (!adminWallet) {
       adminWallet = new AdminWallet({
@@ -596,7 +607,7 @@ const starBuy = async (req, res) => {
     }
     await adminWallet.save();
 
-    // ✅ Super admin wallet
+    // Super admin wallet
     let superAdminWallet = await SuperAdminWallet.findOne();
     if (!superAdminWallet) {
       superAdminWallet = new SuperAdminWallet({
@@ -615,11 +626,11 @@ const starBuy = async (req, res) => {
     }
     await superAdminWallet.save();
 
-    // ✅ Get admins and super admin
+    // Get admins and super admin
     const adminUsers = await Admin.find({ adminRole: ADMIN_ROLE });
     const superAdminUser = await superAdminModel.findOne({ role: SUPER_ADMIN_ROLE });
 
-    // ✅ Send ONLY real-time notifications (will handle DB insert too)
+    // Prepare all notifications
     const notificationsToSend = [
       sendNotification(
         user._id,
@@ -646,9 +657,13 @@ const starBuy = async (req, res) => {
       ),
     ];
 
+    // Add referred user notification if it exists
+    if (referredUserNotification) {
+      notificationsToSend.push(referredUserNotification);
+    }
+
     await Promise.all(notificationsToSend);
 
-    // ✅ Return response
     return res.status(200).json({
       message: "Star purchase successful",
       starsRequested: starsNeeded.toString(),
@@ -831,6 +846,26 @@ return res.status(400).json({message:"User Not Found"})
     return res.status(500).json({ message: "Server error", error: error.message });
 }
 }
+// to display the ads posted by the user...
+const fetchAllMyAds = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await User.findById(userId).populate("ads"); 
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const userAds = user.ads;
+    // console.log("ads", userAds);
+
+    return res.status(200).json({ ads: userAds });
+  } catch (error) {
+    console.error("Error fetching user ads:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
 
 export {
@@ -844,5 +879,6 @@ export {
   starBuy,
   getViewedAds,
   redeemCoupon,
-  fetchUserWallet
+  fetchUserWallet,
+  fetchAllMyAds
 };

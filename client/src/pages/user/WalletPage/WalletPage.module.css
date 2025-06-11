@@ -16,6 +16,7 @@
 }
 .firstMain {
   background-image: url("../../../assets/homeBackground.png");
+  background-size: cover;
   display: flex;
   background-repeat: no-repeat;
   border-radius: 10px;
@@ -324,10 +325,10 @@
   border: 1px solid #007bff;
   color: #007bff;
 }
-.modalInput::placeholder{
+.modalInput::placeholder {
   color: #007bff;
 }
-.indicator{
+.indicator {
   color: red;
   font-size: 10px;
 }
