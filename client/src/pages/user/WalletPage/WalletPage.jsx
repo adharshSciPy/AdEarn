@@ -44,7 +44,7 @@ const WalletPage = () => {
   useEffect(() => {
     getUserWalletDetails();
     console.log("userid", userId)
-  });
+  },[]);
   // const handleClick = () => {
   //   navigate(`/adform/${userId}`); // replace with your route
   // };
