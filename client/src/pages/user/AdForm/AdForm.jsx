@@ -4,7 +4,7 @@ import Select from "react-select";
 import baseUrl from "../../../baseurl";
 // import successAnimation from "./success.json";
 import Lottie from "lottie-react";
-import successAnimation from "../../../assets/sucess.json"
+import successAnimation from "../../../assets/sucess.json";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -476,6 +476,8 @@ function AdForm() {
     "48hrs": false,
   });
   const [image, setImage] = useState(null);
+  const [audio, setAudio] = useState(null);
+
   const [form, setForm] = useState({
     state: [],
     city: [],
@@ -502,7 +504,21 @@ function AdForm() {
     setTimeOptions(newOptions);
     setSelectedTimeSlots(parseInt(label.replace("hrs", "")));
   };
-
+  const handleFileChangeaudio = (e) => {
+    const file = e.target.files[0];
+    setAudio(file)
+    if (file) {
+      const previewUrl = URL.createObjectURL(file);
+      setPreviewaudio(previewUrl);
+    }
+  };
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setImage(file);
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+    }
+  };
   // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -570,9 +586,9 @@ function AdForm() {
   };
 
   // Search location/pincode with debounce
-const handleClick=()=>{
-navigate(`/userhome/${id}`)
-}
+  const handleClick = () => {
+    navigate(`/userhome/${id}`);
+  };
   const searchPlace = async (query) => {
     setLoading(true);
     try {
@@ -631,6 +647,8 @@ navigate(`/userhome/${id}`)
     formData.append("districts", JSON.stringify(form.city || []));
     // if array
     formData.append("imageAd", image);
+    formData.append("audioAd", audio);
+
     formData.append(
       "adPeriod",
       JSON.stringify(singleTime ? 0 : selectedTimeSlots)
@@ -656,6 +674,9 @@ navigate(`/userhome/${id}`)
           city: [],
           viewPlan: "",
         });
+        if (fileInputAudioRef.current) {
+          fileInputAudioRef.current.value = null;
+        }
         if (fileInputRef.current) {
           fileInputRef.current.value = null;
         }
@@ -675,7 +696,7 @@ navigate(`/userhome/${id}`)
         setShowSuccessPopup(true);
         setTimeout(() => {
           setShowSuccessPopup(false);
-          navigate(`/userhome/${id}`)
+          navigate(`/userhome/${id}`);
         }, 2000);
       }
     } catch (error) {
@@ -687,14 +708,8 @@ navigate(`/userhome/${id}`)
     }, 1000);
   };
   const [preview, setPreview] = useState(null);
+  const [previewaudio, setPreviewaudio] = useState(null);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setImage(file);
-    if (file) {
-      setPreview(URL.createObjectURL(file));
-    }
-  };
 
   const handleStateChange = (selected) => {
     const selectedStates = selected ? selected.map((opt) => opt.value) : [];
@@ -703,7 +718,8 @@ navigate(`/userhome/${id}`)
   const isMapSelected = positions.length > 0;
   const isRegionSelected = form.state.length > 0;
   const fileInputRef = useRef(null);
-  const navigate = useNavigate()
+  const fileInputAudioRef = useRef(null);
+  const navigate = useNavigate();
   return (
     <>
       <Navbar />
@@ -1060,6 +1076,28 @@ navigate(`/userhome/${id}`)
             </div>
           </div>
         </div>
+        <div className={styles.adName}>
+          <div className={styles.labelContainer}>
+            <div className={styles.labelImg}>
+              <img src={tickAd} alt="tick" />
+            </div>
+            <div className={styles.AdNameHead}>
+              <h2>Your Voice Not</h2>
+              <input
+                type="file"
+                ref={fileInputAudioRef}
+                accept="audio/*"
+                onChange={handleFileChangeaudio}
+              />
+              {previewaudio && (
+                <audio controls>
+                  <source src={previewaudio} />
+                  Your browser does not support the audio element.
+                </audio>
+              )}
+            </div>
+          </div>
+        </div>
         {/* View Required */}
         <div className={styles.adName}>
           <div className={styles.labelContainer}>
@@ -1097,7 +1135,9 @@ navigate(`/userhome/${id}`)
         {/* Buttons */}
         <div className={styles.buttondiv}>
           <div className={styles.mobdiv}>
-            <button className={styles.backButton} onClick={handleClick}>Back</button>
+            <button className={styles.backButton} onClick={handleClick}>
+              Back
+            </button>
             <button
               style={{
                 backgroundColor: "#3563E9",
