@@ -14,7 +14,7 @@ function AdminAds() {
   const getunverifiedAds = async () => {
     try {
       const response = await axios.get(`${baseUrl}/api/v1/ads/ads-to-verify`);
-      console.log("vtoer",response);
+      console.log("vtoer", response);
       setunverifiedAds(response.data.ads);
     } catch (error) {
       console.log(error);
@@ -85,7 +85,7 @@ function AdminAds() {
 
   useEffect(() => {
     getunverifiedAds();
-    getVerifiedAd()
+    getVerifiedAd();
   }, []);
 
   return (
@@ -158,7 +158,9 @@ function AdminAds() {
             </div>
             {activeTab === "Ads" && (
               <section className={styles.payoutTableSection}>
-                <h1 style={{ fontSize: "25px", padding: '10px' }}>Current Ads</h1>
+                <h1 style={{ fontSize: "25px", padding: "10px" }}>
+                  Current Ads
+                </h1>
                 <table className={styles.payoutTable}>
                   <thead>
                     <tr>
@@ -169,18 +171,54 @@ function AdminAds() {
                     </tr>
                   </thead>
                   <tbody>
-                    {verifiedAd.map((ad,index) => (
+                    {verifiedAd.map((ad, index) => (
                       <tr key={index}>
-                        <td>{ad.imageAd?.title?(<p>{ad.imageAd?.title}</p>):(ad?.videoAd?.title?(<p>{ad.videoAd?.title}</p>):null)}</td>
-                        <td>{ad.imageAd?.userViewsNeeded?(<p>{ad.imageAd?.userViewsNeeded}</p>):(ad?.videoAd?.userViewsNeeded?(<p>{ad.videoAd?.userViewsNeeded}</p>):null)}</td>
-                        <td>{ad.imageAd?.totalStarsAllocated?(<p>{ad.imageAd?.totalStarsAllocated}</p>):(ad?.videoAd?.totalStarsAllocated?(<p>{ad.videoAd?.totalStarsAllocated}</p>):null)}</td>
-                        <td>{ad.imageAd?.createdAt?(<p>{ad.imageAd?.createdAt}</p>):(ad?.videoAd?.createdAt?(<p>{ad.videoAd?.createdAt}</p>):null)}</td>
+                        <td>
+                          {ad.imageAd?.title ? (
+                            <p>{ad.imageAd?.title}</p>
+                          ) : ad?.videoAd?.title ? (
+                            <p>{ad.videoAd?.title}</p>
+                          ) : null}
+                        </td>
+                        <td>
+                          {ad.imageAd?.userViewsNeeded ? (
+                            <p>{ad.imageAd?.userViewsNeeded}</p>
+                          ) : ad?.videoAd?.userViewsNeeded ? (
+                            <p>{ad.videoAd?.userViewsNeeded}</p>
+                          ) : null}
+                        </td>
+                        <td>
+                          {ad.imageAd?.totalStarsAllocated ? (
+                            <p>{ad.imageAd?.totalStarsAllocated}</p>
+                          ) : ad?.videoAd?.totalStarsAllocated ? (
+                            <p>{ad.videoAd?.totalStarsAllocated}</p>
+                          ) : null}
+                        </td>
+                        <td>
+                          {ad.imageAd?.createdAt ? (
+                            <p>
+                              {
+                                new Date(ad.imageAd.createdAt)
+                                  .toISOString()
+                                  .split("T")[0]
+                              }
+                            </p>
+                          ) : ad.videoAd?.createdAt ? (
+                            <p>
+                              {
+                                new Date(ad.videoAd.createdAt)
+                                  .toISOString()
+                                  .split("T")[0]
+                              }
+                            </p>
+                          ) : null}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
                 <div className={styles.pagination}>
-                    {/* <Pagination
+                  {/* <Pagination
                       current={currentPage}
                       pageSize={pageSize}
                       total={filteredAds.length}
@@ -208,10 +246,46 @@ function AdminAds() {
                   <tbody>
                     {unverifiedAds.map((ad, index) => (
                       <tr key={index}>
-                        <td>{ad.imageAd?.createdAt?(<p>{ad.imageAd?.createdAt}</p>):(ad?.videoAd?.createdAt?(<p>{ad.videoAd?.createdAt}</p>):null)}</td>
-                        <td>{ad.imageAd?.title?(<p>{ad.imageAd?.title}</p>):(ad?.videoAd?.title?(<p>{ad.videoAd?.title}</p>):null)}</td>
-                        <td>{ad.imageAd?.userViewsNeeded?(<p>{ad.imageAd?.userViewsNeeded}</p>):(ad?.videoAd?.userViewsNeeded?(<p>{ad.videoAd?.userViewsNeeded}</p>):null)}</td>
-                        <td>{ad.imageAd?.totalStarsAllocated?(<p>{ad.imageAd?.totalStarsAllocated}</p>):(ad?.videoAd?.totalStarsAllocated?(<p>{ad.videoAd?.totalStarsAllocated}</p>):null)}</td>
+                        <td>
+                          {ad.imageAd?.createdAt ? (
+                            <p>
+                              {
+                                new Date(ad.imageAd.createdAt)
+                                  .toISOString()
+                                  .split("T")[0]
+                              }
+                            </p>
+                          ) : ad.videoAd?.createdAt ? (
+                            <p>
+                              {
+                                new Date(ad.videoAd.createdAt)
+                                  .toISOString()
+                                  .split("T")[0]
+                              }
+                            </p>
+                          ) : null}
+                        </td>
+                        <td>
+                          {ad.imageAd?.title ? (
+                            <p>{ad.imageAd?.title}</p>
+                          ) : ad?.videoAd?.title ? (
+                            <p>{ad.videoAd?.title}</p>
+                          ) : null}
+                        </td>
+                        <td>
+                          {ad.imageAd?.userViewsNeeded ? (
+                            <p>{ad.imageAd?.userViewsNeeded}</p>
+                          ) : ad?.videoAd?.userViewsNeeded ? (
+                            <p>{ad.videoAd?.userViewsNeeded}</p>
+                          ) : null}
+                        </td>
+                        <td>
+                          {ad.imageAd?.totalStarsAllocated ? (
+                            <p>{ad.imageAd?.totalStarsAllocated}</p>
+                          ) : ad?.videoAd?.totalStarsAllocated ? (
+                            <p>{ad.videoAd?.totalStarsAllocated}</p>
+                          ) : null}
+                        </td>
 
                         <td>
                           <button

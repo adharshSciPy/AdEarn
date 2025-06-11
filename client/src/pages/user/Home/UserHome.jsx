@@ -16,13 +16,33 @@ function UserHome() {
   const [showPopup, setShowPopup] = useState(false);
 
   const getImageAdData = async () => {
-    try {
-      const response = await axios.get(`${baseUrl}/api/v1/ads/image-ads/${id}`);
-      setImageAd(response.data.ads);
-    } catch (error) {
-      console.log(error);
+  try {
+    const getPosition = () =>
+      new Promise((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject)
+      );
+
+    const position = await getPosition();
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+    console.log("post",position);
+     // or get it from context/state
+
+    const response = await axios.get(
+      `${baseUrl}/api/v1/ads/image-ads/${id}?lat=${lat}&lng=${lng}`
+    );
+
+    setImageAd(response.data.ads);
+    
+  } catch (error) {
+    if (error.response) {
+      console.log("API error:", error.response.data.message);
+    } else {
+      console.log("Error getting location or data:", error.message);
     }
-  };
+  }
+};
+
 
   const getVideoAdData = async () => {
     try {
@@ -110,7 +130,7 @@ function UserHome() {
                   </div>
                 ))}
                 <div className={styles.seeAllContainer}>
-                  <button>See All</button>
+                  <button onClick={()=> navigate("/ads/image")}>See All</button>
                 </div>
               </div>
             </div>
@@ -148,7 +168,7 @@ function UserHome() {
                   </div>
                 ))}
                 <div className={styles.seeAllContainer}>
-                  <button>See All</button>
+                  <button onClick={()=> navigate("/ads/video")}>See All</button>
                 </div>
               </div>
             </div>
@@ -182,7 +202,7 @@ function UserHome() {
                   </div>
                 ))}
                 <div className={styles.seeAllContainer}>
-                  <button>See All</button>
+                  <button onClick={()=> navigate("/ads/survey")}>See All</button>
                 </div>
               </div>
             </div>
