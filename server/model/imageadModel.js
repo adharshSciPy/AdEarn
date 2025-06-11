@@ -136,7 +136,7 @@ const imageAd = new mongoose.Schema(
     // user can turn on and off ads after admin verified
     isAdOn: {
       type: Boolean,
-      default: false,
+      default: true,
     },
   },
 
