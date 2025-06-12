@@ -373,6 +373,7 @@ const addKyc = async (req, res) => {
     bankName,
     accountNumber,
     ifscCode,
+    city,state
   } = req.body;
 
   const { io, connectedUsers } = req;
@@ -393,6 +394,7 @@ const addKyc = async (req, res) => {
     bankName,
     accountNumber,
     ifscCode,
+    city,state
   };
 
   for (const [key, value] of Object.entries(requiredFields)) {
@@ -433,6 +435,7 @@ const addKyc = async (req, res) => {
       bankName,
       accountNumber,
       ifscCode,
+      city,state,
       kycStatus: "pending",
       kycSubmittedAt: new Date(),
     };
