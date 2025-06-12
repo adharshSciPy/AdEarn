@@ -1,419 +1,290 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import styles from "./Surveyads.module.css";
-import tickAd from "../../../assets/tickAd.png";
 import Navbar from "../NavBar/Navbar";
-
-function Surveyads() {
+import axios from "axios";
+const SurveyAds = () => {
   const [questionType, setQuestionType] = useState("yesno");
 
-  const [yesNoQuestionInput, setYesNoQuestionInput] = useState("");
-  const [yesNoQuestions, setYesNoQuestions] = useState([]);
+  const [adText, setAdText] = useState("");
+  const [adDescription, setAdDescription] = useState("");
+  const [imageFile, setImageFile] = useState(null);
 
-  const [mcQuestionInput, setMcQuestionInput] = useState("");
-  const [mcOptions, setMcOptions] = useState(["", "", "", ""]);
-  const [multipleChoiceQuestions, setMultipleChoiceQuestions] = useState([]);
+  // Yes/No
+  const [yesNoQuestion, setYesNoQuestion] = useState("");
+  const [allYesNoQuestions, setAllYesNoQuestions] = useState([]);
 
-  const [editState, setEditState] = useState(null);
-
-  const [editYesNoQuestion, setEditYesNoQuestion] = useState("");
-  const [editMcQuestion, setEditMcQuestion] = useState("");
-  const [editMcOptions, setEditMcOptions] = useState(["", "", "", ""]);
-
+  // Multiple choice
+  const [mcQuestion, setMcQuestion] = useState("");
+  const [mcOptions, setMcOptions] = useState([]);
+  const [allMCQuestions, setAllMCQuestions] = useState([]);
   const [imagePreview, setImagePreview] = useState(null);
-  const fileInputRef = useRef(null);
 
-  // Handlers
-  const handleYesNoAdd = () => {
-    if (yesNoQuestionInput.trim()) {
-      setYesNoQuestions([...yesNoQuestions, yesNoQuestionInput.trim()]);
-      setYesNoQuestionInput("");
-    }
+const handleImageChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  }
+};
+  // Option change
+  const handleOptionChange = (index, value) => {
+    const updatedOptions = [...mcOptions];
+    updatedOptions[index] = value;
+    setMcOptions(updatedOptions);
   };
 
-  const handleMcAdd = () => {
-    if (mcQuestionInput.trim() && mcOptions.every((opt) => opt.trim())) {
-      setMultipleChoiceQuestions([
-        ...multipleChoiceQuestions,
-        {
-          question: mcQuestionInput.trim(),
-          options: [...mcOptions],
-        },
-      ]);
-      setMcQuestionInput("");
-      setMcOptions(["", "", "", ""]);
-    }
+  const addOption = () => {
+    setMcOptions([...mcOptions, ""]);
   };
 
-  const handleDelete = (type, index) => {
-    if (type === "yesno") {
-      setYesNoQuestions(yesNoQuestions.filter((_, i) => i !== index));
-    } else {
-      setMultipleChoiceQuestions(
-        multipleChoiceQuestions.filter((_, i) => i !== index)
-      );
-    }
-    if (editState?.type === type && editState.index === index) {
-      setEditState(null);
-    }
+  const removeOption = (index) => {
+    const updatedOptions = mcOptions.filter((_, i) => i !== index);
+    setMcOptions(updatedOptions);
   };
 
-  const handleEditStart = (type, index) => {
-    setEditState({ type, index });
-    if (type === "yesno") {
-      setEditYesNoQuestion(yesNoQuestions[index]);
-    } else {
-      setEditMcQuestion(multipleChoiceQuestions[index].question);
-      setEditMcOptions([...multipleChoiceQuestions[index].options]);
-    }
-  };
-
-  const handleEditCancel = () => {
-    setEditState(null);
-  };
-
-  const handleEditSave = () => {
-    if (editState.type === "yesno") {
-      if (!editYesNoQuestion.trim()) return;
-      const updated = [...yesNoQuestions];
-      updated[editState.index] = editYesNoQuestion.trim();
-      setYesNoQuestions(updated);
-    } else {
-      if (!editMcQuestion.trim() || editMcOptions.some((opt) => !opt.trim()))
-        return;
-      const updated = [...multipleChoiceQuestions];
-      updated[editState.index] = {
-        question: editMcQuestion.trim(),
-        options: [...editMcOptions],
+  const addMCQuestion = () => {
+    if (mcQuestion.trim() && mcOptions.every((opt) => opt.trim())) {
+      const newQuestion = {
+        question: mcQuestion,
+        options: mcOptions,
       };
-      setMultipleChoiceQuestions(updated);
+      setAllMCQuestions([...allMCQuestions, newQuestion]);
+      setMcQuestion("");
+      setMcOptions([]);
     }
-    setEditState(null);
   };
 
-  const handleButtonClick = () => {
-    fileInputRef.current.click();
+  const deleteMCQuestion = (index) => {
+    setAllMCQuestions(allMCQuestions.filter((_, i) => i !== index));
   };
 
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file && file.type.startsWith("image/")) {
-      const previewURL = URL.createObjectURL(file);
-      setImagePreview(previewURL);
+  const addYesNoQuestion = () => {
+    if (yesNoQuestion.trim()) {
+      setAllYesNoQuestions([...allYesNoQuestions, yesNoQuestion]);
+      setYesNoQuestion("");
+    }
+  };
+
+  const deleteYesNoQuestion = (index) => {
+    setAllYesNoQuestions(allYesNoQuestions.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async () => {
+    const formData = new FormData();
+    formData.append("adText", adText);
+    formData.append("adDescription", adDescription);
+    formData.append("questionType", questionType);
+
+    formData.append("yesNoQuestions", JSON.stringify(allYesNoQuestions));
+    formData.append("multipleChoiceQuestions", JSON.stringify(allMCQuestions));
+
+    if (imageFile) {
+      formData.append("adImage", imageFile);
+    }
+
+    // try {
+    //   const res = await axios.post(`${baseUrl}/api/survey-ads`, formData, {
+    //     headers: {
+    //       "Content-Type": "multipart/form-data",
+    //     },
+    //   });
+    //   alert("Survey Ad submitted successfully!");
+    // } catch (err) {
+    //   console.error("Submission error:", err);
+    //   alert("Failed to submit survey ad.");
+    // }
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}:`, value);
     }
   };
 
   return (
-    <>
-      <Navbar/>
-      <div className={styles.pageHead}>
-        <div className={styles.subpageHead}>
-          <div className={styles.pageHeading}>
-            <h1>Survey Ads</h1>
-          </div>
-        </div>
-      </div>
-      <div className={styles.adFormMain}>
-        {/* Ad Text */}
-        <div className=""></div>
-        <div className={styles.adName}>
-          <div className={styles.labelContainer}>
-            <div className={styles.labelImg}>
-              <img src={tickAd} alt="" />
-            </div>
-            <div className={styles.AdNameHead}>
-              <h2>Ad Text</h2>
-              <input
-                className={styles.AdInput}
-                type="text"
-                placeholder="Name Primary Text"
-              />
-            </div>
-          </div>
+    <div className={styles.mainContainer}>
+      <Navbar />
+      <div className={styles.container}>
+        <h2 className={styles.title}>Survey Ads</h2>
+
+        {/* Ad Text Input */}
+        <div className={styles.section}>
+          <label className={styles.label}>✅ Ad Text</label>
+          <input
+            type="text"
+            value={adText}
+            onChange={(e) => setAdText(e.target.value)}
+            placeholder="Name Primary Text"
+            className={styles.input}
+          />
         </div>
 
         {/* Ad Description */}
-        <div className={styles.adName}>
-          <div className={styles.labelContainer}>
-            <div className={styles.labelImg}>
-              <img src={tickAd} alt="" />
-            </div>
-            <div className={styles.AdNameHead}>
-              <h2>Ad Description</h2>
-              <textarea
-                rows={6}
-                className={styles.AdInput}
-                placeholder="Enter Ad Description"
-                style={{ marginTop: "20px" }}
-              />
-            </div>
-          </div>
+        <div className={styles.section}>
+          <label className={styles.label}>✅ Ad Description</label>
+          <textarea
+            value={adDescription}
+            onChange={(e) => setAdDescription(e.target.value)}
+            placeholder="Enter Ad Description"
+            className={styles.textarea}
+          ></textarea>
         </div>
 
-        {/* Question Type Selection */}
-        <div className={styles.adName}>
-          <div className={styles.labelContainer}>
-            <div className={styles.labelImg}>
-              <img src={tickAd} alt="" />
-            </div>
-            <div className={styles.AdNameHead}>
-              <h2>Survey Question Type</h2>
-              <div className={styles.questionContainerSurvey}>
-                <input
-                  type="radio"
-                  name="questionType"
-                  checked={questionType === "yesno"}
-                  onChange={() => setQuestionType("yesno")}
-                  id="yesno"
-                />
-                <label htmlFor="yesno" style={{ marginLeft: "10px", cursor: "pointer" }}>
-                  Yes or No Questions
-                </label>
-              </div>
-
-              <div className={styles.questionContainerSurvey}>
-                <input
-                  type="radio"
-                  name="questionType"
-                  checked={questionType === "mc"}
-                  onChange={() => setQuestionType("mc")}
-                  id="mc"
-                />
-                <label htmlFor="mc" style={{ marginLeft: "10px", cursor: "pointer" }}>
-                  Multiple Choice Questions
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Yes/No Questions Section */}
-        {questionType === "yesno" && (
-          <div className={styles.adName}>
-            <h3>Yes/No Question</h3>
-            <input
-              type="text"
-              className={styles.AdInput}
-              placeholder="Enter your Yes/No question"
-              value={yesNoQuestionInput}
-              onChange={(e) => setYesNoQuestionInput(e.target.value)}
-            />
-            <button className={styles.searchBtn} onClick={handleYesNoAdd} style={{ marginTop: "10px" }}>
-              Add Question
-            </button>
-
-            {yesNoQuestions.length > 0 && (
-              <div style={{ marginTop: "20px" }}>
-                <h4 style={{ marginBottom: "20px" }}>Added Yes/No Questions:</h4>
-                {yesNoQuestions.map((q, idx) => (
-                  <div className={styles.questionContainer} key={idx}>
-                    {editState?.type === "yesno" && editState.index === idx ? (
-                      <div className={styles.questionContainerspanEdit}>
-                        <input
-                          type="text"
-                          value={editYesNoQuestion}
-                          onChange={(e) => setEditYesNoQuestion(e.target.value)}
-                          className={styles.AdInput}
-                        />
-                      </div>
-                    ) : (
-                      <span className={styles.questionContainerspan}>{q}</span>
-                    )}
-
-                    <div className={styles.editDelete}>
-                      {editState?.type === "yesno" && editState.index === idx ? (
-                        <>
-                          <button className={styles.editButton} onClick={handleEditSave} style={{ marginRight: "8px" }}>
-                            Save
-                          </button>
-                          <button className={styles.deleteButton} onClick={handleEditCancel}>
-                            Cancel
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button className={styles.editButton} onClick={() => handleEditStart("yesno", idx)} style={{ marginRight: "8px" }}>
-                            Edit
-                          </button>
-                          <button className={styles.deleteButton} onClick={() => handleDelete("yesno", idx)}>
-                            Delete
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Multiple Choice Section */}
-        {questionType === "mc" && (
-          <div className={styles.adName}>
-            <h3>Multiple Choice Question</h3>
-            <input
-              type="text"
-              className={styles.AdInput}
-              placeholder="Enter your multiple choice question"
-              value={mcQuestionInput}
-              onChange={(e) => setMcQuestionInput(e.target.value)}
-            />
-            {mcOptions.map((opt, index) => (
+        {/* Survey Type Radio */}
+        <div className={styles.section}>
+          <label className={styles.label}>✅ Survey Question Type</label>
+          <div className={styles.radioGroup}>
+            <label>
               <input
-                key={index}
-                type="text"
-                className={styles.AdInput}
-                placeholder={`Option ${index + 1}`}
-                style={{ marginTop: "10px" }}
-                value={opt}
-                onChange={(e) => {
-                  const newOptions = [...mcOptions];
-                  newOptions[index] = e.target.value;
-                  setMcOptions(newOptions);
-                }}
+                type="radio"
+                checked={questionType === "yesno"}
+                onChange={() => setQuestionType("yesno")}
               />
-            ))}
-            <button className={styles.searchBtn} onClick={handleMcAdd} style={{ marginTop: "10px" }}>
+              Yes or No Questions
+            </label>
+            <label>
+              <input
+                type="radio"
+                checked={questionType === "multiple"}
+                onChange={() => setQuestionType("multiple")}
+              />
+              Multiple Choice Questions
+            </label>
+          </div>
+        </div>
+
+        {/* Yes/No UI */}
+        {questionType === "yesno" && (
+          <div className={styles.section}>
+            <label className={styles.label}>Yes/No Question</label>
+            <input
+              type="text"
+              value={yesNoQuestion}
+              onChange={(e) => setYesNoQuestion(e.target.value)}
+              placeholder="Enter your Yes/No question"
+              className={styles.input}
+            />
+            <button onClick={addYesNoQuestion} className={styles.button}>
               Add Question
             </button>
+            <p className={styles.note}>
+              <strong>Note:</strong> Yes/No questions do not require options.
+            </p>
 
-            {multipleChoiceQuestions.length > 0 && (
-              <div style={{ marginTop: "20px" }}>
-                <h4>Added Multiple Choice Questions:</h4>
-                {multipleChoiceQuestions.map((q, idx) => (
+            <div style={{ marginTop: "20px" }}>
+              {allYesNoQuestions.map((q, i) => (
+                <div key={i} className={styles.questionContainer}>
                   <div
-                    key={idx}
-                    style={{
-                      border: "1px solid #ccc",
-                      padding: "10px",
-                      marginBottom: "10px",
-                      borderRadius: "6px",
-                      backgroundColor: "#f0f8ff",
-                      marginTop: "20px",
-                    }}
+                    style={{ display: "flex", justifyContent: "space-between" }}
                   >
-                    {editState?.type === "mc" && editState.index === idx ? (
-                      <>
-                        <input
-                          type="text"
-                          value={editMcQuestion}
-                          onChange={(e) => setEditMcQuestion(e.target.value)}
-                          className={styles.AdInput}
-                          style={{ marginBottom: "10px" }}
-                        />
-                        {editMcOptions.map((opt, i) => (
-                          <input
-                            key={i}
-                            type="text"
-                            value={opt}
-                            onChange={(e) => {
-                              const newOptions = [...editMcOptions];
-                              newOptions[i] = e.target.value;
-                              setEditMcOptions(newOptions);
-                            }}
-                            placeholder={`Option ${i + 1}`}
-                            className={styles.AdInput}
-                            style={{ marginBottom: "8px" }}
-                          />
-                        ))}
-                        <div>
-                          <button className={styles.backButton} onClick={handleEditSave} style={{ marginRight: "8px" }}>
-                            Save
-                          </button>
-                          <button className={styles.backButton} onClick={handleEditCancel} style={{ backgroundColor: "#ccc" }}>
-                            Cancel
-                          </button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <strong>{q.question}</strong>
-                        <ul style={{ marginTop: "10px" }}>
-                          {q.options.map((opt, i) => (
-                            <li key={i} style={{ listStyle: "none", paddingTop: "10px" }}>
-                              {opt}
-                            </li>
-                          ))}
-                        </ul>
-                        <div style={{ marginTop: "20px" }}>
-                          <button className={styles.editButton} onClick={() => handleEditStart("mc", idx)} style={{ marginRight: "8px" }}>
-                            Edit
-                          </button>
-                          <button className={styles.deleteButton} onClick={() => handleDelete("mc", idx)} style={{ backgroundColor: "#e74c3c", color: "white" }}>
-                            Delete
-                          </button>
-                        </div>
-                      </>
-                    )}
+                    <div>
+                      <strong>Q{i + 1}:</strong> {q}
+                    </div>
+                    <button
+                      onClick={() => deleteYesNoQuestion(i)}
+                      className={styles.deleteButton}
+                    >
+                      Delete
+                    </button>
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Upload Image Section */}
-        <div className={styles.adName}>
-          <div className={styles.labelContainer}>
-            <div className={styles.labelImg}>
-              <img src={tickAd} alt="" />
-            </div>
-            <div className={styles.AdNameHead}>
-              <h2>Upload Picture</h2>
-            </div>
-          </div>
-          <div className={styles.fileUpload}>
+        {/* MCQ UI */}
+        {questionType === "multiple" && (
+          <div className={styles.section}>
+            <label className={styles.label}>Multiple Choice Question</label>
             <input
-              type="file"
-              ref={fileInputRef}
-              style={{ display: "none" }}
-              accept="image/*"
-              onChange={handleFileChange}
+              type="text"
+              value={mcQuestion}
+              onChange={(e) => setMcQuestion(e.target.value)}
+              placeholder="Enter your multiple choice question"
+              className={styles.input}
             />
-            <button onClick={handleButtonClick} className={styles.uploadButton}>
-              Upload File
-            </button>
-
-            
-          </div>
-          {imagePreview && (
-              <div style={{ marginTop: "20px" }} className={styles.previewContainer}>
-                <img
-                  src={imagePreview}
-                  alt="Preview"
+            {mcOptions.map((opt, idx) => (
+              <div
+                key={idx}
+                style={{ display: "flex", gap: "10px", marginTop: "10px" }}
+              >
+                <input
+                  type="text"
+                  value={opt}
+                  onChange={(e) => handleOptionChange(idx, e.target.value)}
+                  placeholder={`Option ${idx + 1}`}
+                  className={styles.input}
+                  style={{ flex: 1 }}
                 />
                 <button
-          onClick={() => {
-            setImagePreview(null);
-            fileInputRef.current.value = null;
-          }}
-          style={{
-            position: "absolute",
-            top: "-10px",
-            right: "10px",
-            backgroundColor: "#e74c3c",
-            color: "#fff",
-            border: "none",
-            borderRadius: "50%",
-            width: "24px",
-            height: "24px",
-            cursor: "pointer",
-          }}
-          title="Remove Image"
-        >
-          ×
-        </button>
+                  onClick={() => removeOption(idx)}
+                  className={styles.deleteButton}
+                >
+                  Remove
+                </button>
               </div>
-              
-            )}
-        </div>
-        <div className={styles.nextButton}>
-        <button>Next</button>
-      </div>
-      </div>
-      
-    </>
-  );
-}
+            ))}
+            <button onClick={addOption} className={styles.addOptionButton}>
+              ➕ Add Option
+            </button>
 
-export default Surveyads;
+            <button onClick={addMCQuestion} className={styles.button}>
+              Add Question
+            </button>
+
+            <div style={{ marginTop: "20px" }}>
+              {allMCQuestions.map((q, i) => (
+                <div key={i} className={styles.questionContainer}>
+                  <div
+                    style={{ display: "flex", justifyContent: "space-between" }}
+                  >
+                    <div>
+                      <strong>Q{i + 1}:</strong> {q.question}
+                    </div>
+                    <button
+                      onClick={() => deleteMCQuestion(i)}
+                      className={styles.deleteButton}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                  <ul style={{ marginTop: "5px" }}>
+                    {q.options.map((o, j) => (
+                      <li key={j}>- {o}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* File Upload */}
+        <div className={styles.section}>
+  <label className={styles.label}>Ad Image Upload</label>
+  <input type="file" accept="image/*" onChange={handleImageChange} />
+  {imagePreview && (
+    <div style={{ marginTop: "10px" }}>
+      <img
+        src={imagePreview}
+        alt="Preview"
+        style={{ width: "200px", borderRadius: "8px" }}
+      />
+    </div>
+  )}
+</div>
+
+        {/* Submit */}
+        <div className={styles.section}>
+          <button
+            onClick={handleSubmit}
+            className={styles.button}
+            style={{ width: "100%", padding: "20px" }}
+          >
+            Submit
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SurveyAds;
