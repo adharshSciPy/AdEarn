@@ -6,6 +6,8 @@ import { Button, Flex, Progress, Tooltip, Pagination, Select } from "antd";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import baseUrl from "../../../baseurl";
+import { useMemo } from "react";
+
 
 function AdminAds() {
   const [unverifiedAds, setunverifiedAds] = useState([]);
@@ -52,29 +54,37 @@ function AdminAds() {
     setCurrentPage(page);
   };
 
-  // const filteredAds = adsData.filter(ad => {
-  //   if (!ad.startDate || !ad.startDate.includes('/')) return false;
+  const filteredVerifiedAds = useMemo(() => {
+    return verifiedAd.filter((ad) => {
+      const dateStr = ad.imageAd?.createdAt || ad.videoAd?.createdAt;
+      if (!dateStr) return false;
 
-  //   const [day, month, year] = ad.startDate.split('/');
-  //   return (
-  //     (!selectedMonth || month === selectedMonth) &&
-  //     (!selectedYear || year === selectedYear)
-  //   );
-  // });
+      const date = new Date(dateStr);
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = String(date.getFullYear());
 
-  // const filteredVerifyAds = adsVerifyData.filter(ad => {
-  //   if (!ad.date || !ad.date.includes('/')) return false;
+      return (
+        (!selectedMonth || selectedMonth === month) &&
+        (!selectedYear || selectedYear === year)
+      );
+    });
+  }, [verifiedAd, selectedMonth, selectedYear]);
 
-  //   const [day, month, year] = ad.date.split('/');
-  //   return (
-  //     (!selectedMonth || month === selectedMonth) &&
-  //     (!selectedYear || year === selectedYear)
-  //   );
-  // });
+  const filteredUnverifiedAds = useMemo(() => {
+    return unverifiedAds.filter((ad) => {
+      const dateStr = ad.imageAd?.createdAt || ad.videoAd?.createdAt;
+      if (!dateStr) return false;
 
-  // const paginatedAds = filteredAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+      const date = new Date(dateStr);
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = String(date.getFullYear());
 
-  // const paginatedVerifyAds = filteredVerifyAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+      return (
+        (!selectedMonth || selectedMonth === month) &&
+        (!selectedYear || selectedYear === year)
+      );
+    });
+  }, [unverifiedAds, selectedMonth, selectedYear]);
 
   const onChange = (value) => {
     console.log(`selected ${value}`);
@@ -87,6 +97,11 @@ function AdminAds() {
     getunverifiedAds();
     getVerifiedAd();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedMonth, selectedYear]);
+
 
   return (
     <div className={styles.adminadsmain}>
@@ -171,7 +186,7 @@ function AdminAds() {
                     </tr>
                   </thead>
                   <tbody>
-                    {verifiedAd.map((ad, index) => (
+                    {filteredVerifiedAds.map((ad, index) => (
                       <tr key={index}>
                         <td>
                           {ad.imageAd?.title ? (
@@ -244,7 +259,7 @@ function AdminAds() {
                     </tr>
                   </thead>
                   <tbody>
-                    {unverifiedAds.map((ad, index) => (
+                    {filteredUnverifiedAds.map((ad, index) => (
                       <tr key={index}>
                         <td>
                           {ad.imageAd?.createdAt ? (
