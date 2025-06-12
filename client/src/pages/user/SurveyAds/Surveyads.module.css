@@ -1,324 +1,128 @@
+
+.mainContainer{
+  width: 100%;
+  background-color: white;
+}
 .container {
+  background-color: #e0ecff;
   padding: 30px;
-  background-color: white;
-  border-radius: 20px;
-}
-.adName {
-  padding: 30px;
-  background-color: white;
-  border-radius: 20px;
-  margin-bottom: 30px;
-}
-.selectOption {
-  padding: 10px;
-  margin-top: 10px;
-  width: 100%;
-  border-radius: 10px;
-}
-.adFormMain {
-  width: 95%;
-  margin: auto;
-  background-color: #d6e4fd;
-  padding: 70px 50px 50px 50px;
-  margin-top: -20px;
-  position: relative;
-  z-index: -10;
-}
-.pageHead{
-  width: 95%;
-  margin: auto;
-  background-color: #5D32B9;
-  padding: 25px 0;
-  border-radius: 20px;
-  margin-top: 50px;
-  
-}
-.mainsurvey{
-  background-color: #F6F7F9;
-}
-.subpageHead{
-  width: 95%;
-  margin: auto; 
-}
-.pageHeading h1{
-  color: white;
-  font-weight: 600;
-}
-.heading {
-  margin-top: 20px;
-  font-size: 1.2rem;
-  font-weight: bold;
-}
-.mapSection {
-  padding: 0px 30px;
-  background-color: white;
-}
-.controls {
-  margin: 10px 0;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.selectBox {
-  padding: 6px 10px;
-  margin-top: 6px;
-  border-radius: 4px;
-}
-
-.inputBox {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  flex: 1;
-}
-
-.searchBtn {
-  padding: 8px 14px;
-  background-color: #5D32B9;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.editButton {
-  padding: 8px 14px;
-  background-color: #5D32B9;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.deleteButton {
-  padding: 8px 14px;
-  background-color: rgb(234, 63, 63);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.searchBtn:hover {
-  background-color: #0056b3;
-}
-.questionContainer {
-  display: flex;
-  margin-top: 20px;
-  align-items: center;
-}
-.radiusInput {
-  padding: 6px 10px;
-  margin-top: 6px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  width: 140px;
-}
-
-.result {
-  margin-top: 10px;
-  background: #f9f9f9;
-  padding: 10px;
-  border-radius: 6px;
-}
-
-.removeBtn {
-  margin-left: 10px;
-  background: red;
-  color: white;
-  border: none;
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.moveBtn {
-  margin-left: 10px;
-  color: red;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
-
-.map {
-  height: 400px;
-  width: 100%;
   border-radius: 8px;
-  overflow: hidden;
+  max-width: 90%;
+  margin: auto;
+  margin-top: 50px;
+}
+
+.title {
+  background-color: #6332ca;
+  color: white;
+  padding: 15px 20px;
+  border-radius: 10px 10px 0 0;
   margin-bottom: 20px;
+  font-size: 24px;
 }
 
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-
-.selectBox {
-  flex: 1 1 200px;
-  padding: 10px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+.section {
   background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.05);
 }
 
-.result {
+.label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.input, .textarea {
+  width: 100%;
+  padding: 10px 15px;
   font-size: 14px;
-  color: #2d3748;
-  font-weight: 500;
-}
-.labelImg {
-  height: 30px;
-  width: 30px;
-}
-.labelImg img {
-  height: 100%;
-  width: 100%;
-  object-fit: cover;
-}
-.labelContainer {
-  display: flex;
-  gap: 10px;
-}
-.AdNameHead {
-  color: #3d5278;
-  width: 100%;
-}
-.AdInput {
-  padding: 15px 12px;
+  border: 1px solid #ccc;
   border-radius: 6px;
-  border: 1px solid #ccc;
-  width: 100%;
+}
+
+.textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.radioGroup label {
+  display: block;
+  margin: 10px 0;
+  font-size: 14px;
+}
+
+.button {
   margin-top: 10px;
+  background-color: #6332ca;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
-.buttondiv {
-  margin-top: 100px;
-  display: flex;
-  justify-content: end;
+
+.button:hover {
+  background-color: #4e25a1;
 }
-.buttondiv button {
-  font-size: 25px;
-  padding: 10px 30px;
-  border-radius: 10px;
+
+.note {
+  font-size: 13px;
+  margin-top: 10px;
+  color: #555;
 }
-.backButton {
-  margin-right: 30px;
-  background-color: "transparent";
-  border: "1px solid #3563E9";
+
+.addOptionButton {
+  background-color: #98baf1;
+  color: white;
+  padding: 7px 14px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 6px;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
-.questionContainerSurvey{
-  border: 1px solid #ccc;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  background-color: #f9f9f9;
-  display: flex;
-  align-items:center;
+
+.addOptionButton:hover {
+  background-color: #e0ecff;
 }
+
+.deleteButton {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.deleteButton:hover {
+  background-color: #d32f2f;
+}
+
 .questionContainer {
-  border: 1px solid #ccc;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  background-color: #f9f9f9;
+  background-color: #e0ecff;
+  border-left: 6px solid #6332ca;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.questionHeader {
   display: flex;
   justify-content: space-between;
-  align-items:center;
-}
-.questionContainerspan{
-        width: 80%;
-    }
-.questionContainerspanEdit{
-    width: 75%;
-}
-.fileUpload{
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-}
-.fileUpload input{
-    padding: 15px 30px;
-}
-.uploadButton {
-  padding: 10px 20px;
-  background-color: #5D32B9;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-.previewContainer{
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    position: relative;
-}
-.previewContainer img{
-    height: auto;
-    width: 400px;
-    object-fit: cover;
-    position: relative;
-}
-.nextButton{
-    width: 100%;
-    display: flex;
-    justify-content:end ;
-    margin-top: 50px;
-}
-.nextButton button{
-    padding: 10px 50px ;
-    background-color: #5D32B9;
-    border: none;
-    border-radius: 5px;
-    color: white;
-    font-size: 20px;
-}
-.AdNameHead h2{
-margin-bottom: 20px;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
-@media (max-width: 869px){
-    .questionContainer{
-        flex-direction: column;
-    }
-    .editDelete{
-    margin-top: 15px;
-  }
-    .questionContainerspan{
-        width: 90%;
-    }
-.questionContainerspanEdit{
-    width: 90%;
+.optionList {
+  padding-left: 18px;
+  list-style-type: disc;
+  color: #333;
 }
-
-}
-@media (max-width: 769px) {
-  .adFormMain {
-    width: 100%;
-    padding: 10px;
-  }
-  .adName {
-    padding: 20px;
-  }
-  .container {
-    padding: 20px 10px;
-  }
-  .buttondiv {
-    margin-top: 20px;
-    justify-content: center;
-  }
-  .buttondiv button {
-    width: 100%;
-    font-size: 20px;
-  }
-  .backButton {
-    margin-right: 0px;
-    margin-bottom: 30px;
-  }
-  .AdNameHead h2{
-    margin-bottom: 20px;
-  }
-  
-}
-
