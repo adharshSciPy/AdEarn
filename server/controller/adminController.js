@@ -10,6 +10,7 @@ import { SurveyAd } from "../model/surveyadModel.js";
 import AdminWallet from "../model/adminwalletModel.js";
 import  Notification  from "../model/notificationsModel.js";
 import  {sendNotification } from "../utils/sendNotifications.js";
+import { UserWallet } from "../model/userWallet.js";
 
 const USER_ROLE=process.env.USER_ROLE;
 const ADMIN_ROLE=process.env.ADMIN_ROLE;
@@ -512,106 +513,133 @@ const rejectAdById = async (req, res) => {
 
   try {
     const ad = await Ad.findById(adId)
-      .populate("imgAdRef")
-      .populate("videoAdRef")
-      .populate("surveyAdRef");
+      .populate({
+        path: "imgAdRef videoAdRef surveyAdRef",
+        populate: {
+          path: "createdBy",
+          populate: {
+            path: "userWalletDetails",
+          },
+        },
+      });
 
     if (!ad) {
       return res.status(404).json({ message: "Ad not found" });
     }
 
     let updatedAd = null;
-    let createdBy = null;
+    let adDoc = null;
     let adType = "";
     let adTitle = "";
     let adPostedTime = "";
+    let createdBy = null;
+    let totalStarsAllocated = 0;
     const rejectionReason = reason || "Rejected by admin";
-
     const rejectedTime = new Date();
 
-    // ✅ Handle Image Ad
+    // ✅ Image Ad
     if (ad.imgAdRef && !ad.imgAdRef.isAdVerified) {
       updatedAd = await ImageAd.findByIdAndUpdate(
         ad.imgAdRef._id,
         {
           isAdVerified: false,
           isAdVisible: false,
-           isAdRejected: true,
+          isAdRejected: true,
           adRejectionReason: rejectionReason,
           adRejectedTime: rejectedTime,
         },
         { new: true }
       );
+      adDoc = ad.imgAdRef;
       adType = "Image Ad";
-      createdBy = ad.imgAdRef.createdBy;
-      adTitle = ad.imgAdRef.title;
-      adPostedTime = ad.imgAdRef.createdAt;
     }
 
-    // ✅ Handle Video Ad
+    // ✅ Video Ad
     else if (ad.videoAdRef && !ad.videoAdRef.isAdVerified) {
       updatedAd = await VideoAd.findByIdAndUpdate(
         ad.videoAdRef._id,
         {
           isAdVerified: false,
           isAdVisible: false,
-           isAdRejected: true,
+          isAdRejected: true,
           adRejectionReason: rejectionReason,
           adRejectedTime: rejectedTime,
         },
         { new: true }
       );
+      adDoc = ad.videoAdRef;
       adType = "Video Ad";
-      createdBy = ad.videoAdRef.createdBy;
-      adTitle = ad.videoAdRef.title;
-      adPostedTime = ad.videoAdRef.createdAt;
     }
 
-    // ✅ Handle Survey Ad
+    // ✅ Survey Ad
     else if (ad.surveyAdRef && !ad.surveyAdRef.isAdVerified) {
       updatedAd = await SurveyAd.findByIdAndUpdate(
         ad.surveyAdRef._id,
         {
           isAdVerified: false,
           isAdVisible: false,
-           isAdRejected: true,
+          isAdRejected: true,
           adRejectionReason: rejectionReason,
           adRejectedTime: rejectedTime,
         },
         { new: true }
       );
+      adDoc = ad.surveyAdRef;
       adType = "Survey Ad";
-      createdBy = ad.surveyAdRef.createdBy;
-      adTitle = ad.surveyAdRef.title;
-      adPostedTime = ad.surveyAdRef.createdAt;
     }
 
-    if (!updatedAd) {
+    if (!updatedAd || !adDoc) {
       return res.status(400).json({ message: "Ad is already verified or invalid ad type" });
     }
 
-    // 🔔 Send rejection notification to the creator
+    createdBy = adDoc.createdBy;
+    adTitle = adDoc.title;
+    adPostedTime = adDoc.createdAt;
+    totalStarsAllocated = adDoc.totalStarsAllocated;
+
+    // ✅ Refund stars to user wallet (fallback safe)
+    const walletId =
+      createdBy?.userWalletDetails?._id || createdBy?.userWalletDetails;
+
+    if (walletId && totalStarsAllocated > 0) {
+      const updatedWallet = await UserWallet.findByIdAndUpdate(
+        walletId,
+        { $inc: { totalStars: totalStarsAllocated } },
+        { new: true }
+      );
+
+      console.log(
+        `✅ Refunded ${totalStarsAllocated} stars to wallet ${walletId}. New balance: ${updatedWallet?.totalStars}`
+      );
+    } else {
+      console.warn("⚠️ Wallet not found or zero refund stars");
+    }
+
+    // ✅ Notification with refund info
     if (createdBy) {
       const formattedTime = new Date(adPostedTime).toLocaleString("en-IN", {
         timeZone: "Asia/Kolkata",
         dateStyle: "medium",
-        timeStyle: "short"
+        timeStyle: "short",
       });
 
-      const message = `Your ${adType} titled "${adTitle}" posted on ${formattedTime} has been rejected. Reason: ${rejectionReason}`;
-      await sendNotification(createdBy, USER_ROLE, message, io, connectedUsers);
+      const message = `Your ${adType} titled "${adTitle}" posted on ${formattedTime} has been rejected. Reason: ${rejectionReason}. Refunded ${totalStarsAllocated} stars to your wallet.`;
+      await sendNotification(createdBy._id, USER_ROLE, message, io, connectedUsers);
     }
 
     return res.status(200).json({
-      message: `Ad rejected successfully (${adType})`,
+      message: `Ad rejected successfully (${adType}), stars refunded`,
       updatedAd,
+      refundedStars: totalStarsAllocated,
     });
 
   } catch (error) {
-    console.error("Error rejecting ad:", error);
+    console.error("❌ Error rejecting ad:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
 
 
 export {
