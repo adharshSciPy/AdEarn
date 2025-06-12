@@ -221,6 +221,31 @@ function VerifyAds() {
                     ) : null}
                   </div>
                 </div>
+                {(unverifiedAd?.imageAd?.audioUrl ||
+                  unverifiedAd?.videoAd?.audioUrl) && (
+                  <div className={styles.adsnametext}>
+                    <div>
+                      <h1>Audio</h1>
+                    </div>
+                    <div>
+                      {unverifiedAd?.imageAd?.audioUrl ? (
+                        <audio controls>
+                          <source
+                            src={`${baseUrl}${unverifiedAd.imageAd.audioUrl}`}
+                          />
+                          Your browser does not support the audio element.
+                        </audio>
+                      ) : (
+                        <audio controls>
+                          <source
+                            src={`${baseUrl}${unverifiedAd.videoAd.audioUrl}`}
+                          />
+                          Your browser does not support the audio element.
+                        </audio>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

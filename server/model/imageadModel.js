@@ -81,16 +81,16 @@ const imageAd = new mongoose.Schema(
       type: [Number],
       default: [],
     },
-    isAdRejected:{
-type:Boolean,
-default:false
+    isAdRejected: {
+      type: Boolean,
+      default: false,
     },
-    adRejectionReason: { 
-      type: String 
+    adRejectionReason: {
+      type: String,
     },
     adRejectedTime: {
-       type: Date
-       },
+      type: Date,
+    },
     viewersRewarded: [
       {
         userId: {
@@ -119,22 +119,27 @@ default:false
         },
       },
     ],
-    targetStates:[
+    targetStates: [
       {
-        type:String
-      }
+        type: String,
+      },
     ],
-    targetDistricts:[
+    targetDistricts: [
       {
-        type:String
-      }
+        type: String,
+      },
     ],
     audioUrl: {
-  type: String,
-  required: false,
-},
-
+      type: String,
+      required: false,
+    },
+    // user can turn on and off ads after admin verified
+    isAdOn: {
+      type: Boolean,
+      default: true,
+    },
   },
+
   { timestamps: true }
 );
 imageAd.index({ "targetRegions.location": "2dsphere" });

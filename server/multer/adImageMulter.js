@@ -1,7 +1,7 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from "url";
 
 // Get the current directory path
 const __filename = fileURLToPath(import.meta.url);
@@ -28,15 +28,29 @@ const storage = multer.diskStorage({
 
 // File filter
 const fileFilter = (req, file, cb) => {
-  const allowedImageTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-  const allowedAudioTypes = ["audio/mpeg", "audio/mp3", "audio/wav"];
+  const allowedImageTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+  ];
+  const allowedAudioTypes = [
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/wav",
+    "audio/x-wav",
+    "audio/m4a",
+    "audio/x-m4a",
+  ];
   const allowedTypes = [...allowedImageTypes, ...allowedAudioTypes];
 
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
     cb(
-      new Error("Invalid file type. Only JPEG, PNG, GIF, WEBP images and MP3/WAV audio are allowed!"),
+      new Error(
+        "Invalid file type. Only JPEG, PNG, GIF, WEBP images and MP3/WAV audio are allowed!"
+      ),
       false
     );
   }

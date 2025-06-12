@@ -10,7 +10,9 @@ import {
   fetchVerifiedVideoAd,
   viewAd,
   fetchSingleUnverifiedAd,
-  fetchVerifiedSurveyAd
+  fetchVerifiedSurveyAd,
+  toggleAds,
+  editImageAd
 } from "../controller/adsController.js";
 import adMediaUpload from "../multer/adImageMulter.js"
 import adVideoUpload from "../multer/adVideoMulter.js"
@@ -31,6 +33,11 @@ adsRouter.get('/image-ads/:userId', fetchVerifiedImgAd);
 adsRouter.get('/video-ads/:userId', fetchVerifiedVideoAd);
 adsRouter.get('/survey-ads/:userId', fetchVerifiedSurveyAd);
 adsRouter.post('/view-ads/:id/:adId', viewAd);
+adsRouter.post('/toggle-ad',toggleAds);
+adsRouter.patch("/edit-image-ad/:id", adMediaUpload, editImageAd);
+
+
+
 
 
 

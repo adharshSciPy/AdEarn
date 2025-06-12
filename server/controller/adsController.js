@@ -3,7 +3,7 @@ import { VideoAd } from "../model/videoadModel.js";
 import { SurveyAd } from "../model/surveyadModel.js";
 import User from "../model/userModel.js";
 import { Ad } from "../model/AdsModel.js";
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 // function generateStarPayoutPlan(views, totalStars) {
 //   const payout = Array(views).fill(0);
@@ -55,7 +55,7 @@ import mongoose from 'mongoose';
 // function to calculate the region (radius)
 function calculateDistance(lat1, lng1, lat2, lng2) {
   const R = 6371000;
-  const toRad = deg => (deg * Math.PI) / 180;
+  const toRad = (deg) => (deg * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
   const a =
@@ -115,9 +115,7 @@ const createImageAd = async (req, res) => {
         const radius = parseFloat(loc.radius);
 
         if (isNaN(latitude) || isNaN(longitude) || isNaN(radius)) {
-          return res
-            .status(400)
-            .json({ message: "Invalid location format" });
+          return res.status(400).json({ message: "Invalid location format" });
         }
 
         targetRegions.push({
@@ -236,10 +234,6 @@ const createImageAd = async (req, res) => {
   }
 };
 
-
-
-
-
 // ------------------- VIDEO AD -------------------
 
 const createVideoAd = async (req, res) => {
@@ -288,9 +282,7 @@ const createVideoAd = async (req, res) => {
         const radius = parseFloat(loc.radius);
 
         if (isNaN(latitude) || isNaN(longitude) || isNaN(radius)) {
-          return res
-            .status(400)
-            .json({ message: "Invalid location format" });
+          return res.status(400).json({ message: "Invalid location format" });
         }
 
         targetRegions.push({
@@ -338,9 +330,7 @@ const createVideoAd = async (req, res) => {
 
     const viewsNeeded = parseInt(userViewsNeeded);
     if (isNaN(viewsNeeded) || viewsNeeded <= 0) {
-      return res
-        .status(400)
-        .json({ message: "Invalid userViewsNeeded value" });
+      return res.status(400).json({ message: "Invalid userViewsNeeded value" });
     }
 
     const starsDeductionRate = 2.4;
@@ -414,8 +404,6 @@ const createVideoAd = async (req, res) => {
   }
 };
 
-
-
 // ------------------- SURVEY AD -------------------
 
 const createSurveyAd = async (req, res) => {
@@ -455,15 +443,13 @@ const createSurveyAd = async (req, res) => {
         const radius = parseFloat(loc.radius);
 
         if (isNaN(latitude) || isNaN(longitude) || isNaN(radius)) {
-          return res
-            .status(400)
-            .json({ message: "Invalid location format" });
+          return res.status(400).json({ message: "Invalid location format" });
         }
 
         targetRegions.push({
           location: {
             type: "Point",
-            coordinates: [latitude,longitude],
+            coordinates: [latitude, longitude],
           },
           radius,
         });
@@ -504,9 +490,7 @@ const createSurveyAd = async (req, res) => {
 
     const viewsNeeded = parseInt(userViewsNeeded);
     if (isNaN(viewsNeeded) || viewsNeeded <= 0) {
-      return res
-        .status(400)
-        .json({ message: "Invalid userViewsNeeded value" });
+      return res.status(400).json({ message: "Invalid userViewsNeeded value" });
     }
 
     const starsDeductionRate = 0.6;
@@ -583,7 +567,6 @@ const createSurveyAd = async (req, res) => {
   }
 };
 
-
 // fetch single unVerifiedAds
 const fetchSingleUnverifiedAd = async (req, res) => {
   const { id } = req.params;
@@ -639,59 +622,66 @@ const fetchSingleUnverifiedAd = async (req, res) => {
   }
 };
 
-
 // fetching all the ads with isVerified:false for verification
 const fetchAdsForVerification = async (req, res) => {
   try {
     const allAds = await Ad.find()
       .populate({
         path: "imgAdRef",
-        match: { 
+        match: {
           isAdVerified: false,
           isAdRejected: false,
-          adRejectedTime: { $exists: false }
-        }
+          adRejectedTime: { $exists: false },
+        },
       })
       .populate({
         path: "videoAdRef",
-        match: { 
+        match: {
           isAdVerified: false,
           isAdRejected: false,
-          adRejectedTime: { $exists: false }
-        }
+          adRejectedTime: { $exists: false },
+        },
       })
       .populate({
         path: "surveyAdRef",
-        match: { 
+        match: {
           isAdVerified: false,
           isAdRejected: false,
-          adRejectedTime: { $exists: false }
-        }
+          adRejectedTime: { $exists: false },
+        },
       });
 
     // Filter out ads where all refs are null (due to population matching)
-    const validAds = allAds.filter(ad => 
-      ad.imgAdRef || ad.videoAdRef || ad.surveyAdRef
+    const validAds = allAds.filter(
+      (ad) => ad.imgAdRef || ad.videoAdRef || ad.surveyAdRef
     );
 
     if (validAds.length === 0) {
-      return res.status(404).json({ message: "No unverified and non-rejected ads found" });
+      return res
+        .status(404)
+        .json({ message: "No unverified and non-rejected ads found" });
     }
 
     const adsWithVerificationStatus = validAds.map((ad) => ({
       _id: ad._id,
-      imageAd: ad.imgAdRef ? {
-        ...ad.imgAdRef.toObject(),
-        isVerified: ad.imgAdRef.isAdVerified
-      } : null,
-      videoAd: ad.videoAdRef ? {
-        ...ad.videoAdRef.toObject(),
-        isVerified: ad.videoAdRef.isAdVerified
-      } : null,
-      surveyAd: ad.surveyAdRef ? {
-        ...ad.surveyAdRef.toObject(),
-        isVerified: ad.surveyAdRef.isAdVerified
-      } : null,
+      imageAd: ad.imgAdRef
+        ? {
+            ...ad.imgAdRef.toObject(),
+            isVerified: ad.imgAdRef.isAdVerified,
+          }
+        : null,
+      videoAd: ad.videoAdRef
+        ? {
+            ...ad.videoAdRef.toObject(),
+            isVerified: ad.videoAdRef.isAdVerified,
+          }
+        : null,
+      surveyAd: ad.surveyAdRef
+        ? {
+            ...ad.surveyAdRef.toObject(),
+            isVerified: ad.surveyAdRef.isAdVerified,
+          }
+        : null,
     }));
 
     res.status(200).json({ ads: adsWithVerificationStatus });
@@ -831,9 +821,15 @@ const fetchVerifiedImgAd = async (req, res) => {
     const userState = user.state?.toLowerCase();
     const userDistrict = user.district?.toLowerCase();
 
-    if ((!userLat || !userLng) && !profileCoords && !userState && !userDistrict) {
+    if (
+      (!userLat || !userLng) &&
+      !profileCoords &&
+      !userState &&
+      !userDistrict
+    ) {
       return res.status(400).json({
-        message: "No valid user location or region data available for ad matching",
+        message:
+          "No valid user location or region data available for ad matching",
       });
     }
 
@@ -846,20 +842,26 @@ const fetchVerifiedImgAd = async (req, res) => {
       if (!imgAd || imgAd.createdBy?.toString() === userId) continue;
 
       // 🔍 Region-based targeting
-      const isUserInTargetRegion = imgAd.targetRegions?.some(region => {
+      const isUserInTargetRegion = imgAd.targetRegions?.some((region) => {
         if (!region?.location?.coordinates) return false;
 
         const [targetLat, targetLng] = region.location.coordinates;
         const radiusMeters = region.radius * 1000;
 
         const withinLiveLocation =
-          userLat && userLng &&
-          calculateDistance(userLat, userLng, targetLat, targetLng) <= radiusMeters;
+          userLat &&
+          userLng &&
+          calculateDistance(userLat, userLng, targetLat, targetLng) <=
+            radiusMeters;
 
         const withinProfileLocation =
           profileCoords &&
-          calculateDistance(profileCoords.lat, profileCoords.lng, targetLat, targetLng) <=
-            radiusMeters;
+          calculateDistance(
+            profileCoords.lat,
+            profileCoords.lng,
+            targetLat,
+            targetLng
+          ) <= radiusMeters;
 
         return withinLiveLocation || withinProfileLocation;
       });
@@ -870,11 +872,13 @@ const fetchVerifiedImgAd = async (req, res) => {
 
       if (imgAd.targetStates?.length > 0) {
         isUserInTargetState = imgAd.targetStates.some(
-          state => state.toLowerCase() === userState
+          (state) => state.toLowerCase() === userState
         );
 
         if (isUserInTargetState && imgAd.targetDistricts?.length > 0) {
-          const normalizedDistricts = imgAd.targetDistricts.map(d => d.toLowerCase());
+          const normalizedDistricts = imgAd.targetDistricts.map((d) =>
+            d.toLowerCase()
+          );
 
           if (normalizedDistricts.includes("all")) {
             isUserInTargetDistrict = true;
@@ -894,13 +898,14 @@ const fetchVerifiedImgAd = async (req, res) => {
 
       // ✅ Has user already seen the ad?
       const hasUserViewed = imgAd.viewersRewarded.some(
-        entry => entry.userId.toString() === userId
+        (entry) => entry.userId.toString() === userId
       );
 
       // ✅ Is ad active?
       const adIsActive =
         imgAd.isAdVerified &&
         imgAd.isAdVisible &&
+        imgAd.isAdOn &&
         imgAd.totalViewCount < imgAd.userViewsNeeded &&
         (!imgAd.adExpirationTime || imgAd.adExpirationTime > currentDate);
 
@@ -909,9 +914,10 @@ const fetchVerifiedImgAd = async (req, res) => {
 
         if (imgAd.adRepetition) {
           const userSchedule = imgAd.adRepeatSchedule.find(
-            entry => entry.userId.toString() === userId
+            (entry) => entry.userId.toString() === userId
           );
-          if (userSchedule && userSchedule.nextScheduledAt > currentDate) continue;
+          if (userSchedule && userSchedule.nextScheduledAt > currentDate)
+            continue;
         }
 
         verifiedImgAds.push({
@@ -926,12 +932,19 @@ const fetchVerifiedImgAd = async (req, res) => {
         const updateFields = {};
         let shouldUpdate = false;
 
-        if (imgAd.totalViewCount >= imgAd.userViewsNeeded && !imgAd.isViewsReached) {
+        if (
+          imgAd.totalViewCount >= imgAd.userViewsNeeded &&
+          !imgAd.isViewsReached
+        ) {
           updateFields.isViewsReached = true;
           shouldUpdate = true;
         }
 
-        if (imgAd.adExpirationTime && imgAd.adExpirationTime <= currentDate && imgAd.isAdVisible) {
+        if (
+          imgAd.adExpirationTime &&
+          imgAd.adExpirationTime <= currentDate &&
+          imgAd.isAdVisible
+        ) {
           updateFields.isAdVisible = false;
           shouldUpdate = true;
         }
@@ -944,12 +957,14 @@ const fetchVerifiedImgAd = async (req, res) => {
 
     if (verifiedImgAds.length === 0) {
       return res.status(404).json({
-        message: "No verified and eligible image ads found for your location or region",
+        message:
+          "No verified and eligible image ads found for your location or region",
       });
     }
 
     return res.status(200).json({
       message: "Verified image ads fetched successfully",
+      count:verifiedImgAds.length,
       ads: verifiedImgAds,
     });
   } catch (error) {
@@ -958,11 +973,8 @@ const fetchVerifiedImgAd = async (req, res) => {
   }
 };
 
-
-
-
 // to fetch verified imageAd based on repation if any periodic fetchng and only if the view count is not reached
-const fetchVerifiedVideoAd = async (req, res) => {
+const fetchVerifiedVideoAd = async (req, res) => {  
   try {
     const { userId } = req.params;
     const userLat = parseFloat(req.query.lat);
@@ -978,9 +990,15 @@ const fetchVerifiedVideoAd = async (req, res) => {
     const userState = user.state?.toLowerCase();
     const userDistrict = user.district?.toLowerCase();
 
-    if ((!userLat || !userLng) && !profileCoords && !userState && !userDistrict) {
+    if (
+      (!userLat || !userLng) &&
+      !profileCoords &&
+      !userState &&
+      !userDistrict
+    ) {
       return res.status(400).json({
-        message: "No valid user location or region data available for ad matching",
+        message:
+          "No valid user location or region data available for ad matching",
       });
     }
 
@@ -993,20 +1011,26 @@ const fetchVerifiedVideoAd = async (req, res) => {
       if (!videoAd || videoAd.createdBy?.toString() === userId) continue;
 
       // 🔍 Region-based targeting
-      const isUserInTargetRegion = videoAd.targetRegions?.some(region => {
+      const isUserInTargetRegion = videoAd.targetRegions?.some((region) => {
         if (!region?.location?.coordinates) return false;
 
         const [targetLat, targetLng] = region.location.coordinates;
         const radiusMeters = region.radius * 1000;
 
         const withinLiveLocation =
-          userLat && userLng &&
-          calculateDistance(userLat, userLng, targetLat, targetLng) <= radiusMeters;
+          userLat &&
+          userLng &&
+          calculateDistance(userLat, userLng, targetLat, targetLng) <=
+            radiusMeters;
 
         const withinProfileLocation =
           profileCoords &&
-          calculateDistance(profileCoords.lat, profileCoords.lng, targetLat, targetLng) <=
-            radiusMeters;
+          calculateDistance(
+            profileCoords.lat,
+            profileCoords.lng,
+            targetLat,
+            targetLng
+          ) <= radiusMeters;
 
         return withinLiveLocation || withinProfileLocation;
       });
@@ -1017,11 +1041,13 @@ const fetchVerifiedVideoAd = async (req, res) => {
 
       if (videoAd.targetStates?.length > 0) {
         isUserInTargetState = videoAd.targetStates.some(
-          state => state.toLowerCase() === userState
+          (state) => state.toLowerCase() === userState
         );
 
         if (isUserInTargetState && videoAd.targetDistricts?.length > 0) {
-          const normalizedDistricts = videoAd.targetDistricts.map(d => d.toLowerCase());
+          const normalizedDistricts = videoAd.targetDistricts.map((d) =>
+            d.toLowerCase()
+          );
 
           if (normalizedDistricts.includes("all")) {
             isUserInTargetDistrict = true;
@@ -1041,13 +1067,14 @@ const fetchVerifiedVideoAd = async (req, res) => {
 
       // ✅ Has user already seen the ad?
       const hasUserViewed = videoAd.viewersRewarded.some(
-        entry => entry.userId.toString() === userId
+        (entry) => entry.userId.toString() === userId
       );
 
       // ✅ Is ad active?
       const adIsActive =
         videoAd.isAdVerified &&
         videoAd.isAdVisible &&
+        videoAd.isAdOn &&
         videoAd.totalViewCount < videoAd.userViewsNeeded &&
         (!videoAd.adExpirationTime || videoAd.adExpirationTime > currentDate);
 
@@ -1056,9 +1083,10 @@ const fetchVerifiedVideoAd = async (req, res) => {
 
         if (videoAd.adRepetition) {
           const userSchedule = videoAd.adRepeatSchedule.find(
-            entry => entry.userId.toString() === userId
+            (entry) => entry.userId.toString() === userId
           );
-          if (userSchedule && userSchedule.nextScheduledAt > currentDate) continue;
+          if (userSchedule && userSchedule.nextScheduledAt > currentDate)
+            continue;
         }
 
         verifiedVideoAds.push({
@@ -1073,7 +1101,10 @@ const fetchVerifiedVideoAd = async (req, res) => {
         const updateFields = {};
         let shouldUpdate = false;
 
-        if (videoAd.totalViewCount >= videoAd.userViewsNeeded && !videoAd.isViewsReached) {
+        if (
+          videoAd.totalViewCount >= videoAd.userViewsNeeded &&
+          !videoAd.isViewsReached
+        ) {
           updateFields.isViewsReached = true;
           shouldUpdate = true;
         }
@@ -1095,12 +1126,14 @@ const fetchVerifiedVideoAd = async (req, res) => {
 
     if (verifiedVideoAds.length === 0) {
       return res.status(404).json({
-        message: "No verified and eligible video ads found for your location or region",
+        message:
+          "No verified and eligible video ads found for your location or region",
       });
     }
 
     return res.status(200).json({
       message: "Verified video ads fetched successfully",
+      count:verifiedVideoAds.length,
       ads: verifiedVideoAds,
     });
   } catch (error) {
@@ -1108,9 +1141,6 @@ const fetchVerifiedVideoAd = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-
-
-
 
 // to fetch verified surveyAd
 const fetchVerifiedSurveyAd = async (req, res) => {
@@ -1129,9 +1159,15 @@ const fetchVerifiedSurveyAd = async (req, res) => {
     const userState = user.state?.toLowerCase();
     const userDistrict = user.district?.toLowerCase();
 
-    if ((!userLat || !userLng) && !profileCoords && !userState && !userDistrict) {
+    if (
+      (!userLat || !userLng) &&
+      !profileCoords &&
+      !userState &&
+      !userDistrict
+    ) {
       return res.status(400).json({
-        message: "No valid user location or region data available for ad matching",
+        message:
+          "No valid user location or region data available for ad matching",
       });
     }
 
@@ -1144,20 +1180,26 @@ const fetchVerifiedSurveyAd = async (req, res) => {
       if (!surveyAd || surveyAd.createdBy?.toString() === userId) continue;
 
       // ✅ Region-based targeting
-      const isUserInTargetRegion = surveyAd.targetRegions?.some(region => {
+      const isUserInTargetRegion = surveyAd.targetRegions?.some((region) => {
         if (!region?.location?.coordinates) return false;
 
         const [targetLat, targetLng] = region.location.coordinates;
         const radiusMeters = region.radius * 1000;
 
         const withinLiveLocation =
-          userLat && userLng &&
-          calculateDistance(userLat, userLng, targetLat, targetLng) <= radiusMeters;
+          userLat &&
+          userLng &&
+          calculateDistance(userLat, userLng, targetLat, targetLng) <=
+            radiusMeters;
 
         const withinProfileLocation =
           profileCoords &&
-          calculateDistance(profileCoords.lat, profileCoords.lng, targetLat, targetLng) <=
-            radiusMeters;
+          calculateDistance(
+            profileCoords.lat,
+            profileCoords.lng,
+            targetLat,
+            targetLng
+          ) <= radiusMeters;
 
         return withinLiveLocation || withinProfileLocation;
       });
@@ -1168,11 +1210,13 @@ const fetchVerifiedSurveyAd = async (req, res) => {
 
       if (surveyAd.targetStates?.length > 0) {
         isUserInTargetState = surveyAd.targetStates.some(
-          state => state.toLowerCase() === userState
+          (state) => state.toLowerCase() === userState
         );
 
         if (isUserInTargetState && surveyAd.targetDistricts?.length > 0) {
-          const normalizedDistricts = surveyAd.targetDistricts.map(d => d.toLowerCase());
+          const normalizedDistricts = surveyAd.targetDistricts.map((d) =>
+            d.toLowerCase()
+          );
           if (normalizedDistricts.includes("all")) {
             isUserInTargetDistrict = true;
           } else {
@@ -1190,13 +1234,14 @@ const fetchVerifiedSurveyAd = async (req, res) => {
 
       // ✅ Already completed check
       const hasUserCompleted = surveyAd.usersCompleted?.some(
-        entry => entry.userId.toString() === userId
+        (entry) => entry.userId.toString() === userId
       );
 
       // ✅ Active status
       const adIsActive =
         surveyAd.isAdVerified &&
         surveyAd.isAdVisible &&
+        surveyAd.isAdOn &&
         surveyAd.totalResponses < surveyAd.responseLimit &&
         (!surveyAd.adExpirationTime || surveyAd.adExpirationTime > currentDate);
 
@@ -1205,9 +1250,10 @@ const fetchVerifiedSurveyAd = async (req, res) => {
 
         if (surveyAd.adRepetition) {
           const userSchedule = surveyAd.repeatSchedule?.find(
-            entry => entry.userId.toString() === userId
+            (entry) => entry.userId.toString() === userId
           );
-          if (userSchedule && userSchedule.nextScheduledAt > currentDate) continue;
+          if (userSchedule && userSchedule.nextScheduledAt > currentDate)
+            continue;
         }
 
         verifiedSurveyAds.push({
@@ -1221,7 +1267,10 @@ const fetchVerifiedSurveyAd = async (req, res) => {
         const updateFields = {};
         let shouldUpdate = false;
 
-        if (surveyAd.totalResponses >= surveyAd.responseLimit && !surveyAd.isResponsesReached) {
+        if (
+          surveyAd.totalResponses >= surveyAd.responseLimit &&
+          !surveyAd.isResponsesReached
+        ) {
           updateFields.isResponsesReached = true;
           shouldUpdate = true;
         }
@@ -1243,7 +1292,8 @@ const fetchVerifiedSurveyAd = async (req, res) => {
 
     if (verifiedSurveyAds.length === 0) {
       return res.status(404).json({
-        message: "No verified and eligible survey ads found for your location or region",
+        message:
+          "No verified and eligible survey ads found for your location or region",
       });
     }
 
@@ -1257,7 +1307,6 @@ const fetchVerifiedSurveyAd = async (req, res) => {
   }
 };
 
-
 // to watch ads,star split,view count
 const viewAd = async (req, res) => {
   const { id, adId } = req.params;
@@ -1265,7 +1314,6 @@ const viewAd = async (req, res) => {
   session.startTransaction();
 
   try {
-    // Fetch user with session
     const user = await User.findById(id)
       .populate("userWalletDetails")
       .session(session);
@@ -1274,7 +1322,6 @@ const viewAd = async (req, res) => {
       return res.status(400).json({ message: "User not found" });
     }
 
-    // Fetch ad with all references and session
     const ad = await Ad.findById(adId)
       .populate("imgAdRef")
       .populate("videoAdRef")
@@ -1286,7 +1333,6 @@ const viewAd = async (req, res) => {
       return res.status(404).json({ message: "Ad not found" });
     }
 
-    // Identify which ad type it is
     const adTypes = [
       { ref: ad.imgAdRef, type: "Image" },
       { ref: ad.videoAdRef, type: "Video" },
@@ -1298,48 +1344,49 @@ const viewAd = async (req, res) => {
 
     if (!adObj) {
       await session.abortTransaction();
-      return res.status(403).json({ 
-        message: "Ad is not verified or not found in any category" 
+      return res.status(403).json({
+        message: "Ad is not verified or not found in any category",
       });
     }
 
     const now = new Date();
 
-    // Check if user already rewarded
     const previouslyRewarded = adObj.viewersRewarded.find(
       (entry) => entry.userId.toString() === id
     );
 
+    // Check for user's repeat schedule (latest, since we now ensure only one entry)
     const userRepeat = adObj.adRepeatSchedule.find(
-      (entry) => entry.id.toString() === id
+      (entry) => entry.userId.toString() === id
     );
 
-    // If repetition is off and user already viewed
+    // If repetition is off and user already rewarded
     if (!adObj.adRepetition && previouslyRewarded) {
       await session.abortTransaction();
-      return res.status(409).json({ 
-        message: "User has already viewed this ad" 
+      return res.status(409).json({
+        message: "User has already viewed this ad",
       });
     }
 
-    // If repetition is on but time not reached
+    // If repetition is on and the user is not yet eligible again
     if (adObj.adRepetition && userRepeat && userRepeat.nextScheduledAt > now) {
-      await session.abortTransaction();
       const waitTime = (userRepeat.nextScheduledAt - now) / 1000 / 60;
+      await session.abortTransaction();
       return res.status(429).json({
-        message: `Ad will be available again in ${Math.ceil(waitTime)} minute(s)`,
+        message: `Ad will be available again in ${Math.ceil(
+          waitTime
+        )} minute(s)`,
       });
     }
 
-    // If no rewards left
     if (adObj.starPayoutPlan.length === 0) {
       await session.abortTransaction();
-      return res.status(410).json({ 
-        message: "All rewards have been claimed" 
+      return res.status(410).json({
+        message: "All rewards have been claimed",
       });
     }
 
-    // Reward the user
+    // Rewarding
     const starsToGive = adObj.starPayoutPlan.shift();
     adObj.totalViewCount += 1;
 
@@ -1354,10 +1401,17 @@ const viewAd = async (req, res) => {
     });
 
     if (adObj.adRepetition) {
-      const nextScheduledAt = new Date(now.getTime() + adObj.adPeriod * 60 * 60 * 1000);
-      if (userRepeat) {
-        userRepeat.viewsRepatitionCount += 1;
-        userRepeat.nextScheduledAt = nextScheduledAt;
+      const nextScheduledAt = new Date(
+        now.getTime() + adObj.adPeriod * 60 * 60 * 1000
+      );
+
+      const existingIndex = adObj.adRepeatSchedule.findIndex(
+        (entry) => entry.userId.toString() === user._id.toString()
+      );
+
+      if (existingIndex !== -1) {
+        adObj.adRepeatSchedule[existingIndex].viewsRepatitionCount += 1;
+        adObj.adRepeatSchedule[existingIndex].nextScheduledAt = nextScheduledAt;
       } else {
         adObj.adRepeatSchedule.push({
           userId: user._id,
@@ -1370,8 +1424,8 @@ const viewAd = async (req, res) => {
     const wallet = user.userWalletDetails;
     if (!wallet) {
       await session.abortTransaction();
-      return res.status(500).json({ 
-        message: "User wallet not found" 
+      return res.status(500).json({
+        message: "User wallet not found",
       });
     }
 
@@ -1390,7 +1444,6 @@ const viewAd = async (req, res) => {
       });
     }
 
-    // Save all changes within the transaction
     await Promise.all([
       adObj.save({ session }),
       wallet.save({ session }),
@@ -1405,24 +1458,25 @@ const viewAd = async (req, res) => {
       currentViewCount: adObj.totalViewCount,
       remainingPayouts: adObj.starPayoutPlan.length,
       isViewsReached: adObj.isViewsReached,
-      nextAvailableAt: adObj.adRepetition 
-        ? new Date(now.getTime() + adObj.adPeriod * 60 * 60 * 1000).toISOString()
+      nextAvailableAt: adObj.adRepetition
+        ? new Date(
+            now.getTime() + adObj.adPeriod * 60 * 60 * 1000
+          ).toISOString()
         : null,
     });
-
   } catch (error) {
     await session.abortTransaction();
-    
+
     console.error("Error viewing ad:", error);
-    
-    if (error.name === 'VersionError') {
+
+    if (error.name === "VersionError") {
       return res.status(409).json({
         message: "The ad was modified by another operation. Please try again.",
         code: "VERSION_CONFLICT",
       });
     }
-    
-    if (error.name === 'DocumentNotFoundError') {
+
+    if (error.name === "DocumentNotFoundError") {
       return res.status(404).json({
         message: "The ad or user was not found. It may have been deleted.",
         code: "DOCUMENT_NOT_FOUND",
@@ -1439,8 +1493,124 @@ const viewAd = async (req, res) => {
   }
 };
 
+// to on or off ads(toggle functionality)
+const toggleAds = async (req, res) => {
+  const { adId } = req.body;
 
-// 
+  try {
+    const specificAd = await Ad.findById(adId)
+      .populate("imgAdRef")
+      .populate("videoAdRef")
+      .populate("surveyAdRef");
+
+    if (!specificAd) {
+      return res.status(404).json({ message: "Ad not found" });
+    }
+
+    let refAd = specificAd.imgAdRef || specificAd.videoAdRef || specificAd.surveyAdRef;
+
+    if (!refAd) {
+      return res.status(400).json({ message: "No referenced ad found to toggle" });
+    }
+
+    refAd.isAdOn = !refAd.isAdOn;
+    await refAd.save();
+
+    return res.status(200).json({
+      message: `Ad has been ${refAd.isAdOn ? "enabled" : "disabled"}`,
+      ad: specificAd, // includes populated ref with updated isAdOn
+    });
+  } catch (error) {
+    console.error("Error toggling ad:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+// to edit imageAds
+ const editImageAd = async (req, res) => {
+  const { adId } = req.params;
+  const {
+    title,
+    description,
+    adPeriod,
+    locations,
+    states,
+    districts,
+  } = req.body;
+
+  try {
+    const imageAd = await ImageAd.findById(adId);
+    if (!imageAd) {
+      return res.status(404).json({ message: "Image ad not found" });
+    }
+
+    // Update editable fields
+    if (title) imageAd.title = title;
+    if (description) imageAd.description = description;
+    // if (userViewsNeeded) imageAd.userViewsNeeded = userViewsNeeded;
+    if (adPeriod) {
+      const parsedAdPeriod = parseFloat(adPeriod);
+      imageAd.adPeriod = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0 ? parsedAdPeriod : 0;
+      imageAd.adRepetition = parsedAdPeriod > 0;
+    }
+
+    // Update targeting info
+    try {
+      let parsedLocations = typeof locations === "string" ? JSON.parse(locations) : locations;
+      if (Array.isArray(parsedLocations)) {
+        const targetRegions = [];
+
+        for (const loc of parsedLocations) {
+          if (!loc.coords || !loc.radius) continue;
+
+          const [latStr, lngStr] = loc.coords.split(",");
+          const latitude = parseFloat(latStr);
+          const longitude = parseFloat(lngStr);
+          const radius = parseFloat(loc.radius);
+
+          if (!isNaN(latitude) && !isNaN(longitude) && !isNaN(radius)) {
+            targetRegions.push({
+              location: {
+                type: "Point",
+                coordinates: [latitude, longitude],
+              },
+              radius,
+            });
+          }
+        }
+
+        imageAd.targetRegions = targetRegions;
+      }
+
+      const parsedStates = typeof states === "string" ? JSON.parse(states) : states;
+      if (Array.isArray(parsedStates)) {
+        imageAd.targetStates = parsedStates;
+      }
+
+      const parsedDistricts = typeof districts === "string" ? JSON.parse(districts) : districts;
+      if (Array.isArray(parsedDistricts)) {
+        imageAd.targetDistricts = parsedDistricts;
+      }
+    } catch (err) {
+      return res.status(400).json({ message: "Invalid location format", error: err.message });
+    }
+
+    // Toggle isAdVerified to false if it was true
+    if (imageAd.isAdVerified === true) {
+      imageAd.isAdVerified = false;
+    }
+
+    await imageAd.save();
+
+    return res.status(200).json({
+      message: "Image Ad updated successfully.Ad is sent to admin for verification",
+      updatedAd: imageAd,
+    });
+  } catch (error) {
+    console.error("Error updating image ad:", error);
+    return res.status(500).json({ message: "Failed to update ad", error: error.message });
+  }
+};
+
 
 export {
   createImageAd,
@@ -1453,5 +1623,7 @@ export {
   fetchVerifiedImgAd,
   fetchVerifiedVideoAd,
   fetchVerifiedSurveyAd,
-  viewAd
+  viewAd,
+  toggleAds,
+  editImageAd
 };

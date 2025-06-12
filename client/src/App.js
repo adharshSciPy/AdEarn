@@ -39,6 +39,7 @@ import UserReport from "./pages/user/ReportPage/ReportPageUser"
 import SurveyAds from "./pages/user/SurveyAds/Surveyads"
 import AdsPreview from "./pages/user/AdPreview/Adpreview"
 import VideoAdForm from './pages/user/VideoAdForm/VideoAdForm';
+import Adspage from './pages/user/AdsPage/Adspage';
 
 
 import SuperadminDash from './pages/superadmin/Dashboard/SuperadminDash';
@@ -129,6 +130,7 @@ function App() {
           <Route path='/adreportuser' element={<UserReport />} />
           <Route path='/surveyaduser' element={<SurveyAds />} />
           <Route path='/adspreview/:id/:adId' element={<AdsPreview />} />
+          <Route path='/ads/:type' element={<Adspage />} />
 
 
 
