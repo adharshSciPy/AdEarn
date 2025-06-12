@@ -8,13 +8,13 @@ import { ImageAd } from "../model/imageadModel.js";
 import { VideoAd } from "../model/videoadModel.js";
 import { SurveyAd } from "../model/surveyadModel.js";
 import AdminWallet from "../model/adminwalletModel.js";
-import  Notification  from "../model/notificationsModel.js";
-import  {sendNotification } from "../utils/sendNotifications.js";
+import Notification from "../model/notificationsModel.js";
+import { sendNotification } from "../utils/sendNotifications.js";
 import { UserWallet } from "../model/userWallet.js";
 
-const USER_ROLE=process.env.USER_ROLE;
-const ADMIN_ROLE=process.env.ADMIN_ROLE;
-const SUPER_ADMIN_ROLE=process.env.SUPER_ADMIN_ROLE;
+const USER_ROLE = process.env.USER_ROLE;
+const ADMIN_ROLE = process.env.ADMIN_ROLE;
+const SUPER_ADMIN_ROLE = process.env.SUPER_ADMIN_ROLE;
 
 const registerAdmin = async (req, res) => {
   const { phoneNumber, password } = req.body;
@@ -178,7 +178,9 @@ const fetchKycUploadedUsers = async (req, res) => {
     });
 
     if (!fetchKycUsers || fetchKycUsers.length === 0) {
-      return res.status(400).json({ message: "No pending verification requests" });
+      return res
+        .status(400)
+        .json({ message: "No pending verification requests" });
     }
 
     // 2. Get all admin users
@@ -245,11 +247,15 @@ const verifyKyc = async (req, res) => {
   try {
     const user = await User.findById(id);
     if (!user) {
-      return res.status(400).json({ message: "No user found. Please check the ID." });
+      return res
+        .status(400)
+        .json({ message: "No user found. Please check the ID." });
     }
 
     if (!user.kycDetails) {
-      return res.status(400).json({ message: "User has not submitted KYC details." });
+      return res
+        .status(400)
+        .json({ message: "User has not submitted KYC details." });
     }
 
     const existingKyc = await kyc.findById(user.kycDetails);
@@ -257,12 +263,10 @@ const verifyKyc = async (req, res) => {
       return res.status(404).json({ message: "KYC document not found." });
     }
 
-
     if (existingKyc.kycStatus === "approved") {
       return res.status(400).json({ message: "User KYC is already approved." });
     }
 
-    
     const updatedKyc = await kyc.findByIdAndUpdate(
       user.kycDetails,
       { kycStatus: "approved" },
@@ -277,7 +281,6 @@ const verifyKyc = async (req, res) => {
       message: "KYC approved successfully.",
       kyc: updatedKyc,
     });
-
   } catch (error) {
     console.error("Error verifying KYC:", error);
     return res.status(500).json({ message: "Internal Server Error" });
@@ -295,11 +298,15 @@ const rejectKyc = async (req, res) => {
   try {
     const user = await User.findById(id);
     if (!user) {
-      return res.status(400).json({ message: "No user found. Please check the ID." });
+      return res
+        .status(400)
+        .json({ message: "No user found. Please check the ID." });
     }
 
     if (!user.kycDetails) {
-      return res.status(400).json({ message: "User has not submitted KYC details." });
+      return res
+        .status(400)
+        .json({ message: "User has not submitted KYC details." });
     }
 
     const existingKyc = await kyc.findById(user.kycDetails);
@@ -328,7 +335,6 @@ const rejectKyc = async (req, res) => {
       rejectionReason,
       kyc: updatedKyc,
     });
-
   } catch (error) {
     console.error("Error rejecting KYC:", error);
     return res.status(500).json({ message: "Internal Server Error" });
@@ -359,7 +365,6 @@ const verifyAdById = async (req, res) => {
     let adType = "";
     let adTitle = "";
     let adPostedTime = "";
-    
 
     const verifiedTime = new Date();
 
@@ -393,8 +398,6 @@ const verifyAdById = async (req, res) => {
       adType = "Image Ad";
       adTitle = ad.imgAdRef.title;
       adPostedTime = ad.imgAdRef.createdAt;
-
-
     } else if (ad.videoAdRef && !ad.videoAdRef.isAdVerified) {
       const views = ad.videoAdRef.userViewsNeeded;
       const expirationDate = calculateExpirationDate(views);
@@ -413,7 +416,6 @@ const verifyAdById = async (req, res) => {
       adType = "Video Ad";
       adTitle = ad.videoAdRef.title;
       adPostedTime = ad.videoAdRef.createdAt;
-
     } else if (ad.surveyAdRef && !ad.surveyAdRef.isAdVerified) {
       const views = ad.surveyAdRef.userViewsNeeded;
       const expirationDate = calculateExpirationDate(views);
@@ -432,7 +434,6 @@ const verifyAdById = async (req, res) => {
       adType = "Survey Ad";
       adTitle = ad.surveyAdRef.title;
       adPostedTime = ad.surveyAdRef.createdAt;
-
     } else {
       return res.status(200).json({ message: "Ad is already verified" });
     }
@@ -442,24 +443,29 @@ const verifyAdById = async (req, res) => {
       const formattedTime = new Date(adPostedTime).toLocaleString("en-IN", {
         timeZone: "Asia/Kolkata",
         dateStyle: "medium",
-        timeStyle: "short"
+        timeStyle: "short",
       });
-        const link = `/adspreview/${createdBy}/${ad._id}`;
+      const link = `/adspreview/${createdBy}/${ad._id}`;
       const message = `Your ${adType} titled "${adTitle}" posted on ${formattedTime} has been verified successfully!`;
-      await sendNotification(createdBy, USER_ROLE, message, io, connectedUsers,link);
+      await sendNotification(
+        createdBy,
+        USER_ROLE,
+        message,
+        io,
+        connectedUsers,
+        link
+      );
     }
 
     return res.status(200).json({
       message: "Ad verified successfully",
       updatedAd,
     });
-
   } catch (error) {
     console.error("Error verifying ad:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 const getAdminWallet = async (req, res) => {
   try {
@@ -512,16 +518,15 @@ const rejectAdById = async (req, res) => {
   }
 
   try {
-    const ad = await Ad.findById(adId)
-      .populate({
-        path: "imgAdRef videoAdRef surveyAdRef",
+    const ad = await Ad.findById(adId).populate({
+      path: "imgAdRef videoAdRef surveyAdRef",
+      populate: {
+        path: "createdBy",
         populate: {
-          path: "createdBy",
-          populate: {
-            path: "userWalletDetails",
-          },
+          path: "userWalletDetails",
         },
-      });
+      },
+    });
 
     if (!ad) {
       return res.status(404).json({ message: "Ad not found" });
@@ -589,7 +594,9 @@ const rejectAdById = async (req, res) => {
     }
 
     if (!updatedAd || !adDoc) {
-      return res.status(400).json({ message: "Ad is already verified or invalid ad type" });
+      return res
+        .status(400)
+        .json({ message: "Ad is already verified or invalid ad type" });
     }
 
     createdBy = adDoc.createdBy;
@@ -624,7 +631,13 @@ const rejectAdById = async (req, res) => {
       });
 
       const message = `Your ${adType} titled "${adTitle}" posted on ${formattedTime} has been rejected. Reason: ${rejectionReason}. Refunded ${totalStarsAllocated} stars to your wallet.`;
-      await sendNotification(createdBy._id, USER_ROLE, message, io, connectedUsers);
+      await sendNotification(
+        createdBy._id,
+        USER_ROLE,
+        message,
+        io,
+        connectedUsers
+      );
     }
 
     return res.status(200).json({
@@ -632,15 +645,11 @@ const rejectAdById = async (req, res) => {
       updatedAd,
       refundedStars: totalStarsAllocated,
     });
-
   } catch (error) {
     console.error("❌ Error rejecting ad:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-
-
-
 
 export {
   registerAdmin,
@@ -655,5 +664,5 @@ export {
   verifyAdById,
   getAdminWallet,
   getSuperAdminWallet,
-  rejectAdById 
+  rejectAdById,
 };

@@ -281,6 +281,11 @@ const userLogin = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
+     if (user.isBlacklisted) {
+      return res
+        .status(403)
+        .json({ message: "You are blacklisted by the admin and cannot login." });
+    }
     if (!user.isUserEnabled) {
       return res
         .status(400)
