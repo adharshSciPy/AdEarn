@@ -358,6 +358,7 @@ const verifyAdById = async (req, res) => {
     let adType = "";
     let adTitle = "";
     let adPostedTime = "";
+    
 
     const verifiedTime = new Date();
 
@@ -391,6 +392,7 @@ const verifyAdById = async (req, res) => {
       adType = "Image Ad";
       adTitle = ad.imgAdRef.title;
       adPostedTime = ad.imgAdRef.createdAt;
+
 
     } else if (ad.videoAdRef && !ad.videoAdRef.isAdVerified) {
       const views = ad.videoAdRef.userViewsNeeded;
@@ -441,9 +443,9 @@ const verifyAdById = async (req, res) => {
         dateStyle: "medium",
         timeStyle: "short"
       });
-
+        const link = `/adspreview/${createdBy}/${ad._id}`;
       const message = `Your ${adType} titled "${adTitle}" posted on ${formattedTime} has been verified successfully!`;
-      await sendNotification(createdBy, USER_ROLE, message, io, connectedUsers);
+      await sendNotification(createdBy, USER_ROLE, message, io, connectedUsers,link);
     }
 
     return res.status(200).json({
