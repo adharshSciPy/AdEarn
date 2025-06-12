@@ -1526,7 +1526,7 @@ const toggleAds = async (req, res) => {
   }
 };
 // to edit imageAds
- const editImageAd = async (req, res) => {
+const editImageAd = async (req, res) => {
   const { adId } = req.params;
   const {
     title,
@@ -1537,25 +1537,44 @@ const toggleAds = async (req, res) => {
     districts,
   } = req.body;
 
+  // console.log("Looking for Ad with ID:", adId); // Debug log
+
   try {
-    const imageAd = await ImageAd.findById(adId);
-    if (!imageAd) {
-      return res.status(404).json({ message: "Image ad not found" });
+    const ad = await Ad.findById(adId).populate("imgAdRef");
+    
+    // console.log("Found Ad:", ad); // Debug log
+    
+    if (!ad) {
+      // console.log("Ad document not found");
+      return res.status(404).json({ message: "Ad not found" });
+    }
+    
+    if (!ad.imgAdRef) {
+      // console.log("imgAdRef is null or undefined");
+      return res.status(404).json({ message: "Image ad reference not found" });
+    }
+    
+    if (!(ad.imgAdRef instanceof mongoose.Document)) {
+      // console.log("imgAdRef is not a mongoose Document");
+      // console.log("imgAdRef type:", typeof ad.imgAdRef);
+      return res.status(404).json({ message: "Image ad reference is not a valid document" });
     }
 
-    // Update editable fields
+    const imageAd = ad.imgAdRef;
+
+    // 🔧 Update editable fields
     if (title) imageAd.title = title;
     if (description) imageAd.description = description;
-    // if (userViewsNeeded) imageAd.userViewsNeeded = userViewsNeeded;
+
     if (adPeriod) {
       const parsedAdPeriod = parseFloat(adPeriod);
       imageAd.adPeriod = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0 ? parsedAdPeriod : 0;
       imageAd.adRepetition = parsedAdPeriod > 0;
     }
 
-    // Update targeting info
     try {
-      let parsedLocations = typeof locations === "string" ? JSON.parse(locations) : locations;
+      // 🌍 Parse target regions
+      const parsedLocations = typeof locations === "string" ? JSON.parse(locations) : locations;
       if (Array.isArray(parsedLocations)) {
         const targetRegions = [];
 
@@ -1571,7 +1590,7 @@ const toggleAds = async (req, res) => {
             targetRegions.push({
               location: {
                 type: "Point",
-                coordinates: [latitude, longitude],
+                coordinates: [longitude, latitude], // ✅ [lng, lat] per GeoJSON standard
               },
               radius,
             });
@@ -1581,6 +1600,7 @@ const toggleAds = async (req, res) => {
         imageAd.targetRegions = targetRegions;
       }
 
+      // 🏙️ States & Districts
       const parsedStates = typeof states === "string" ? JSON.parse(states) : states;
       if (Array.isArray(parsedStates)) {
         imageAd.targetStates = parsedStates;
@@ -1590,11 +1610,12 @@ const toggleAds = async (req, res) => {
       if (Array.isArray(parsedDistricts)) {
         imageAd.targetDistricts = parsedDistricts;
       }
+
     } catch (err) {
       return res.status(400).json({ message: "Invalid location format", error: err.message });
     }
 
-    // Toggle isAdVerified to false if it was true
+    // 🔄 Re-verification trigger
     if (imageAd.isAdVerified === true) {
       imageAd.isAdVerified = false;
     }
@@ -1602,14 +1623,109 @@ const toggleAds = async (req, res) => {
     await imageAd.save();
 
     return res.status(200).json({
-      message: "Image Ad updated successfully.Ad is sent to admin for verification",
+      message: "Image Ad updated successfully. Ad is sent to admin for verification.",
       updatedAd: imageAd,
     });
+
   } catch (error) {
     console.error("Error updating image ad:", error);
     return res.status(500).json({ message: "Failed to update ad", error: error.message });
   }
+}; 
+
+// to edit videoAds
+const editVideoAd=async(req,res)=>{
+  const {adId}=req.params;
+  const{
+    title,
+    description,
+    adPeriod,
+    locations,
+    states,
+    districts
+  }=req.body;
+  try {
+    const ad =await Ad.findById(adId).populate("videoAdRef");
+    if (!ad){
+return res.status(404).json({message:"Ad not found"});
+    }
+    if(!ad.videoAdRef){
+      //  console.log("imgAdRef is null or undefined");
+      return res.status(404).json({ message: "Video ad reference not found" });
+    }
+    if(!(ad.videoAdRef instanceof mongoose.Document)){
+         return res.status(404).json({ message: "Video ad reference is not a valid document" });
+    }
+    const videoAd=ad.videoAdRef;
+    if(title) videoAd.title=title;
+    if(description) videoAd.description=description;
+    if(adPeriod){
+      const parsedAdPeriod=parseFloat(adPeriod);
+      videoAd.adPeriod=!isNaN(parsedAdPeriod)&&
+      parsedAdPeriod>0?parsedAdPeriod:0;
+
+    }
+    try {
+      // 🌍 Parse target regions
+      const parsedLocations = typeof locations === "string" ? JSON.parse(locations) : locations;
+      if (Array.isArray(parsedLocations)) {
+        const targetRegions = [];
+
+        for (const loc of parsedLocations) {
+          if (!loc.coords || !loc.radius) continue;
+
+          const [latStr, lngStr] = loc.coords.split(",");
+          const latitude = parseFloat(latStr);
+          const longitude = parseFloat(lngStr);
+          const radius = parseFloat(loc.radius);
+
+          if (!isNaN(latitude) && !isNaN(longitude) && !isNaN(radius)) {
+            targetRegions.push({
+              location: {
+                type: "Point",
+                coordinates: [longitude, latitude], // ✅ [lng, lat] per GeoJSON standard
+              },
+              radius,
+            });
+          }
+        }
+
+        videoAd.targetRegions = targetRegions;
+      }
+
+      //  States & Districts
+      const parsedStates = typeof states === "string" ? JSON.parse(states) : states;
+      if (Array.isArray(parsedStates)) {
+        videoAd.targetStates = parsedStates;
+      }
+
+      const parsedDistricts = typeof districts === "string" ? JSON.parse(districts) : districts;
+      if (Array.isArray(parsedDistricts)) {
+        videoAd.targetDistricts = parsedDistricts;
+      }
+
+    } catch (err) {
+      return res.status(400).json({ message: "Invalid location format", error: err.message });
+    }
+ if (videoAd.isAdVerified === true) {
+      videoAd.isAdVerified = false;
+    }
+
+    await videoAd.save();
+
+    return res.status(200).json({
+      message: "Video Ad updated successfully. Ad is sent to admin for verification.",
+      updatedAd: videoAd,
+    });
+
+  } catch (error) {
+    console.error("Error updating video ad:", error);
+    return res.status(500).json({ message: "Failed to update ad", error: error.message });
+  }
+
 };
+
+
 
 
 export {
@@ -1625,5 +1741,6 @@ export {
   fetchVerifiedSurveyAd,
   viewAd,
   toggleAds,
-  editImageAd
+  editImageAd,
+  editVideoAd
 };
