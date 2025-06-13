@@ -41,6 +41,7 @@ import AdsPreview from "./pages/user/AdPreview/Adpreview"
 import VideoAdForm from './pages/user/VideoAdForm/VideoAdForm';
 import Adspage from './pages/user/AdsPage/Adspage';
 import AdEdit from './pages/user/AdEdit/AdEdit'
+import VideoAdEdit from './pages/user/VideoAdsEdit/VideoAdEdit';
 
 
 import SuperadminDash from './pages/superadmin/Dashboard/SuperadminDash';
@@ -133,6 +134,8 @@ function App() {
           <Route path='/adspreview/:id/:adId' element={<AdsPreview />} />
           <Route path='/ads/:type' element={<Adspage />} />
           <Route path='/adedit/:id' element={<AdEdit />} />
+          <Route path='/videoadedit/:id' element={<VideoAdEdit />} />
+
 
 
 

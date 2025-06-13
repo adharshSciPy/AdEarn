@@ -221,14 +221,24 @@ function Adsmanager() {
                             </td>
                             <td>
                               <Link
-                                to={`/adedit/${row._id}`}
+                                to={
+                                  row?.imgAdRef
+                                    ? `/adedit/image/${row._id}`
+                                    : row?.videoAdRef
+                                    ? `/videoadedit/${row._id}`
+                                    : `/adedit/${row._id}` // fallback
+                                }
                                 className={styles.editBtn}
                               >
                                 <img
                                   src={edit}
                                   alt="Edit"
                                   className={styles.img}
-                                  style={{objectFit:"cover",height:"15px",width:"15px"}}
+                                  style={{
+                                    objectFit: "cover",
+                                    height: "15px",
+                                    width: "15px",
+                                  }}
                                 />
                               </Link>
                             </td>
