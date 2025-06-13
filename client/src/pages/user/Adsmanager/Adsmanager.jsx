@@ -5,25 +5,26 @@ import edit from "../../../assets/edit.png";
 import Duplicate from "../../../assets/copy.png";
 import report from "../../../assets/report.png";
 import Delete from "../../../assets/delete.png";
-import generatePdf from "../Pdfgenerator/PdfGenerator"
+import generatePdf from "../Pdfgenerator/PdfGenerator";
 import Navbar from "../NavBar/Navbar";
-import axios from "axios"
+import axios from "axios";
 import baseUrl from "../../../baseurl";
 import { useSelector } from "react-redux";
 
 function Adsmanager() {
   const [toggleStates, setToggleStates] = useState({});
-  const [userads, setUserads] = useState([])
-  const userId = useSelector((state) => state.user.id)
-
+  const [userads, setUserads] = useState([]);
+  const userId = useSelector((state) => state.user.id);
 
   const handleToggle = async (adId) => {
     try {
-      console.log("rowid", adId)
-      const response = await axios.post(`${baseUrl}/api/v1/ads/toggle-ad`, { adId })
-      console.log("response", response)
+      console.log("rowid", adId);
+      const response = await axios.post(`${baseUrl}/api/v1/ads/toggle-ad`, {
+        adId,
+      });
+      console.log("response", response);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
 
     setToggleStates((prevState) => ({
@@ -32,24 +33,22 @@ function Adsmanager() {
     }));
   };
 
-
   useEffect(() => {
     const fetchAds = async () => {
       try {
-        console.log("id store", userId)
-        const response = await axios.get(`${baseUrl}/api/v1/user/my-all-ads/${userId}`)
-        setUserads(response.data.data.ads)
-        console.log("resres", response)
+        console.log("id store", userId);
+        const response = await axios.get(
+          `${baseUrl}/api/v1/user/my-all-ads/${userId}`
+        );
+        setUserads(response.data.data.ads);
+        console.log("resres", response);
       } catch (error) {
-        console.log(error)
+        console.log(error);
       }
-    }
+    };
 
-    fetchAds()
-  }, [])
-
-
-
+    fetchAds();
+  }, [userId]);
 
   return (
     <div>
@@ -145,6 +144,7 @@ function Adsmanager() {
                         <th>Total Views</th>
                         <th>Report</th>
                         <th>Status</th>
+                        <th>Edit</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -153,22 +153,25 @@ function Adsmanager() {
                         let adType = "Unknown";
                         let adTitle = "Untitled";
                         let totalReach = "Unknown";
-                        let totalViews = "Unknown"
+                        let totalViews = "Unknown";
 
                         if (row.imgAdRef) {
                           adType = "Image Ad";
                           adTitle = row.imgAdRef.title || "Untitled";
-                          totalReach = row.imgAdRef.userViewsNeeded || "Unknown";
+                          totalReach =
+                            row.imgAdRef.userViewsNeeded || "Unknown";
                           totalViews = row.imgAdRef.totalViewCount || "0";
                         } else if (row.videoAdRef) {
                           adType = "Video Ad";
                           adTitle = row.videoAdRef.title || "Untitled";
-                          totalReach = row.videoAdRef.userViewsNeeded || "Unknown"
+                          totalReach =
+                            row.videoAdRef.userViewsNeeded || "Unknown";
                           totalViews = row.videoAdRef.totalViewCount || "0";
                         } else if (row.surveyAdRef) {
                           adType = "Survey Ad";
                           adTitle = row.surveyAdRef.title || "Untitled";
-                          totalReach = row.surveyAdRef.userViewsNeeded || "Unknown"
+                          totalReach =
+                            row.surveyAdRef.userViewsNeeded || "Unknown";
                           totalViews = row.surveyAdRef.totalViewCount || "0";
                         }
 
@@ -179,13 +182,15 @@ function Adsmanager() {
                             </td>
                             <td className={styles.tdBorder}>
                               <div
-                                className={`${styles.switchContainer} ${toggleStates[row._id] ? styles.on : ""
-                                  }`}
+                                className={`${styles.switchContainer} ${
+                                  toggleStates[row._id] ? styles.on : ""
+                                }`}
                                 onClick={() => handleToggle(row._id)}
                               >
                                 <div
-                                  className={`${styles.switchButton} ${toggleStates[row._id] ? styles.on : ""
-                                    }`}
+                                  className={`${styles.switchButton} ${
+                                    toggleStates[row._id] ? styles.on : ""
+                                  }`}
                                 ></div>
                               </div>
                             </td>
@@ -203,19 +208,34 @@ function Adsmanager() {
                             </td>
                             <td
                               style={{
-                                color: row?.imgAdRef?.isAdVerified ? "green" : "red",
+                                color: row?.imgAdRef?.isAdVerified
+                                  ? "green"
+                                  : "red",
                                 fontWeight: "bold",
                                 textAlign: "center",
                               }}
                             >
-                              {row?.imgAdRef?.isAdVerified ? "Ongoing" : "Pending"}
+                              {row?.imgAdRef?.isAdVerified
+                                ? "Ongoing"
+                                : "Pending"}
                             </td>
-
+                            <td>
+                              <Link
+                                to={`/adedit/${row._id}`}
+                                className={styles.editBtn}
+                              >
+                                <img
+                                  src={edit}
+                                  alt="Edit"
+                                  className={styles.img}
+                                  style={{objectFit:"cover",height:"15px",width:"15px"}}
+                                />
+                              </Link>
+                            </td>
                           </tr>
                         );
                       })}
                     </tbody>
-
                   </table>
                 </div>
               </div>
