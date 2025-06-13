@@ -133,6 +133,10 @@ const userSchema = new Schema(
     subscriptionEndDate: {
       type: Date
     },
+    isBlacklisted:{
+      type:Boolean,
+      default:false
+    }
   },
   { timestamps: true }
 );

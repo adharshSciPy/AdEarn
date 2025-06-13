@@ -12,13 +12,26 @@ const surveyAdSchema = new mongoose.Schema(
           type: String,
           required: true,
         },
+        questionType: {
+          type: String,
+          enum: ["yesno", "multiple"],
+          required: true,
+        },
         options: {
           type: [String],
           required: true,
-          validate: [
-            (arr) => arr.length >= 2,
-            "Each question must have at least 2 options",
-          ],
+          validate: {
+            validator: function (val) {
+              if (this.questionType === "yesno") {
+                return val.length === 2 && val.includes("Yes") && val.includes("No");
+              }
+              if (this.questionType === "multiple") {
+                return val.length >= 2;
+              }
+              return false;
+            },
+            message: "Invalid options for the question type.",
+          },
         },
       },
     ],
@@ -38,7 +51,6 @@ const surveyAdSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    // Added ad rejection fields
     isAdRejected: {
       type: Boolean,
       default: false,
@@ -85,10 +97,8 @@ const surveyAdSchema = new mongoose.Schema(
       type: [Number],
       default: [],
     },
-    // Added audioUrl field for consistency
     audioUrl: {
       type: String,
-      required: false,
     },
     viewersRewarded: [
       {
@@ -121,18 +131,9 @@ const surveyAdSchema = new mongoose.Schema(
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: false,
     },
-    targetStates: [
-      {
-        type: String,
-      },
-    ],
-    targetDistricts: [
-      {
-        type: String,
-      },
-    ],
+    targetStates: [String],
+    targetDistricts: [String],
     isAdOn: {
       type: Boolean,
       default: true,
@@ -144,4 +145,3 @@ const surveyAdSchema = new mongoose.Schema(
 surveyAdSchema.index({ "targetRegions.location": "2dsphere" });
 
 export const SurveyAd = mongoose.model("SurveyAd", surveyAdSchema);
-

@@ -171,6 +171,14 @@ const deletedUserStarsSchema = new Schema(
   },
   { _id: false }
 );
+const blacklistedUserStarsSchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
+    starsTransferred: { type: Number, required: true },
+    timestamp: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
 const contestEntryWalletSchema = new Schema(
   {
     totalReceived: { type: Number, default: 0 },

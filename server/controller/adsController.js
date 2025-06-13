@@ -4,6 +4,7 @@ import { SurveyAd } from "../model/surveyadModel.js";
 import User from "../model/userModel.js";
 import { Ad } from "../model/AdsModel.js";
 import mongoose from "mongoose";
+import { UserWallet } from "../model/userWallet.js";
 
 // function generateStarPayoutPlan(views, totalStars) {
 //   const payout = Array(views).fill(0);
@@ -406,6 +407,7 @@ const createVideoAd = async (req, res) => {
 
 // ------------------- SURVEY AD -------------------
 
+
 const createSurveyAd = async (req, res) => {
   const {
     title,
@@ -421,6 +423,48 @@ const createSurveyAd = async (req, res) => {
   if (!id) return res.status(400).json({ message: "User ID is required" });
   if (!title || !questions || !userViewsNeeded)
     return res.status(400).json({ message: "Missing required fields" });
+
+  // Validate questions
+  if (!Array.isArray(questions) || questions.length === 0) {
+    return res.status(400).json({ message: "At least one question is required" });
+  }
+
+  for (const [index, q] of questions.entries()) {
+    const { questionText, questionType, options } = q;
+
+    if (!questionText || !questionType || !options) {
+      return res.status(400).json({
+        message: `Missing fields in question ${index + 1}`,
+      });
+    }
+
+    if (!["yesno", "multiple"].includes(questionType)) {
+      return res.status(400).json({
+        message: `Invalid questionType in question ${index + 1}`,
+      });
+    }
+
+    if (questionType === "yesno") {
+      if (
+        !Array.isArray(options) ||
+        options.length !== 2 ||
+        !options.includes("Yes") ||
+        !options.includes("No")
+      ) {
+        return res.status(400).json({
+          message: `Yes/No question ${index + 1} must have exactly ['Yes', 'No'] as options`,
+        });
+      }
+    }
+
+    if (questionType === "multiple") {
+      if (!Array.isArray(options) || options.length < 2) {
+        return res.status(400).json({
+          message: `Multiple choice question ${index + 1} must have at least 2 options`,
+        });
+      }
+    }
+  }
 
   const parsedAdPeriod = parseFloat(adPeriod);
   const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
@@ -481,12 +525,17 @@ const createSurveyAd = async (req, res) => {
   }
 
   try {
-    const user = await User.findById(id).populate("userWalletDetails");
-    if (!user) return res.status(404).json({ message: "User not found" });
+  const user = await User.findById(id).populate("userWalletDetails");
+  console.log("user",user)
 
-    const userWallet = user.userWalletDetails;
-    if (!userWallet)
-      return res.status(400).json({ message: "User wallet not found" });
+if (!user || !user.userWalletDetails) {
+  return res.status(404).json({ message: "User or user wallet not found" });
+}
+
+const userWallet = await UserWallet.findById(user.userWalletDetails._id);
+if (!userWallet) {
+  return res.status(404).json({ message: "User wallet not found" });
+}
 
     const viewsNeeded = parseInt(userViewsNeeded);
     if (isNaN(viewsNeeded) || viewsNeeded <= 0) {
@@ -523,6 +572,7 @@ const createSurveyAd = async (req, res) => {
     const nullStars = Array(nullStarsCount).fill(0);
     const starPayoutPlan = [...highValueStars, ...nullStars];
 
+    // Deduct stars
     userWallet.totalStars -= starsToBeDeducted;
     await userWallet.save();
 

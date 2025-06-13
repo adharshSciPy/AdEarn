@@ -1,35 +1,48 @@
 import React, { useState } from "react";
 import styles from "./Kyc.module.css";
 import Navbar from "../NavBar/Navbar";
+import axios from 'axios'
+import baseUrl from "../../../baseurl";
+import { useSelector } from "react-redux";
 
 function KycForm() {
+  const userId = useSelector((state) => state.user.id)
   const [form, setForm] = useState({
     fullName: "",
-    dob: "",
+    dateOfBirth: "",
     gender: "",
     nationality: "",
     guardianName: "",
     email: "",
-    phone: "",
+    phoneNumber: "",
     permanentAddress: "",
     currentAddress: "",
     document: null,
     bankName: "",
     accountNumber: "",
-    ifsc: "",
+    ifscCode: "",
     state: "",
     city: "",
+    documentType: "",
+    documentNumber: ""
   });
 
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
+
+    console.log(value)
+    if (name === "documentType") {
+      console.log("Selected Document Type:", value);
+      // You can add extra logic here if needed later
+    }
     setForm((prev) => ({
       ...prev,
       [name]: type === "file" ? files[0] : value,
     }));
   };
 
-  const stateCityMap = {Kerala: [
+  const stateCityMap = {
+    Kerala: [
       "Thiruvananthapuram",
       "Kollam",
       "Pathanamthitta",
@@ -419,99 +432,160 @@ function KycForm() {
 
   const cityOptions = form.state ? stateCityMap[form.state] || [] : [];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(form); // Handle form submission logic here
+
+    const formData = new FormData();
+
+    Object.entries(form).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
+
+    try {
+      console.log("userid", userId)
+      const response = await axios.post(`${baseUrl}/api/v1/user/kyc-verification/${userId}`, formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      setForm({
+        fullName: "",
+        dateOfBirth: "",
+        gender: "",
+        nationality: "",
+        guardianName: "",
+        email: "",
+        phoneNumber: "",
+        permanentAddress: "",
+        currentAddress: "",
+        document: null,
+        bankName: "",
+        accountNumber: "",
+        ifscCode: "",
+        state: "",
+        city: "",
+        documentType: "",
+        documentNumber: ""
+      });
+      console.log("response", response)
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   return (
     <>
-    <Navbar/>
-    <div className={styles.mainUserContainer}>
-      <div className={styles.profileWrapper}>
-        <div className={styles.editformHeading}>
-          <h2>KYC Form</h2>
-        </div>
-        <form className={styles.profileCard} onSubmit={handleSubmit}>
-          <div className={styles.formGroup}>
-            <label>Full Name</label>
-            <input type="text" name="fullName" value={form.fullName} onChange={handleChange} placeholder="Your Full Name" />
-
-            <label>Date of Birth</label>
-            <input type="date" name="dob" value={form.dob} onChange={handleChange} />
-
-            <label>Gender</label>
-            <select name="gender" value={form.gender} onChange={handleChange}style={{
-                    padding: "10px",
-                    borderRadius: "10px",
-                    border: "none",
-                  }}>
-              <option value="">Select Gender</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
-
-            <label>Nationality</label>
-            <input type="text" name="nationality" value={form.nationality} onChange={handleChange} placeholder="Nationality" />
-
-            <label>Guardian Name</label>
-            <input type="text" name="guardianName" value={form.guardianName} onChange={handleChange} placeholder="Guardian Name" />
-
-            <label>Email</label>
-            <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" />
-
-            <label>Phone Number</label>
-            <input type="text" name="phone" value={form.phone} onChange={handleChange} placeholder="Phone Number" />
-
-            <label>Permanent Address</label>
-            <input type="text" name="permanentAddress" value={form.permanentAddress} onChange={handleChange} placeholder="Permanent Address" />
-
-            <label>Current Address</label>
-            <input type="text" name="currentAddress" value={form.currentAddress} onChange={handleChange} placeholder="Current Address" />
-
-            <label>State</label>
-            <select name="state" value={form.state} onChange={handleChange} style={{
-                    padding: "10px",
-                    borderRadius: "10px",
-                    border: "none",
-                  }}>
-              <option value="">Select State</option>
-              {Object.keys(stateCityMap).map((state) => (
-                <option key={state} value={state}>{state}</option>
-              ))}
-            </select>
-
-            <label>City</label>
-            <select name="city" value={form.city} onChange={handleChange} disabled={!form.state} style={{
-                    padding: "10px",
-                    borderRadius: "10px",
-                    border: "none",
-                  }}>
-              <option value="">Select City</option>
-              {cityOptions.map((city) => (
-                <option key={city} value={city}>{city}</option>
-              ))}
-            </select>
-
-            <label>Document Proof</label>
-            <input type="file" name="document" onChange={handleChange} />
-
-            <label>Bank Name</label>
-            <input type="text" name="bankName" value={form.bankName} onChange={handleChange} placeholder="Bank Name" />
-
-            <label>Account Number</label>
-            <input type="text" name="accountNumber" value={form.accountNumber} onChange={handleChange} placeholder="Account Number" />
-
-            <label>IFSC Code</label>
-            <input type="text" name="ifsc" value={form.ifsc} onChange={handleChange} placeholder="IFSC Code" />
-
-            <div className={styles.buttonContainer}>
-              <button type="submit">Save</button>
-            </div>
+      <Navbar />
+      <div className={styles.mainUserContainer}>
+        <div className={styles.profileWrapper}>
+          <div className={styles.editformHeading}>
+            <h2>KYC Form</h2>
           </div>
-        </form>
+          <form className={styles.profileCard} onSubmit={handleSubmit}>
+            <div className={styles.formGroup}>
+              <label>Full Name</label>
+              <input type="text" name="fullName" value={form.fullName} onChange={handleChange} placeholder="Your Full Name" />
+
+              <label>Date of Birth</label>
+              <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} />
+
+              <label>Gender</label>
+              <select name="gender" value={form.gender} onChange={handleChange} style={{
+                padding: "10px",
+                borderRadius: "10px",
+                border: "none",
+              }}>
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+
+              <label>Nationality</label>
+              <input type="text" name="nationality" value={form.nationality} onChange={handleChange} placeholder="Nationality" />
+
+              <label>Guardian Name</label>
+              <input type="text" name="guardianName" value={form.guardianName} onChange={handleChange} placeholder="Guardian Name" />
+
+              <label>Email</label>
+              <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" />
+
+              <label>Phone Number</label>
+              <input type="text" name="phoneNumber" value={form.phoneNumber} onChange={handleChange} placeholder="Phone Number" />
+
+              <label>Permanent Address</label>
+              <input type="text" name="permanentAddress" value={form.permanentAddress} onChange={handleChange} placeholder="Permanent Address" />
+
+              <label>Current Address</label>
+              <input type="text" name="currentAddress" value={form.currentAddress} onChange={handleChange} placeholder="Current Address" />
+
+              <label>State</label>
+              <select name="state" value={form.state} onChange={handleChange} style={{
+                padding: "10px",
+                borderRadius: "10px",
+                border: "none",
+              }}>
+                <option value="">Select State</option>
+                {Object.keys(stateCityMap).map((state) => (
+                  <option key={state} value={state}>{state}</option>
+                ))}
+              </select>
+
+              <label>City</label>
+              <select name="city" value={form.city} onChange={handleChange} disabled={!form.state} style={{
+                padding: "10px",
+                borderRadius: "10px",
+                border: "none",
+              }}>
+                <option value="">Select City</option>
+                {cityOptions.map((city) => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
+
+              <label>Document Proof</label>
+              <input type="file" name="userKyc" onChange={handleChange} />
+
+              <label>Bank Name</label>
+              <input type="text" name="bankName" value={form.bankName} onChange={handleChange} placeholder="Bank Name" />
+
+              <label>Account Number</label>
+              <input type="text" name="accountNumber" value={form.accountNumber} onChange={handleChange} placeholder="Account Number" />
+
+              <label>IFSC Code</label>
+              <input type="text" name="ifscCode" value={form.ifscCode} onChange={handleChange} placeholder="IFSC Code" />
+
+              <label>Document Type</label>
+              <select
+                name="documentType"
+                value={form.documentType}
+                onChange={handleChange}
+                style={{
+                  padding: "10px",
+                  borderRadius: "10px",
+                  border: "none",
+                }}
+              >
+                <option value="">Select Document Type</option>
+                <option value="Aadhaar">Aadhaar</option>
+                <option value="Voterid">Voter ID</option>
+                <option value="Drivinglicense">Driving License</option>
+                <option value="Passport">Passport</option>
+                <option value="Pancard">PAN Card</option>
+              </select>
+
+              <label>Document Number</label>
+              <input type="text" name="documentNumber" value={form.documentNumber} onChange={handleChange} placeholder="Document Number" />
+
+
+              <div className={styles.buttonContainer}>
+                <button type="submit">Save</button>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
     </>
   );
 }

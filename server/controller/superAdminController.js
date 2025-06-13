@@ -11,8 +11,11 @@ import ContestEntry from "../model/contestEntrySchema.js";
 import  {UserWallet}  from "../model/userWallet.js";
 import kyc from "../model/kycModel.js";
 import { passwordValidator } from "../utils/passwordValidator.js";
+import { sendNotification } from "../utils/sendNotifications.js";
+
 import mongoose from "mongoose";
 
+const USER_ROLE=process.env.USER_ROLE
 // to generate coupons randomly and store
 
 function generateRandomCode(length) {
@@ -684,6 +687,89 @@ const deleteUser = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+// to blacklist user
+const blacklistUser = async (req, res) => {
+  const { userId } = req.body;
+  const { io, connectedUsers } = req;
+
+  if (!userId) {
+    return res.status(400).json({ message: "userId is required" });
+  }
+
+  try {
+    // 🔍 Check if user already blacklisted
+    const existingUser = await User.findById(userId);
+
+    if (!existingUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (existingUser.isBlacklisted) {
+      return res.status(400).json({ message: "User is already blacklisted" });
+    }
+
+    // ✅ Blacklist the user
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { isBlacklisted: true },
+      { new: true }
+    );
+
+    // 🔄 Fetch wallet separately for accuracy
+    const userWallet = await UserWallet.findById(user.userWalletDetails);
+    let transferredStars = 0;
+
+    if (userWallet && userWallet.totalStars > 0) {
+      transferredStars = userWallet.totalStars;
+
+      // Update super admin wallet
+      await SuperAdminWallet.findOneAndUpdate(
+        {},
+        {
+          $inc: { totalStars: transferredStars },
+          $push: {
+            blacklistedUserStars: {
+              userId: user._id,
+              starsTransferred: transferredStars,
+            },
+          },
+        },
+        { new: true }
+      );
+
+      // Reset user stars
+      await UserWallet.findByIdAndUpdate(userWallet._id, {
+        $set: { totalStars: 0 },
+      });
+    }
+
+    // Notify user with correct star count
+    const message = `Your account has been blacklisted by the admin. All your stars (${transferredStars}) have been transferred and you will be logged out shortly.`;
+    await sendNotification(user._id, USER_ROLE, message, io, connectedUsers);
+
+    // Emit logout
+    const socketId = connectedUsers.get(userId);
+    if (socketId) {
+      setTimeout(() => {
+        io.to(socketId).emit("forceLogout", {
+          reason: "blacklisted",
+          message: "You have been blacklisted. Logging out...",
+        });
+      }, 3000);
+    }
+
+    return res.status(200).json({
+      message: `User blacklisted. Transferred ${transferredStars} stars to Super Admin.`,
+      transferredStars,
+    });
+
+  } catch (error) {
+    console.error("Error blacklisting user:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 
 
 export {
@@ -701,5 +787,7 @@ export {
   topUpCompanyRewardStars,
   patchSuperAdminWallet,
   registerUserToContest,
-  deleteUser
+  deleteUser,
+  blacklistUser
+  
 };

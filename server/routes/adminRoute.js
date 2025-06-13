@@ -18,5 +18,6 @@ adminRouter.route('/reject-ad').post(rejectAdById)
 
 
 
+
 export default adminRouter
 
