@@ -8,11 +8,12 @@ import Coupon from "../model/couponModel.js";
 import WelcomeBonusSetting from "../model/WelcomeBonusSetting.js";
 import ContestEntry from "../model/contestEntrySchema.js";
 // import userEntrySchema from "../model/superAdminWallet.js"
-import { UserWallet } from "../model/userWallet.js";
+import  {UserWallet}  from "../model/userWallet.js";
 import kyc from "../model/kycModel.js";
 import { passwordValidator } from "../utils/passwordValidator.js";
 import { sendNotification } from "../utils/sendNotifications.js";
 
+import mongoose from "mongoose";
 
 const USER_ROLE=process.env.USER_ROLE
 // to generate coupons randomly and store
@@ -529,6 +530,8 @@ const patchSuperAdminWallet = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
 const registerUserToContest = async (req, res) => {
   const { userId, contestNumber, starsUsed } = req.body;
 
@@ -545,47 +548,48 @@ const registerUserToContest = async (req, res) => {
       return res.status(404).json({ message: "Contest not found" });
     }
 
-    // Check if user is already registered
-    const wallet = await SuperAdminWallet.findOne({
+    // Already registered?
+    const existingEntry = await SuperAdminWallet.findOne({
       "contestEntryWallet.collectedFromUsers.userId": userId,
-      "contestEntryWallet.collectedFromUsers.contestId": contest._id
+      "contestEntryWallet.collectedFromUsers.contestId": contest._id,
     });
-    
-    if (wallet) {
+
+    if (existingEntry) {
       return res.status(400).json({ message: "User already registered for this contest" });
     }
 
-    // If contest already ended
-    if (contest.status === "Ended") {
-      return res.status(400).json({ message: "Contest has ended" });
-    }
-
-    // If current date > endDate, auto-end contest
-    if (now > contest.endDate) {
+    // Contest expired or full
+    if (contest.status === "Ended" || now > contest.endDate) {
       contest.status = "Ended";
       await contest.save();
       return res.status(400).json({ message: "Contest has expired" });
     }
 
-    // If max participants reached, auto-end contest
-    if (
-      contest.maxParticipants &&
-      contest.currentParticipants >= contest.maxParticipants
-    ) {
+    if (contest.maxParticipants && contest.currentParticipants >= contest.maxParticipants) {
       contest.status = "Ended";
       await contest.save();
       return res.status(400).json({ message: "Contest is full" });
     }
 
-    // Proceed with registration
+    // Fetch UserWallet directly
+    const userWallet = await UserWallet.findOne({ userId });
+    if (!userWallet) {
+      return res.status(404).json({ message: "User wallet not found" });
+    }
+
+    if (typeof userWallet.totalStars !== "number" || userWallet.totalStars < starsUsed) {
+      return res.status(400).json({ message: "Insufficient stars in user's wallet" });
+    }
+
+    // Deduct stars from user's wallet
+    userWallet.totalStars -= starsUsed;
+    await userWallet.save();
+
+    // Update contest participation
     contest.currentParticipants += 1;
     contest.totalEntries += 1;
 
-    // End contest if after this addition it reaches limit
-    if (
-      contest.maxParticipants &&
-      contest.currentParticipants >= contest.maxParticipants
-    ) {
+    if (contest.maxParticipants && contest.currentParticipants >= contest.maxParticipants) {
       contest.status = "Ended";
     }
 
@@ -614,23 +618,18 @@ const registerUserToContest = async (req, res) => {
     adminWallet.contestEntryWallet.totalReceived += starsUsed;
     adminWallet.contestEntryWallet.totalEntries += 1;
 
-    // Optional: Deduct from global stars
-    adminWallet.totalStars -= starsUsed;
-
     await adminWallet.save();
 
     return res.status(200).json({
       message: "User registered successfully",
       contestStatus: contest.status,
-      contestEntryWallet: adminWallet.contestEntryWallet,
     });
   } catch (error) {
     console.error("Contest Registration Error:", error);
-    return res
-      .status(500)
-      .json({ message: "Server error", error: error.message });
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 // to delete users
 
 const deleteUser = async (req, res) => {
