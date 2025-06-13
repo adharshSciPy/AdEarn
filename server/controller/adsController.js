@@ -525,17 +525,20 @@ const createSurveyAd = async (req, res) => {
   }
 
   try {
-  const user = await User.findById(id).populate("userWalletDetails");
-  console.log("user",user)
+    const user = await User.findById(id).populate("userWalletDetails");
+    // console.log("user", user);
 
-if (!user || !user.userWalletDetails) {
-  return res.status(404).json({ message: "User or user wallet not found" });
-}
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-const userWallet = await UserWallet.findById(user.userWalletDetails._id);
-if (!userWallet) {
-  return res.status(404).json({ message: "User wallet not found" });
-}
+    const userWallet = user.userWalletDetails;
+    if (!userWallet) {
+      return res.status(400).json({ message: "User wallet not found" });
+    }
+    // if (!userWallet.userId) {
+    //   userWallet.userId = user._id; // Add the userId reference if missing
+    // }
 
     const viewsNeeded = parseInt(userViewsNeeded);
     if (isNaN(viewsNeeded) || viewsNeeded <= 0) {
@@ -616,7 +619,6 @@ if (!userWallet) {
     });
   }
 };
-
 // fetch single unVerifiedAds
 const fetchSingleUnverifiedAd = async (req, res) => {
   const { id } = req.params;
