@@ -54,4 +54,4 @@ const userWallet = new Schema({
   },
 });
 
-export const UserWallet = mongoose.model("UserWallet", userWallet);
+export const UserWallet = mongoose.model("UserWallet", userWallet, "userwallets");

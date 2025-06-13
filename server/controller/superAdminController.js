@@ -8,9 +8,10 @@ import Coupon from "../model/couponModel.js";
 import WelcomeBonusSetting from "../model/WelcomeBonusSetting.js";
 import ContestEntry from "../model/contestEntrySchema.js";
 // import userEntrySchema from "../model/superAdminWallet.js"
-import { UserWallet } from "../model/userWallet.js";
+import  {UserWallet}  from "../model/userWallet.js";
 import kyc from "../model/kycModel.js";
 import { passwordValidator } from "../utils/passwordValidator.js";
+import mongoose from "mongoose";
 
 // to generate coupons randomly and store
 
@@ -526,6 +527,8 @@ const patchSuperAdminWallet = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
 const registerUserToContest = async (req, res) => {
   const { userId, contestNumber, starsUsed } = req.body;
 
@@ -536,59 +539,61 @@ const registerUserToContest = async (req, res) => {
 
     const now = new Date();
 
-    // Step 1: Fetch contest
+    // Fetch contest
     const contest = await ContestEntry.findOne({ contestNumber });
     if (!contest) {
       return res.status(404).json({ message: "Contest not found" });
     }
 
-    // Step 2: Check if contest is expired or ended
-    if (contest.status === "Ended") {
-      return res.status(400).json({ message: "Contest has ended" });
+    // Already registered?
+    const existingEntry = await SuperAdminWallet.findOne({
+      "contestEntryWallet.collectedFromUsers.userId": userId,
+      "contestEntryWallet.collectedFromUsers.contestId": contest._id,
+    });
+
+    if (existingEntry) {
+      return res.status(400).json({ message: "User already registered for this contest" });
     }
 
-    if (now > contest.endDate) {
+    // Contest expired or full
+    if (contest.status === "Ended" || now > contest.endDate) {
       contest.status = "Ended";
       await contest.save();
       return res.status(400).json({ message: "Contest has expired" });
     }
 
-    if (
-      contest.maxParticipants &&
-      contest.currentParticipants >= contest.maxParticipants
-    ) {
+    if (contest.maxParticipants && contest.currentParticipants >= contest.maxParticipants) {
       contest.status = "Ended";
       await contest.save();
       return res.status(400).json({ message: "Contest is full" });
     }
 
-    // Step 3: Check if user already registered for this contest
-    const adminWallet = await SuperAdminWallet.findOne();
-    const alreadyRegistered = adminWallet?.contestEntryWallet?.collectedFromUsers?.some(
-      (entry) =>
-        entry.userId.toString() === userId &&
-        entry.contestId.toString() === contest._id.toString()
-    );
-
-    if (alreadyRegistered) {
-      return res.status(400).json({ message: "User already registered for this contest" });
-    }
-
-    // Step 4: Fetch user wallet and check balance
+    // Fetch UserWallet directly
     const userWallet = await UserWallet.findOne({ userId });
     if (!userWallet) {
       return res.status(404).json({ message: "User wallet not found" });
     }
 
-    if (userWallet.totalStars < starsUsed) {
-      return res.status(400).json({ message: "Insufficient stars" });
+    if (typeof userWallet.totalStars !== "number" || userWallet.totalStars < starsUsed) {
+      return res.status(400).json({ message: "Insufficient stars in user's wallet" });
     }
 
-    // Step 5: Deduct stars from user
+    // Deduct stars from user's wallet
     userWallet.totalStars -= starsUsed;
     await userWallet.save();
 
-    // Step 6: Add stars to SuperAdmin contest entry wallet
+    // Update contest participation
+    contest.currentParticipants += 1;
+    contest.totalEntries += 1;
+
+    if (contest.maxParticipants && contest.currentParticipants >= contest.maxParticipants) {
+      contest.status = "Ended";
+    }
+
+    await contest.save();
+
+    // Update SuperAdmin wallet
+    const adminWallet = await SuperAdminWallet.findOne();
     if (!adminWallet) {
       return res.status(404).json({ message: "SuperAdmin wallet not found" });
     }
@@ -612,24 +617,9 @@ const registerUserToContest = async (req, res) => {
 
     await adminWallet.save();
 
-    // Step 7: Update contest details
-    contest.currentParticipants += 1;
-    contest.totalEntries += 1;
-
-    if (
-      contest.maxParticipants &&
-      contest.currentParticipants >= contest.maxParticipants
-    ) {
-      contest.status = "Ended";
-    }
-
-    await contest.save();
-
     return res.status(200).json({
       message: "User registered successfully",
       contestStatus: contest.status,
-      userWalletStars: userWallet.totalStars,
-      contestEntryWallet: adminWallet.contestEntryWallet,
     });
   } catch (error) {
     console.error("Contest Registration Error:", error);
