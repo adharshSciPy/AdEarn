@@ -686,12 +686,17 @@ const fetchUserKycStatus = async (req, res) => {
       return res.status(404).json({ message: "No users found" });
     }
 
-    // const firstUser = users[5]; // 6th user (index 5)
-    // console.log("User with KYC:", firstUser);
+    const filteredUsers = users
+      .filter(user => user.kycDetails) // only include users with KYC
+      .map(user => ({
+        fullName: user.kycDetails.fullName || "N/A",
+        kycStatus: user.kycDetails.kycStatus || "not submitted",
+        requestedAt: user.kycDetails.createdAt || null
+      }));
 
     return res.status(200).json({
-      message: "User KYC fetched successfully",
-      user:users,
+      message: "Filtered KYC user details fetched successfully",
+      users: filteredUsers,
     });
 
   } catch (error) {
@@ -699,6 +704,7 @@ const fetchUserKycStatus = async (req, res) => {
     return res.status(500).json({ message: "Server error", error });
   }
 };
+
 
 export {
   registerAdmin,
