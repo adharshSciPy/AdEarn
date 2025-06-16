@@ -1,11 +1,15 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Sidebar from '../../../components/sidebar/Sidebar'
 import Header from '../../../components/Header/Header';
 import styles from "./KYCVerify.module.css"
 import { Button, Flex, Progress, Tooltip, Pagination, Select } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import baseUrl from '../../../baseurl';
+import axios from "axios"
 
 function KYCVerify() {
+
+  const [kycRequested, setKycRequested] = useState([])
 
   const adsData = Array.from({ length: 30 }, (_, i) => ({
     id: i + 1,
@@ -33,6 +37,7 @@ function KYCVerify() {
   const pageSize = 10;
 
   const handlenavigate = (adId) => {
+    console.log("id vannu", adId)
     navigate(`/VerifyKYC/${adId}`)
   }
 
@@ -40,6 +45,7 @@ function KYCVerify() {
 
   const handleTabClick = (tabName) => {
     setActiveTab(tabName);
+    setCurrentPage(1);
   };
 
   const tabs = [
@@ -63,10 +69,13 @@ function KYCVerify() {
 
 
 
-  const filteredVerifyAds = adsVerifyData.filter(ad => {
-    if (!ad.date || !ad.date.includes('/')) return false;
+  const filteredVerifyAds = kycRequested.filter(ad => {
+    if (!ad.createdAt) return false;
 
-    const [day, month, year] = ad.date.split('/');
+    const createdAtDate = new Date(ad.createdAt);
+    const month = (createdAtDate.getMonth() + 1).toString().padStart(2, '0');
+    const year = createdAtDate.getFullYear().toString();
+
     return (
       (!selectedMonth || month === selectedMonth) &&
       (!selectedYear || year === selectedYear)
@@ -85,6 +94,29 @@ function KYCVerify() {
   const onSearch = value => {
     console.log('search:', value);
   };
+
+  function formatDate(isoString) {
+    const date = new Date(isoString);
+    const day = String(date.getDate()).padStart(2, '0');       // 05
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // 06
+    const year = date.getFullYear();                           // 2025
+    return `${day}/${month}/${year}`;
+  }
+
+
+  useEffect(() => {
+    const fetchVerifykyc = async () => {
+      try {
+        const response = await axios.get(`${baseUrl}/api/v1/admin/kyc-requested-users`)
+        console.log("requested kyc", response.data.data)
+        setKycRequested(response.data.data)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    fetchVerifykyc()
+  }, [])
 
 
   return (
@@ -203,12 +235,12 @@ function KYCVerify() {
                   </thead>
                   <tbody>
                     {paginatedVerifyAds.map((ad) => (
-                      <tr key={ad.id}>
+                      <tr key={ad._id}>
                         <td>
-                          {ad.title}<br />
-                          User Id
+                          {ad.firstName}{" "}{ad.lastName}<br />
+                          {ad.uniqueUserId}
                         </td>
-                        <td>{ad.date}</td>
+                        <td>{formatDate(ad.createdAt)}</td>
                         <td>
                           <span className={ad.status === "Applied" ? styles.statusOngoing : styles.statusStopped}>
                             {ad.status === "Applied" ? "Applied" : "Not Applied"}
@@ -217,7 +249,7 @@ function KYCVerify() {
                         <td>
                           <button
                             className={styles.redeemBtn}
-                            onClick={() => handlenavigate(ad.id)}
+                            onClick={() => handlenavigate(ad._id)}
                           >
                             {'Verify'}
                           </button>
