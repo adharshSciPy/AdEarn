@@ -340,6 +340,33 @@ const rejectKyc = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+// to fetch users with kyc verified
+const kycVerifiedUsers = async (req, res) => {
+  try {
+    const fetchKycVerifiedUsers = await User.find({
+      kycDetails: { $exists: true, $ne: null },
+    }).populate("kycDetails");
+
+    const verifiedUsers = fetchKycVerifiedUsers.filter(
+      (user) => user.kycDetails?.kycStatus === "approved"
+    );
+
+    if (verifiedUsers.length === 0) {
+      return res.status(404).json({
+        message: "No users with verified KYC found.",
+        users: [],
+      });
+    }
+
+    return res.status(200).json({
+      message: "KYC verified users fetched successfully",
+      users: verifiedUsers,
+    });
+  } catch (error) {
+    console.error("Error fetching KYC verified users:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 // to verify ads
 const verifyAdById = async (req, res) => {
@@ -665,4 +692,5 @@ export {
   getAdminWallet,
   getSuperAdminWallet,
   rejectAdById,
+  kycVerifiedUsers
 };

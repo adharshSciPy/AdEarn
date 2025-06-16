@@ -8,14 +8,14 @@ import Coupon from "../model/couponModel.js";
 import WelcomeBonusSetting from "../model/WelcomeBonusSetting.js";
 import ContestEntry from "../model/contestEntrySchema.js";
 // import userEntrySchema from "../model/superAdminWallet.js"
-import  {UserWallet}  from "../model/userWallet.js";
+import { UserWallet } from "../model/userWallet.js";
 import kyc from "../model/kycModel.js";
 import { passwordValidator } from "../utils/passwordValidator.js";
 import { sendNotification } from "../utils/sendNotifications.js";
 
 import mongoose from "mongoose";
 
-const USER_ROLE=process.env.USER_ROLE
+const USER_ROLE = process.env.USER_ROLE;
 // to generate coupons randomly and store
 
 function generateRandomCode(length) {
@@ -325,11 +325,19 @@ const createContest = async (req, res) => {
       endDate,
       entryStars,
       maxParticipants, // ✅ Add this
-      result
+      result,
     } = req.body;
 
-    if (!contestName || !contestNumber || !startDate || !endDate || !entryStars) {
-      return res.status(400).json({ message: "All required fields must be filled" });
+    if (
+      !contestName ||
+      !contestNumber ||
+      !startDate ||
+      !endDate ||
+      !entryStars
+    ) {
+      return res
+        .status(400)
+        .json({ message: "All required fields must be filled" });
     }
 
     const existing = await ContestEntry.findOne({ contestNumber });
@@ -343,28 +351,48 @@ const createContest = async (req, res) => {
       startDate,
       endDate,
       entryStars,
-      maxParticipants,                 // ✅ Store it in DB
-      currentParticipants: 0,         // ✅ Important for tracking
+      maxParticipants, // ✅ Store it in DB
+      currentParticipants: 0, // ✅ Important for tracking
       totalEntries: 0,
-      result: result || "Pending"
+      result: result || "Pending",
     });
 
     await contest.save();
-    return res.status(201).json({ message: "Contest created successfully", contest });
-
+    return res
+      .status(201)
+      .json({ message: "Contest created successfully", contest });
   } catch (error) {
     console.error("Error creating contest:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
-
 const generateCoupons = async (req, res) => {
   const { couponCount, perStarCount, generationDate, expiryDate } = req.body;
+
   try {
+    const totalStarsNeeded = couponCount * perStarCount;
+
+  
+    const superAdminWallet = await SuperAdminWallet.findOne();
+
+    if (!superAdminWallet) {
+      return res.status(404).json({ message: "Super admin wallet not found" });
+    }
+
+    if (superAdminWallet.totalStars < totalStarsNeeded) {
+      return res.status(400).json({
+        message: "Insufficient stars in Super Admin Wallet to generate coupons",
+      });
+    }
+
+    
     const couponsToCreate = [];
+    const couponCodes = [];
+
     for (let i = 0; i < couponCount; i++) {
       const code = generateRandomCode(10);
+      couponCodes.push(code);
       couponsToCreate.push({
         code,
         perStarCount,
@@ -373,15 +401,71 @@ const generateCoupons = async (req, res) => {
       });
     }
 
+    
     const createdCoupons = await Coupon.insertMany(couponsToCreate);
+
+    
+    superAdminWallet.totalStars -= totalStarsNeeded;
+
+
+    superAdminWallet.transactions.push({
+      starsReceived: -totalStarsNeeded, 
+      reason: `Coupon Generation of ${couponCount} coupons`,
+      addedBy: null, // can be filled if superAdmin `_id` is tracked in session
+    });
+
+    await superAdminWallet.save();
+
     return res.status(201).json({
-      message: "Coupons generated successfully",
+      message: "Coupons generated and wallet updated successfully",
       count: createdCoupons.length,
       coupons: createdCoupons.map((c) => c.code),
+      starsDeducted: totalStarsNeeded,
+      totalStars:superAdminWallet.totalStars
     });
   } catch (error) {
     console.error("Error generating coupons:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+const getAllCoupons = async (req, res) => {
+  try {
+    const now = new Date();
+
+    // Fetch coupons and project only necessary fields
+    const coupons = await Coupon.find({}, "code perStarCount expiryDate isClaimed generationDate")
+      .sort({ generationDate: -1 });
+
+    if (!coupons.length) {
+      return res.status(200).json({
+        message: "No coupons generated yet",
+        coupons: [],
+      });
+    }
+
+    // Add isExpired field
+    const enrichedCoupons = coupons.map((coupon) => {
+      const isExpired = coupon.expiryDate ? coupon.expiryDate < now : false;
+
+      return {
+        _id: coupon._id,
+        code: coupon.code,
+        perStarCount: coupon.perStarCount,
+        expiryDate: coupon.expiryDate,
+        isClaimed: coupon.isClaimed,
+        generationDate: coupon.generationDate,
+        isExpired,
+      };
+    });
+
+    return res.status(200).json({
+      message: "All generated coupons fetched successfully",
+      count: enrichedCoupons.length,
+      coupons: enrichedCoupons,
+    });
+  } catch (error) {
+    console.error("Error fetching coupons:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 const topUpWelcomeBonusStars = async (req, res) => {
@@ -531,7 +615,6 @@ const patchSuperAdminWallet = async (req, res) => {
   }
 };
 
-
 const registerUserToContest = async (req, res) => {
   const { userId, contestNumber, starsUsed } = req.body;
 
@@ -555,7 +638,9 @@ const registerUserToContest = async (req, res) => {
     });
 
     if (existingEntry) {
-      return res.status(400).json({ message: "User already registered for this contest" });
+      return res
+        .status(400)
+        .json({ message: "User already registered for this contest" });
     }
 
     // Contest expired or full
@@ -565,7 +650,10 @@ const registerUserToContest = async (req, res) => {
       return res.status(400).json({ message: "Contest has expired" });
     }
 
-    if (contest.maxParticipants && contest.currentParticipants >= contest.maxParticipants) {
+    if (
+      contest.maxParticipants &&
+      contest.currentParticipants >= contest.maxParticipants
+    ) {
       contest.status = "Ended";
       await contest.save();
       return res.status(400).json({ message: "Contest is full" });
@@ -577,8 +665,13 @@ const registerUserToContest = async (req, res) => {
       return res.status(404).json({ message: "User wallet not found" });
     }
 
-    if (typeof userWallet.totalStars !== "number" || userWallet.totalStars < starsUsed) {
-      return res.status(400).json({ message: "Insufficient stars in user's wallet" });
+    if (
+      typeof userWallet.totalStars !== "number" ||
+      userWallet.totalStars < starsUsed
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Insufficient stars in user's wallet" });
     }
 
     // Deduct stars from user's wallet
@@ -589,7 +682,10 @@ const registerUserToContest = async (req, res) => {
     contest.currentParticipants += 1;
     contest.totalEntries += 1;
 
-    if (contest.maxParticipants && contest.currentParticipants >= contest.maxParticipants) {
+    if (
+      contest.maxParticipants &&
+      contest.currentParticipants >= contest.maxParticipants
+    ) {
       contest.status = "Ended";
     }
 
@@ -626,7 +722,9 @@ const registerUserToContest = async (req, res) => {
     });
   } catch (error) {
     console.error("Contest Registration Error:", error);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
   }
 };
 
@@ -681,7 +779,9 @@ const deleteUser = async (req, res) => {
 
     await User.findByIdAndDelete(id);
 
-    return res.status(200).json({ message: "User deleted and stars transferred successfully" });
+    return res
+      .status(200)
+      .json({ message: "User deleted and stars transferred successfully" });
   } catch (error) {
     console.error("Error deleting user:", error);
     return res.status(500).json({ message: "Internal server error" });
@@ -762,15 +862,11 @@ const blacklistUser = async (req, res) => {
       message: `User blacklisted. Transferred ${transferredStars} stars to Super Admin.`,
       transferredStars,
     });
-
   } catch (error) {
     console.error("Error blacklisting user:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-
-
-
 
 export {
   registerSuperAdmin,
@@ -788,6 +884,6 @@ export {
   patchSuperAdminWallet,
   registerUserToContest,
   deleteUser,
-  blacklistUser
-  
+  blacklistUser,
+  getAllCoupons
 };

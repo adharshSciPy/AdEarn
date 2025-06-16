@@ -13,7 +13,8 @@ import {
   topUpCompanyRewardStars,
   patchSuperAdminWallet,
   deleteUser,
-  blacklistUser
+  blacklistUser,
+  getAllCoupons
 } from "../controller/superAdminController.js";
 const superAdminRouter = Router();
 superAdminRouter.route("/register").post(registerSuperAdmin);
@@ -30,6 +31,8 @@ superAdminRouter.route('/topup-company-stars').post(topUpCompanyRewardStars);
 superAdminRouter.route('/patch-wallet').patch(patchSuperAdminWallet);
 superAdminRouter.route('/delete-user').delete(deleteUser);
 superAdminRouter.route('/blacklist-user').patch(blacklistUser)
+superAdminRouter.route('/all-coupons').get(getAllCoupons)
+
 
 
 export default superAdminRouter;
