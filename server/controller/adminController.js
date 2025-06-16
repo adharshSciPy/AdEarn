@@ -673,7 +673,7 @@ const rejectAdById = async (req, res) => {
       refundedStars: totalStarsAllocated,
     });
   } catch (error) {
-    console.error("❌ Error rejecting ad:", error);
+    console.error("Error rejecting ad:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
