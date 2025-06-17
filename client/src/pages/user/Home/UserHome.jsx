@@ -1,6 +1,5 @@
 import { React, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import Sidebar from "../../../components/sidebar/Sidebar";
 import styles from "./userhome.module.css";
 import logo from "../../../assets/Logo.png";
 import Navbar from "../NavBar/Navbar";
