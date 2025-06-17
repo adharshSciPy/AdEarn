@@ -689,6 +689,7 @@ const fetchUserKycStatus = async (req, res) => {
     const filteredUsers = users
       .filter(user => user.kycDetails) // only include users with KYC
       .map(user => ({
+         userId: user._id,
         fullName: user.kycDetails.fullName || "N/A",
         kycStatus: user.kycDetails.kycStatus || "not submitted",
         requestedAt: user.kycDetails.createdAt || null
