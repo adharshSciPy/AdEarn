@@ -37,6 +37,11 @@ const imageAd = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    clickUrl: {
+  type: String,
+  required: false,
+},
+
     // boolean state to check to display ads to user .(only if isViewsReached : false&&isAdsVisible :true &&isAdsVerified:true)
     isAdVisible: {
       type: Boolean,
@@ -138,6 +143,7 @@ const imageAd = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    
   },
 
   { timestamps: true }
