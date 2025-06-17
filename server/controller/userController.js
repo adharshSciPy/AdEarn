@@ -15,6 +15,9 @@ import Coupon from "../model/couponModel.js"
 import { distributeWelcomeBonus } from './superAdminController.js';
 import  Notification  from "../model/notificationsModel.js";
 import  {sendNotification } from "../utils/sendNotifications.js";
+import Redis from "ioredis";
+import crypto from "crypto";
+import config from "../config.js";
 
 
 // function to create referal code
@@ -63,6 +66,9 @@ const formatTo12HourTime = (date) => {
 const USER_ROLE=process.env.USER_ROLE;
 const ADMIN_ROLE=process.env.ADMIN_ROLE;
 const SUPER_ADMIN_ROLE=process.env.SUPER_ADMIN_ROLE;
+// const redis = new Redis("redis-cli -u redis://default:NE9Iv5GnPdF1RH12Vg3bJoiZ77Cx7WrZ@redis-16497.c10.us-east-1-4.ec2.redns.redis-cloud.com:16497"); 
+const redis = new Redis(config.REDIS_URL);
+
 
 
 
@@ -138,6 +144,136 @@ const registerUser = async (req, res) => {
   }
 };
 
+// dummy
+const sendOTP = async (req, res) => {
+  const { phoneNumber } = req.body;
+
+  try {
+    if (!phoneNumber)
+      return res.status(400).json({ message: "Phone Number is required" });
+
+    const phoneRegex = /^(\+\d{1,3}[- ]?)?\d{10}$/;
+    if (!phoneRegex.test(phoneNumber)) {
+      return res.status(400).json({ message: "Invalid Phone Number format" });
+    }
+
+    const existingUser = await User.findOne({ phoneNumber });
+    if (existingUser) {
+      return res.status(400).json({ message: "Phone Number already registered" });
+    }
+
+    const otp =
+      config.USE_OTP_TEST_MODE === 'true' && phoneNumber === config.OTP_TEST_NUMBER
+        ? config.OTP_TEST_VALUE
+        : crypto.randomInt(100000, 999999).toString();
+
+    await redis.set(`otp:${phoneNumber}`, otp, "EX", 300);
+    console.log(`✅ OTP ${otp} saved for ${phoneNumber}`);
+
+    if (config.USE_OTP_TEST_MODE !== 'true') {
+      await axios.get("https://api.msg91.com/api/v5/otp", {
+        params: {
+          authkey: config.MSG91_AUTH_KEY,
+          mobile: phoneNumber,
+          otp,
+          template_id: config.MSG91_TEMPLATE_ID,
+        },
+      });
+    }
+
+    return res.status(200).json({
+      message: "OTP sent successfully",
+      ...(config.USE_OTP_TEST_MODE === 'true' ? { otp } : {}),
+    });
+  } catch (err) {
+    console.error("❌ Error sending OTP:", err.response?.data || err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+// helper function to create user
+const createUserAndRespond = async (phoneNumber, res) => {
+  try {
+    const existingUser = await User.findOne({ phoneNumber });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const user = await User.create({ phoneNumber });
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    const myReferalCode = await generateReferalCode();
+    user.myReferalCode = myReferalCode;
+
+    const wallet = await UserWallet.create({ totalStars: 0 });
+    user.userWalletDetails = wallet._id;
+
+    const uniqueUserId = await generateUniqueUserId();
+    user.uniqueUserId = uniqueUserId;
+
+    await user.save();
+
+    let bonusResult = { success: false, starsGiven: 0, message: "Not applied" };
+    try {
+      bonusResult = await distributeWelcomeBonus(user._id);
+    } catch (bonusErr) {
+      console.error("Bonus failed:", bonusErr.message);
+    }
+
+    await user.populate('userWalletDetails');
+
+    return res.status(200).json({
+      message: "User registered successfully",
+      user: {
+        id: user._id,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        myReferalCode: user.myReferalCode,
+        uniqueUserId: user.uniqueUserId,
+        wallet: {
+          totalStars: user.userWalletDetails.totalStars,
+          walletId: user.userWalletDetails._id,
+        },
+      },
+      token,
+      bonus: bonusResult,
+    });
+  } catch (err) {
+    console.error("User creation error:", err);
+    return res.status(500).json({ message: `Internal Server Error: ${err.message}` });
+  }
+};
+
+// verifyotp
+const verifyOTP = async (req, res) => {
+  const { phoneNumber, otp } = req.body;
+
+  try {
+    // 🔁 Test mode OTP auto-pass
+    if (
+      config.USE_OTP_TEST_MODE === 'true' &&
+      phoneNumber === config.OTP_TEST_NUMBER &&
+      otp === config.OTP_TEST_VALUE
+    ) {
+      return await createUserAndRespond(phoneNumber, res);
+    }
+
+    const savedOtp = await redis.get(`otp:${phoneNumber}`);
+    if (!savedOtp || savedOtp !== otp) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    await redis.del(`otp:${phoneNumber}`);
+    return await createUserAndRespond(phoneNumber, res);
+  } catch (err) {
+    console.error("OTP verification error:", err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 
 
@@ -932,5 +1068,7 @@ export {
   redeemCoupon,
   fetchUserWallet,
   fetchAllMyAds,
-  fetchMySingleAd
+  fetchMySingleAd,
+  sendOTP,
+  verifyOTP
 };

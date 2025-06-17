@@ -97,9 +97,9 @@ function KYCVerify() {
 
   function formatDate(isoString) {
     const date = new Date(isoString);
-    const day = String(date.getDate()).padStart(2, '0');       // 05
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // 06
-    const year = date.getFullYear();                           // 2025
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   }
 
@@ -229,7 +229,6 @@ function KYCVerify() {
                     <tr>
                       <th>Ads</th>
                       <th>Date</th>
-                      <th>Status</th>
                       <th>Ads Verification</th>
                     </tr>
                   </thead>
@@ -240,12 +239,7 @@ function KYCVerify() {
                           {ad.firstName}{" "}{ad.lastName}<br />
                           {ad.uniqueUserId}
                         </td>
-                        <td>{formatDate(ad.createdAt)}</td>
-                        <td>
-                          <span className={ad.status === "Applied" ? styles.statusOngoing : styles.statusStopped}>
-                            {ad.status === "Applied" ? "Applied" : "Not Applied"}
-                          </span>
-                        </td>
+                        <td>{formatDate(ad.updatedAt)}</td>
                         <td>
                           <button
                             className={styles.redeemBtn}

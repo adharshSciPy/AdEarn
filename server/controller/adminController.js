@@ -216,29 +216,34 @@ const fetchKycUploadedUsers = async (req, res) => {
 };
 // to view each induvidual for kyc verification
 const fetchSingleKycUploadUser = async (req, res) => {
-  const { id } = req.body;
+  const { id } = req.query;
+
+  if (!id) {
+    return res.status(400).json({ message: "User ID is required" });
+  }
 
   try {
     const user = await User.findById(id);
     if (!user) {
-      return res
-        .status(400)
-        .json({ message: "No user found,Please check the Id" });
+      return res.status(404).json({ message: "User not found. Please check the ID." });
     }
+
     if (!user.kycDetails) {
-      return res
-        .status(400)
-        .json({ message: "User has not submitted KYC details." });
+      return res.status(400).json({ message: "User has not submitted KYC details." });
     }
+
     const kycDetails = await kyc.findById(user.kycDetails);
-    return res
-      .status(200)
-      .json({ message: "User fetched Succesfully", data: kycDetails });
+    if (!kycDetails) {
+      return res.status(404).json({ message: "KYC details not found." });
+    }
+
+    return res.status(200).json({ message: "User fetched successfully", data: kycDetails });
   } catch (error) {
-    console.error("Error fetching users:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error fetching user KYC details:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 // kyc verification
 const verifyKyc = async (req, res) => {
   const { id } = req.body;
@@ -689,6 +694,7 @@ const fetchUserKycStatus = async (req, res) => {
     const filteredUsers = users
       .filter(user => user.kycDetails) // only include users with KYC
       .map(user => ({
+         userId: user._id,
         fullName: user.kycDetails.fullName || "N/A",
         kycStatus: user.kycDetails.kycStatus || "not submitted",
         requestedAt: user.kycDetails.createdAt || null
