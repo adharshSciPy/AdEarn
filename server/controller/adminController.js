@@ -246,7 +246,7 @@ const fetchSingleKycUploadUser = async (req, res) => {
 
 // kyc verification
 const verifyKyc = async (req, res) => {
-  const { id } = req.body;
+  const { id ,adminId} = req.body;//this id is userId vishvannaa(id:userId)
   const { io, connectedUsers } = req;
 
   try {
@@ -277,6 +277,22 @@ const verifyKyc = async (req, res) => {
       { kycStatus: "approved" },
       { new: true }
     );
+     if (adminId) {
+     await Admin.findByIdAndUpdate(
+  adminId,
+  {
+    $push: {
+      kycsVerified: {
+        kycId: updatedKyc._id,
+        verifiedAt: new Date(),
+        userId:id,
+        status: "approved",
+      },
+    },
+  },
+  { new: true }
+);
+    }
 
     // ✅ Send DB + real-time notification
     const message = "Your KYC has been approved!";
@@ -293,7 +309,7 @@ const verifyKyc = async (req, res) => {
 };
 // kyc rejection
 const rejectKyc = async (req, res) => {
-  const { id, rejectionReason } = req.body;
+  const { id, rejectionReason,adminId } = req.body;
   const { io, connectedUsers } = req;
 
   if (!rejectionReason || rejectionReason.trim() === "") {
@@ -331,6 +347,23 @@ const rejectKyc = async (req, res) => {
       },
       { new: true }
     );
+    if (adminId) {
+      await Admin.findByIdAndUpdate(
+        adminId,
+        {
+          $push: {
+            kycsVerified: {
+              kycId: updatedKyc._id,
+              verifiedAt: new Date(),
+              userId: id,
+              status: "rejected",
+      
+            },
+          },
+        },
+        { new: true }
+      );
+    }
 
     const message = `Your KYC has been rejected. Reason: ${rejectionReason}`;
     await sendNotification(user._id, USER_ROLE, message, io, connectedUsers);
