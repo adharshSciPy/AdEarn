@@ -7,26 +7,31 @@ import Idproof from "../../../assets/cardbackground.jpg"
 import { Button } from 'antd'
 import baseUrl from '../../../baseurl'
 import axios from 'axios'
-import { useSelector } from 'react-redux'
+import { useLocation } from "react-router-dom";
 
 
 function VerifyKYC() {
 
-  const id = useSelector((state) => state.user.id)
+  const { state } = useLocation();
+  const kycData = state?.kycData;
 
   useEffect(() => {
-    const verifyKyc = async () => {
-      try {
-        console.log("idid", id)
-        const response = await axios.get(`${baseUrl}/api/v1/admin/kyc-requested-single-user`, { id: id })
-        console.log("response", response)
-      } catch (error) {
-        console.log(error)
-      }
+    try {
+      console.log("vada", kycData)
+    } catch (error) {
+      console.log(error)
     }
-
-    verifyKyc()
   }, [])
+
+  function formatDate(isoString) {
+    const date = new Date(isoString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+
   return (
     <div className={styles.KYCDetails}>
       <div className={styles.KYCdetailsmain}>
@@ -39,21 +44,21 @@ function VerifyKYC() {
               <Button>Log</Button>
             </div>
             <div className={styles.kycuserdetails}>
-              <div className={styles.userimage}>
+              {/* <div className={styles.userimage}>
                 <img src={UserImage} />
-              </div>
+              </div> */}
               <div className={styles.usernamedetails}>
-                <p>Name : John Doe</p>
-                <p>UserId : #78964</p>
-                <p>Date : 20/10/2025</p>
-                <p>Payout Status : Not Started</p>
+                <p>Name : {kycData.fullName}</p>
+                <p>Email : {kycData.email}</p>
+                <p>Date : {formatDate(kycData.createdAt)}</p>
+                <p>Phone : {kycData.phoneNumber}</p>
               </div>
             </div>
 
             <h3 style={{ padding: "10px", marginTop: "15px" }}>Id Proof</h3>
             <div className={styles.Idproof}>
               <div className={styles.Iddetails}>
-                <img src={Idproof} />
+                <img src={kycData.documentFile} />
               </div>
             </div>
 
