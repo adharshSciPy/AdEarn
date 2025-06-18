@@ -169,51 +169,33 @@ const getSingleUser = async (req, res) => {
 };
 // to fetch users who have requested for Kyc verification
 const fetchKycUploadedUsers = async (req, res) => {
-  // const { io, connectedUsers } = req;
-
   try {
-    // 1. Find users who uploaded KYC
-    const fetchKycUsers = await User.find({
-      kycDetails: { $exists: true, $ne: null },
+    
+    const usersWithKyc = await User.find({
+      kycDetails: { $exists: true, $ne: null }
+    }).populate({
+      path: 'kycDetails',
+      match: { kycStatus: 'pending' } 
     });
 
-    if (!fetchKycUsers || fetchKycUsers.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "No pending verification requests" });
+    
+    const pendingUsers = usersWithKyc.filter(user => user.kycDetails);
+
+    if (pendingUsers.length === 0) {
+      return res.status(400).json({ message: "No pending KYC verification requests" });
     }
 
-    // 2. Get all admin users
-    // const adminUsers = await Admin.find({ adminRole: ADMIN_ROLE });
-
-    // // 3. Prepare notifications
-    // const message = `New KYC verification request(s) submitted.`;
-    // const adminNotifications = adminUsers.map((admin) => ({
-    //   receiverId: admin._id,
-    //   receiverRole: ADMIN_ROLE,
-    //   message,
-    // }));
-
-    // 4. Save notifications to DB
-    // await Notification.insertMany(adminNotifications);
-
-    // // 5. Send real-time notifications via socket.io
-    // const notifyAdmins = adminUsers.map((admin) =>
-    //   sendNotification(admin._id, ADMIN_ROLE, message, io, connectedUsers)
-    // );
-    // await Promise.all(notifyAdmins);
-
-    // 6. Respond
     return res.status(200).json({
-      message: "Admins notified of KYC requests",
-      totalPendingUsers: fetchKycUsers.length,
-      data: fetchKycUsers,
+      message: "Fetched users with pending KYC",
+      totalPendingUsers: pendingUsers.length,
+      data: pendingUsers,
     });
   } catch (error) {
     console.error("Error in fetchKycUploadedUsers:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 // to view each induvidual for kyc verification
 const fetchSingleKycUploadUser = async (req, res) => {
   const { id } = req.query;
