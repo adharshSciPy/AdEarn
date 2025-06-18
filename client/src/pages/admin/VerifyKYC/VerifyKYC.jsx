@@ -1,13 +1,32 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import styles from "./VerifyKYC.module.css"
 import Header from '../../../components/Header/Header'
 import Sidebar from '../../../components/sidebar/Sidebar'
 import UserImage from "../../../assets/cardBack.jpg"
 import Idproof from "../../../assets/cardbackground.jpg"
 import { Button } from 'antd'
+import baseUrl from '../../../baseurl'
+import axios from 'axios'
+import { useSelector } from 'react-redux'
 
 
 function VerifyKYC() {
+
+  const id = useSelector((state) => state.user.id)
+
+  useEffect(() => {
+    const verifyKyc = async () => {
+      try {
+        console.log("idid", id)
+        const response = await axios.get(`${baseUrl}/api/v1/admin/kyc-requested-single-user`, { id: id })
+        console.log("response", response)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    verifyKyc()
+  }, [])
   return (
     <div className={styles.KYCDetails}>
       <div className={styles.KYCdetailsmain}>
@@ -54,12 +73,6 @@ function VerifyKYC() {
             <div className={styles.bankpartner}>
               <div className={styles.bankpartnerdetails}>
                 <p>IFSC Code</p>
-              </div>
-            </div>
-            <h3 style={{ padding: "10px", marginTop: "15px" }}>Your Bank Details</h3>
-            <div className={styles.Idproof}>
-              <div className={styles.Iddetails}>
-                <img src={Idproof} />
               </div>
             </div>
 
