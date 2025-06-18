@@ -32,6 +32,25 @@ const adminSchema = new Schema(
     otpExpiry: {
       type: Date,
     },
+    verifiedAds: [
+  {
+    adId: { type: Schema.Types.ObjectId, ref: "Ad" },
+    verifiedAt: { type: Date, default: Date.now },
+    userId:{type:Schema.Types.ObjectId,ref:"User"},
+    status:{type:String}
+  }
+],
+kycsVerified: [
+  { 
+    kycId: { type: Schema.Types.ObjectId, ref: "kyc" },
+    verifiedAt: { type: Date, default: Date.now },
+    userId:{type:Schema.Types.ObjectId,ref:"User"},
+    status:{type:String}
+
+
+
+  }
+],
   },
   { timestamps: true }
 );
