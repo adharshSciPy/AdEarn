@@ -7,12 +7,12 @@ import Idproof from "../../../assets/cardbackground.jpg"
 import { Button } from 'antd'
 import baseUrl from '../../../baseurl'
 import axios from 'axios'
-import { useSelector } from 'react-redux'
+import { useParams } from 'react-router-dom'
 
 
 function VerifyKYC() {
 
-  const id = useSelector((state) => state.user.id)
+  const { id } = useParams()
   const [kycData, setKycData] = useState({})
 
   function formatDate(isoString) {
