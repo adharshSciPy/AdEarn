@@ -1,14 +1,19 @@
-import {React,useState} from "react";
+import { React, useState } from "react";
 import logo from "../../../assets/Logo.png";
 import styles from "./Adminemailregister.module.css";
 import { Link } from "react-router-dom";
+import axios from "axios";
+import baseUrl from "../../../baseurl";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 
 function Adminemailregister() {
-  const[form,setForm]=useState(
+  const navigate = useNavigate()
+  const [form, setForm] = useState(
     {
-      email:"",
-      password:""
-  
+      adminEmail: "",
+      password: ""
+
     }
   )
   const handleChange = (e) => {
@@ -18,15 +23,20 @@ function Adminemailregister() {
       [name]: value,
     }));
   };
-  const handleSubmit = (e) => {
-
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    try {
+      const response = await axios.post(`${baseUrl}/api/v1/admin/admin-login`, form)
+      console.log("res", response)
+      setForm({
+        adminEmail: "",
+        password: ""
+      });
+      navigate("/admindashboard")
+    } catch (error) {
+      console.log(error)
+    }
 
-    console.log("Submitted:", form);
-    setForm({
-      email: "",
-      password: ""
-    });
   };
   return (
     <div>
@@ -48,19 +58,19 @@ function Adminemailregister() {
                     <p>This is a demo content</p>
                   </div>
                   <div className={styles.formContainer}>
-                  <form className="form" onSubmit={handleSubmit}>
+                    <form className="form" onSubmit={handleSubmit}>
                       <div>
                         <label htmlFor="email1" className={styles.label}>
                           Your email
                         </label>
                         <input
                           id="email1"
-                          name="email"
+                          name="adminEmail"
                           type="email"
                           placeholder="Email@example.com"
                           required
                           className={styles.input}
-                          value={form.email}
+                          value={form.adminEmail}
                           onChange={handleChange}
                         />
                       </div>
