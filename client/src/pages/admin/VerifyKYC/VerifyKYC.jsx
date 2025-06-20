@@ -7,21 +7,13 @@ import Idproof from "../../../assets/cardbackground.jpg"
 import { Button } from 'antd'
 import baseUrl from '../../../baseurl'
 import axios from 'axios'
-import { useLocation } from "react-router-dom";
+import { useParams } from 'react-router-dom'
 
 
 function VerifyKYC() {
 
-  const { state } = useLocation();
-  const kycData = state?.kycData;
-
-  useEffect(() => {
-    try {
-      console.log("vada", kycData)
-    } catch (error) {
-      console.log(error)
-    }
-  }, [])
+  const { id } = useParams()
+  const [kycData, setKycData] = useState({})
 
   function formatDate(isoString) {
     const date = new Date(isoString);
@@ -31,6 +23,25 @@ function VerifyKYC() {
     return `${day}/${month}/${year}`;
   }
 
+  useEffect(() => {
+    const verifyKyc = async () => {
+      try {
+        console.log("idid", id)
+        const response = await axios.get(`${baseUrl}/api/v1/admin/kyc-requested-single-user`, { params: { id } })
+        console.log("response", response.data.data)
+        setKycData(response.data.data)
+        console.log("kyc state", kycData)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    if (id) verifyKyc();
+
+  }, [id])
+
+  useEffect(() => {
+    console.log("kycData updated:", kycData);
+  }, [kycData]);
 
   return (
     <div className={styles.KYCDetails}>
@@ -51,33 +62,33 @@ function VerifyKYC() {
                 <p>Name : {kycData.fullName}</p>
                 <p>Email : {kycData.email}</p>
                 <p>Date : {formatDate(kycData.createdAt)}</p>
-                <p>Phone : {kycData.phoneNumber}</p>
+                <p>Document Type : {kycData.documentType}</p>
               </div>
             </div>
 
             <h3 style={{ padding: "10px", marginTop: "15px" }}>Id Proof</h3>
             <div className={styles.Idproof}>
               <div className={styles.Iddetails}>
-                <img src={kycData.documentFile} />
+                <img src={`${baseUrl}${kycData.documentFile}`} />
               </div>
             </div>
 
             <h3 style={{ padding: "10px", marginTop: "15px" }}>Banking Partner Name *</h3>
             <div className={styles.bankpartner}>
               <div className={styles.bankpartnerdetails}>
-                <p>State Bank Of India</p>
+                <p>{kycData.bankName}</p>
               </div>
             </div>
             <h3 style={{ padding: "10px", marginTop: "15px" }}>Account Number</h3>
             <div className={styles.bankpartner}>
               <div className={styles.bankpartnerdetails}>
-                <p>7896 4582 1561 4545</p>
+                <p>{kycData.accountNumber}</p>
               </div>
             </div>
             <h3 style={{ padding: "10px", marginTop: "15px" }}>IFSC Code</h3>
             <div className={styles.bankpartner}>
               <div className={styles.bankpartnerdetails}>
-                <p>IFSC Code</p>
+                <p>{kycData.ifscCode}</p>
               </div>
             </div>
 
