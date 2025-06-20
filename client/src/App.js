@@ -100,7 +100,7 @@ function App() {
           <Route path='/AdminReport' element={<AdminReport />} />
           <Route path='/AdminSettings' element={<AdminSettings />} />
           <Route path='/VerifyAds/:adId' element={<VerifyAds />} />
-          <Route path='/VerifyKYC/:adId' element={<VerifyKYC />} />
+          <Route path='/VerifyKYC/:id' element={<VerifyKYC />} />
           <Route path='/ContestForm' element={<ContestForm />} />
 
 

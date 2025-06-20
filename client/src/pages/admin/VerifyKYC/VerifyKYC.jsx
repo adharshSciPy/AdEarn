@@ -7,26 +7,64 @@ import Idproof from "../../../assets/cardbackground.jpg"
 import { Button } from 'antd'
 import baseUrl from '../../../baseurl'
 import axios from 'axios'
-import { useSelector } from 'react-redux'
+import { useParams } from 'react-router-dom'
 
 
 function VerifyKYC() {
 
-  const id = useSelector((state) => state.user.id)
+  const { id } = useParams()
+  const [kycData, setKycData] = useState({})
+
+  function formatDate(isoString) {
+    const date = new Date(isoString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
 
   useEffect(() => {
     const verifyKyc = async () => {
       try {
         console.log("idid", id)
-        const response = await axios.get(`${baseUrl}/api/v1/admin/kyc-requested-single-user`, { id: id })
-        console.log("response", response)
+        const response = await axios.get(`${baseUrl}/api/v1/admin/kyc-requested-single-user`, { params: { id } })
+        console.log("response", response.data.data)
+        setKycData(response.data.data)
+        console.log("kyc state", kycData)
       } catch (error) {
         console.log(error)
       }
     }
+    if (id) verifyKyc();
 
-    verifyKyc()
-  }, [])
+  }, [id])
+
+  useEffect(() => {
+    console.log("kycData updated:", kycData);
+  }, [kycData]);
+
+  const approveKyc = async () => {
+    try {
+      const approveres = await axios.post(`${baseUrl}/api/v1/admin/kyc-approval`, {
+        id: id,
+        // adminId: adminId
+      })
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const rejectKyc = async () => {
+    try {
+      const approveres = await axios.post(`${baseUrl}/api/v1/admin/kyc-rejection`, {
+        id: id,
+        // adminId: adminId
+      })
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   return (
     <div className={styles.KYCDetails}>
       <div className={styles.KYCdetailsmain}>
@@ -39,46 +77,46 @@ function VerifyKYC() {
               <Button>Log</Button>
             </div>
             <div className={styles.kycuserdetails}>
-              <div className={styles.userimage}>
+              {/* <div className={styles.userimage}>
                 <img src={UserImage} />
-              </div>
+              </div> */}
               <div className={styles.usernamedetails}>
-                <p>Name : John Doe</p>
-                <p>UserId : #78964</p>
-                <p>Date : 20/10/2025</p>
-                <p>Payout Status : Not Started</p>
+                <p>Name : {kycData.fullName}</p>
+                <p>Email : {kycData.email}</p>
+                <p>Date : {formatDate(kycData.createdAt)}</p>
+                <p>Document Type : {kycData.documentType}</p>
               </div>
             </div>
 
             <h3 style={{ padding: "10px", marginTop: "15px" }}>Id Proof</h3>
             <div className={styles.Idproof}>
               <div className={styles.Iddetails}>
-                <img src={Idproof} />
+                <img src={`${baseUrl}${kycData.documentFile}`} />
               </div>
             </div>
 
             <h3 style={{ padding: "10px", marginTop: "15px" }}>Banking Partner Name *</h3>
             <div className={styles.bankpartner}>
               <div className={styles.bankpartnerdetails}>
-                <p>State Bank Of India</p>
+                <p>{kycData.bankName}</p>
               </div>
             </div>
             <h3 style={{ padding: "10px", marginTop: "15px" }}>Account Number</h3>
             <div className={styles.bankpartner}>
               <div className={styles.bankpartnerdetails}>
-                <p>7896 4582 1561 4545</p>
+                <p>{kycData.accountNumber}</p>
               </div>
             </div>
             <h3 style={{ padding: "10px", marginTop: "15px" }}>IFSC Code</h3>
             <div className={styles.bankpartner}>
               <div className={styles.bankpartnerdetails}>
-                <p>IFSC Code</p>
+                <p>{kycData.ifscCode}</p>
               </div>
             </div>
 
             <div className={styles.buttons}>
-              <Button style={{ backgroundColor: "#693bb8", color: "white" }}>Reject</Button>
-              <Button>Approve</Button>
+              <Button style={{ backgroundColor: "#693bb8", color: "white" }} onClick={() => rejectKyc()}>Reject</Button>
+              <Button onClick={() => approveKyc()}>Approve</Button>
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { Avatar, Input } from 'antd';
 
 function Header() {
     const [showSearch, setShowSearch] = useState(false);
+   
 
     return (
         <div className={styles.header}>
@@ -38,4 +39,4 @@ function Header() {
     )
 }
 
-export default Header
+export default Header   

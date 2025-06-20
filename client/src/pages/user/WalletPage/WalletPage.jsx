@@ -8,10 +8,9 @@ import baseUrl from "../../../baseurl";
 import { useNavigate } from "react-router-dom";
 import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
 
-
 const WalletPage = () => {
   const [activeTab, setActiveTab] = useState("Payouts");
-    const [showPopup, setShowPopup] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
   const [stars, setStars] = useState("");
   const [walletDetails, setWalletDetails] = useState([]);
   const [showBuyStarsModal, setShowBuyStarsModal] = useState(false);
@@ -43,8 +42,9 @@ const WalletPage = () => {
   };
   useEffect(() => {
     getUserWalletDetails();
-    console.log("userid", userId)
-  },[]);
+    console.log("userid", userId);
+  }, []);
+ 
   // const handleClick = () => {
   //   navigate(`/adform/${userId}`); // replace with your route
   // };

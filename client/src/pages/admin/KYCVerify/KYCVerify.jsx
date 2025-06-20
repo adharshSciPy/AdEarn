@@ -10,6 +10,7 @@ import axios from "axios"
 function KYCVerify() {
 
   const [kycRequested, setKycRequested] = useState([])
+  const [verifyKYC, setVerifyKYC] = useState([])
 
   const adsData = Array.from({ length: 30 }, (_, i) => ({
     id: i + 1,
@@ -20,13 +21,21 @@ function KYCVerify() {
     startDate: "02/06/2025",
   }));
 
-  const adsVerifyData = Array.from({ length: 30 }, (_, i) => ({
-    id: i + 1,
-    title: `User Name ${i + 1}`,
-    date: "02/06/2025",
-    status: i % 3 === 0 ? 'Not Applied' : 'Applied',
-    verificationStatus: "Verify Now",
-  }));
+  const verifyKyc = async (id) => {
+    try {
+      console.log("idid", id);
+
+      const response = await axios.get(`${baseUrl}/api/v1/admin/kyc-requested-single-user`, {
+        params: { id }
+      });
+      const kycData = response.data.data
+      navigate(`/VerifyKYC/${id}`, { state: { kycData } });
+
+      console.log("response", response.data.data);
+    } catch (error) {
+      console.error("Axios error:", error.response?.data?.message || error.message);
+    }
+  };
 
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
@@ -36,9 +45,9 @@ function KYCVerify() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  const handlenavigate = (adId) => {
-    console.log("id vannu", adId)
-    navigate(`/VerifyKYC/${adId}`)
+  const handlenavigate = (id) => {
+    console.log("id vannu", id)
+    navigate(`/VerifyKYC/${id}`)
   }
 
   const [activeTab, setActiveTab] = useState("KYC");
@@ -227,9 +236,9 @@ function KYCVerify() {
                 <table className={styles.payoutTable}>
                   <thead>
                     <tr>
-                      <th>Ads</th>
+                      <th>User</th>
                       <th>Date</th>
-                      <th>Ads Verification</th>
+                      <th>Kyc Verification</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -243,7 +252,7 @@ function KYCVerify() {
                         <td>
                           <button
                             className={styles.redeemBtn}
-                            onClick={() => handlenavigate(ad._id)}
+                            onClick={() => verifyKyc(ad._id)}
                           >
                             {'Verify'}
                           </button>
