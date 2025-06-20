@@ -11,10 +11,15 @@ import AdminWallet from "../model/adminwalletModel.js";
 import Notification from "../model/notificationsModel.js";
 import { sendNotification } from "../utils/sendNotifications.js";
 import { UserWallet } from "../model/userWallet.js";
+import sgMail from "@sendgrid/mail";
+import crypto from "crypto";
+import redis from "../redisClient.js";
+import config from "../config.js";
 
 const USER_ROLE = process.env.USER_ROLE;
 const ADMIN_ROLE = process.env.ADMIN_ROLE;
 const SUPER_ADMIN_ROLE = process.env.SUPER_ADMIN_ROLE;
+sgMail.setApiKey(config.SEND_GRID_API_KEY);
 
 const registerAdmin = async (req, res) => {
   const { phoneNumber, password } = req.body;
@@ -124,6 +129,7 @@ const adminLogin = async (req, res) => {
     res.status(200).json({
       message: "Login successful",
       token,
+      role:admin.adminRole,
       adminId: admin._id,
       adminEmail: admin.adminEmail,
     });
@@ -390,7 +396,7 @@ const kycVerifiedUsers = async (req, res) => {
 
 // to verify ads
 const verifyAdById = async (req, res) => {
-  const { adId } = req.body;
+  const { adId,adminId} = req.body;
   const { io, connectedUsers } = req;
 
   if (!adId) {
@@ -484,7 +490,18 @@ const verifyAdById = async (req, res) => {
     } else {
       return res.status(200).json({ message: "Ad is already verified" });
     }
-
+if (adminId) {
+      await Admin.findByIdAndUpdate(adminId, {
+        $push: {
+          verifiedAds: {
+            adId: ad._id,
+            verifiedAt: verifiedTime,
+            userId: createdBy,
+            status: "verified",
+          },
+        },
+      });
+    }
     // 🔔 Send notification to creator
     if (createdBy) {
       const formattedTime = new Date(adPostedTime).toLocaleString("en-IN", {
@@ -557,7 +574,7 @@ const getSuperAdminWallet = async (req, res) => {
   }
 };
 const rejectAdById = async (req, res) => {
-  const { adId, reason } = req.body;
+  const { adId, reason,adminId } = req.body;
   const { io, connectedUsers } = req;
 
   if (!adId) {
@@ -726,6 +743,89 @@ const fetchUserKycStatus = async (req, res) => {
   }
 };
 
+// to register admin using email otp(sendGrid &redis cloud)
+const sendOtpToAdmin = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) return res.status(400).json({ message: "Email is required" });
+
+  const existingAdmin = await Admin.findOne({ email });
+  if (existingAdmin) {
+    return res.status(409).json({ message: "Email already in use" });
+  }
+
+ 
+ const otp =
+  config.USE_OTP_TEST_MODE === true &&
+  email === config.OTP_TEST_EMAIL // <- Add this to config
+    ? config.OTP_TEST_VALUE
+    : crypto.randomInt(100000, 999999).toString();
+
+
+  try {
+    await redis.set(`admin_otp:${email}`, otp, "EX", 300);
+    console.log(`✅ OTP for ${email}: ${otp}`);
+  } catch (err) {
+    return res.status(500).json({ message: "Redis error", error: err.message });
+  }
+
+  if (!config.USE_OTP_TEST_MODE) {
+    try {
+      await sgMail.send({
+        to: email,
+        from: config.SENDGRID_SENDER_EMAIL,
+        subject: "Your Admin OTP Code",
+        text: `Your OTP is ${otp}`,
+        html: `<p>Your OTP is <strong>${otp}</strong>. It expires in 5 minutes.</p>`,
+      });
+    } catch (err) {
+      return res.status(500).json({ message: "SendGrid error", error: err.message });
+    }
+  }
+
+  return res.status(200).json({
+    message: "OTP sent to admin email",
+    ...(config.USE_OTP_TEST_MODE ? { otp } : {}),
+  });
+};
+// to verify otp and store the admin in db
+const verifyOtpAndRegisterAdmin = async (req, res) => {
+  const { email, otp, phoneNumber, password } = req.body;
+
+  if (!email || !otp || !phoneNumber || !password) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  const storedOtp = await redis.get(`admin_otp:${email}`);
+  if (!storedOtp) return res.status(400).json({ message: "OTP expired or not found" });
+  if (storedOtp !== otp) return res.status(400).json({ message: "Invalid OTP" });
+
+  await redis.del(`admin_otp:${email}`);
+
+  if (!passwordValidator(password)) {
+    return res.status(400).json({
+      message:
+        "Password must be at least 8 characters, include uppercase, lowercase, number, and special character.",
+    });
+  }
+
+  const existingAdmin = await Admin.findOne({ phoneNumber });
+  if (existingAdmin) return res.status(409).json({ message: "Phone number already in use" });
+
+  try {
+    const role = Number(ADMIN_ROLE) || 400;
+    const admin = await Admin.create({ email, phoneNumber, password, role });
+    const createdAdmin = await Admin.findById(admin._id).select("-password");
+
+    return res.status(201).json({
+      message: "Admin registered successfully",
+      data: createdAdmin,
+    });
+  } catch (err) {
+    console.error("Admin Registration Error:", err);
+    return res.status(500).json({ message: `Internal server error: ${err.message}` });
+  }
+};
 
 export {
   registerAdmin,
@@ -742,5 +842,7 @@ export {
   getSuperAdminWallet,
   rejectAdById,
   kycVerifiedUsers,
-  fetchUserKycStatus
+  fetchUserKycStatus,
+  sendOtpToAdmin,
+  verifyOtpAndRegisterAdmin
 };
