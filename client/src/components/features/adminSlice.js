@@ -13,8 +13,8 @@ const adminSlice = createSlice({
   reducers: {
     setAdmin(state, action) {
       console.log("from redux admin", action.payload);
-      state.id = action.payload.id;
-      state.email = action.payload.email;
+      state.id = action.payload.adminId;
+      state.email = action.payload.adminEmail;
       state.token = action.payload.token;
       state.role = action.payload.role;
     },

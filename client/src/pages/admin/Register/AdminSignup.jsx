@@ -4,28 +4,36 @@ import styles from "./AdminSignup.module.css";
 import { Link } from "react-router-dom";
 
 function AdminSignup() {
-  const [phone, setPhone] = useState("");
-  const [error, setError] = useState("");
-
-  const validatePhone = (value) => {
-    const regex = /^\d{10}$/;
-    return regex.test(value);
-  };
-
-  const handleChange = (e) => {
-    setPhone(e.target.value);
-    if (error) setError(""); // clear error as user types
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!validatePhone(phone)) {
-      setError("Enter a valid phone number starting with +91 and 10 digits.");
-      return;
+ const [form, setForm] = useState(
+    {
+      adminEmail: ""
     }
-    setPhone("")
-    
+  )
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post(`${baseUrl}/api/v1/admin/admin-login`, form)
+      const adminres = response.data;
+      console.log("res", response.data)
+      dispatch(setAdmin(adminres));
+
+      setForm({
+        adminEmail: ""
+      });
+      navigate("/adminotp")
+    } catch (error) {
+      console.log(error)
+    }
+
+  };
+
   return (
     <div>
       <div className={styles.containerOneUser}>
