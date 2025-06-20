@@ -745,11 +745,11 @@ const fetchUserKycStatus = async (req, res) => {
 
 // to register admin using email otp(sendGrid &redis cloud)
 const sendOtpToAdmin = async (req, res) => {
-  const { email } = req.body;
+  const { adminEmail } = req.body;
 
-  if (!email) return res.status(400).json({ message: "Email is required" });
+  if (!adminEmail) return res.status(400).json({ message: "Email is required" });
 
-  const existingAdmin = await Admin.findOne({ email });
+  const existingAdmin = await Admin.findOne({ adminEmail });
   if (existingAdmin) {
     return res.status(409).json({ message: "Email already in use" });
   }
@@ -757,14 +757,14 @@ const sendOtpToAdmin = async (req, res) => {
  
  const otp =
   config.USE_OTP_TEST_MODE === true &&
-  email === config.OTP_TEST_EMAIL // <- Add this to config
+  adminEmail === config.OTP_TEST_EMAIL // <- Add this to config
     ? config.OTP_TEST_VALUE
     : crypto.randomInt(100000, 999999).toString();
 
 
   try {
-    await redis.set(`admin_otp:${email}`, otp, "EX", 300);
-    console.log(`✅ OTP for ${email}: ${otp}`);
+    await redis.set(`admin_otp:${adminEmail}`, otp, "EX", 300);
+    console.log(`✅ OTP for ${adminEmail}: ${otp}`);
   } catch (err) {
     return res.status(500).json({ message: "Redis error", error: err.message });
   }
@@ -772,7 +772,7 @@ const sendOtpToAdmin = async (req, res) => {
   if (!config.USE_OTP_TEST_MODE) {
     try {
       await sgMail.send({
-        to: email,
+        to: adminEmail,
         from: config.SENDGRID_SENDER_EMAIL,
         subject: "Your Admin OTP Code",
         text: `Your OTP is ${otp}`,
@@ -790,17 +790,17 @@ const sendOtpToAdmin = async (req, res) => {
 };
 // to verify otp and store the admin in db
 const verifyOtpAndRegisterAdmin = async (req, res) => {
-  const { email, otp, phoneNumber, password } = req.body;
+  const { adminEmail, otp } = req.body;
 
-  if (!email || !otp || !phoneNumber || !password) {
+  if (!adminEmail || !otp ) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
-  const storedOtp = await redis.get(`admin_otp:${email}`);
+  const storedOtp = await redis.get(`admin_otp:${adminEmail}`);
   if (!storedOtp) return res.status(400).json({ message: "OTP expired or not found" });
   if (storedOtp !== otp) return res.status(400).json({ message: "Invalid OTP" });
 
-  await redis.del(`admin_otp:${email}`);
+  await redis.del(`admin_otp:${adminEmail}`);
 
   if (!passwordValidator(password)) {
     return res.status(400).json({
@@ -809,17 +809,17 @@ const verifyOtpAndRegisterAdmin = async (req, res) => {
     });
   }
 
-  const existingAdmin = await Admin.findOne({ phoneNumber });
-  if (existingAdmin) return res.status(409).json({ message: "Phone number already in use" });
+  const existingAdmin = await Admin.findOne({ adminEmail });
+  if (existingAdmin) return res.status(409).json({ message: "Email already in use" });
 
   try {
     const role = Number(ADMIN_ROLE) || 400;
-    const admin = await Admin.create({ email, phoneNumber, password, role });
-    const createdAdmin = await Admin.findById(admin._id).select("-password");
+    const admin = await Admin.create({ adminEmail,  role });
+    // const createdAdmin = await Admin.findById(admin._id).select("-password");
 
     return res.status(201).json({
       message: "Admin registered successfully",
-      data: createdAdmin,
+      data: admin,
     });
   } catch (err) {
     console.error("Admin Registration Error:", err);
