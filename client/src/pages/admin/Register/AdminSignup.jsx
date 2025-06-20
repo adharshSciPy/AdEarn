@@ -27,9 +27,9 @@ function AdminSignup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${baseUrl}/api/v1/admin/admin-register`, form)
-      const adminres = response.data;
-      console.log("res", response.data)
+      const response = await axios.post(`${baseUrl}/api/v1/admin/send-otp`, form)
+      const adminres = form.adminEmail;
+      console.log("res", form.adminEmail)
       dispatch(setAdmin(adminres));
 
       setForm({
@@ -76,7 +76,7 @@ function AdminSignup() {
                             id="phone"
                             name="adminEmail"
                             type="text"
-                            value={form.adminEmail} 
+                            value={form.adminEmail}
                             onChange={handleChange}
                             required
                             className={styles.input}
