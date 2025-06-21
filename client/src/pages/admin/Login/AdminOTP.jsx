@@ -2,10 +2,14 @@ import { React, useState } from "react";
 import logo from "../../../assets/Logo.png";
 import styles from "./Adminotp.module.css";
 import { Link } from "react-router-dom";
+import axios from "axios";
+import baseUrl from "../../../baseurl";
+import { useSelector } from "react-redux";
 
 function PhoneOtp() {
-  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
+  const adminEmail = useSelector((state) => state.admin.adminEmail)
 
   const handleChange = (e, index) => {
     const { value } = e.target;
@@ -17,21 +21,30 @@ function PhoneOtp() {
     setOtp(newOtp);
     setError("");
 
-    if (value && index < 3) {
+    if (value && index < 5) {
       const nextInput = document.getElementById(`otp-${index + 1}`);
       if (nextInput) nextInput.focus();
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const enteredOtp = otp.join("");
-    if (enteredOtp.length !== 4) {
-      setError("Please enter a 4-digit OTP.");
-      return;
+    try {
+      const enteredOtp = otp.join("");
+      if (enteredOtp.length !== 6) {
+        setError("Please enter a 6-digit OTP.");
+        return;
+      }
+      const response = await axios.post(`${baseUrl}/api/v1/admin/verify-otp`, {
+        adminEmail: adminEmail,
+        otp: enteredOtp
+      })
+      console.log("res", response)
+      console.log("otp", otp)
+      console.log("adminemail", adminEmail)
+    } catch (error) {
+      console.log(error)
     }
-
-    console.log("Submitted OTP:", enteredOtp);
   };
 
   return (
@@ -51,7 +64,7 @@ function PhoneOtp() {
                     <h2>Enter OTP</h2>
                   </div>
                   <div className={styles.paraContent}>
-                    <p>We've sent a 4-digit OTP to your phone.</p>
+                    <p>We've sent a 6-digit OTP to your phone.</p>
                   </div>
                   <div className={styles.formContainer}>
                     <form className="form" onSubmit={handleSubmit}>
@@ -74,7 +87,7 @@ function PhoneOtp() {
                       </div>
                     </form>
                   </div>
-                  
+
                 </div>
               </div>
             </div>

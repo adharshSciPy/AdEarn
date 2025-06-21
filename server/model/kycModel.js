@@ -62,5 +62,5 @@ kycStatus: {
   default: null,
 },
 
-})
+},{timestamps:true})
 export default mongoose.model("kyc",kycSchema)

@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import styles from "./CouponGeneration.module.css";
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
+import baseUrl from "../../../baseurl";
+import axios from "axios";
 
 function CouponGeneration() {
   const [formData, setFormData] = useState({
-    couponNumber: "",
     couponCount: "",
-    starCount: "",
+    perStarCount: "",
     date: "",
     expiryDate: "",
   });
@@ -16,11 +17,39 @@ function CouponGeneration() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Submitted:", formData);
-    // You can call your API here
+
+    const payload = {
+      couponCount: formData.couponCount,
+      perStarCount:formData.perStarCount,
+      generationDate: formData.date,
+      expiryDate: formData.expiryDate,
+    };
+    console.log(payload);
+    
+    try {
+      const response = await axios.post(
+        `${baseUrl}/api/v1/super-admin/generate-coupons`,
+        payload
+      );
+
+      if (response.status === 201) {
+        console.log("Success:", response.data);
+        // toast.success("Coupons generated successfully!");
+        setFormData({
+          couponCount: "",
+          perStarCount: "",
+          date: "",
+          expiryDate: "",
+        });
+      }
+    } catch (error) {
+      console.error("Error generating coupons:", error);
+      // toast.error(error?.response?.data?.message || "Failed to generate coupons!");
+    }
   };
+
   return (
     <div className={styles.UserAccount}>
       <SuperSidebar />
@@ -30,34 +59,25 @@ function CouponGeneration() {
         </div>
         <div className={styles.container}>
           <form className={styles.form} onSubmit={handleSubmit}>
-            <label>Enter coupon number</label>
-            <input
-              type="text"
-              name="couponNumber"
-              value={formData.couponNumber}
-              onChange={handleChange}
-              placeholder="Enter coupon number"
-            />
-
             <label>Enter generating coupon count</label>
             <input
-              type="text"
+              type="number"
               name="couponCount"
               value={formData.couponCount}
               onChange={handleChange}
-              placeholder="Enter contest name"
+              placeholder="Enter generating coupon count"
             />
 
             <label>Enter each coupon star count</label>
             <input
-              type="text"
-              name="starCount"
-              value={formData.starCount}
+              type="number"
+              name="perStarCount"
+              value={formData.perStarCount}
               onChange={handleChange}
               placeholder="Enter star count"
             />
 
-            <label>Enter date</label>
+            <label>Enter Start Date</label>
             <input
               type="date"
               name="date"
@@ -65,13 +85,13 @@ function CouponGeneration() {
               onChange={handleChange}
             />
 
-            {/* <label>Enter expiry date</label>
-        <input
-          type="date"
-          name="expiryDate"
-          value={formData.expiryDate}
-          onChange={handleChange}
-        /> */}
+            <label>Enter Expiry Date</label>
+            <input
+              type="date"
+              name="expiryDate"
+              value={formData.expiryDate}
+              onChange={handleChange}
+            />
 
             <div className={styles.buttons}>
               <button type="button" className={styles.cancel}>

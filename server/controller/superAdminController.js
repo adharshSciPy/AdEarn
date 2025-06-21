@@ -374,10 +374,30 @@ const createContest = async (req, res) => {
 
 const generateCoupons = async (req, res) => {
   const { couponCount, perStarCount, generationDate, expiryDate } = req.body;
+
   try {
+    const totalStarsNeeded = couponCount * perStarCount;
+
+  
+    const superAdminWallet = await SuperAdminWallet.findOne();
+
+    if (!superAdminWallet) {
+      return res.status(404).json({ message: "Super admin wallet not found" });
+    }
+
+    if (superAdminWallet.totalStars < totalStarsNeeded) {
+      return res.status(400).json({
+        message: "Insufficient stars in Super Admin Wallet to generate coupons",
+      });
+    }
+
+    
     const couponsToCreate = [];
+    const couponCodes = [];
+
     for (let i = 0; i < couponCount; i++) {
       const code = generateRandomCode(10);
+      couponCodes.push(code);
       couponsToCreate.push({
         code,
         perStarCount,
@@ -386,15 +406,71 @@ const generateCoupons = async (req, res) => {
       });
     }
 
+    
     const createdCoupons = await Coupon.insertMany(couponsToCreate);
+
+    
+    superAdminWallet.totalStars -= totalStarsNeeded;
+
+
+    superAdminWallet.transactions.push({
+      starsReceived: -totalStarsNeeded, 
+      reason: `Coupon Generation of ${couponCount} coupons`,
+      addedBy: null, // can be filled if superAdmin `_id` is tracked in session
+    });
+
+    await superAdminWallet.save();
+
     return res.status(201).json({
-      message: "Coupons generated successfully",
+      message: "Coupons generated and wallet updated successfully",
       count: createdCoupons.length,
       coupons: createdCoupons.map((c) => c.code),
+      starsDeducted: totalStarsNeeded,
+      totalStars:superAdminWallet.totalStars
     });
   } catch (error) {
     console.error("Error generating coupons:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+const getAllCoupons = async (req, res) => {
+  try {
+    const now = new Date();
+
+    // Fetch coupons and project only necessary fields
+    const coupons = await Coupon.find({}, "code perStarCount expiryDate isClaimed generationDate")
+      .sort({ generationDate: -1 });
+
+    if (!coupons.length) {
+      return res.status(200).json({
+        message: "No coupons generated yet",
+        coupons: [],
+      });
+    }
+
+    // Add isExpired field
+    const enrichedCoupons = coupons.map((coupon) => {
+      const isExpired = coupon.expiryDate ? coupon.expiryDate < now : false;
+
+      return {
+        _id: coupon._id,
+        code: coupon.code,
+        perStarCount: coupon.perStarCount,
+        expiryDate: coupon.expiryDate,
+        isClaimed: coupon.isClaimed,
+        generationDate: coupon.generationDate,
+        isExpired,
+      };
+    });
+
+    return res.status(200).json({
+      message: "All generated coupons fetched successfully",
+      count: enrichedCoupons.length,
+      coupons: enrichedCoupons,
+    });
+  } catch (error) {
+    console.error("Error fetching coupons:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 const topUpWelcomeBonusStars = async (req, res) => {
@@ -543,7 +619,6 @@ const patchSuperAdminWallet = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 const registerUserToContest = async (req, res) => {
   const { userId, contestNumber } = req.body;
@@ -824,4 +899,5 @@ export {
   registerUserToContest,
   deleteUser,
   blacklistUser,
+  getAllCoupons
 };

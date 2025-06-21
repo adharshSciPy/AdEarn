@@ -1,5 +1,5 @@
 import  Router  from "express";
-import { addKyc, editUser, fetchAllMyAds, fetchMySingleAd, fetchUserWallet, getUserByUniqueId, getViewedAds, redeemCoupon, registerUser, starBuy, uploadProfilePicture, userLogin, userLogout, } from "../controller/userController.js";
+import { addKyc, editUser, fetchAllMyAds, fetchMySingleAd, fetchUserWallet, getUserByUniqueId, getViewedAds, redeemCoupon, registerUser, sendOTP, starBuy, uploadProfilePicture, userLogin, userLogout, verifyOTP, } from "../controller/userController.js";
 import uploadUserImg from "../multer/userImgMulter.js";
 import userKyc from "../multer/kycVerificationMulter.js";
 import authMiddleware from "../auth/authMiddleware.js";
@@ -8,7 +8,7 @@ import {registerUserToContest} from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
 
 const userRouter = Router()
-userRouter.route('/register').post(registerUser);
+userRouter.route('/register').post(registerUser);//not use this instead go down
 userRouter.route('/update/:id').patch(editUser);
 userRouter.route('/login').post(userLogin);
 userRouter.route('/logout/:id').post(userLogout);
@@ -22,6 +22,9 @@ userRouter.route('/user-wallet/:id').get(fetchUserWallet);
 userRouter.route('/contest/register').post(registerUserToContest);
 userRouter.route('/my-all-ads/:userId').get(fetchAllMyAds);
 userRouter.route('/my-single-ad/:userId/:adId').get(fetchMySingleAd)
+userRouter.route('/send-otp').post(sendOTP);//user registration to send otp
+userRouter.route('/verify-otp').post(verifyOTP);//to verify otp (body:phoneNumber &otp...phoneNumber should be stored in state and send into the backend);
+
 
 
 

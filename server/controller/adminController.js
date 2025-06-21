@@ -11,10 +11,15 @@ import AdminWallet from "../model/adminwalletModel.js";
 import Notification from "../model/notificationsModel.js";
 import { sendNotification } from "../utils/sendNotifications.js";
 import { UserWallet } from "../model/userWallet.js";
+import sgMail from "@sendgrid/mail";
+import crypto from "crypto";
+import redis from "../redisClient.js";
+import config from "../config.js";
 
 const USER_ROLE = process.env.USER_ROLE;
 const ADMIN_ROLE = process.env.ADMIN_ROLE;
 const SUPER_ADMIN_ROLE = process.env.SUPER_ADMIN_ROLE;
+sgMail.setApiKey(config.SEND_GRID_API_KEY);
 
 const registerAdmin = async (req, res) => {
   const { phoneNumber, password } = req.body;
@@ -124,6 +129,7 @@ const adminLogin = async (req, res) => {
     res.status(200).json({
       message: "Login successful",
       token,
+      role:admin.adminRole,
       adminId: admin._id,
       adminEmail: admin.adminEmail,
     });
@@ -169,79 +175,66 @@ const getSingleUser = async (req, res) => {
 };
 // to fetch users who have requested for Kyc verification
 const fetchKycUploadedUsers = async (req, res) => {
-  // const { io, connectedUsers } = req;
-
   try {
-    // 1. Find users who uploaded KYC
-    const fetchKycUsers = await User.find({
-      kycDetails: { $exists: true, $ne: null },
+    
+    const usersWithKyc = await User.find({
+      kycDetails: { $exists: true, $ne: null }
+    }).populate({
+      path: 'kycDetails',
+      match: { kycStatus: 'pending' } 
     });
 
-    if (!fetchKycUsers || fetchKycUsers.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "No pending verification requests" });
+    
+    const pendingUsers = usersWithKyc.filter(user => user.kycDetails);
+
+    if (pendingUsers.length === 0) {
+      return res.status(400).json({ message: "No pending KYC verification requests" });
     }
 
-    // 2. Get all admin users
-    // const adminUsers = await Admin.find({ adminRole: ADMIN_ROLE });
-
-    // // 3. Prepare notifications
-    // const message = `New KYC verification request(s) submitted.`;
-    // const adminNotifications = adminUsers.map((admin) => ({
-    //   receiverId: admin._id,
-    //   receiverRole: ADMIN_ROLE,
-    //   message,
-    // }));
-
-    // 4. Save notifications to DB
-    // await Notification.insertMany(adminNotifications);
-
-    // // 5. Send real-time notifications via socket.io
-    // const notifyAdmins = adminUsers.map((admin) =>
-    //   sendNotification(admin._id, ADMIN_ROLE, message, io, connectedUsers)
-    // );
-    // await Promise.all(notifyAdmins);
-
-    // 6. Respond
     return res.status(200).json({
-      message: "Admins notified of KYC requests",
-      totalPendingUsers: fetchKycUsers.length,
-      data: fetchKycUsers,
+      message: "Fetched users with pending KYC",
+      totalPendingUsers: pendingUsers.length,
+      data: pendingUsers,
     });
   } catch (error) {
     console.error("Error in fetchKycUploadedUsers:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 // to view each induvidual for kyc verification
 const fetchSingleKycUploadUser = async (req, res) => {
-  const { id } = req.body;
+  const { id } = req.query;
+
+  if (!id) {
+    return res.status(400).json({ message: "User ID is required" });
+  }
 
   try {
     const user = await User.findById(id);
     if (!user) {
-      return res
-        .status(400)
-        .json({ message: "No user found,Please check the Id" });
+      return res.status(404).json({ message: "User not found. Please check the ID." });
     }
+
     if (!user.kycDetails) {
-      return res
-        .status(400)
-        .json({ message: "User has not submitted KYC details." });
+      return res.status(400).json({ message: "User has not submitted KYC details." });
     }
+
     const kycDetails = await kyc.findById(user.kycDetails);
-    return res
-      .status(200)
-      .json({ message: "User fetched Succesfully", data: kycDetails });
+    if (!kycDetails) {
+      return res.status(404).json({ message: "KYC details not found." });
+    }
+
+    return res.status(200).json({ message: "User fetched successfully", data: kycDetails });
   } catch (error) {
-    console.error("Error fetching users:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error fetching user KYC details:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 // kyc verification
 const verifyKyc = async (req, res) => {
-  const { id } = req.body;
+  const { id ,adminId} = req.body;//this id is userId vishvannaa(id:userId)
   const { io, connectedUsers } = req;
 
   try {
@@ -272,6 +265,22 @@ const verifyKyc = async (req, res) => {
       { kycStatus: "approved" },
       { new: true }
     );
+     if (adminId) {
+     await Admin.findByIdAndUpdate(
+  adminId,
+  {
+    $push: {
+      kycsVerified: {
+        kycId: updatedKyc._id,
+        verifiedAt: new Date(),
+        userId:id,
+        status: "approved",
+      },
+    },
+  },
+  { new: true }
+);
+    }
 
     // ✅ Send DB + real-time notification
     const message = "Your KYC has been approved!";
@@ -288,7 +297,7 @@ const verifyKyc = async (req, res) => {
 };
 // kyc rejection
 const rejectKyc = async (req, res) => {
-  const { id, rejectionReason } = req.body;
+  const { id, rejectionReason,adminId } = req.body;
   const { io, connectedUsers } = req;
 
   if (!rejectionReason || rejectionReason.trim() === "") {
@@ -326,6 +335,23 @@ const rejectKyc = async (req, res) => {
       },
       { new: true }
     );
+    if (adminId) {
+      await Admin.findByIdAndUpdate(
+        adminId,
+        {
+          $push: {
+            kycsVerified: {
+              kycId: updatedKyc._id,
+              verifiedAt: new Date(),
+              userId: id,
+              status: "rejected",
+      
+            },
+          },
+        },
+        { new: true }
+      );
+    }
 
     const message = `Your KYC has been rejected. Reason: ${rejectionReason}`;
     await sendNotification(user._id, USER_ROLE, message, io, connectedUsers);
@@ -340,10 +366,37 @@ const rejectKyc = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+// to fetch users with kyc verified
+const kycVerifiedUsers = async (req, res) => {
+  try {
+    const fetchKycVerifiedUsers = await User.find({
+      kycDetails: { $exists: true, $ne: null },
+    }).populate("kycDetails");
+
+    const verifiedUsers = fetchKycVerifiedUsers.filter(
+      (user) => user.kycDetails?.kycStatus === "approved"
+    );
+
+    if (verifiedUsers.length === 0) {
+      return res.status(404).json({
+        message: "No users with verified KYC found.",
+        users: [],
+      });
+    }
+
+    return res.status(200).json({
+      message: "KYC verified users fetched successfully",
+      users: verifiedUsers,
+    });
+  } catch (error) {
+    console.error("Error fetching KYC verified users:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 // to verify ads
 const verifyAdById = async (req, res) => {
-  const { adId } = req.body;
+  const { adId,adminId} = req.body;
   const { io, connectedUsers } = req;
 
   if (!adId) {
@@ -437,7 +490,18 @@ const verifyAdById = async (req, res) => {
     } else {
       return res.status(200).json({ message: "Ad is already verified" });
     }
-
+if (adminId) {
+      await Admin.findByIdAndUpdate(adminId, {
+        $push: {
+          verifiedAds: {
+            adId: ad._id,
+            verifiedAt: verifiedTime,
+            userId: createdBy,
+            status: "verified",
+          },
+        },
+      });
+    }
     // 🔔 Send notification to creator
     if (createdBy) {
       const formattedTime = new Date(adPostedTime).toLocaleString("en-IN", {
@@ -510,7 +574,7 @@ const getSuperAdminWallet = async (req, res) => {
   }
 };
 const rejectAdById = async (req, res) => {
-  const { adId, reason } = req.body;
+  const { adId, reason,adminId } = req.body;
   const { io, connectedUsers } = req;
 
   if (!adId) {
@@ -646,8 +710,120 @@ const rejectAdById = async (req, res) => {
       refundedStars: totalStarsAllocated,
     });
   } catch (error) {
-    console.error("❌ Error rejecting ad:", error);
+    console.error("Error rejecting ad:", error);
     return res.status(500).json({ message: "Internal server error" });
+  }
+};
+// kyc user details
+const fetchUserKycStatus = async (req, res) => {
+  try {
+    const users = await User.find().populate("kycDetails");
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({ message: "No users found" });
+    }
+
+    const filteredUsers = users
+      .filter(user => user.kycDetails) // only include users with KYC
+      .map(user => ({
+         userId: user._id,
+        fullName: user.kycDetails.fullName || "N/A",
+        kycStatus: user.kycDetails.kycStatus || "not submitted",
+        requestedAt: user.kycDetails.createdAt || null
+      }));
+
+    return res.status(200).json({
+      message: "Filtered KYC user details fetched successfully",
+      users: filteredUsers,
+    });
+
+  } catch (error) {
+    console.error("Error fetching user KYC status:", error);
+    return res.status(500).json({ message: "Server error", error });
+  }
+};
+
+// to register admin using email otp(sendGrid &redis cloud)
+const sendOtpToAdmin = async (req, res) => {
+  const { adminEmail } = req.body;
+
+  if (!adminEmail) return res.status(400).json({ message: "Email is required" });
+
+  const existingAdmin = await Admin.findOne({ adminEmail });
+  if (existingAdmin) {
+    return res.status(409).json({ message: "Email already in use" });
+  }
+
+ 
+ const otp =
+  config.USE_OTP_TEST_MODE === true &&
+  adminEmail === config.OTP_TEST_EMAIL // <- Add this to config
+    ? config.OTP_TEST_VALUE
+    : crypto.randomInt(100000, 999999).toString();
+
+
+  try {
+    await redis.set(`admin_otp:${adminEmail}`, otp, "EX", 300);
+    console.log(`✅ OTP for ${adminEmail}: ${otp}`);
+  } catch (err) {
+    return res.status(500).json({ message: "Redis error", error: err.message });
+  }
+
+  if (!config.USE_OTP_TEST_MODE) {
+    try {
+      await sgMail.send({
+        to: adminEmail,
+        from: config.SENDGRID_SENDER_EMAIL,
+        subject: "Your Admin OTP Code",
+        text: `Your OTP is ${otp}`,
+        html: `<p>Your OTP is <strong>${otp}</strong>. It expires in 5 minutes.</p>`,
+      });
+    } catch (err) {
+      return res.status(500).json({ message: "SendGrid error", error: err.message });
+    }
+  }
+
+  return res.status(200).json({
+    message: "OTP sent to admin email",
+    ...(config.USE_OTP_TEST_MODE ? { otp } : {}),
+  });
+};
+// to verify otp and store the admin in db
+const verifyOtpAndRegisterAdmin = async (req, res) => {
+  const { adminEmail, otp } = req.body;
+
+  if (!adminEmail || !otp ) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  const storedOtp = await redis.get(`admin_otp:${adminEmail}`);
+  if (!storedOtp) return res.status(400).json({ message: "OTP expired or not found" });
+  if (storedOtp !== otp) return res.status(400).json({ message: "Invalid OTP" });
+
+  await redis.del(`admin_otp:${adminEmail}`);
+
+  if (!passwordValidator(password)) {
+    return res.status(400).json({
+      message:
+        "Password must be at least 8 characters, include uppercase, lowercase, number, and special character.",
+    });
+  }
+
+  const existingAdmin = await Admin.findOne({ adminEmail });
+  if (existingAdmin) return res.status(409).json({ message: "Email already in use" });
+
+  try {
+    const role = Number(ADMIN_ROLE) || 400;
+    const admin = await Admin.create({ adminEmail,  role });
+    // const createdAdmin = await Admin.findById(admin._id).select("-password");
+
+    return res.status(201).json({
+      message: "Admin registered successfully",
+      data: admin,
+    });
+  } catch (err) {
+    console.error("Admin Registration Error:", err);
+    return res.status(500).json({ message: `Internal server error: ${err.message}` });
   }
 };
 
@@ -665,4 +841,8 @@ export {
   getAdminWallet,
   getSuperAdminWallet,
   rejectAdById,
+  kycVerifiedUsers,
+  fetchUserKycStatus,
+  sendOtpToAdmin,
+  verifyOtpAndRegisterAdmin
 };

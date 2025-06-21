@@ -38,7 +38,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: hidden;position: relative;
 }
 .iconContainer img {
   height: 100%;
@@ -49,6 +49,45 @@
 
 .bottomNav {
   display: none;
+}
+.notificationDropdown {
+  position: absolute;
+  top: 70px;
+  right: 20px;
+  background: #fff;
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  width: 260px;
+  z-index: 1000;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.notificationItem {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+  color: #333;
+}
+
+.notificationItem:last-child {
+  border-bottom: none;
+}
+
+.noNotification {
+  font-size: 14px;
+  color: #999;
+  text-align: center;
+  padding: 10px;
+}
+.notificationDot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  height: 10px;
+  width: 10px;
+  background-color: red;
+  border-radius: 50%;
 }
 
 @media (max-width: 978px) {

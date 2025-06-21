@@ -14,6 +14,7 @@ import {
   patchSuperAdminWallet,
   deleteUser,
   blacklistUser,
+  getAllCoupons,
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
 import welcomeBonusUpload from "../multer/welBonusMulter.js";
@@ -33,6 +34,8 @@ superAdminRouter.route("/topup-company-stars").post(topUpCompanyRewardStars);
 superAdminRouter.route("/patch-wallet").patch(patchSuperAdminWallet);
 superAdminRouter.route("/delete-user").delete(deleteUser);
 superAdminRouter.route("/blacklist-user").patch(blacklistUser);
-superAdminRouter.route("/set-welcome-bonus").post(wrapMulter(welcomeBonusUpload),setWelcomeBonusAmount);
+superAdminRouter.route("/set-welcome-bonus").post(wrapMulter(welcomeBonusUpload),setWelcomeBonusAmount);superAdminRouter.route('/all-coupons').get(getAllCoupons)
+
+
 
 export default superAdminRouter;

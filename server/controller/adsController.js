@@ -75,7 +75,9 @@ const createImageAd = async (req, res) => {
     locations,
     states,
     districts,
+    clickUrl, 
   } = req.body;
+
   const { id } = req.params;
 
   if (!id) {
@@ -86,7 +88,7 @@ const createImageAd = async (req, res) => {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
-  // ✅ Extract files correctly
+
   const imageFile = req.files?.imageAd?.[0];
   const audioFile = req.files?.audioAd?.[0];
 
@@ -198,12 +200,13 @@ const createImageAd = async (req, res) => {
     const imageUrl = `/imgAdUploads/${imageFile.filename}`;
     const audioUrl = audioFile ? `/imgAdUploads/${audioFile.filename}` : null;
 
-    // Save image ad
+    // ✅ Save image ad with clickUrl
     const imageAd = await ImageAd.create({
       title,
       description,
       imageUrl,
       audioUrl,
+      clickUrl: clickUrl?.trim() || null, // Add to DB
       adPeriod: adRepetition ? parsedAdPeriod : 0,
       adRepetition,
       createdBy: user._id,

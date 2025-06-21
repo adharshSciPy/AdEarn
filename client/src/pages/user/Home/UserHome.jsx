@@ -1,12 +1,12 @@
 import { React, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import Sidebar from "../../../components/sidebar/Sidebar";
 import styles from "./userhome.module.css";
 import logo from "../../../assets/Logo.png";
 import Navbar from "../NavBar/Navbar";
 import axios from "axios";
 import baseUrl from "../../../baseurl";
 import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
+import socket from "../../../components/Socket/socket.js";
 
 function UserHome() {
   const navigate = useNavigate();
@@ -16,44 +16,42 @@ function UserHome() {
   const [showPopup, setShowPopup] = useState(false);
 
   const getImageAdData = async () => {
-  try {
-    let lat = null;
-    let lng = null;
-
-    // Try to get location if permitted
     try {
-      const getPosition = () =>
-        new Promise((resolve, reject) =>
-          navigator.geolocation.getCurrentPosition(resolve, reject)
-        );
-      const position = await getPosition();
-      lat = position.coords.latitude;
-      lng = position.coords.longitude;
-    } catch (locationError) {
-      console.log("Location access denied or failed:", locationError.message);
-      // Proceed without lat/lng
+      let lat = null;
+      let lng = null;
+
+      // Try to get location if permitted
+      try {
+        const getPosition = () =>
+          new Promise((resolve, reject) =>
+            navigator.geolocation.getCurrentPosition(resolve, reject)
+          );
+        const position = await getPosition();
+        lat = position.coords.latitude;
+        lng = position.coords.longitude;
+      } catch (locationError) {
+        console.log("Location access denied or failed:", locationError.message);
+        // Proceed without lat/lng
+      }
+
+      // Build URL conditionally
+      let url = `${baseUrl}/api/v1/ads/image-ads/${id}`;
+      if (lat && lng) {
+        url += `?lat=${lat}&lng=${lng}`;
+      }
+
+      const response = await axios.get(url);
+      console.log("url", url);
+
+      setImageAd(response.data.ads);
+    } catch (error) {
+      if (error.response) {
+        console.log("API error:", error.response.data.message);
+      } else {
+        console.log("Error fetching ad data:", error.message);
+      }
     }
-
-    // Build URL conditionally
-    let url = `${baseUrl}/api/v1/ads/image-ads/${id}`;
-    if (lat && lng) {
-      url += `?lat=${lat}&lng=${lng}`;
-    }
-
-    const response = await axios.get(url);
-    console.log("url",url);
-    
-    setImageAd(response.data.ads);
-  } catch (error) {
-    if (error.response) {
-      console.log("API error:", error.response.data.message);
-    } else {
-      console.log("Error fetching ad data:", error.message);
-    }
-  }
-};
-
-
+  };
 
   const getVideoAdData = async () => {
     try {
@@ -67,6 +65,19 @@ function UserHome() {
   useEffect(() => {
     getImageAdData();
     getVideoAdData();
+  }, []);
+  useEffect(() => {
+    if (!socket.connected) socket.connect();
+
+    socket.emit("register", id);
+
+    socket.on("notification", (data) => {
+      console.log("🔔 Notification received on frontend:", data);
+    });
+
+    return () => {
+      socket.off("notification");
+    };
   }, []);
 
   const viewAd = async (adId) => {
@@ -113,7 +124,7 @@ function UserHome() {
                 <h2>Image Ads</h2>
               </div>
               <div className={styles.adcontainerSub}>
-                {imageAdData.slice(0,4).map((item, index) => (
+                {imageAdData.slice(0, 4).map((item, index) => (
                   <div
                     className={styles.adCard}
                     key={index}
@@ -141,7 +152,9 @@ function UserHome() {
                   </div>
                 ))}
                 <div className={styles.seeAllContainer}>
-                  <button onClick={()=> navigate("/ads/image")}>See All</button>
+                  <button onClick={() => navigate("/ads/image")}>
+                    See All
+                  </button>
                 </div>
               </div>
             </div>
@@ -179,7 +192,9 @@ function UserHome() {
                   </div>
                 ))}
                 <div className={styles.seeAllContainer}>
-                  <button onClick={()=> navigate("/ads/video")}>See All</button>
+                  <button onClick={() => navigate("/ads/video")}>
+                    See All
+                  </button>
                 </div>
               </div>
             </div>
@@ -213,7 +228,9 @@ function UserHome() {
                   </div>
                 ))}
                 <div className={styles.seeAllContainer}>
-                  <button onClick={()=> navigate("/ads/survey")}>See All</button>
+                  <button onClick={() => navigate("/ads/survey")}>
+                    See All
+                  </button>
                 </div>
               </div>
             </div>
