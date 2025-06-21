@@ -528,8 +528,8 @@ const createSurveyAd = async (req, res) => {
   }
 
   try {
-  const user = await User.findById(id).populate("userWalletDetails");
-  // console.log("user",user)
+    const user = await User.findById(id).populate("userWalletDetails");
+  //   // console.log("user", user);
 
 if (!user) {
   return res.status(404).json({ message: "User not found" });
@@ -612,7 +612,6 @@ const userWallet = user.userWalletDetails;
     });
   }
 };
-
 // fetch single unVerifiedAds
 const fetchSingleUnverifiedAd = async (req, res) => {
   const { id } = req.params;

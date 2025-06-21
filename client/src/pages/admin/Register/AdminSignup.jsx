@@ -2,30 +2,47 @@ import { React, useState } from "react";
 import logo from "../../../assets/Logo.png";
 import styles from "./AdminSignup.module.css";
 import { Link } from "react-router-dom";
+import axios from "axios";
+import baseUrl from "../../../baseurl";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { setAdmin } from "../../../components/features/adminSlice";
 
 function AdminSignup() {
-  const [phone, setPhone] = useState("");
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
   const [error, setError] = useState("");
-
-  const validatePhone = (value) => {
-    const regex = /^\d{10}$/;
-    return regex.test(value);
-  };
-
-  const handleChange = (e) => {
-    setPhone(e.target.value);
-    if (error) setError(""); // clear error as user types
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!validatePhone(phone)) {
-      setError("Enter a valid phone number starting with +91 and 10 digits.");
-      return;
+  const [form, setForm] = useState(
+    {
+      adminEmail: ""
     }
-    setPhone("")
-    
+  )
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post(`${baseUrl}/api/v1/admin/send-otp`, form)
+      const adminres = form.adminEmail;
+      console.log("res", form.adminEmail)
+      dispatch(setAdmin(adminres));
+
+      setForm({
+        adminEmail: ""
+      });
+      navigate("/adminotp")
+    } catch (error) {
+      console.log(error)
+      setError("Something went wrong. Please try again.");
+    }
+
+  };
+
   return (
     <div>
       <div className={styles.containerOneUser}>
@@ -40,16 +57,13 @@ function AdminSignup() {
               <div className={styles.contentsContainerLeft}>
                 <div className={styles.contentsMainLeft}>
                   <div className={styles.headingMain}>
-                    <h2>Welcome Back</h2>
-                  </div>
-                  <div className={styles.paraContent}>
-                    <p>This is a demo content</p>
+                    <h2>Welcome Admin</h2>
                   </div>
                   <div className={styles.formContainer}>
                     <form className="form" onSubmit={handleSubmit}>
                       <div className={styles.formContents}>
                         <label htmlFor="phone" className={styles.label}>
-                          Phone Number
+                          Email
                         </label>
                         <div
                           style={{
@@ -58,28 +72,20 @@ function AdminSignup() {
                             gap: "4px",
                           }}
                         >
-                          <span
-                            style={{
-                              padding: "15px",
-                              background: "#eee",
-                              borderRadius: "4px 4px 4px 4px",
-                            }}
-                          >
-                            +91
-                          </span>
                           <input
                             id="phone"
-                            type="tel"
-                            value={phone}
+                            name="adminEmail"
+                            type="text"
+                            value={form.adminEmail}
                             onChange={handleChange}
                             required
                             className={styles.input}
-                            placeholder="10-digit number"
+                            placeholder="Enter your Email"
                             style={{ flex: 1 }}
                           />
                         </div>
                         {error && (
-                          <p style={{ color: "red", fontSize: "0.9rem",padding:"0.5rem" }}>
+                          <p style={{ color: "red", fontSize: "0.9rem", padding: "0.5rem" }}>
                             {error}
                           </p>
                         )}

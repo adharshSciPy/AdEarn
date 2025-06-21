@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const welcomeBonusSettingSchema = new mongoose.Schema(
   {
@@ -13,10 +13,13 @@ const welcomeBonusSettingSchema = new mongoose.Schema(
     },
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'SuperAdmin',
-    }
+      ref: "SuperAdmin",
+    },
+    companyImage: {
+      type: String, // Stores the image path
+    },
   },
   { timestamps: true }
 );
 
-export default mongoose.model('WelcomeBonusSetting', welcomeBonusSettingSchema);
+export default mongoose.model("WelcomeBonusSetting", welcomeBonusSettingSchema);

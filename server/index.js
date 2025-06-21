@@ -43,6 +43,8 @@ app.use("/userUploads", express.static(path.join(__dirname, "Uploads/userUploads
 app.use("/userKyc", express.static(path.join(__dirname, "Uploads/userKyc")));
 app.use("/imgAdUploads", express.static(path.join(__dirname, "Uploads/imageAdUploads")));
 app.use('/videoAdUploads', express.static(path.join(__dirname, 'Uploads/videoAdUploads')));
+app.use('/welcomeBonusUploads', express.static(path.join(__dirname, 'Uploads/welcomeBonusImages')));
+
 
 app.use('/api/v1/user', (req, res, next) => {
   req.io = io; req.connectedUsers = connectedUsers; next();

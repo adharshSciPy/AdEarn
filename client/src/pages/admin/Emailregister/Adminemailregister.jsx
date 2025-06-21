@@ -6,8 +6,10 @@ import axios from "axios";
 import baseUrl from "../../../baseurl";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import { setAdmin } from "../../../components/features/adminSlice";
 
 function Adminemailregister() {
+  const dispatch = useDispatch()
   const navigate = useNavigate()
   const [form, setForm] = useState(
     {
@@ -27,7 +29,10 @@ function Adminemailregister() {
     e.preventDefault();
     try {
       const response = await axios.post(`${baseUrl}/api/v1/admin/admin-login`, form)
-      console.log("res", response)
+      const adminres = response.data;
+      console.log("res", response.data)
+      dispatch(setAdmin(adminres));
+
       setForm({
         adminEmail: "",
         password: ""
