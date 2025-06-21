@@ -164,23 +164,42 @@ userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
-// generating token
-userSchema.methods.generateAcessToken = function () {
-  const payload = { id: this._id, email: this.email };
-  const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: "7d",
-  });
-  return accessToken;
+// Inside userSchema.methods
+
+// In your userSchema methods:
+userSchema.methods.generateAccessToken = function () {
+  const payload = {
+    id: this._id,
+    email: this.email,
+    role: this.role,
+    timestamp: Date.now() // Add timestamp for debugging
+  };
+
+  const token = jwt.sign(
+    payload,
+    process.env.ACCESS_TOKEN_SECRET,
+    { 
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "1d",
+      algorithm: "HS256" // Explicitly set algorithm
+    }
+  );
+
+  console.log("🧾 Generated Access Token:", token);
+  console.log("⏳ Access Token Expiry:", process.env.ACCESS_TOKEN_EXPIRY);
+  return token;
+};
+userSchema.methods.generateRefreshToken = function () {
+  const token = jwt.sign(
+    { id: this._id },
+    process.env.REFRESH_TOKEN_SECRET,
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRY || "7d" }
+  );
+
+  console.log("🧾 Generated Refresh Token:", token);
+  console.log("⏳ Refresh Token Expiry:", process.env.REFRESH_TOKEN_EXPIRY);
+  return token;
 };
 
-// refreshing token
-userSchema.methods.generateRefreshToken = function () {
-  const payload = { id: this._id };
-  const refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET, {
-    expiresIn: "7d",
-  }); 
-  return refreshToken;
-};
 
 // subscription checking
 userSchema.methods.hasActiveSubscription = function () {

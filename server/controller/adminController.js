@@ -802,12 +802,7 @@ const verifyOtpAndRegisterAdmin = async (req, res) => {
 
   await redis.del(`admin_otp:${adminEmail}`);
 
-  if (!passwordValidator(password)) {
-    return res.status(400).json({
-      message:
-        "Password must be at least 8 characters, include uppercase, lowercase, number, and special character.",
-    });
-  }
+
 
   const existingAdmin = await Admin.findOne({ adminEmail });
   if (existingAdmin) return res.status(409).json({ message: "Email already in use" });
