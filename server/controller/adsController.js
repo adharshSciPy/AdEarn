@@ -526,19 +526,15 @@ const createSurveyAd = async (req, res) => {
 
   try {
     const user = await User.findById(id).populate("userWalletDetails");
-    // console.log("user", user);
+  //   // console.log("user", user);
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+if (!user) {
+  return res.status(404).json({ message: "User not found" });
+}
 
-    const userWallet = user.userWalletDetails;
-    if (!userWallet) {
+const userWallet = user.userWalletDetails;
+    if (!userWallet)
       return res.status(400).json({ message: "User wallet not found" });
-    }
-    // if (!userWallet.userId) {
-    //   userWallet.userId = user._id; // Add the userId reference if missing
-    // }
 
     const viewsNeeded = parseInt(userViewsNeeded);
     if (isNaN(viewsNeeded) || viewsNeeded <= 0) {
@@ -579,7 +575,7 @@ const createSurveyAd = async (req, res) => {
     userWallet.totalStars -= starsToBeDeducted;
     await userWallet.save();
 
-    const now = new Date();
+    // const now = new Date();
     const surveyAd = await SurveyAd.create({
       title,
       questions,
@@ -589,15 +585,9 @@ const createSurveyAd = async (req, res) => {
       starPayoutPlan,
       adPeriod: adRepetition ? parsedAdPeriod : 0,
       adRepetition,
-      isAdVisible: true,
-      isViewsReached: false,
       targetRegions,
       targetStates,
       targetDistricts,
-      adVerifiedTime: now,
-      adExpirationTime: adRepetition
-        ? new Date(now.getTime() + parsedAdPeriod * 24 * 60 * 60 * 1000)
-        : null,
     });
 
     const ad = await Ad.create({ surveyAdRef: surveyAd._id });
