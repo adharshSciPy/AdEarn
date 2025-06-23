@@ -1,7 +1,9 @@
 import { Router } from "express";
-import { getNotifications } from "../controller/NotificationController.js";
+import { getNotifications, markNotificationsAsRead } from "../controller/NotificationController.js";
 import authMiddleware from "../auth/authMiddleware.js";
 const notificationRouter = Router();
-notificationRouter.route('/get-notifications').get(authMiddleware,getNotifications)
+notificationRouter.use(authMiddleware); //every route on this router is token authenticated
+notificationRouter.route('/get-notifications').get(getNotifications);
+notificationRouter.route('/read-notification').post(markNotificationsAsRead);
 
 export default notificationRouter

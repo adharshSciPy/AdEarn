@@ -121,7 +121,7 @@ function App() {
           <Route path='/form1' element={<Form1 />} />
           <Route path='/form2' element={<Form2 />} />
           <Route path='/userhome/:id' element={<UserHome />} />
-          <Route path='/adsmanageruser' element={<Adsmanager />} />
+          <Route path='/adsmanageruser/:id' element={<Adsmanager />} />
           <Route path='/adstemplate' element={<AdTemplateSelector />} />
           <Route path='/contextpage' element={<ContestPage />} />
           <Route path='/walletpage/:id' element={<WalletPage />} />
@@ -133,7 +133,7 @@ function App() {
           <Route path='/videoform/:id' element={<VideoAdForm />} />
 
           <Route path='/adreportuser' element={<UserReport />} />
-          <Route path='/surveyaduser' element={<SurveyAds />} />
+          <Route path='/surveyaduser/:id' element={<SurveyAds />} />
           <Route path='/adspreview/:id/:adId' element={<AdsPreview />} />
           <Route path='/ads/:type' element={<Adspage />} />
           <Route path='/adedit/:id' element={<AdEdit />} />
