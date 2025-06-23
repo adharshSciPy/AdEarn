@@ -8,7 +8,7 @@ import {registerUserToContest} from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
 
 const userRouter = Router()
-userRouter.route('/register').post(registerUser);
+userRouter.route('/register').post(registerUser);//not use this instead go down
 userRouter.route('/update/:id').patch(editUser);
 userRouter.route('/login').post(userLogin);
 userRouter.route('/logout/:id').post(userLogout);
@@ -22,8 +22,8 @@ userRouter.route('/user-wallet/:id').get(fetchUserWallet);
 userRouter.route('/contest/register').post(registerUserToContest);
 userRouter.route('/my-all-ads/:userId').get(fetchAllMyAds);
 userRouter.route('/my-single-ad/:userId/:adId').get(fetchMySingleAd)
-userRouter.route('/send-otp').post(sendOTP);
-userRouter.route('/verify-otp').post(verifyOTP);
+userRouter.route('/send-otp').post(sendOTP);//user registration to send otp
+userRouter.route('/verify-otp').post(verifyOTP);//to verify otp (body:phoneNumber &otp...phoneNumber should be stored in state and send into the backend);
 
 
 

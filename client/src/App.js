@@ -88,7 +88,7 @@ function App() {
         <Routes>
           {/* admin */}
 
-          <Route path='/adminphoneregister' element={<AdminSignup />} />
+          <Route path='/adminregister' element={<AdminSignup />} />
           <Route path='/adminotp' element={<AdminLogin />} />
           <Route path='/adminemail' element={<Adminemailregister />} />
 

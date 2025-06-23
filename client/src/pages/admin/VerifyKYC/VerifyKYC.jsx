@@ -43,6 +43,28 @@ function VerifyKYC() {
     console.log("kycData updated:", kycData);
   }, [kycData]);
 
+  const approveKyc = async () => {
+    try {
+      const approveres = await axios.post(`${baseUrl}/api/v1/admin/kyc-approval`, {
+        id: id,
+        // adminId: adminId
+      })
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const rejectKyc = async () => {
+    try {
+      const approveres = await axios.post(`${baseUrl}/api/v1/admin/kyc-rejection`, {
+        id: id,
+        // adminId: adminId
+      })
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   return (
     <div className={styles.KYCDetails}>
       <div className={styles.KYCdetailsmain}>
@@ -93,8 +115,8 @@ function VerifyKYC() {
             </div>
 
             <div className={styles.buttons}>
-              <Button style={{ backgroundColor: "#693bb8", color: "white" }}>Reject</Button>
-              <Button>Approve</Button>
+              <Button style={{ backgroundColor: "#693bb8", color: "white" }} onClick={() => rejectKyc()}>Reject</Button>
+              <Button onClick={() => approveKyc()}>Approve</Button>
             </div>
           </div>
         </div>

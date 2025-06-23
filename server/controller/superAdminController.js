@@ -14,6 +14,7 @@ import { passwordValidator } from "../utils/passwordValidator.js";
 import { sendNotification } from "../utils/sendNotifications.js";
 
 import mongoose from "mongoose";
+const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
 // to generate coupons randomly and store
@@ -190,6 +191,7 @@ const getSuperAdminWallet = async (req, res) => {
   }
 };
 
+
 const setWelcomeBonusAmount = async (req, res) => {
   const { amount, isEnabled } = req.body;
 
@@ -198,19 +200,23 @@ const setWelcomeBonusAmount = async (req, res) => {
   }
 
   try {
-    let setting = await WelcomeBonusSet;
-    ting.findOne();
+    let setting = await WelcomeBonusSetting.findOne();
 
     if (!setting) {
       setting = new WelcomeBonusSetting({
         perUserBonus: amount,
         isEnabled: isEnabled !== undefined ? isEnabled : true,
         updatedBy: req.superAdminId || null,
+        companyImage: req.file ? `/Uploads/welcomeBonusImages/${req.file.filename}` : null,
       });
     } else {
       setting.perUserBonus = amount;
       if (isEnabled !== undefined) setting.isEnabled = isEnabled;
       setting.updatedBy = req.superAdminId || null;
+
+      if (req.file) {
+        setting.companyImage = `/Uploads/welcomeBonusImages/${req.file.filename}`;
+      }
     }
 
     await setting.save();
@@ -220,11 +226,10 @@ const setWelcomeBonusAmount = async (req, res) => {
       setting,
     });
   } catch (err) {
-    return res
-      .status(500)
-      .json({ message: "Server error", error: err.message });
+    return res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
 const distributeWelcomeBonus = async (newUserId) => {
   try {
     const setting = await WelcomeBonusSetting.findOne();
@@ -616,10 +621,10 @@ const patchSuperAdminWallet = async (req, res) => {
 };
 
 const registerUserToContest = async (req, res) => {
-  const { userId, contestNumber, starsUsed } = req.body;
+  const { userId, contestNumber } = req.body;
 
   try {
-    if (!userId || !contestNumber || !starsUsed) {
+    if (!userId || !contestNumber) {
       return res.status(400).json({ message: "Missing fields" });
     }
 
@@ -631,10 +636,16 @@ const registerUserToContest = async (req, res) => {
       return res.status(404).json({ message: "Contest not found" });
     }
 
-    // Already registered?
+    const starsUsed = contest.entryStars;
+
+    // Check if user already registered
     const existingEntry = await SuperAdminWallet.findOne({
-      "contestEntryWallet.collectedFromUsers.userId": userId,
-      "contestEntryWallet.collectedFromUsers.contestId": contest._id,
+      "contestEntryWallet.collectedFromUsers": {
+        $elemMatch: {
+          userId: new ObjectId(userId),
+          contestId: contest._id,
+        },
+      },
     });
 
     if (existingEntry) {
@@ -643,7 +654,7 @@ const registerUserToContest = async (req, res) => {
         .json({ message: "User already registered for this contest" });
     }
 
-    // Contest expired or full
+    // Check if contest expired or full
     if (contest.status === "Ended" || now > contest.endDate) {
       contest.status = "Ended";
       await contest.save();
@@ -659,11 +670,13 @@ const registerUserToContest = async (req, res) => {
       return res.status(400).json({ message: "Contest is full" });
     }
 
-    // Fetch UserWallet directly
-    const userWallet = await UserWallet.findOne({ userId });
-    if (!userWallet) {
-      return res.status(404).json({ message: "User wallet not found" });
+    // Get user and wallet (populate wallet reference)
+    const user = await User.findById(userId).populate("userWalletDetails");
+    if (!user || !user.userWalletDetails) {
+      return res.status(404).json({ message: "User or user wallet not found" });
     }
+
+    const userWallet = user.userWalletDetails;
 
     if (
       typeof userWallet.totalStars !== "number" ||
@@ -706,13 +719,14 @@ const registerUserToContest = async (req, res) => {
     }
 
     adminWallet.contestEntryWallet.collectedFromUsers.push({
-      userId,
+      userId: new ObjectId(userId),
       starsUsed,
       contestId: contest._id,
     });
 
     adminWallet.contestEntryWallet.totalReceived += starsUsed;
     adminWallet.contestEntryWallet.totalEntries += 1;
+    adminWallet.totalStars += starsUsed;
 
     await adminWallet.save();
 

@@ -17,6 +17,8 @@ import { Ad } from "./model/AdsModel.js";
 import { ImageAd } from "./model/imageadModel.js";
 import { VideoAd } from "./model/videoadModel.js";
 import { SurveyAd } from "./model/surveyadModel.js";
+import notificationRouter from "./routes/notificationRoute.js";
+import authMiddleware from "./auth/authMiddleware.js";
 
 
 dotenv.config();
@@ -41,6 +43,8 @@ app.use("/userUploads", express.static(path.join(__dirname, "Uploads/userUploads
 app.use("/userKyc", express.static(path.join(__dirname, "Uploads/userKyc")));
 app.use("/imgAdUploads", express.static(path.join(__dirname, "Uploads/imageAdUploads")));
 app.use('/videoAdUploads', express.static(path.join(__dirname, 'Uploads/videoAdUploads')));
+app.use('/welcomeBonusUploads', express.static(path.join(__dirname, 'Uploads/welcomeBonusImages')));
+
 
 app.use('/api/v1/user', (req, res, next) => {
   req.io = io; req.connectedUsers = connectedUsers; next();
@@ -54,6 +58,18 @@ app.use('/api/v1/ads', adsRouter);
 app.use('/api/v1/super-admin', (req, res, next) => {
   req.io = io; req.connectedUsers = connectedUsers; next();
 }, superAdminRouter);
+app.use('/api/v1/notifications', 
+  (req, res, next) => {
+    req.io = io; 
+    req.connectedUsers = connectedUsers; 
+    next();
+  },
+  authMiddleware, // Explicitly add auth middleware here
+  notificationRouter
+);
+// app.get("/api/test-protected", authMiddleware, (req, res) => {
+//   res.json({ message: "You are authenticated", user: req.user });
+// });
 
 // Socket.IO Connection
 io.on("connection", (socket) => {

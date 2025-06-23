@@ -427,7 +427,7 @@ const userLogin = async (req, res) => {
         .status(400)
         .json({ message: "User login has been blocked by Admin" });
     }
-    const accessToken = user.generateAcessToken();
+   const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
     const userObj = user.toObject();
     delete userObj.password;
