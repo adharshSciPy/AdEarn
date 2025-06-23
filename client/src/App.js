@@ -130,7 +130,7 @@ function App() {
           <Route path='/videoform/:id' element={<VideoAdForm />} />
 
           <Route path='/adreportuser' element={<UserReport />} />
-          <Route path='/surveyaduser' element={<SurveyAds />} />
+          <Route path='/surveyaduser/:id' element={<SurveyAds />} />
           <Route path='/adspreview/:id/:adId' element={<AdsPreview />} />
           <Route path='/ads/:type' element={<Adspage />} />
           <Route path='/adedit/:id' element={<AdEdit />} />

@@ -536,7 +536,7 @@ function VideoAdForm() {
 
   // Validate form before submit
   const validateForm = () => {
-    if (!form.adName.trim()) {
+    if (!form.adName || !form.adName.trim()) {
       setSubmitError("Please enter the Ad Name");
       return false;
     }
