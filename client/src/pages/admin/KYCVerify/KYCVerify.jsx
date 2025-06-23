@@ -12,14 +12,19 @@ function KYCVerify() {
   const [kycRequested, setKycRequested] = useState([])
   const [verifyKYC, setVerifyKYC] = useState([])
 
-  const adsData = Array.from({ length: 30 }, (_, i) => ({
-    id: i + 1,
-    title: `User Name ${i + 1}`,
-    status: i % 3 === 0 ? 'Not Applied' : 'Applied',
-    kycstatus: i % 3 === 0 ? 'Not Completed' : 'Completed',
-    approved: true,
-    startDate: "02/06/2025",
-  }));
+  useEffect(() => {
+    const verifyKYC = async () => {
+      try {
+        const kycVerified = await axios.get(`${baseUrl}/api/v1/admin/kyc-verified-users`);
+        setVerifyKYC(kycVerified.data.users)
+        console.log("verfied kyc vano", kycVerified)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    verifyKYC()
+  }, [])
 
   const verifyKyc = async (id) => {
     try {
@@ -47,7 +52,7 @@ function KYCVerify() {
 
   const handlenavigate = (id) => {
     console.log("id vannu", id)
-    navigate(`/VerifyKYC/${id}`)
+    navigate(`/ViewKYC/${id}`)
   }
 
   const [activeTab, setActiveTab] = useState("KYC");
@@ -66,15 +71,17 @@ function KYCVerify() {
     setCurrentPage(page);
   };
 
-  const filteredAds = adsData.filter(ad => {
-    if (!ad.startDate || !ad.startDate.includes('/')) return false;
+  const filteredVerifiedUsers = verifyKYC.filter(user => {
+    const date = new Date(user.updatedAt || user.createdAt);
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear().toString();
 
-    const [day, month, year] = ad.startDate.split('/');
     return (
       (!selectedMonth || month === selectedMonth) &&
       (!selectedYear || year === selectedYear)
     );
   });
+
 
 
 
@@ -93,7 +100,7 @@ function KYCVerify() {
 
 
 
-  const paginatedAds = filteredAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const paginatedVerifiedUsers = filteredVerifiedUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const paginatedVerifyAds = filteredVerifyAds.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
@@ -194,27 +201,19 @@ function KYCVerify() {
                 <table className={styles.payoutTable}>
                   <thead>
                     <tr>
-                      <th>Ads</th>
-                      <th>Date</th>
-                      <th>Payout Status</th>
+                      <th>User Name</th>
+                      <th>Referral Code</th>
                       <th>KYC Status</th>
+                      <th>View</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedAds.map((ad) => (
-                      <tr key={ad.id}>
-                        <td>{ad.title}<br />User Id</td>
-                        <td>{ad.startDate}</td>
-                        <td>
-                          <span className={ad.status === "Applied" ? styles.statusOngoing : styles.statusStopped}>
-                            {ad.status}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={ad.kycstatus === "Completed" ? styles.statusOngoing : styles.statusStopped}>
-                            {ad.kycstatus}
-                          </span>
-                        </td>
+                    {paginatedVerifiedUsers.map((user) => (
+                      <tr key={user._id}>
+                        <td>{user.firstName} {user.lastName}<br />{user.uniqueUserId}</td>
+                        <td>{user.myReferalCode}</td>
+                        <td><span className={styles.statusOngoing}>Completed</span></td>
+                        <td><Button onClick={() => handlenavigate(user._id)}>View</Button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -223,7 +222,7 @@ function KYCVerify() {
                   <Pagination
                     current={currentPage}
                     pageSize={pageSize}
-                    total={filteredAds.length}
+                    total={paginatedVerifiedUsers.length}
                     onChange={handlePageChange}
                   />
                 </div>
@@ -279,7 +278,7 @@ function KYCVerify() {
 
 
       </div>
-    </div>
+    </div >
   )
 }
 
