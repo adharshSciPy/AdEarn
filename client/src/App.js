@@ -118,7 +118,7 @@ function App() {
           <Route path='/form1' element={<Form1 />} />
           <Route path='/form2' element={<Form2 />} />
           <Route path='/userhome/:id' element={<UserHome />} />
-          <Route path='/adsmanageruser' element={<Adsmanager />} />
+          <Route path='/adsmanageruser/:id' element={<Adsmanager />} />
           <Route path='/adstemplate' element={<AdTemplateSelector />} />
           <Route path='/contextpage' element={<ContestPage />} />
           <Route path='/walletpage/:id' element={<WalletPage />} />

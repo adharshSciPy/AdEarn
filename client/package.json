@@ -16,6 +16,7 @@
     "axios": "^1.9.0",
     "chart.js": "^4.4.9",
     "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
     "leaflet": "^1.9.4",
     "lottie-react": "^2.4.1",
     "next-scratchcard": "^0.0.4",

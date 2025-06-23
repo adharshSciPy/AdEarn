@@ -24,7 +24,7 @@ const dropdownRef = useRef(null);
   const navItems = [
     { icon: home, label: `/userhome/${userId}` },
     { icon: wallet, label: `/walletpage/${userId}` },
-    { icon: market, label: "market1" },
+    { icon: market, label: `/adsmanageruser/${userId}` },
     { icon: market, label: "market2" },
     { icon: notificationIcon, label: "notification" },
     { icon: profile, label: "/userprofile" },
