@@ -4,13 +4,14 @@ import styles from "./Adminotp.module.css";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import baseUrl from "../../../baseurl";
-import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setAdmin } from "../../../components/features/adminSlice";
 
 function PhoneOtp() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
-  const adminEmail = useSelector((state) => state.admin.email)
+  const dispatch = useDispatch()
   const navigate = useNavigate()
 
 
@@ -43,7 +44,15 @@ function PhoneOtp() {
         otp: enteredOtp
       })
       setOtp(["", "", "", "", "", ""]);
+      dispatch(setAdmin({
+        adminEmail: response.data.data.adminEmail,
+        adminId: response.data.data._id
+      }))
+      const adminId = response.data.data._id
+      const adminmail = response.data.data.adminEmail
+      navigate(`/adminupdate/${adminId}`)
       console.log(response)
+      console.log("otp response", adminId, adminmail)
     } catch (error) {
       console.log(error)
     }

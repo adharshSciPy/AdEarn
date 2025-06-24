@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 import AdminLogin from './pages/admin/Login/AdminOTP'
 import AdminSignup from './pages/admin/Register/AdminSignup'
+import AdminUpdate from './pages/admin/Register/AdminUpdate';
 import AdminHome from './pages/admin/Home/AdminHome';
 import AdminAds from './pages/admin/Ads/AdminAds';
 import AdminCoupon from './pages/admin/Coupons/AdminCoupon'
@@ -91,6 +92,7 @@ function App() {
 
           <Route path='/adminregister' element={<AdminSignup />} />
           <Route path='/adminotp' element={<AdminLogin />} />
+          <Route path='/adminupdate/:id' element={<AdminUpdate />} />
           <Route path='/adminemail' element={<Adminemailregister />} />
 
           <Route path='/Admindashboard' element={<AdminHome />} />
