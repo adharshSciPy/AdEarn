@@ -414,12 +414,12 @@ const createVideoAd = async (req, res) => {
 const createSurveyAd = async (req, res) => {
   const {
     title,
-    questions,
     userViewsNeeded,
     adPeriod,
-    locations,
+    questions,
     states,
     districts,
+    locations,
   } = req.body;
   const { id } = req.params;
 
@@ -427,125 +427,111 @@ const createSurveyAd = async (req, res) => {
   if (!title || !questions || !userViewsNeeded)
     return res.status(400).json({ message: "Missing required fields" });
 
-  // Validate questions
-  if (!Array.isArray(questions) || questions.length === 0) {
-    return res.status(400).json({ message: "At least one question is required" });
-  }
+  // Parse JSON fields sent as strings
+  let parsedQuestions, parsedStates, parsedDistricts, parsedLocations;
 
-  for (const [index, q] of questions.entries()) {
-    const { questionText, questionType, options } = q;
-
-    if (!questionText || !questionType || !options) {
-      return res.status(400).json({
-        message: `Missing fields in question ${index + 1}`,
-      });
+  try {
+    parsedQuestions = typeof questions === "string" ? JSON.parse(questions) : questions;
+    if (!Array.isArray(parsedQuestions) || parsedQuestions.length === 0) {
+      return res.status(400).json({ message: "At least one question is required" });
     }
 
-    if (!["yesno", "multiple"].includes(questionType)) {
-      return res.status(400).json({
-        message: `Invalid questionType in question ${index + 1}`,
-      });
-    }
+    parsedStates = typeof states === "string" ? JSON.parse(states) : states || [];
+    parsedDistricts = typeof districts === "string" ? JSON.parse(districts) : districts || [];
+    parsedLocations = typeof locations === "string" ? JSON.parse(locations) : locations || [];
 
-    if (questionType === "yesno") {
-      if (
-        !Array.isArray(options) ||
-        options.length !== 2 ||
-        !options.includes("Yes") ||
-        !options.includes("No")
-      ) {
-        return res.status(400).json({
-          message: `Yes/No question ${index + 1} must have exactly ['Yes', 'No'] as options`,
-        });
+    // Validate each question
+    for (const [index, q] of parsedQuestions.entries()) {
+      const { questionText, questionType, options } = q;
+
+      if (!questionText || !questionType || !options) {
+        return res.status(400).json({ message: `Missing fields in question ${index + 1}` });
       }
-    }
 
-    if (questionType === "multiple") {
-      if (!Array.isArray(options) || options.length < 2) {
+      if (!["yesno", "multiple"].includes(questionType)) {
+        return res.status(400).json({ message: `Invalid questionType in question ${index + 1}` });
+      }
+
+      if (questionType === "yesno") {
+        if (!Array.isArray(options) || options.length !== 2 || !options.includes("Yes") || !options.includes("No")) {
+          return res.status(400).json({
+            message: `Yes/No question ${index + 1} must have exactly ['Yes', 'No'] as options`,
+          });
+        }
+      }
+
+      if (questionType === "multiple" && (!Array.isArray(options) || options.length < 2)) {
         return res.status(400).json({
           message: `Multiple choice question ${index + 1} must have at least 2 options`,
         });
       }
     }
+  } catch (err) {
+    return res.status(400).json({ message: "Invalid JSON format", error: err.message });
   }
 
-  const parsedAdPeriod = parseFloat(adPeriod);
-  const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
-
+  // Validate at least one target location
   let targetRegions = [];
-  let targetStates = [];
-  let targetDistricts = [];
-
   try {
-    const parsedLocations =
-      typeof locations === "string" ? JSON.parse(locations) : locations;
+    for (const loc of parsedLocations) {
+      if (!loc.coords || !loc.radius) continue;
 
-    if (Array.isArray(parsedLocations)) {
-      for (const loc of parsedLocations) {
-        if (!loc.coords || !loc.radius) continue;
+      const [latStr, lngStr] = loc.coords.split(",");
+      const latitude = parseFloat(latStr);
+      const longitude = parseFloat(lngStr);
+      const radius = parseFloat(loc.radius);
 
-        const [latStr, lngStr] = loc.coords.split(",");
-        const latitude = parseFloat(latStr);
-        const longitude = parseFloat(lngStr);
-        const radius = parseFloat(loc.radius);
-
-        if (isNaN(latitude) || isNaN(longitude) || isNaN(radius)) {
-          return res.status(400).json({ message: "Invalid location format" });
-        }
-
-        targetRegions.push({
-          location: {
-            type: "Point",
-            coordinates: [latitude, longitude],
-          },
-          radius,
-        });
+      if (isNaN(latitude) || isNaN(longitude) || isNaN(radius)) {
+        return res.status(400).json({ message: "Invalid location format" });
       }
-    }
 
-    targetStates = typeof states === "string" ? JSON.parse(states) : states;
-    if (!Array.isArray(targetStates)) targetStates = [];
-
-    targetDistricts =
-      typeof districts === "string" ? JSON.parse(districts) : districts;
-    if (!Array.isArray(targetDistricts)) targetDistricts = [];
-
-    if (
-      targetRegions.length === 0 &&
-      targetStates.length === 0 &&
-      targetDistricts.length === 0
-    ) {
-      return res.status(400).json({
-        message:
-          "At least one target location (geo, state, or district) is required",
+      targetRegions.push({
+        location: {
+          type: "Point",
+          coordinates: [latitude, longitude],
+        },
+        radius,
       });
     }
   } catch (err) {
+    return res.status(400).json({ message: "Error parsing locations", error: err.message });
+  }
+
+  if (
+    targetRegions.length === 0 &&
+    (!parsedStates || parsedStates.length === 0) &&
+    (!parsedDistricts || parsedDistricts.length === 0)
+  ) {
     return res.status(400).json({
-      message: "Invalid location format",
-      error: err.message,
+      message: "At least one target location (geo, state, or district) is required",
     });
   }
 
   try {
     const user = await User.findById(id).populate("userWalletDetails");
-  //   // console.log("user", user);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-if (!user) {
-  return res.status(404).json({ message: "User not found" });
-}
-
-const userWallet = user.userWalletDetails;
-    if (!userWallet)
-      return res.status(400).json({ message: "User wallet not found" });
+    const userWallet = user.userWalletDetails;
+    if (!userWallet) return res.status(400).json({ message: "User wallet not found" });
 
     const viewsNeeded = parseInt(userViewsNeeded);
     if (isNaN(viewsNeeded) || viewsNeeded <= 0) {
       return res.status(400).json({ message: "Invalid userViewsNeeded value" });
     }
 
-    const starsDeductionRate = 0.6;
-    const starsToBeDeducted = viewsNeeded * starsDeductionRate;
+    // Star payout plan: 60% 2-star, 40% 3-star
+    const percent2Star = 0.6;
+    const percent3Star = 0.4;
+
+    const total2Stars = Math.floor(viewsNeeded * percent2Star);
+    const total3Stars = viewsNeeded - total2Stars;
+
+    const starPayoutPlan = [
+      ...Array(total2Stars).fill(2),
+      ...Array(total3Stars).fill(3),
+    ];
+
+    const starsToBeDeducted = (total2Stars * 2) + (total3Stars * 3);
 
     if (userWallet.totalStars < starsToBeDeducted) {
       const starsShort = starsToBeDeducted - userWallet.totalStars;
@@ -554,34 +540,18 @@ const userWallet = user.userWalletDetails;
       });
     }
 
-    // Star split logic: 40% 3-star, 60% 2-star
-    const total3Stars = Math.floor((starsToBeDeducted * 0.4) / 3);
-    const total2Stars = Math.floor((starsToBeDeducted * 0.6) / 2);
-    const usedStars = total3Stars * 3 + total2Stars * 2;
-    let remainingStars = Math.floor(starsToBeDeducted - usedStars);
-    if (remainingStars < 0) remainingStars = 0;
-
-    const highValueStars = [
-      ...Array(total3Stars).fill(3),
-      ...Array(total2Stars).fill(2),
-      ...Array(remainingStars).fill(1),
-    ];
-
-    const totalGiven = highValueStars.length;
-    let nullStarsCount = viewsNeeded - totalGiven;
-    if (nullStarsCount < 0) nullStarsCount = 0;
-
-    const nullStars = Array(nullStarsCount).fill(0);
-    const starPayoutPlan = [...highValueStars, ...nullStars];
-
     // Deduct stars
     userWallet.totalStars -= starsToBeDeducted;
     await userWallet.save();
 
-    // const now = new Date();
+    const imageUrl = req.file ? `/surveyAdUploads/${req.file.filename}` : "";
+
+    const parsedAdPeriod = parseFloat(adPeriod);
+    const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
+
     const surveyAd = await SurveyAd.create({
       title,
-      questions,
+      questions: parsedQuestions,
       createdBy: user._id,
       userViewsNeeded: viewsNeeded,
       totalStarsAllocated: starsToBeDeducted,
@@ -589,8 +559,9 @@ const userWallet = user.userWalletDetails;
       adPeriod: adRepetition ? parsedAdPeriod : 0,
       adRepetition,
       targetRegions,
-      targetStates,
-      targetDistricts,
+      targetStates: parsedStates,
+      targetDistricts: parsedDistricts,
+      imageUrl: imageUrl,
     });
 
     const ad = await Ad.create({ surveyAdRef: surveyAd._id });

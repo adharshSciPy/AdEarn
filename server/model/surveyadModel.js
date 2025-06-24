@@ -6,6 +6,9 @@ const surveyAdSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    imageUrl: {
+      type: String,
+    },
     questions: [
       {
         questionText: {
@@ -23,7 +26,9 @@ const surveyAdSchema = new mongoose.Schema(
           validate: {
             validator: function (val) {
               if (this.questionType === "yesno") {
-                return val.length === 2 && val.includes("Yes") && val.includes("No");
+                return (
+                  val.length === 2 && val.includes("Yes") && val.includes("No")
+                );
               }
               if (this.questionType === "multiple") {
                 return val.length >= 2;
