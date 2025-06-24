@@ -9,7 +9,7 @@ const adminRole = process.env.ADMIN_ROLE;
 
 const adminSchema = new Schema(
   {
-    firstName: {
+    username: {
       type: String,
     },
     address: {
