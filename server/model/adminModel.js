@@ -51,6 +51,13 @@ kycsVerified: [
 
   }
 ],
+assignedCouponBatches: [
+  {
+    batchId: { type: Schema.Types.ObjectId, ref: "CouponBatch" },
+    assignedAt: { type: Date, default: Date.now }
+  }
+]
+
   },
   { timestamps: true }
 );
