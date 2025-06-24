@@ -12,8 +12,10 @@ import { UserWallet } from "../model/userWallet.js";
 import kyc from "../model/kycModel.js";
 import { passwordValidator } from "../utils/passwordValidator.js";
 import { sendNotification } from "../utils/sendNotifications.js";
+import CouponBatch from "../model/couponBatchModel.js";
 
 import mongoose from "mongoose";
+import couponBatchModel from "../model/couponBatchModel.js";
 const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
@@ -191,7 +193,6 @@ const getSuperAdminWallet = async (req, res) => {
   }
 };
 
-
 const setWelcomeBonusAmount = async (req, res) => {
   const { amount, isEnabled } = req.body;
 
@@ -207,7 +208,9 @@ const setWelcomeBonusAmount = async (req, res) => {
         perUserBonus: amount,
         isEnabled: isEnabled !== undefined ? isEnabled : true,
         updatedBy: req.superAdminId || null,
-        companyImage: req.file ? `/Uploads/welcomeBonusImages/${req.file.filename}` : null,
+        companyImage: req.file
+          ? `/Uploads/welcomeBonusImages/${req.file.filename}`
+          : null,
       });
     } else {
       setting.perUserBonus = amount;
@@ -226,7 +229,9 @@ const setWelcomeBonusAmount = async (req, res) => {
       setting,
     });
   } catch (err) {
-    return res.status(500).json({ message: "Server error", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err.message });
   }
 };
 
@@ -373,25 +378,43 @@ const createContest = async (req, res) => {
 };
 
 const generateCoupons = async (req, res) => {
-  const { couponCount, perStarCount, generationDate, expiryDate } = req.body;
+  const { couponCount, perStarCount, generationDate, expiryDate, requestNote } =
+    req.body;
 
   try {
     const totalStarsNeeded = couponCount * perStarCount;
 
-  
+    // Find Super Admin Wallet
     const superAdminWallet = await SuperAdminWallet.findOne();
-
     if (!superAdminWallet) {
       return res.status(404).json({ message: "Super admin wallet not found" });
     }
 
+    // Check for enough stars
     if (superAdminWallet.totalStars < totalStarsNeeded) {
       return res.status(400).json({
         message: "Insufficient stars in Super Admin Wallet to generate coupons",
       });
     }
 
-    
+    // Create empty batch first
+    const generationDateObj = new Date(generationDate);
+    const expiryDateObj = expiryDate ? new Date(expiryDate) : null;
+
+    const newBatch = new CouponBatch({
+      coupons: [], // will be filled later
+      couponCount,
+      totalStarsSpent: totalStarsNeeded,
+      generationDate: generationDateObj,
+      expiryDate: expiryDateObj,
+      generatedBy: null, // optional, if you track superadmin ID
+      createdByRole: "admin",
+      requestNote: requestNote || "",
+    });
+
+    await newBatch.save();
+
+    // Create each coupon individually
     const couponsToCreate = [];
     const couponCodes = [];
 
@@ -401,32 +424,37 @@ const generateCoupons = async (req, res) => {
       couponsToCreate.push({
         code,
         perStarCount,
-        generationDate: new Date(generationDate),
-        expiryDate: expiryDate ? new Date(expiryDate) : undefined,
+        generationDate: generationDateObj,
+        expiryDate: expiryDateObj,
+        createdByRole: "admin",
+        batchId: newBatch._id,
       });
     }
 
-    
     const createdCoupons = await Coupon.insertMany(couponsToCreate);
 
-    
+    // Update the batch with coupon IDs
+    newBatch.coupons = createdCoupons.map((c) => c._id);
+    await newBatch.save();
+
+    // Deduct stars from SuperAdmin Wallet
     superAdminWallet.totalStars -= totalStarsNeeded;
-
-
     superAdminWallet.transactions.push({
-      starsReceived: -totalStarsNeeded, 
+      starsReceived: -totalStarsNeeded,
       reason: `Coupon Generation of ${couponCount} coupons`,
-      addedBy: null, // can be filled if superAdmin `_id` is tracked in session
+      addedBy: null, // If you track which admin added, fill it here
     });
 
     await superAdminWallet.save();
 
-    return res.status(201).json({
+    // Send success response
+    return res.status(200).json({
       message: "Coupons generated and wallet updated successfully",
       count: createdCoupons.length,
-      coupons: createdCoupons.map((c) => c.code),
+      couponCodes,
       starsDeducted: totalStarsNeeded,
-      totalStars:superAdminWallet.totalStars
+      totalStars: superAdminWallet.totalStars,
+      batchId: newBatch._id,
     });
   } catch (error) {
     console.error("Error generating coupons:", error);
@@ -437,9 +465,11 @@ const getAllCoupons = async (req, res) => {
   try {
     const now = new Date();
 
-    // Fetch coupons and project only necessary fields
-    const coupons = await Coupon.find({}, "code perStarCount expiryDate isClaimed generationDate")
-      .sort({ generationDate: -1 });
+    // Fetch all coupons with required fields + batchId
+    const coupons = await Coupon.find(
+      {},
+      "code perStarCount expiryDate isClaimed generationDate batchId"
+    ).sort({ generationDate: -1 });
 
     if (!coupons.length) {
       return res.status(200).json({
@@ -448,7 +478,7 @@ const getAllCoupons = async (req, res) => {
       });
     }
 
-    // Add isExpired field
+    // Add `isExpired` field
     const enrichedCoupons = coupons.map((coupon) => {
       const isExpired = coupon.expiryDate ? coupon.expiryDate < now : false;
 
@@ -460,6 +490,7 @@ const getAllCoupons = async (req, res) => {
         isClaimed: coupon.isClaimed,
         generationDate: coupon.generationDate,
         isExpired,
+        batchId: coupon.batchId,
       };
     });
 
@@ -473,6 +504,7 @@ const getAllCoupons = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 const topUpWelcomeBonusStars = async (req, res) => {
   const { stars, source } = req.body;
 
@@ -882,6 +914,118 @@ const blacklistUser = async (req, res) => {
   }
 };
 
+const getAllCouponBatches = async (req, res) => {
+  try {
+    const now = new Date();
+
+    // Fetch all coupon batches and populate the coupons array
+    const batches = await CouponBatch.find({})
+      .sort({ generationDate: -1 }) // recent first
+      .populate("coupons");
+
+    if (!batches.length) {
+      return res.status(200).json({
+        message: "No coupon batches found",
+        batches: [],
+      });
+    }
+
+    // Enrich each coupon with isExpired
+    const enrichedBatches = batches.map((batch) => {
+      const enrichedCoupons = batch.coupons.map((coupon) => {
+        const isExpired = coupon.expiryDate ? coupon.expiryDate < now : false;
+
+        return {
+          _id: coupon._id,
+          code: coupon.code,
+          perStarCount: coupon.perStarCount,
+          expiryDate: coupon.expiryDate,
+          isClaimed: coupon.isClaimed,
+          generationDate: coupon.generationDate,
+          isExpired,
+          batchId: coupon.batchId,
+        };
+      });
+
+      return {
+        _id: batch._id,
+        couponCount: batch.couponCount,
+        totalStarsSpent: batch.totalStarsSpent,
+        generationDate: batch.generationDate,
+        expiryDate: batch.expiryDate,
+        requestNote: batch.requestNote,
+        createdByRole: batch.createdByRole,
+        generatedBy: batch.generatedBy,
+        assignedTo: batch.assignedTo,
+        assignedAt: batch.assignedAt,
+        coupons: enrichedCoupons,
+      };
+    });
+
+    return res.status(200).json({
+      message: "All coupon batches fetched successfully",
+      count: enrichedBatches.length,
+      batches: enrichedBatches,
+    });
+  } catch (error) {
+    console.error("Error fetching coupon batches:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+const couponDistribution = async (req, res) => {
+  // const { adminId } = req.params;
+  const { batchId,adminId} = req.body;
+  try {
+    const admin = await Admin.findById(adminId);
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+    const couponBatch = await couponBatchModel.findById(batchId);
+    if (!couponBatch) {
+      return res.status(404).json({ message: "Coupons not found" });
+    }
+    couponBatch.assignedTo = admin._id;
+    couponBatch.assignedAt = new Date();
+    await couponBatch.save();
+
+    admin.assignedCouponBatches.push({
+    batchId: couponBatch._id,
+    assignedAt: new Date(),
+    });
+    await admin.save();
+
+     res.status(200).json({
+      success: true,
+      message: "Coupon batch assigned successfully",
+      data: {
+        adminId: admin._id,
+        batchId: couponBatch._id
+      }
+    });
+  } catch (error) {
+     console.error("Error assigning coupon batch:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+const couponFetchById=async(req,res)=>{
+  const{batchId}=req.body;
+  try {
+    const coupons=await couponBatchModel.findById(batchId).populate("Coupon");
+    if(!coupons){
+      return res.status(404).json({message:"Coupons not found"})
+    }
+    return res.status(200).json({
+      message:"Coupons fetched succesfully",
+      data:coupons
+    })
+
+  } catch (error) {
+      console.error("Error fetching coupon batch:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
 export {
   registerSuperAdmin,
   superAdminLogin,
@@ -899,5 +1043,8 @@ export {
   registerUserToContest,
   deleteUser,
   blacklistUser,
-  getAllCoupons
+  getAllCoupons,
+  getAllCouponBatches,
+  couponDistribution,
+  couponFetchById
 };

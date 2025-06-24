@@ -54,6 +54,13 @@ const adminSchema = new Schema(
         status: { type: String },
       },
     ],
+assignedCouponBatches: [
+  {
+    batchId: { type: Schema.Types.ObjectId, ref: "CouponBatch" },
+    assignedAt: { type: Date, default: Date.now }
+  }
+]
+
   },
   { timestamps: true }
 );

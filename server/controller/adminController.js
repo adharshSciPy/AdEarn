@@ -794,6 +794,7 @@ const sendOtpToAdmin = async (req, res) => {
 
   return res.status(200).json({
     message: "OTP sent to admin email",
+    adminEmail,
     ...(config.USE_OTP_TEST_MODE ? { otp } : {}),
   });
 };
@@ -830,7 +831,7 @@ const verifyOtpAndRegisterAdmin = async (req, res) => {
     return res.status(500).json({ message: `Internal server error: ${err.message}` });
   }
 };
-
+// const getAssignedCoupon
 export {
   registerAdmin,
   updateAdmin,
