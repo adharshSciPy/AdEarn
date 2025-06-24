@@ -32,10 +32,17 @@ function AdminUpdate() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post(`${baseUrl}/api/v1/admin/admin-edit/${adminId}`, form)
-            const adminres = form.adminEmail;
-            console.log("mail form adminemail", adminres)
-           
+            console.log("admin Vaid", adminId)
+            const response = await axios.patch(`${baseUrl}/api/v1/admin/admin-edit/${adminId}`, form)
+            console.log("res from adm update", response)
+            setForm({
+                adminEmail: "",
+                password: "",
+                username: "",
+                address: ""
+            })
+            navigate("/Admindashboard")
+
         } catch (error) {
             console.log(error)
             setError("Something went wrong. Please try again.");
