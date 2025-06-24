@@ -5,11 +5,14 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import baseUrl from "../../../baseurl";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 function PhoneOtp() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
-  const adminEmail = useSelector((state) => state.admin.adminEmail)
+  const adminEmail = useSelector((state) => state.admin.email)
+  const navigate = useNavigate()
+
 
   const handleChange = (e, index) => {
     const { value } = e.target;
@@ -39,9 +42,8 @@ function PhoneOtp() {
         adminEmail: adminEmail,
         otp: enteredOtp
       })
-      console.log("res", response)
-      console.log("otp", otp)
-      console.log("adminemail", adminEmail)
+      setOtp(["", "", "", "", "", ""]);
+      console.log(response)
     } catch (error) {
       console.log(error)
     }

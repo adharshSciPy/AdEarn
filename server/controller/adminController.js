@@ -65,7 +65,7 @@ const registerAdmin = async (req, res) => {
 };
 const updateAdmin = async (req, res) => {
   const { id } = req.params;
-  const { adminEmail, password } = req.body;
+  const { adminEmail, password, username, address } = req.body;
 
   try {
     const admin = await Admin.findById(id);
@@ -73,9 +73,17 @@ const updateAdmin = async (req, res) => {
       return res.status(404).json({ message: "Admin not found" });
     }
 
-    // Update email if provided
+    // Update fields if provided
     if (adminEmail) {
       admin.adminEmail = adminEmail;
+    }
+
+    if (username) {
+      admin.username = username;
+    }
+
+    if (address) {
+      admin.address = address;
     }
 
     if (password) {
@@ -85,6 +93,7 @@ const updateAdmin = async (req, res) => {
             "Password must be at least 8 characters long, contain one uppercase, one lowercase, one number, and one special character.",
         });
       }
+      admin.password = password;
     }
 
     await admin.save();

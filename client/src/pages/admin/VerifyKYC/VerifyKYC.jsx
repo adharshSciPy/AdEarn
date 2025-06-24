@@ -4,16 +4,52 @@ import Header from '../../../components/Header/Header'
 import Sidebar from '../../../components/sidebar/Sidebar'
 import UserImage from "../../../assets/cardBack.jpg"
 import Idproof from "../../../assets/cardbackground.jpg"
-import { Button } from 'antd'
 import baseUrl from '../../../baseurl'
 import axios from 'axios'
 import { useParams } from 'react-router-dom'
+import { useSelector } from 'react-redux'
+import { Button, Modal } from 'antd';
+import { Input } from 'antd';
+import { useNavigate } from 'react-router-dom'
+const { TextArea } = Input;
 
 
 function VerifyKYC() {
 
+  const navigate = useNavigate()
   const { id } = useParams()
   const [kycData, setKycData] = useState({})
+  const adminId = useSelector((state) => state.admin.id)
+
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+  const handleOk = async () => {
+    if (!rejectionReason.trim()) {
+      return Modal.warning({
+        title: "Missing Reason",
+        content: "Please enter a rejection reason before submitting.",
+      });
+    }
+
+    try {
+      const id = kycData.userId
+      await rejectKyc(id, rejectionReason);
+      console.log("userId", id)
+      console.log("reason", rejectionReason)
+      setIsModalOpen(false);
+      setRejectionReason("");
+    } catch (error) {
+      console.error("Rejection failed:", error);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+  };
+
 
   function formatDate(isoString) {
     const date = new Date(isoString);
@@ -26,7 +62,7 @@ function VerifyKYC() {
   useEffect(() => {
     const verifyKyc = async () => {
       try {
-        console.log("idid", id)
+        console.log("admin id", adminId)
         const response = await axios.get(`${baseUrl}/api/v1/admin/kyc-requested-single-user`, { params: { id } })
         console.log("response", response.data.data)
         setKycData(response.data.data)
@@ -45,21 +81,27 @@ function VerifyKYC() {
 
   const approveKyc = async () => {
     try {
+      console.log("userid", id)
       const approveres = await axios.post(`${baseUrl}/api/v1/admin/kyc-approval`, {
         id: id,
-        // adminId: adminId
+        adminId: adminId
       })
+      navigate("/AdminKYC")
+      console.log("approveres", approveres)
     } catch (error) {
       console.log(error)
     }
   }
 
-  const rejectKyc = async () => {
+  const rejectKyc = async (userId) => {
     try {
-      const approveres = await axios.post(`${baseUrl}/api/v1/admin/kyc-rejection`, {
-        id: id,
-        // adminId: adminId
+      const rejectres = await axios.post(`${baseUrl}/api/v1/admin/kyc-rejection`, {
+        id: userId,
+        adminId: adminId,
+        rejectionReason: rejectionReason,
       })
+      navigate("/AdminKYC")
+      console.log("reject res", rejectres)
     } catch (error) {
       console.log(error)
     }
@@ -115,9 +157,25 @@ function VerifyKYC() {
             </div>
 
             <div className={styles.buttons}>
-              <Button style={{ backgroundColor: "#693bb8", color: "white" }} onClick={() => rejectKyc()}>Reject</Button>
+              <Button style={{ backgroundColor: "#693bb8", color: "white" }} onClick={() => {
+                showModal();
+
+              }}>Reject</Button>
               <Button onClick={() => approveKyc()}>Approve</Button>
             </div>
+            <Modal
+              title="Rejection Modal"
+              closable={{ 'aria-label': 'Custom Close Button' }}
+              open={isModalOpen}
+              onOk={handleOk}
+              onCancel={handleCancel}
+            >
+              <TextArea rows={4}
+                placeholder="Reject Message"
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+              />
+            </Modal>
           </div>
         </div>
       </div>
