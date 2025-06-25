@@ -831,6 +831,86 @@ const verifyOtpAndRegisterAdmin = async (req, res) => {
     return res.status(500).json({ message: `Internal server error: ${err.message}` });
   }
 };
+
+
+// pasword reset apis
+const sendAdminForgotPasswordOtp = async (req, res) => {
+  const { adminEmail } = req.body;
+
+  if (!adminEmail) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+
+  try {
+   
+ await redis.set(`forgot_otp:${adminEmail.toLowerCase()}`, otp, 'EX', 300);// expires in 5 min
+    console.log(`✅ OTP for ${adminEmail}: ${otp}`);
+
+    
+    const msg = {
+      to: adminEmail,
+      from: config.SENDGRID_SENDER_EMAIL,
+      subject: 'Your Admin OTP Code',
+      text: `Your OTP is: ${otp}`,
+      html: `<strong>Your OTP is: ${otp}</strong>`,
+    };
+
+    await sgMail.send(msg);
+
+    return res.status(200).json({ message: "OTP sent successfully" });
+  } catch (error) {
+    console.error("Send OTP Error:", error);
+    return res.status(500).json({ message: "Failed to send OTP" });
+  }
+};
+const verifyAdminForgotPasswordOtp = async (req, res) => {
+  const { adminEmail, otp } = req.body;
+
+  if (!adminEmail || !otp) {
+    return res.status(400).json({ message: "Email and OTP are required" });
+  }
+  const emailKey = adminEmail.toLowerCase();
+ const storedOtp = await redis.get(`forgot_otp:${emailKey}`);
+if (!storedOtp || storedOtp !== otp) {
+  return res.status(400).json({ message: "Invalid or expired OTP" });
+}
+await redis.del(`forgot_otp:${emailKey}`);
+await redis.set(`reset_session:${emailKey}`, true, "EX", 600); // valid for 10 minutes
+
+  return res.status(200).json({ message: "OTP verified. You may now reset your password." });
+};
+const resetAdminPassword = async (req, res) => {
+  const { adminEmail, newPassword } = req.body;
+
+  if (!adminEmail || !newPassword) {
+    return res.status(400).json({ message: "Email and new password are required" });
+  }
+
+  const emailKey = adminEmail.toLowerCase();
+const sessionValid = await redis.get(`reset_session:${emailKey}`);
+if (!sessionValid) {
+  return res.status(403).json({ message: "Session expired or OTP not verified" });
+}
+
+
+  try {
+    const admin = await Admin.findOne({ adminEmail });
+    if (!admin) return res.status(404).json({ message: "Admin not found" });
+
+    admin.password = newPassword; // hashed via pre-save
+    await admin.save();
+    await redis.del(`reset_session:${adminEmail}`);
+
+    return res.status(200).json({ message: "Password reset successfully" });
+  } catch (err) {
+    console.error("Password Reset Error:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 // const getAssignedCoupon
 export {
   registerAdmin,
@@ -849,5 +929,8 @@ export {
   kycVerifiedUsers,
   fetchUserKycStatus,
   sendOtpToAdmin,
-  verifyOtpAndRegisterAdmin
+  verifyOtpAndRegisterAdmin,
+  sendAdminForgotPasswordOtp,
+  verifyAdminForgotPasswordOtp,
+  resetAdminPassword
 };
