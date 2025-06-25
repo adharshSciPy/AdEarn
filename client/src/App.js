@@ -22,7 +22,6 @@ import ViewKYC from './pages/admin/VerifyKYC/ViewKYC';
 import LoginUser from './pages/user/Login/LoginUser';
 import PhoneLogin from './pages/user/signUp/PhoneLogin';
 import PhoneOtp from "./pages/user/signUp/PhoneOtp"
-import UserSignUp from './pages/user/signUp/UserSignUp';
 import EmailRegistration from './pages/user/signUp/EmailReg'
 import ReferalCode from './pages/user/signUp/ReferalCode';
 import Form1 from './pages/user/signUp/Form1';
@@ -115,13 +114,12 @@ function App() {
 
           {/* user */}
           <Route path='/' element={<LoginUser />} />
-          <Route path='/usersignup' element={<UserSignUp />} />
           <Route path='/phonesignup' element={<PhoneLogin />} />
           <Route path='/phoneotp' element={<PhoneOtp />} />
           <Route path='/emailRegistration' element={<EmailRegistration />} />
           <Route path='/referalPage' element={<ReferalCode />} />
-          <Route path='/form1' element={<Form1 />} />
-          <Route path='/form2' element={<Form2 />} />
+          <Route path='/form1/:id' element={<Form1 />} />
+          <Route path='/form2/:id' element={<Form2 />} />
           <Route path='/userhome/:id' element={<UserHome />} />
           <Route path='/adsmanageruser/:id' element={<Adsmanager />} />
           <Route path='/adstemplate' element={<AdTemplateSelector />} />

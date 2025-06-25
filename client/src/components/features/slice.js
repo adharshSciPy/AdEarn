@@ -3,6 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
     id: null,
     email: null,
+    phone: null,
     token: null,
     role: null
 }
@@ -15,6 +16,7 @@ const userSlice = createSlice({
             console.log("from redux", action.payload);
             state.id = action.payload.id;
             state.email = action.payload.email;
+            state.phone = action.payload.phone;
             state.token = action.payload.token;
             state.role = action.payload.role;
 
@@ -22,6 +24,7 @@ const userSlice = createSlice({
         clearUser(state) {
             state.id = null;
             state.email = null;
+            state.phone = null;
             state.token = null;
             state.role = null;
         }
