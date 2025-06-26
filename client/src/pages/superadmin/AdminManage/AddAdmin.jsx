@@ -1,27 +1,27 @@
-import React,{useState} from "react";
+import React, { useState } from "react";
 import styles from "./AddAdmin.module.css"
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
 
 
 function AddAdmin() {
-     const [formData, setFormData] = useState({
-        couponNumber: "",
-        couponCount: "",
-        starCount: "",
-        date: "",
-        expiryDate: "",
-      });
-    
-      const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-      };
-    
-      const handleSubmit = (e) => {
-        e.preventDefault();
-        console.log("Form Submitted:", formData);
-        // You can call your API here
-      };
+  const [formData, setFormData] = useState({
+    username: "",
+    address: "",
+    phoneNumber: "",
+    password: "",
+    email: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Form Submitted:", formData);
+    // You can call your API here
+  };
   return (
     <div className={styles.UserAccount}>
       <SuperSidebar />
@@ -34,29 +34,48 @@ function AddAdmin() {
             <label>Admin Name</label>
             <input
               type="text"
-              name="adminname"
-              value={formData.adname}
+              name="username"
+              value={formData.username}
               onChange={handleChange}
-              placeholder="Admin Name"
+              placeholder="Name"
             />
 
-            <label>Admin Username</label>
+            <label>Address</label>
             <input
               type="text"
-              name="adminusername"
-              value={formData.adminusername}
+              name="address"
+              value={formData.address}
               onChange={handleChange}
-              placeholder="Enter Admin Username"
+              placeholder="Address"
             />
 
-            <label>Admin Password</label>
+            <label>Email</label>
             <input
               type="text"
-              name="adminpassword"
-              value={formData.starCount}
+              name="email"
+              value={formData.email}
               onChange={handleChange}
-              placeholder="Enter Admin Password"
-            />  
+              placeholder="Email"
+            />
+
+            <label>Phone Number</label>
+            <input
+              type="text"
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              placeholder="Phone Number"
+            />
+
+            <label>Password</label>
+            <input
+              type="text"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Password"
+            />
+
             <div className={styles.buttons}>
               <button type="button" className={styles.cancel}>
                 Cancel
