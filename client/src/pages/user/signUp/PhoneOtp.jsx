@@ -2,9 +2,21 @@ import { React, useState } from "react";
 import logo from "../../../assets/Logo.png";
 import styles from "./phoneotp.module.css";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import baseUrl from "../../../baseurl";
+import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+import { setUser } from "../../../components/features/slice";
+
+
 
 function PhoneOtp() {
-  const [otp, setOtp] = useState(["", "", "", ""]);
+  const navigate = useNavigate();
+  const dispatch = useDispatch()
+  const phone = useSelector((state) => state.user.phone);
+  const id = useSelector((state) => state.user.id);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
 
   const handleChange = (e, index) => {
@@ -17,21 +29,33 @@ function PhoneOtp() {
     setOtp(newOtp);
     setError("");
 
-    if (value && index < 3) {
+    if (value && index < 5) {
       const nextInput = document.getElementById(`otp-${index + 1}`);
       if (nextInput) nextInput.focus();
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const enteredOtp = otp.join("");
-    if (enteredOtp.length !== 4) {
-      setError("Please enter a 4-digit OTP.");
-      return;
+    try {
+      const enteredOtp = otp.join("");
+      if (enteredOtp.length !== 6) {
+        setError("Please enter a 6-digit OTP.");
+        return;
+      }
+      const response = await axios.post(`${baseUrl}/api/v1/user/verify-otp`,
+        {
+          phoneNumber: phone,
+          otp: enteredOtp
+        }
+      )
+      console.log(response)
+      const id = response.data.user.id
+      dispatch(setUser({ id: id }))
+      navigate(`/form1/${id}`)
+    } catch (error) {
+      console.log(error)
     }
-
-    console.log("Submitted OTP:", enteredOtp);
   };
 
   return (
@@ -74,7 +98,7 @@ function PhoneOtp() {
                       </div>
                     </form>
                   </div>
-                  
+
                 </div>
               </div>
             </div>

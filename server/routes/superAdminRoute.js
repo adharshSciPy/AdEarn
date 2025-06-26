@@ -15,6 +15,11 @@ import {
   deleteUser,
   blacklistUser,
   getAllCoupons,
+  couponDistribution,
+  getAllCouponBatches,
+  sendSuperAdminForgotPasswordOtp,
+  verifySuperAdminForgotPasswordOtp,
+  resetSuperAdminPassword,
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
 import welcomeBonusUpload from "../multer/welBonusMulter.js";
@@ -34,7 +39,14 @@ superAdminRouter.route("/topup-company-stars").post(topUpCompanyRewardStars);
 superAdminRouter.route("/patch-wallet").patch(patchSuperAdminWallet);
 superAdminRouter.route("/delete-user").delete(deleteUser);
 superAdminRouter.route("/blacklist-user").patch(blacklistUser);
-superAdminRouter.route("/set-welcome-bonus").post(wrapMulter(welcomeBonusUpload),setWelcomeBonusAmount);superAdminRouter.route('/all-coupons').get(getAllCoupons)
+superAdminRouter.route("/set-welcome-bonus").post(wrapMulter(welcomeBonusUpload),setWelcomeBonusAmount);
+superAdminRouter.route('/all-coupons').get(getAllCoupons)
+superAdminRouter.route('/distribute-coupon').post(couponDistribution)
+superAdminRouter.route('/all-coupon-batch').get(getAllCouponBatches)
+superAdminRouter.route('/forgot-password/send-otp').post(sendSuperAdminForgotPasswordOtp);
+superAdminRouter.route('/forgot-password/verify-otp').post(verifySuperAdminForgotPasswordOtp);
+superAdminRouter.route('/forgot-password/reset-password').post(resetSuperAdminPassword);
+
 
 
 

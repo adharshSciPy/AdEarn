@@ -9,6 +9,12 @@ const adminRole = process.env.ADMIN_ROLE;
 
 const adminSchema = new Schema(
   {
+    username: {
+      type: String,
+    },
+    address: {
+      type: String,
+    },
     phoneNumber: {
       type: Number,
     },
@@ -33,24 +39,28 @@ const adminSchema = new Schema(
       type: Date,
     },
     verifiedAds: [
+      {
+        adId: { type: Schema.Types.ObjectId, ref: "Ad" },
+        verifiedAt: { type: Date, default: Date.now },
+        userId: { type: Schema.Types.ObjectId, ref: "User" },
+        status: { type: String },
+      },
+    ],
+    kycsVerified: [
+      {
+        kycId: { type: Schema.Types.ObjectId, ref: "kyc" },
+        verifiedAt: { type: Date, default: Date.now },
+        userId: { type: Schema.Types.ObjectId, ref: "User" },
+        status: { type: String },
+      },
+    ],
+assignedCouponBatches: [
   {
-    adId: { type: Schema.Types.ObjectId, ref: "Ad" },
-    verifiedAt: { type: Date, default: Date.now },
-    userId:{type:Schema.Types.ObjectId,ref:"User"},
-    status:{type:String}
+    batchId: { type: Schema.Types.ObjectId, ref: "CouponBatch" },
+    assignedAt: { type: Date, default: Date.now }
   }
-],
-kycsVerified: [
-  { 
-    kycId: { type: Schema.Types.ObjectId, ref: "kyc" },
-    verifiedAt: { type: Date, default: Date.now },
-    userId:{type:Schema.Types.ObjectId,ref:"User"},
-    status:{type:String}
+]
 
-
-
-  }
-],
   },
   { timestamps: true }
 );

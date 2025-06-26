@@ -4,12 +4,18 @@ import styles from "./Adminotp.module.css";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import baseUrl from "../../../baseurl";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setAdmin } from "../../../components/features/adminSlice";
 import { useSelector } from "react-redux";
 
 function PhoneOtp() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
-  const adminEmail = useSelector((state) => state.admin.adminEmail)
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const email = useSelector((state) => state.admin.email)
+
 
   const handleChange = (e, index) => {
     const { value } = e.target;
@@ -36,12 +42,20 @@ function PhoneOtp() {
         return;
       }
       const response = await axios.post(`${baseUrl}/api/v1/admin/verify-otp`, {
-        adminEmail: adminEmail,
+        adminEmail: email,
         otp: enteredOtp
       })
-      console.log("res", response)
-      console.log("otp", otp)
-      console.log("adminemail", adminEmail)
+      setOtp(["", "", "", "", "", ""]);
+      const adminId = response.data.data._id
+      const adminmail = response.data.data.adminEmail
+      dispatch(setAdmin({
+        adminEmail: adminmail,
+        adminId: adminId
+      }))
+
+      navigate(`/adminupdate/${adminId}`)
+      console.log(response)
+      console.log("otp response", adminId, adminmail)
     } catch (error) {
       console.log(error)
     }

@@ -1,10 +1,15 @@
 import { React, useState } from "react";
 import logo from "../../../assets/Logo.png";
 import styles from "./form2.module.css";
-import axios from 'axios'
 import baseUrl from "../../../baseurl";
+import axios from "axios"
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 function Form2() {
+  const navigate = useNavigate();
+  const id = useSelector((state) => state.user.id)
+
   const [form, setForm] = useState({
     fieldOfIntrest: "",
     subcategory: "",
@@ -144,13 +149,13 @@ function Form2() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const userId = '683edc32b29c143dd749401d'
     try {
-      const response = await axios.patch(`${baseUrl}/api/v1/user/update/${userId}`, form)
+      const response = await axios.patch(`${baseUrl}/api/v1/user/update/${id}`, form)
       if (response.status === 200) {
         console.log("Submitted Successfully")
         console.log("form 2", response)
       }
+      navigate("/")
     } catch (error) {
       console.log(error)
     }

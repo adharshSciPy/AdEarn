@@ -1,5 +1,5 @@
 import { Router } from "express";
-import{ registerAdmin,updateAdmin,adminLogin, getAllUsers, fetchKycUploadedUsers, fetchSingleKycUploadUser, getSingleUser, verifyKyc, rejectKyc, verifyAdById, getAdminWallet,rejectAdById, kycVerifiedUsers, fetchUserKycStatus, sendOtpToAdmin, verifyOtpAndRegisterAdmin} from "../controller/adminController.js";
+import{ registerAdmin,updateAdmin,adminLogin, getAllUsers, fetchKycUploadedUsers, fetchSingleKycUploadUser, getSingleUser, verifyKyc, rejectKyc, verifyAdById, getAdminWallet,rejectAdById, kycVerifiedUsers, fetchUserKycStatus, sendOtpToAdmin, verifyOtpAndRegisterAdmin, sendAdminForgotPasswordOtp, resetAdminPassword, verifyAdminForgotPasswordOtp} from "../controller/adminController.js";
 const adminRouter = Router()
 
 adminRouter.route('/admin-register').post(registerAdmin)
@@ -18,6 +18,13 @@ adminRouter.route('/admin-wallet').get(getAdminWallet)
 adminRouter.route('/reject-ad').post(rejectAdById)
 adminRouter.route('/send-otp').post(sendOtpToAdmin)
 adminRouter.route('/verify-otp').post(verifyOtpAndRegisterAdmin)
+adminRouter.route('/forgot-password/send-otp').post(sendAdminForgotPasswordOtp);
+adminRouter.route('/forgot-password/verify-otp').post(verifyAdminForgotPasswordOtp);
+adminRouter.route('/forgot-password/reset-password').post(resetAdminPassword);
+
+
+
+
 
 
 
