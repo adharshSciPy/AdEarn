@@ -1,5 +1,5 @@
 import  Router  from "express";
-import { addKyc, editUser, fetchAllMyAds, fetchMySingleAd, fetchUserWallet, getUserByUniqueId, getViewedAds, redeemCoupon, registerUser, sendOTP, starBuy, uploadProfilePicture, userLogin, userLogout, verifyOTP, } from "../controller/userController.js";
+import { addKyc, editUser, fetchAllMyAds, fetchMySingleAd, fetchUserWallet, getUserByUniqueId, getViewedAds, redeemCoupon, registerUser, resetPassword, sendOTP, sendPasswordResetOTP, starBuy, uploadProfilePicture, userLogin, userLogout, verifyOTP, verifyPasswordResetOTP, } from "../controller/userController.js";
 import uploadUserImg from "../multer/userImgMulter.js";
 import userKyc from "../multer/kycVerificationMulter.js";
 import authMiddleware from "../auth/authMiddleware.js";
@@ -24,7 +24,9 @@ userRouter.route('/my-all-ads/:userId').get(fetchAllMyAds);
 userRouter.route('/my-single-ad/:userId/:adId').get(fetchMySingleAd)
 userRouter.route('/send-otp').post(sendOTP);//user registration to send otp
 userRouter.route('/verify-otp').post(verifyOTP);//to verify otp (body:phoneNumber &otp...phoneNumber should be stored in state and send into the backend);
-
+userRouter.route('/forgot-password/send-otp').post(sendPasswordResetOTP);
+userRouter.route('/forgot-password/verify-otp').post(verifyPasswordResetOTP);
+userRouter.route('/forgot-password/reset-password').post(resetPassword);
 
 
 

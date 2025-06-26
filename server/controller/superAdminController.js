@@ -16,11 +16,15 @@ import CouponBatch from "../model/couponBatchModel.js";
 
 import mongoose from "mongoose";
 import couponBatchModel from "../model/couponBatchModel.js";
+import sgMail from "@sendgrid/mail";
+import crypto from "crypto";
+import redis from "../redisClient.js";
+import config from "../config.js";
 const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
+sgMail.setApiKey(config.SEND_GRID_API_KEY);
 // to generate coupons randomly and store
-
 function generateRandomCode(length) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let result = "";
@@ -1025,6 +1029,73 @@ const couponFetchById=async(req,res)=>{
     return res.status(500).json({ message: "Internal Server Error" });
   }
 }
+// password reset for superAdmin
+const sendSuperAdminForgotPasswordOtp=async(req,res)=>{
+const{email}=req.body;
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+   const otp = Math.floor(100000 + Math.random() * 900000).toString();
+   try {
+    await redis.set(`forgot_otp:${email.toLowerCase()}`,otp,'EX',300)
+    console.log(`Otp for ${email}:${otp}`);
+    const msg={
+      to:email,
+      from:config.SENDGRID_SENDER_EMAIL,
+      subject:'Your SuperAdmin OTP Code',
+      text:`Your OTP is: ${otp}`,
+      html:`<strong>Your OTP is: ${otp}</strong>`
+    };
+    await sgMail.send(msg);
+     return res.status(200).json({ message: "OTP sent successfully" });
+   } catch (error) {
+    console.error("Send OTP Error:", error);
+    return res.status(500).json({ message: "Failed to send OTP" });
+   }
+}
+const verifySuperAdminForgotPasswordOtp=async(req,res)=>{
+  const{email,otp}=req.body;
+   if (!email || !otp) {
+    return res.status(400).json({ message: "Email and OTP are required" });
+  }
+    const emailKey = email.toLowerCase();
+ const storedOtp = await redis.get(`forgot_otp:${emailKey}`);
+if (!storedOtp || storedOtp !== otp) {
+  return res.status(400).json({ message: "Invalid or expired OTP" });
+}
+await redis.del(`forgot_otp:${emailKey}`);
+await redis.set(`reset_session:${emailKey}`, true, "EX", 600); // valid for 10 minutes
+
+  return res.status(200).json({ message: "OTP verified. You may now reset your password." });
+
+}
+const resetSuperAdminPassword=async(req,res)=>{
+  const{email,newPassword}=req.body;
+  if (!email || !newPassword) {
+      return res.status(400).json({ message: "Email and new password are required" });
+    }
+  
+    const emailKey = email.toLowerCase();
+  const sessionValid = await redis.get(`reset_session:${emailKey}`);
+  if (!sessionValid) {
+    return res.status(403).json({ message: "Session expired or OTP not verified" });
+  }
+  
+  
+    try {
+      const admin = await superAdmin.findOne({ email });
+      if (!admin) return res.status(404).json({ message: "Admin not found" });
+  
+      admin.password = newPassword; // hashed via pre-save
+      await admin.save();
+      await redis.del(`reset_session:${email}`);
+  
+      return res.status(200).json({ message: "Password reset successfully" });
+    } catch (err) {
+      console.error("Password Reset Error:", err);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  };
 
 export {
   registerSuperAdmin,
@@ -1046,5 +1117,8 @@ export {
   getAllCoupons,
   getAllCouponBatches,
   couponDistribution,
-  couponFetchById
+  couponFetchById,
+  sendSuperAdminForgotPasswordOtp,
+  verifySuperAdminForgotPasswordOtp,
+  resetSuperAdminPassword
 };

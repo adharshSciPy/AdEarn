@@ -28,7 +28,7 @@ function AdminSignup() {
     e.preventDefault();
     try {
       const response = await axios.post(`${baseUrl}/api/v1/admin/send-otp`, form)
-      const adminres = form.adminEmail;
+      const adminres = response.data.adminEmail;
       console.log("mail form adminemail", adminres)
       dispatch(setAdmin({ adminEmail: adminres }));
 

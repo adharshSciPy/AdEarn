@@ -144,7 +144,7 @@ const registerUser = async (req, res) => {
   }
 };
 
-// dummy
+// working with otp on console
 const sendOTP = async (req, res) => {
   const { phoneNumber } = req.body;
 
@@ -1053,6 +1053,117 @@ const fetchMySingleAd = async (req, res) => {
     return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+// to reset user password
+const sendPasswordResetOTP = async (req, res) => {
+  const { phoneNumber } = req.body;
+
+  try {
+    if (!phoneNumber)
+      return res.status(400).json({ message: "Phone Number is required" });
+
+    const user = await User.findOne({ phoneNumber });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const otp =
+      config.USE_OTP_TEST_MODE === 'true' && phoneNumber === config.OTP_TEST_NUMBER
+        ? config.OTP_TEST_VALUE
+        : crypto.randomInt(100000, 999999).toString();
+
+    await redis.set(`reset_otp:${phoneNumber}`, otp, "EX", 300); // 5 min expiry
+    console.log(`✅ Password Reset OTP ${otp} for ${phoneNumber}`);
+
+    if (config.USE_OTP_TEST_MODE !== 'true') {
+      await axios.get("https://api.msg91.com/api/v5/otp", {
+        params: {
+          authkey: config.MSG91_AUTH_KEY,
+          mobile: phoneNumber,
+          otp,
+          template_id: config.MSG91_TEMPLATE_ID,
+        },
+      });
+    }
+
+    return res.status(200).json({
+      message: "OTP sent for password reset",
+      ...(config.USE_OTP_TEST_MODE === 'true' ? { otp } : {}),
+      phoneNumber
+    });
+  } catch (err) {
+    console.error("❌ Send Password Reset OTP error:", err.response?.data || err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+const verifyPasswordResetOTP = async (req, res) => {
+  const { phoneNumber, otp } = req.body;
+
+  try {
+    if (!phoneNumber || !otp) {
+      return res.status(400).json({ message: "Phone number and OTP are required" });
+    }
+
+    if (
+      config.USE_OTP_TEST_MODE === 'true' &&
+      phoneNumber === config.OTP_TEST_NUMBER &&
+      otp === config.OTP_TEST_VALUE
+    ) {
+      await redis.set(`reset_session:${phoneNumber}`, "active", "EX", 600);
+      return res.status(200).json({ message: "OTP verified successfully" });
+    }
+
+    const savedOtp = await redis.get(`reset_otp:${phoneNumber}`);
+    if (!savedOtp || savedOtp !== otp) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    // Set session in Redis
+    await redis.set(`reset_session:${phoneNumber}`, "active", "EX", 600); // 10 min
+
+    return res.status(200).json({ message: "OTP verified successfully" ,
+      phoneNumber
+    });
+  } catch (err) {
+    console.error("OTP verification error:", err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
+
+const resetPassword = async (req, res) => {
+  const { phoneNumber, newPassword } = req.body;
+
+  try {
+    if (!phoneNumber || !newPassword) {
+      return res.status(400).json({ message: "Phone number and new password are required" });
+    }
+
+    const sessionActive = await redis.get(`reset_session:${phoneNumber}`);
+    if (!sessionActive) {
+      return res.status(403).json({ message: "OTP session expired or not verified" });
+    }
+
+    const user = await User.findOne({ phoneNumber });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // const hashedPassword = await bcrypt.hash(newPassword, 10);
+    // user.password = hashedPassword;
+user.password=newPassword
+    await user.save();
+
+    // Clean up session
+    await redis.del(`reset_session:${phoneNumber}`);
+    await redis.del(`reset_otp:${phoneNumber}`);
+
+    return res.status(200).json({ message: "Password reset successful" });
+  } catch (err) {
+    console.error("Password reset error:", err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
 
 
 export {
@@ -1070,5 +1181,10 @@ export {
   fetchAllMyAds,
   fetchMySingleAd,
   sendOTP,
-  verifyOTP
+  verifyOTP,
+  sendPasswordResetOTP,
+  verifyPasswordResetOTP,
+  resetPassword
+
+
 };

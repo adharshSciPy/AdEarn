@@ -3,11 +3,18 @@ import logo from "../../../assets/Logo.png";
 import styles from "./form1.module.css";
 import baseUrl from "../../../baseurl";
 import axios from "axios";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 function Form1() {
+  const navigate = useNavigate();
+  const id = useSelector((state) => state.user.id)
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
+    email: "",
+    password: "",
+    referalCode: "",
     gender: "",
     maritalStatus: "",
     state: "",
@@ -15,7 +22,7 @@ function Form1() {
     pincode: "",
     location: "",
   });
-  const [maritalStatus, setMaritalStatus] = useState("");
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({
@@ -25,19 +32,23 @@ function Form1() {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const userId = '683edc32b29c143dd749401d'
+
     try {
-      const response = await axios.patch(`${baseUrl}/api/v1/user/update/${userId}`, form)
+      const response = await axios.patch(`${baseUrl}/api/v1/user/update/${id}`, form)
       if (response.status === 200) {
         console.log("Submitted Successfully")
         console.log("form1", response)
       }
+      navigate(`/form2/${id}`)
     } catch (error) {
       console.log(error)
     }
     setForm({
       firstName: "",
       lastName: "",
+      email: "",
+      password: "",
+      referalCode: "",
       gender: "",
       maritalStatus: "",
       state: "",
@@ -502,6 +513,35 @@ function Form1() {
                         />
                       </div>
                       <div>
+                        <label htmlFor="location" className={styles.label} style={{ marginTop: "20px" }}>
+                          Email
+                        </label>
+                        <input
+                          id="location"
+                          name="email"
+                          placeholder="Email"
+                          required
+                          className={styles.input}
+                          value={form.email}
+                          onChange={handleChange}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="location" className={styles.label} style={{ marginTop: "20px" }}>
+                          Password
+                        </label>
+                        <input
+                          type="password"
+                          id="location"
+                          name="password"
+                          placeholder="Password"
+                          required
+                          className={styles.input}
+                          value={form.password}
+                          onChange={handleChange}
+                        />
+                      </div>
+                      <div>
                         <label
                           htmlFor="password1"
                           className={styles.label}
@@ -663,6 +703,22 @@ function Form1() {
                           onChange={handleChange}
                         />
                       </div>
+                      <div>
+                        <label htmlFor="location" className={styles.label} style={{ marginTop: "20px" }}>
+                          Referral Code
+                        </label>
+                        <input
+                          id="location"
+                          name="referalCode"
+                          placeholder="Referral Code"
+                          required
+                          className={styles.input}
+                          value={form.referalCode}
+                          onChange={handleChange}
+                        />
+                      </div>
+
+
                       <div className={styles.buttonContainer}>
                         <button type="submit">Continue</button>
                       </div>

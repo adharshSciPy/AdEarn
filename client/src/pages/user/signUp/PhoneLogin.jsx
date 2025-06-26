@@ -2,8 +2,16 @@ import { React, useState } from "react";
 import logo from "../../../assets/Logo.png";
 import styles from "./phonelogin.module.css";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import baseUrl from "../../../baseurl";
+import { useDispatch } from "react-redux";
+import { setUser } from "../../../components/features/slice";
+
 
 function PhoneLogin() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
 
@@ -17,14 +25,22 @@ function PhoneLogin() {
     if (error) setError(""); // clear error as user types
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!validatePhone(phone)) {
-      setError("Enter a valid phone number starting with +91 and 10 digits.");
-      return;
+  const handleSubmit = async (e) => {
+    try {
+      e.preventDefault();
+      console.log("phone", phone)
+      if (!validatePhone(phone)) {
+        setError("Enter a valid phone number starting with +91 and 10 digits.");
+        return;
+      }
+      const response = await axios.post(`${baseUrl}/api/v1/user/send-otp`, { phoneNumber: phone });
+      dispatch(setUser({ phone: phone }))
+      navigate("/phoneotp")
+      console.log("res", response)
+      setPhone("")
+    } catch (error) {
+      console.log(error)
     }
-    setPhone("")
-    
   };
   return (
     <div>
@@ -70,6 +86,7 @@ function PhoneLogin() {
                           <input
                             id="phone"
                             type="tel"
+                            name="phoneNumber"
                             value={phone}
                             onChange={handleChange}
                             required
@@ -79,7 +96,7 @@ function PhoneLogin() {
                           />
                         </div>
                         {error && (
-                          <p style={{ color: "red", fontSize: "0.9rem",padding:"0.5rem" }}>
+                          <p style={{ color: "red", fontSize: "0.9rem", padding: "0.5rem" }}>
                             {error}
                           </p>
                         )}
