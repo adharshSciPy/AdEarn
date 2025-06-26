@@ -39,7 +39,6 @@ status: {
   enum: ["Active", "Ended"],
   default: "Active",
 },
-
   result: {
     type: String, // or use an ObjectId reference if result is a separate document
     default: "Pending"
