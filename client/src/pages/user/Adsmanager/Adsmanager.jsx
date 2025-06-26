@@ -10,45 +10,114 @@ import Navbar from "../NavBar/Navbar";
 import axios from "axios";
 import baseUrl from "../../../baseurl";
 import { useSelector } from "react-redux";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+
 
 function Adsmanager() {
   const [toggleStates, setToggleStates] = useState({});
   const [userads, setUserads] = useState([]);
   const userId = useSelector((state) => state.user.id);
+const handleToggle = async (adId) => {
+  try {
+    console.log("Toggling ad ID:", adId);
 
-  const handleToggle = async (adId) => {
-    try {
-      console.log("rowid", adId);
-      const response = await axios.post(`${baseUrl}/api/v1/ads/toggle-ad`, {
-        adId,
-      });
-      console.log("response", response);
-    } catch (error) {
-      console.log(error);
-    }
+    // Toggle ad in backend
+    const response = await axios.post(`${baseUrl}/api/v1/ads/toggle-ad`, { adId });
+    console.log("Toggle response:", response);
 
-    setToggleStates((prevState) => ({
-      ...prevState,
-      [adId]: !prevState[adId],
-    }));
-  };
+    // Re-fetch all ads after toggle
+    const updatedResponse = await axios.get(
+      `${baseUrl}/api/v1/user/my-all-ads/${userId}`
+    );
+    const ads = updatedResponse.data.data.ads;
+    setUserads(ads);
+
+    const updatedToggleStates = {};
+    ads.forEach((ad) => {
+      const ref = ad.imgAdRef || ad.videoAdRef || ad.surveyAdRef;
+      updatedToggleStates[ad._id] = ref?.isAdOn || false;
+    });
+    setToggleStates(updatedToggleStates);
+    console.log("Updated toggle states after toggle:", updatedToggleStates);
+
+  } catch (error) {
+    console.error("Error toggling ad:", error);
+  }
+};
+
 
   useEffect(() => {
     const fetchAds = async () => {
       try {
-        console.log("id store", userId);
+        console.log("User ID from store:", userId);
         const response = await axios.get(
           `${baseUrl}/api/v1/user/my-all-ads/${userId}`
         );
-        setUserads(response.data.data.ads);
-        console.log("resres", response);
+        const ads = response.data.data.ads;
+        setUserads(ads);
+
+        const initialToggleStates = {};
+        ads.forEach((ad) => {
+          const ref = ad.imgAdRef || ad.videoAdRef || ad.surveyAdRef;
+          initialToggleStates[ad._id] = ref?.isAdOn || false;
+        });
+
+        setToggleStates(initialToggleStates);
+        console.log(
+          "Fetched ads and initialized toggle states:",
+          initialToggleStates
+        );
       } catch (error) {
-        console.log(error);
+        console.error("Error fetching ads:", error);
       }
     };
 
-    fetchAds();
+    if (userId) {
+      fetchAds();
+    }
   }, [userId]);
+
+const generatePdf = (row) => {
+  const ref = row.imgAdRef || row.videoAdRef || row.surveyAdRef;
+
+  if (!ref) {
+    console.error("No ad data found in row:", row);
+    return;
+  }
+
+  const doc = new jsPDF();
+
+  // Title
+  doc.setFontSize(16);
+  doc.text("Ad Report", 20, 20);
+
+  // Info Table
+  const adType = row.imgAdRef
+    ? "Image Ad"
+    : row.videoAdRef
+    ? "Video Ad"
+    : "Survey Ad";
+
+  const tableData = [
+    ["Ad Title", ref.title || "Untitled"],
+    ["Ad Type", adType],
+    ["Total Reach", ref.userViewsNeeded ?? "N/A"],
+    ["Total Views", ref.totalViewCount ?? "N/A"],
+    ["Status", ref.isAdOn ? "Ongoing" : "Outgoing"],
+  ];
+
+  autoTable(doc, {
+    startY: 30,
+    head: [["Field", "Value"]],
+    body: tableData,
+    theme: "striped",
+    styles: { halign: "left" },
+    headStyles: { fillColor: [22, 160, 133] },
+  });
+
+  doc.save(`${ref.title || "ad"}_report.pdf`);
+};
 
   return (
     <div>
@@ -154,6 +223,8 @@ function Adsmanager() {
                         let adTitle = "Untitled";
                         let totalReach = "Unknown";
                         let totalViews = "Unknown";
+                        const ref =
+                          row.imgAdRef || row.videoAdRef || row.surveyAdRef;
 
                         if (row.imgAdRef) {
                           adType = "Image Ad";
@@ -208,16 +279,12 @@ function Adsmanager() {
                             </td>
                             <td
                               style={{
-                                color: row?.imgAdRef?.isAdVerified
-                                  ? "green"
-                                  : "red",
+                                color: ref?.isAdOn ? "green" : "red",
                                 fontWeight: "bold",
                                 textAlign: "center",
                               }}
                             >
-                              {row?.imgAdRef?.isAdVerified
-                                ? "Ongoing"
-                                : "Pending"}
+                              {ref?.isAdOn ? "Ongoing" : "Outgoing"}
                             </td>
                             <td>
                               <Link
