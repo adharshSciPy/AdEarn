@@ -1,9 +1,9 @@
 import { Router } from "express";
-import{ registerAdmin,updateAdmin,adminLogin, getAllUsers, fetchKycUploadedUsers, fetchSingleKycUploadUser, getSingleUser, verifyKyc, rejectKyc, verifyAdById, getAdminWallet,rejectAdById, kycVerifiedUsers, fetchUserKycStatus, sendOtpToAdmin, verifyOtpAndRegisterAdmin, sendAdminForgotPasswordOtp, resetAdminPassword, verifyAdminForgotPasswordOtp} from "../controller/adminController.js";
+import{ registerAdmin,adminLogin, getAllUsers, fetchKycUploadedUsers, fetchSingleKycUploadUser, getSingleUser, verifyKyc, rejectKyc, verifyAdById, getAdminWallet,rejectAdById, kycVerifiedUsers, fetchUserKycStatus, sendOtpToAdmin, verifyOtpAndRegisterAdmin, sendAdminForgotPasswordOtp, resetAdminPassword, verifyAdminForgotPasswordOtp} from "../controller/adminController.js";
 const adminRouter = Router()
 
 adminRouter.route('/admin-register').post(registerAdmin)
-adminRouter.route('/admin-edit/:id').patch(updateAdmin)
+// adminRouter.route('/admin-edit/:id').patch(updateAdmin)
 adminRouter.route('/admin-login').post(adminLogin)
 adminRouter.route('/all-users').get(getAllUsers)
 adminRouter.route('/single-user').get(getSingleUser)

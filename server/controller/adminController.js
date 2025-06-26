@@ -22,12 +22,18 @@ const SUPER_ADMIN_ROLE = process.env.SUPER_ADMIN_ROLE;
 sgMail.setApiKey(config.SEND_GRID_API_KEY);
 
 const registerAdmin = async (req, res) => {
-  const { phoneNumber, password, username, address } = req.body;
+  const { phoneNumber, password, username, address, adminEmail } = req.body;
 
   try {
     // Validate required fields
-    if (!phoneNumber || !password || !username || !address) {
+    if (!phoneNumber || !password || !username || !address || !adminEmail) {
       return res.status(400).json({ message: "All fields are required" });
+    }
+
+    // Optional: Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(adminEmail)) {
+      return res.status(400).json({ message: "Invalid email format" });
     }
 
     if (!passwordValidator(password)) {
@@ -44,16 +50,15 @@ const registerAdmin = async (req, res) => {
 
     const role = Number(process.env.ADMIN_ROLE) || 400;
 
-    // ✅ Include username and address while creating admin
     const admin = await Admin.create({
       phoneNumber,
       password,
       username,
       address,
+      adminEmail,
       role,
     });
 
-    // Return admin without password
     const createdAdmin = await Admin.findById(admin._id).select("-password");
     if (!createdAdmin) {
       return res.status(500).json({ message: "Admin registration failed" });
@@ -922,7 +927,6 @@ if (!sessionValid) {
 // const getAssignedCoupon
 export {
   registerAdmin,
-  updateAdmin,
   adminLogin,
   getAllUsers,
   getSingleUser,
