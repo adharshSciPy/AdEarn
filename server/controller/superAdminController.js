@@ -332,6 +332,8 @@ const distributeWelcomeBonus = async (newUserId) => {
 
 const createContest = async (req, res) => {
   try {
+    console.log("BODY:", req.body); // 👈 Add here
+    console.log("FILES:", req.files);
     const {
       contestName,
       contestNumber,
@@ -365,7 +367,9 @@ const createContest = async (req, res) => {
     // Handle prize images if provided
     let prizeImages = [];
     if (req.files && req.files.length > 0) {
-      prizeImages = req.files.map(file => `/Uploads/contestPrizeImages/${file.filename}`);
+      prizeImages = req.files.map(
+        (file) => `/contestPrizeImages/${file.filename}`
+      );
     }
 
     // Create new contest entry
@@ -989,7 +993,7 @@ const getAllCouponBatches = async (req, res) => {
 
 const couponDistribution = async (req, res) => {
   // const { adminId } = req.params;
-  const { batchId,adminId} = req.body;
+  const { batchId, adminId } = req.body;
   try {
     const admin = await Admin.findById(adminId);
     if (!admin) {
@@ -1004,108 +1008,111 @@ const couponDistribution = async (req, res) => {
     await couponBatch.save();
 
     admin.assignedCouponBatches.push({
-    batchId: couponBatch._id,
-    assignedAt: new Date(),
+      batchId: couponBatch._id,
+      assignedAt: new Date(),
     });
     await admin.save();
 
-     res.status(200).json({
+    res.status(200).json({
       success: true,
       message: "Coupon batch assigned successfully",
       data: {
         adminId: admin._id,
-        batchId: couponBatch._id
-      }
+        batchId: couponBatch._id,
+      },
     });
   } catch (error) {
-     console.error("Error assigning coupon batch:", error);
+    console.error("Error assigning coupon batch:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-const couponFetchById=async(req,res)=>{
-  const{batchId}=req.body;
+const couponFetchById = async (req, res) => {
+  const { batchId } = req.body;
   try {
-    const coupons=await couponBatchModel.findById(batchId).populate("Coupon");
-    if(!coupons){
-      return res.status(404).json({message:"Coupons not found"})
+    const coupons = await couponBatchModel.findById(batchId).populate("Coupon");
+    if (!coupons) {
+      return res.status(404).json({ message: "Coupons not found" });
     }
     return res.status(200).json({
-      message:"Coupons fetched succesfully",
-      data:coupons
-    })
-
+      message: "Coupons fetched succesfully",
+      data: coupons,
+    });
   } catch (error) {
-      console.error("Error fetching coupon batch:", error);
+    console.error("Error fetching coupon batch:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
-}
+};
 // password reset for superAdmin
-const sendSuperAdminForgotPasswordOtp=async(req,res)=>{
-const{email}=req.body;
+const sendSuperAdminForgotPasswordOtp = async (req, res) => {
+  const { email } = req.body;
   if (!email) {
     return res.status(400).json({ message: "Email is required" });
   }
-   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-   try {
-    await redis.set(`forgot_otp:${email.toLowerCase()}`,otp,'EX',300)
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  try {
+    await redis.set(`forgot_otp:${email.toLowerCase()}`, otp, "EX", 300);
     console.log(`Otp for ${email}:${otp}`);
-    const msg={
-      to:email,
-      from:config.SENDGRID_SENDER_EMAIL,
-      subject:'Your SuperAdmin OTP Code',
-      text:`Your OTP is: ${otp}`,
-      html:`<strong>Your OTP is: ${otp}</strong>`
+    const msg = {
+      to: email,
+      from: config.SENDGRID_SENDER_EMAIL,
+      subject: "Your SuperAdmin OTP Code",
+      text: `Your OTP is: ${otp}`,
+      html: `<strong>Your OTP is: ${otp}</strong>`,
     };
     await sgMail.send(msg);
-     return res.status(200).json({ message: "OTP sent successfully" });
-   } catch (error) {
+    return res.status(200).json({ message: "OTP sent successfully" });
+  } catch (error) {
     console.error("Send OTP Error:", error);
     return res.status(500).json({ message: "Failed to send OTP" });
-   }
-}
-const verifySuperAdminForgotPasswordOtp=async(req,res)=>{
-  const{email,otp}=req.body;
-   if (!email || !otp) {
+  }
+};
+const verifySuperAdminForgotPasswordOtp = async (req, res) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) {
     return res.status(400).json({ message: "Email and OTP are required" });
   }
-    const emailKey = email.toLowerCase();
- const storedOtp = await redis.get(`forgot_otp:${emailKey}`);
-if (!storedOtp || storedOtp !== otp) {
-  return res.status(400).json({ message: "Invalid or expired OTP" });
-}
-await redis.del(`forgot_otp:${emailKey}`);
-await redis.set(`reset_session:${emailKey}`, true, "EX", 600); // valid for 10 minutes
+  const emailKey = email.toLowerCase();
+  const storedOtp = await redis.get(`forgot_otp:${emailKey}`);
+  if (!storedOtp || storedOtp !== otp) {
+    return res.status(400).json({ message: "Invalid or expired OTP" });
+  }
+  await redis.del(`forgot_otp:${emailKey}`);
+  await redis.set(`reset_session:${emailKey}`, true, "EX", 600); // valid for 10 minutes
 
-  return res.status(200).json({ message: "OTP verified. You may now reset your password." });
-
-}
-const resetSuperAdminPassword=async(req,res)=>{
-  const{email,newPassword}=req.body;
+  return res
+    .status(200)
+    .json({ message: "OTP verified. You may now reset your password." });
+};
+const resetSuperAdminPassword = async (req, res) => {
+  const { email, newPassword } = req.body;
   if (!email || !newPassword) {
-      return res.status(400).json({ message: "Email and new password are required" });
-    }
-  
-    const emailKey = email.toLowerCase();
+    return res
+      .status(400)
+      .json({ message: "Email and new password are required" });
+  }
+
+  const emailKey = email.toLowerCase();
   const sessionValid = await redis.get(`reset_session:${emailKey}`);
   if (!sessionValid) {
-    return res.status(403).json({ message: "Session expired or OTP not verified" });
+    return res
+      .status(403)
+      .json({ message: "Session expired or OTP not verified" });
   }
-  
-  
-    try {
-      const admin = await superAdmin.findOne({ email });
-      if (!admin) return res.status(404).json({ message: "Admin not found" });
-  
-      admin.password = newPassword; // hashed via pre-save
-      await admin.save();
-      await redis.del(`reset_session:${email}`);
-  
-      return res.status(200).json({ message: "Password reset successfully" });
-    } catch (err) {
-      console.error("Password Reset Error:", err);
-      return res.status(500).json({ message: "Internal server error" });
-    }
-  };
+
+  try {
+    const admin = await superAdmin.findOne({ email });
+    if (!admin) return res.status(404).json({ message: "Admin not found" });
+
+    admin.password = newPassword; // hashed via pre-save
+    await admin.save();
+    await redis.del(`reset_session:${email}`);
+
+    return res.status(200).json({ message: "Password reset successfully" });
+  } catch (err) {
+    console.error("Password Reset Error:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 export {
   registerSuperAdmin,
@@ -1130,5 +1137,5 @@ export {
   couponFetchById,
   sendSuperAdminForgotPasswordOtp,
   verifySuperAdminForgotPasswordOtp,
-  resetSuperAdminPassword
+  resetSuperAdminPassword,
 };
