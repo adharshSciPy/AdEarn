@@ -12,6 +12,8 @@ function UserHome() {
   const navigate = useNavigate();
   const [imageAdData, setImageAd] = useState([]);
   const [videAdData, setVideoAd] = useState([]);
+  const [surveyData, setSurveyData] = useState([]);
+
   const { id } = useParams();
   const [showPopup, setShowPopup] = useState(false);
 
@@ -61,10 +63,21 @@ function UserHome() {
       console.log(error);
     }
   };
+  const getSurveyData=async ()=>{
+    try {
+      const response = await axios.get(`${baseUrl}/api/v1/ads/survey-ads/${id}`);
+      setSurveyData(response.data.ads);
+      console.log(response);
+      
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   useEffect(() => {
     getImageAdData();
     getVideoAdData();
+    getSurveyData();
   }, []);
   useEffect(() => {
     if (!socket.connected) socket.connect();

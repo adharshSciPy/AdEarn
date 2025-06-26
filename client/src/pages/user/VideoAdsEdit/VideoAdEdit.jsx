@@ -464,9 +464,8 @@ const stateCityMap = {
   // Add more states and cities here
 };
 
-
 function VideoAdEdit() {
-const { id } = useParams();
+  const { id } = useParams();
   const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
@@ -479,8 +478,7 @@ const { id } = useParams();
     "24hrs": false,
     "48hrs": false,
   });
-  const [image, setImage] = useState(null);
-  const [audio, setAudio] = useState(null);
+  const [video, setVideo] = useState(null);
 
   const [form, setForm] = useState({
     state: [],
@@ -506,20 +504,13 @@ const { id } = useParams();
     setTimeOptions(newOptions);
     setSelectedTimeSlots(parseInt(label.replace("hrs", "")));
   };
-const handleFileChangeaudio = (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    setAudio(file);
-    setPreviewaudio(URL.createObjectURL(file));
-  }
-};
-const handleFileChange = (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    setImage(file); // store file for formData
-    setPreview(URL.createObjectURL(file)); // create preview
-  }
-};
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setVideo(file);
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+    }
+  };
   // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -561,7 +552,7 @@ const handleFileChange = (e) => {
             `${baseUrl}/api/v1/user/my-single-ad/${userId}/${id}`
           );
           // FIX: correct property navigation for your API response
-          const data = response.data.ad.imgAdRef;
+          const data = response.data.ad.videoAdRef;
           console.log("Da", data);
 
           setForm({
@@ -572,12 +563,8 @@ const handleFileChange = (e) => {
             viewPlan: data.viewPlan || "",
           });
 
-          if (data.imageUrl) {
-            setPreview(`${baseUrl}${data.imageUrl}`);
-          }
-
-          if (data.audioUrl) {
-            setPreviewaudio(`${baseUrl}${data.audioUrl}`);
+          if (data.videoUrl) {
+            setPreview(`${baseUrl}${data.videoUrl}`);
           }
 
           // Defensive: check for region.location.coordinates
@@ -609,7 +596,6 @@ const handleFileChange = (e) => {
     }
   }, [id, userId]);
 
-  
   const searchPlace = async (query) => {
     setLoading(true);
     try {
@@ -643,7 +629,6 @@ const handleFileChange = (e) => {
     setLoading(false);
   };
   const [preview, setPreview] = useState(null);
-  const [previewaudio, setPreviewaudio] = useState(null);
 
   const handleStateChange = (selected) => {
     const selectedStates = selected ? selected.map((opt) => opt.value) : [];
@@ -654,9 +639,10 @@ const handleFileChange = (e) => {
   const fileInputRef = useRef(null);
   const fileInputAudioRef = useRef(null);
   const navigate = useNavigate();
-  const   handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
   setLoading(true);
+
   const locationPayload = positions.map((p) => ({
     coords: `${p.lat},${p.lng}`,
     radius: p.radiusKm,
@@ -670,15 +656,16 @@ const handleFileChange = (e) => {
     formData.append("locations", JSON.stringify(locationPayload));
     formData.append("states", JSON.stringify(form.state));
     formData.append("districts", JSON.stringify(form.city || []));
-    if (image) formData.append("imageAd", image);
-    if (audio) formData.append("audioAd", audio);
     formData.append(
       "adPeriod",
       JSON.stringify(singleTime ? 0 : selectedTimeSlots)
     );
+    if (video) {
+      formData.append("videoAd", video);
+    }
 
     const response = await axios.patch(
-      `${baseUrl}/api/v1/ads/edit-image-ad/${id}`,
+      `${baseUrl}/api/v1/ads/edit-video-ad/${id}`,
       formData,
       {
         headers: {
@@ -687,46 +674,44 @@ const handleFileChange = (e) => {
       }
     );
 
-    if (response.status===200){
-      
-        setForm({
-          adName: "",
-          adCategory: "",
-          state: [],
-          city: [],
-          viewPlan: "",
-        });
-        if (fileInputAudioRef.current) {
-          fileInputAudioRef.current.value = null;
-        }
-        if (fileInputRef.current) {
-          fileInputRef.current.value = null;
-        }
-        setPreview(null);
-        setPositions([]);
-        setSingleTime(false);
-        setMultipleTime(false);
-        setSelectedTimeSlots([]);
-        setSearchInput("");
-        setTimeOptions({
-          "3hrs": false,
-          "6hrs": false,
-          "12hrs": false,
-          "24hrs": false,
-          "48hrs": false,
-        }); // adjust keys as per your time options
-        setShowSuccessPopup(true);
-        setTimeout(() => {
-          setShowSuccessPopup(false);
-          navigate(`/userhome/${id}`);
-        }, 2000);
-      
+    if (response.status === 200) {
+      setForm({
+        adName: "",
+        adCategory: "",
+        state: [],
+        city: [],
+        viewPlan: "",
+      });
+      if (fileInputRef.current) {
+        fileInputRef.current.value = null;
+      }
+      setPreview(null);
+      setVideo(null);
+      setPositions([]);
+      setSingleTime(false);
+      setMultipleTime(false);
+      setSelectedTimeSlots([]);
+      setSearchInput("");
+      setTimeOptions({
+        "3hrs": false,
+        "6hrs": false,
+        "12hrs": false,
+        "24hrs": false,
+        "48hrs": false,
+      });
+      setShowSuccessPopup(true);
+      setTimeout(() => {
+        setShowSuccessPopup(false);
+        navigate(`/userhome/${id}`);
+      }, 2000);
     }
   } catch (error) {
     console.error(error);
   }
+
   setLoading(false);
 };
+
 
   return (
     <>
@@ -1067,42 +1052,28 @@ const handleFileChange = (e) => {
               <img src={tickAd} alt="tick" />
             </div>
             <div className={styles.AdNameHead}>
-              <h2>Your Ad Photo</h2>
+              <h2>Your Video</h2>
               <input
                 type="file"
                 ref={fileInputRef}
-                accept="image/*"
+                accept="video/*"
                 onChange={handleFileChange}
               />
-              {preview && (
-                <img
-                  src={preview}
-                  alt="Preview"
-                  className={styles.previewImg}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-        <div className={styles.adName}>
-          <div className={styles.labelContainer}>
-            <div className={styles.labelImg}>
-              <img src={tickAd} alt="tick" />
-            </div>
-            <div className={styles.AdNameHead}>
-              <h2>Your Voice Not</h2>
-              <input
-                type="file"
-                ref={fileInputAudioRef}
-                accept="audio/*"
-                onChange={handleFileChangeaudio}
-              />
-              {previewaudio && (
-                <audio controls>
-                  <source src={previewaudio} />
-                  Your browser does not support the audio element.
-                </audio>
-              )}
+              <div style={{ width: "100%" }}>
+                {preview && (
+                  <video
+                    controls
+                    src={preview}
+                    className={styles.previewVideo}
+                    style={{
+                      width: "100%",
+                      maxWidth: "500px",
+                      borderRadius: "10px",
+                      height: "300px",
+                    }}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -1139,4 +1110,4 @@ const handleFileChange = (e) => {
   );
 }
 
-export default VideoAdEdit
+export default VideoAdEdit;
