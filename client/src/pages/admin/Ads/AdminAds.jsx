@@ -8,7 +8,6 @@ import axios from "axios";
 import baseUrl from "../../../baseurl";
 import { useMemo } from "react";
 
-
 function AdminAds() {
   const [unverifiedAds, setunverifiedAds] = useState([]);
   const [verifiedAd, setVerifiedAd] = useState([]);
@@ -101,7 +100,19 @@ function AdminAds() {
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedMonth, selectedYear]);
-
+ const filteredAds = (ads) => {
+    return ads.filter((ad) => {
+      const dateStr = ad.imageAd?.createdAt || ad.videoAd?.createdAt || ad.surveyAd?.createdAt;
+      if (!dateStr) return false;
+      const date = new Date(dateStr);
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = String(date.getFullYear());
+      return (
+        (!selectedMonth || selectedMonth === month) &&
+        (!selectedYear || selectedYear === year)
+      );
+    });
+  };
 
   return (
     <div className={styles.adminadsmain}>
@@ -189,11 +200,15 @@ function AdminAds() {
                     {filteredVerifiedAds.map((ad, index) => (
                       <tr key={index}>
                         <td>
-                          {ad.imageAd?.title ? (
-                            <p>{ad.imageAd?.title}</p>
-                          ) : ad?.videoAd?.title ? (
-                            <p>{ad.videoAd?.title}</p>
-                          ) : null}
+                          <td>
+                            {ad.imageAd?.title ? (
+                              <p>{ad.imageAd.title}</p>
+                            ) : ad.videoAd?.title ? (
+                              <p>{ad.videoAd.title}</p>
+                            ) : ad.surveyAd?.title ? (
+                              <p>{ad.surveyAd.title}</p>
+                            ) : null}
+                          </td>
                         </td>
                         <td>
                           {ad.imageAd?.userViewsNeeded ? (
@@ -258,56 +273,20 @@ function AdminAds() {
                       <th>Ads Verification</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {filteredUnverifiedAds.map((ad, index) => (
+                   <tbody>
+                    {filteredAds(unverifiedAds).map((ad, index) => (
                       <tr key={index}>
+                        <td>{
+                          new Date(ad.imageAd?.createdAt || ad.videoAd?.createdAt || ad.surveyAd?.createdAt)
+                            .toISOString()
+                            .split("T")[0]
+                        }</td>
+                        <td>{ad.imageAd?.title || ad.videoAd?.title || ad.surveyAd?.title}</td>
+                        <td>{ad.imageAd?.userViewsNeeded || ad.videoAd?.userViewsNeeded || ad.surveyAd?.userViewsNeeded}</td>
+                        <td>{ad.imageAd?.totalStarsAllocated || ad.videoAd?.totalStarsAllocated || ad.surveyAd?.totalStarsAllocated}</td>
                         <td>
-                          {ad.imageAd?.createdAt ? (
-                            <p>
-                              {
-                                new Date(ad.imageAd.createdAt)
-                                  .toISOString()
-                                  .split("T")[0]
-                              }
-                            </p>
-                          ) : ad.videoAd?.createdAt ? (
-                            <p>
-                              {
-                                new Date(ad.videoAd.createdAt)
-                                  .toISOString()
-                                  .split("T")[0]
-                              }
-                            </p>
-                          ) : null}
-                        </td>
-                        <td>
-                          {ad.imageAd?.title ? (
-                            <p>{ad.imageAd?.title}</p>
-                          ) : ad?.videoAd?.title ? (
-                            <p>{ad.videoAd?.title}</p>
-                          ) : null}
-                        </td>
-                        <td>
-                          {ad.imageAd?.userViewsNeeded ? (
-                            <p>{ad.imageAd?.userViewsNeeded}</p>
-                          ) : ad?.videoAd?.userViewsNeeded ? (
-                            <p>{ad.videoAd?.userViewsNeeded}</p>
-                          ) : null}
-                        </td>
-                        <td>
-                          {ad.imageAd?.totalStarsAllocated ? (
-                            <p>{ad.imageAd?.totalStarsAllocated}</p>
-                          ) : ad?.videoAd?.totalStarsAllocated ? (
-                            <p>{ad.videoAd?.totalStarsAllocated}</p>
-                          ) : null}
-                        </td>
-
-                        <td>
-                          <button
-                            className={styles.redeemBtn}
-                            onClick={() => handlenavigate(ad._id)}
-                          >
-                            {"Verify Now"}
+                          <button className={styles.redeemBtn} onClick={() => handlenavigate(ad._id)}>
+                            Verify Now
                           </button>
                         </td>
                       </tr>
