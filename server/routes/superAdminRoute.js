@@ -23,7 +23,7 @@ import {
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
 import welcomeBonusUpload from "../multer/welBonusMulter.js";
-import contestPrizeUpload from "../multer/contestRewardMulter";
+import contestPrizeUpload from "../multer/contestRewardMulter.js";
 
 const superAdminRouter = Router();
 superAdminRouter.route("/register").post(registerSuperAdmin);

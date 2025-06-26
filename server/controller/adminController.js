@@ -22,11 +22,11 @@ const SUPER_ADMIN_ROLE = process.env.SUPER_ADMIN_ROLE;
 sgMail.setApiKey(config.SEND_GRID_API_KEY);
 
 const registerAdmin = async (req, res) => {
-  const { phoneNumber, password } = req.body;
+  const { phoneNumber, password, username, address } = req.body;
 
   try {
-    // Validate inputs
-    if (!phoneNumber || !password) {
+    // Validate required fields
+    if (!phoneNumber || !password || !username || !address) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -44,7 +44,14 @@ const registerAdmin = async (req, res) => {
 
     const role = Number(process.env.ADMIN_ROLE) || 400;
 
-    const admin = await Admin.create({ phoneNumber, password, role });
+    // ✅ Include username and address while creating admin
+    const admin = await Admin.create({
+      phoneNumber,
+      password,
+      username,
+      address,
+      role,
+    });
 
     // Return admin without password
     const createdAdmin = await Admin.findById(admin._id).select("-password");
@@ -63,53 +70,54 @@ const registerAdmin = async (req, res) => {
       .json({ message: `Internal server error: ${error.message}` });
   }
 };
-const updateAdmin = async (req, res) => {
-  const { id } = req.params;
-  const { adminEmail, password, username, address } = req.body;
 
-  try {
-    const admin = await Admin.findById(id);
-    if (!admin) {
-      return res.status(404).json({ message: "Admin not found" });
-    }
+// const updateAdmin = async (req, res) => {
+//   const { id } = req.params;
+//   const { adminEmail, password, username, address } = req.body;
 
-    // Update fields if provided
-    if (adminEmail) {
-      admin.adminEmail = adminEmail;
-    }
+//   try {
+//     const admin = await Admin.findById(id);
+//     if (!admin) {
+//       return res.status(404).json({ message: "Admin not found" });
+//     }
 
-    if (username) {
-      admin.username = username;
-    }
+//     // Update fields if provided
+//     if (adminEmail) {
+//       admin.adminEmail = adminEmail;
+//     }
 
-    if (address) {
-      admin.address = address;
-    }
+//     if (username) {
+//       admin.username = username;
+//     }
 
-    if (password) {
-      if (!passwordValidator(password)) {
-        return res.status(400).json({
-          message:
-            "Password must be at least 8 characters long, contain one uppercase, one lowercase, one number, and one special character.",
-        });
-      }
-      admin.password = password;
-    }
+//     if (address) {
+//       admin.address = address;
+//     }
 
-    await admin.save();
+//     if (password) {
+//       if (!passwordValidator(password)) {
+//         return res.status(400).json({
+//           message:
+//             "Password must be at least 8 characters long, contain one uppercase, one lowercase, one number, and one special character.",
+//         });
+//       }
+//       admin.password = password;
+//     }
 
-    // Return updated admin without password
-    const updatedAdmin = await Admin.findById(id).select("-password");
+//     await admin.save();
 
-    res.status(200).json({
-      message: "Admin updated successfully",
-      data: updatedAdmin,
-    });
-  } catch (error) {
-    console.error("Admin update error:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
+//     // Return updated admin without password
+//     const updatedAdmin = await Admin.findById(id).select("-password");
+
+//     res.status(200).json({
+//       message: "Admin updated successfully",
+//       data: updatedAdmin,
+//     });
+//   } catch (error) {
+//     console.error("Admin update error:", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// };
 
 const adminLogin = async (req, res) => {
   const { adminEmail, password } = req.body;
