@@ -30,11 +30,12 @@
 .manageadmindatarow {
   display: flex;
   justify-content: space-between;
-  margin-top: 10px;
   align-items: center;
-  font-size: 13px;
-  flex-wrap: wrap;
+  font-size: 15px;
+  text-align: center;
+  margin-top: 10px;
 }
+
 
 .manageadmindataitem {
   flex: 1;
@@ -47,12 +48,6 @@
   justify-content: center;
   gap: 10px;
   flex-wrap: wrap;
-}
-
-.manageadminadminphoto {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
 }
 
 .manageadminadminname {
@@ -108,11 +103,12 @@
 
 .manageadmindeleteicon {
   position: absolute;
-  right: 10px;
   top: 50%;
+  left: 85px;
   transform: translateY(-50%);
   cursor: pointer;
   font-size: 18px;
+  
 }
 .manageadminformsection {
   margin-top: 20px;
