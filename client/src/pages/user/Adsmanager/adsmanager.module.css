@@ -252,3 +252,35 @@
   background-color: #007bff;
   color: #fff;
 }
+.switchContainer {
+  width: 60px;
+  height: 30px;
+  background-color: #ccc;
+  border-radius: 30px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.switchContainer.on {
+  background-color: #4caf50;
+}
+
+.switchContainer.off {
+  background-color: #ccc;
+}
+
+.switchButton {
+  width: 26px;
+  height: 26px;
+  background-color: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: left 0.3s ease;
+}
+
+.switchContainer.on .switchButton {
+  left: 32px;
+}
