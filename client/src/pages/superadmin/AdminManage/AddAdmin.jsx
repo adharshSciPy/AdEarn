@@ -1,15 +1,20 @@
 import React, { useState } from "react";
 import styles from "./AddAdmin.module.css"
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
+import axios from "axios";
+import baseUrl from "../../../baseurl";
+import { useDispatch } from "react-redux";
+import { setAdmin } from "../../../components/features/adminSlice";
 
 
 function AddAdmin() {
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({
     username: "",
     address: "",
     phoneNumber: "",
     password: "",
-    email: "",
+    adminEmail: "",
   });
 
   const handleChange = (e) => {
@@ -17,10 +22,18 @@ function AddAdmin() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Submitted:", formData);
-    // You can call your API here
+    try {
+      const response = await axios.post(`${baseUrl}/api/v1/admin/admin-register`, formData)
+      console.log("res", response)
+      const id = response.data.data._id;
+      const email = response.data.data.adminEmail;
+      const role = response.data.data.adminRole
+      dispatch(setAdmin({ adminId: id, adminEmail: email, role: role }))
+    } catch (error) {
+      console.log(error)
+    }
   };
   return (
     <div className={styles.UserAccount}>
@@ -52,8 +65,8 @@ function AddAdmin() {
             <label>Email</label>
             <input
               type="text"
-              name="email"
-              value={formData.email}
+              name="adminEmail"
+              value={formData.adminEmail}
               onChange={handleChange}
               placeholder="Email"
             />
