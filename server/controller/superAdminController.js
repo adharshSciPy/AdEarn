@@ -338,37 +338,48 @@ const createContest = async (req, res) => {
       startDate,
       endDate,
       entryStars,
-      maxParticipants, // ✅ Add this
+      maxParticipants,
       result,
     } = req.body;
 
+    // Basic required fields validation
     if (
       !contestName ||
       !contestNumber ||
       !startDate ||
       !endDate ||
-      !entryStars
+      !entryStars ||
+      !maxParticipants
     ) {
       return res
         .status(400)
         .json({ message: "All required fields must be filled" });
     }
 
+    // Check for existing contest number
     const existing = await ContestEntry.findOne({ contestNumber });
     if (existing) {
       return res.status(400).json({ message: "Contest number already exists" });
     }
 
+    // Handle prize images if provided
+    let prizeImages = [];
+    if (req.files && req.files.length > 0) {
+      prizeImages = req.files.map(file => `/Uploads/contestPrizeImages/${file.filename}`);
+    }
+
+    // Create new contest entry
     const contest = new ContestEntry({
       contestName,
       contestNumber,
       startDate,
       endDate,
       entryStars,
-      maxParticipants, // ✅ Store it in DB
-      currentParticipants: 0, // ✅ Important for tracking
+      maxParticipants,
+      currentParticipants: 0,
       totalEntries: 0,
       result: result || "Pending",
+      prizeImages,
     });
 
     await contest.save();
@@ -380,7 +391,6 @@ const createContest = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 const generateCoupons = async (req, res) => {
   const { couponCount, perStarCount, generationDate, expiryDate, requestNote } =
     req.body;
