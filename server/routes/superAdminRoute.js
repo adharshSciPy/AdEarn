@@ -23,10 +23,11 @@ import {
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
 import welcomeBonusUpload from "../multer/welBonusMulter.js";
+import contestPrizeUpload from "../multer/contestRewardMulter.js";
 
 const superAdminRouter = Router();
 superAdminRouter.route("/register").post(registerSuperAdmin);
-superAdminRouter.route("/login").post(superAdminLogin); 
+superAdminRouter.route("/login").post(superAdminLogin);
 superAdminRouter.route("/all-admins").get(getAllAdmins);
 superAdminRouter.route("/toggle-user-status").post(toggleUserStatus);
 superAdminRouter.route("/toggle-admin-status").post(toggleAdminStatus);
@@ -34,20 +35,23 @@ superAdminRouter.route("/superadmin-wallet").get(getSuperAdminWallet);
 superAdminRouter.route("/generate-coupons").post(generateCoupons);
 // superAdminRouter.route("/set-welcome-bonus").post(setWelcomeBonusAmount);
 superAdminRouter.route("/topup-welcome-stars").post(topUpWelcomeBonusStars);
-superAdminRouter.route("/create-contest").post(createContest);
+superAdminRouter.route("/create-contest").post(wrapMulter(contestPrizeUpload.array("prizeImages", 5)), createContest);
 superAdminRouter.route("/topup-company-stars").post(topUpCompanyRewardStars);
 superAdminRouter.route("/patch-wallet").patch(patchSuperAdminWallet);
 superAdminRouter.route("/delete-user").delete(deleteUser);
 superAdminRouter.route("/blacklist-user").patch(blacklistUser);
-superAdminRouter.route("/set-welcome-bonus").post(wrapMulter(welcomeBonusUpload),setWelcomeBonusAmount);
-superAdminRouter.route('/all-coupons').get(getAllCoupons)
-superAdminRouter.route('/distribute-coupon').post(couponDistribution)
-superAdminRouter.route('/all-coupon-batch').get(getAllCouponBatches)
-superAdminRouter.route('/forgot-password/send-otp').post(sendSuperAdminForgotPasswordOtp);
-superAdminRouter.route('/forgot-password/verify-otp').post(verifySuperAdminForgotPasswordOtp);
-superAdminRouter.route('/forgot-password/reset-password').post(resetSuperAdminPassword);
-
-
-
+superAdminRouter.route("/set-welcome-bonus").post(wrapMulter(welcomeBonusUpload), setWelcomeBonusAmount);
+superAdminRouter.route("/all-coupons").get(getAllCoupons);
+superAdminRouter.route("/distribute-coupon").post(couponDistribution);
+superAdminRouter.route("/all-coupon-batch").get(getAllCouponBatches);
+superAdminRouter
+  .route("/forgot-password/send-otp")
+  .post(sendSuperAdminForgotPasswordOtp);
+superAdminRouter
+  .route("/forgot-password/verify-otp")
+  .post(verifySuperAdminForgotPasswordOtp);
+superAdminRouter
+  .route("/forgot-password/reset-password")
+  .post(resetSuperAdminPassword);
 
 export default superAdminRouter;

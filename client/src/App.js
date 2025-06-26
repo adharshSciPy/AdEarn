@@ -45,6 +45,7 @@ import AdEdit from './pages/user/AdEdit/AdEdit'
 import VideoAdEdit from './pages/user/VideoAdsEdit/VideoAdEdit';
 
 
+import SuperAdminLogin from './pages/superadmin/SuperAdminLogin/SuperAdminLogin';
 import SuperadminDash from './pages/superadmin/Dashboard/SuperadminDash';
 import ManageAdmin from './pages/superadmin/ManageAdmin/ManageAdmin';
 import SuperAdminAdUser from './pages/superadmin/AdsUser/SuperAdminAdsUser';
@@ -179,6 +180,7 @@ function App() {
           <Route path='/superadminwelcomestar' element={<WelcomeStar />} />
           <Route path='/superadmincontest' element={<Contest />} />
           <Route path='/superadmincontestwinner' element={<ContestWinner />} />
+          <Route path='/SuperadminLogin' element={<SuperAdminLogin />} />
 
 
 
