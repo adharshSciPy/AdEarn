@@ -1675,6 +1675,10 @@ return res.status(404).json({message:"Ad not found"});
     const videoAd=ad.videoAdRef;
     if(title) videoAd.title=title;
     if(description) videoAd.description=description;
+    if (req.file) {
+  videoAd.videoUrl = `/videoAdUploads/${req.file.filename}`; // Update this path if you serve files differently
+}
+
     if(adPeriod){
       const parsedAdPeriod=parseFloat(adPeriod);
       videoAd.adPeriod=!isNaN(parsedAdPeriod)&&

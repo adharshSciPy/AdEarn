@@ -31,6 +31,8 @@ const handleToggle = async (adId) => {
       `${baseUrl}/api/v1/user/my-all-ads/${userId}`
     );
     const ads = updatedResponse.data.data.ads;
+    
+
     setUserads(ads);
 
     const updatedToggleStates = {};
@@ -55,6 +57,8 @@ const handleToggle = async (adId) => {
           `${baseUrl}/api/v1/user/my-all-ads/${userId}`
         );
         const ads = response.data.data.ads;
+        console.log("abc",ads);
+        
         setUserads(ads);
 
         const initialToggleStates = {};
@@ -290,7 +294,7 @@ const generatePdf = (row) => {
                               <Link
                                 to={
                                   row?.imgAdRef
-                                    ? `/adedit/image/${row._id}`
+                                    ? `/adedit/${row._id}`
                                     : row?.videoAdRef
                                     ? `/videoadedit/${row._id}`
                                     : `/adedit/${row._id}` // fallback

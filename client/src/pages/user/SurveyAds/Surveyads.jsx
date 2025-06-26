@@ -458,7 +458,6 @@ const stateCityMap = {
   Puducherry: ["Puducherry", "Karaikal", "Mahe", "Yanam"],
   // Add more states and cities here
 };
-
 function SurveyAds() {
   const { id } = useParams();
   const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
@@ -686,7 +685,7 @@ function SurveyAds() {
       radius: p.radiusKm,
     }));
     const formData = new FormData();
-    formData.append("question", JSON.stringify(allQuestions));
+    formData.append("questions", JSON.stringify(allQuestions));
     formData.append("title", form.adName);
     formData.append("description", form.adCategory);
     formData.append("userViewsNeeded", form.viewPlan);
@@ -702,7 +701,7 @@ function SurveyAds() {
       JSON.stringify(singleTime ? 0 : selectedTimeSlots)
     );
     if (imageFile) {
-      formData.append("adImage", imageFile);
+      formData.append("image", imageFile);
     }
     for (let [key, value] of formData.entries()) {
       console.log(key, value);
@@ -750,11 +749,10 @@ function SurveyAds() {
       }
     } catch (error) {
       console.log(error);
-    }
-    setTimeout(() => {
+    } finally {
       setSubmitSuccess("Ad saved successfully!");
       setLoading(false);
-    }, 1000);
+    }
   };
   const [preview, setPreview] = useState(null);
 
