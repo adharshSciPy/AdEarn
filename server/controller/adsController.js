@@ -414,6 +414,7 @@ const createVideoAd = async (req, res) => {
 const createSurveyAd = async (req, res) => {
   const {
     title,
+    description,
     userViewsNeeded,
     adPeriod,
     questions,
@@ -424,7 +425,7 @@ const createSurveyAd = async (req, res) => {
   const { id } = req.params;
 
   if (!id) return res.status(400).json({ message: "User ID is required" });
-  if (!title || !questions || !userViewsNeeded)
+  if (!title || !description || !questions || !userViewsNeeded)
     return res.status(400).json({ message: "Missing required fields" });
 
   // Parse JSON fields sent as strings
@@ -551,6 +552,7 @@ const createSurveyAd = async (req, res) => {
 
     const surveyAd = await SurveyAd.create({
       title,
+      description,
       questions: parsedQuestions,
       createdBy: user._id,
       userViewsNeeded: viewsNeeded,
@@ -583,6 +585,7 @@ const createSurveyAd = async (req, res) => {
     });
   }
 };
+
 // fetch single unVerifiedAds
 const fetchSingleUnverifiedAd = async (req, res) => {
   const { id } = req.params;
