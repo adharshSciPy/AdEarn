@@ -151,7 +151,7 @@ const adminLogin = async (req, res) => {
     res.status(200).json({
       message: "Login successful",
       token,
-      role:admin.adminRole,
+      role: admin.adminRole,
       adminId: admin._id,
       adminEmail: admin.adminEmail,
     });
@@ -198,15 +198,15 @@ const getSingleUser = async (req, res) => {
 // to fetch users who have requested for Kyc verification
 const fetchKycUploadedUsers = async (req, res) => {
   try {
-    
+
     const usersWithKyc = await User.find({
       kycDetails: { $exists: true, $ne: null }
     }).populate({
       path: 'kycDetails',
-      match: { kycStatus: 'pending' } 
+      match: { kycStatus: 'pending' }
     });
 
-    
+
     const pendingUsers = usersWithKyc.filter(user => user.kycDetails);
 
     if (pendingUsers.length === 0) {
@@ -256,7 +256,7 @@ const fetchSingleKycUploadUser = async (req, res) => {
 
 // kyc verification
 const verifyKyc = async (req, res) => {
-  const { id ,adminId} = req.body;//this id is userId vishvannaa(id:userId)
+  const { id, adminId } = req.body;//this id is userId vishvannaa(id:userId)
   const { io, connectedUsers } = req;
 
   try {
@@ -287,21 +287,21 @@ const verifyKyc = async (req, res) => {
       { kycStatus: "approved" },
       { new: true }
     );
-     if (adminId) {
-     await Admin.findByIdAndUpdate(
-  adminId,
-  {
-    $push: {
-      kycsVerified: {
-        kycId: updatedKyc._id,
-        verifiedAt: new Date(),
-        userId:id,
-        status: "approved",
-      },
-    },
-  },
-  { new: true }
-);
+    if (adminId) {
+      await Admin.findByIdAndUpdate(
+        adminId,
+        {
+          $push: {
+            kycsVerified: {
+              kycId: updatedKyc._id,
+              verifiedAt: new Date(),
+              userId: id,
+              status: "approved",
+            },
+          },
+        },
+        { new: true }
+      );
     }
 
     // ✅ Send DB + real-time notification
@@ -319,7 +319,7 @@ const verifyKyc = async (req, res) => {
 };
 // kyc rejection
 const rejectKyc = async (req, res) => {
-  const { id, rejectionReason,adminId } = req.body;
+  const { id, rejectionReason, adminId } = req.body;
   const { io, connectedUsers } = req;
 
   if (!rejectionReason || rejectionReason.trim() === "") {
@@ -367,7 +367,7 @@ const rejectKyc = async (req, res) => {
               verifiedAt: new Date(),
               userId: id,
               status: "rejected",
-      
+
             },
           },
         },
@@ -418,7 +418,7 @@ const kycVerifiedUsers = async (req, res) => {
 
 // to verify ads
 const verifyAdById = async (req, res) => {
-  const { adId,adminId} = req.body;
+  const { adId, adminId } = req.body;
   const { io, connectedUsers } = req;
 
   if (!adId) {
@@ -512,7 +512,7 @@ const verifyAdById = async (req, res) => {
     } else {
       return res.status(200).json({ message: "Ad is already verified" });
     }
-if (adminId) {
+    if (adminId) {
       await Admin.findByIdAndUpdate(adminId, {
         $push: {
           verifiedAds: {
@@ -596,7 +596,7 @@ const getSuperAdminWallet = async (req, res) => {
   }
 };
 const rejectAdById = async (req, res) => {
-  const { adId, reason,adminId } = req.body;
+  const { adId, reason, adminId } = req.body;
   const { io, connectedUsers } = req;
 
   if (!adId) {
@@ -748,7 +748,7 @@ const fetchUserKycStatus = async (req, res) => {
     const filteredUsers = users
       .filter(user => user.kycDetails) // only include users with KYC
       .map(user => ({
-         userId: user._id,
+        userId: user._id,
         fullName: user.kycDetails.fullName || "N/A",
         kycStatus: user.kycDetails.kycStatus || "not submitted",
         requestedAt: user.kycDetails.createdAt || null
@@ -776,12 +776,12 @@ const sendOtpToAdmin = async (req, res) => {
     return res.status(409).json({ message: "Email already in use" });
   }
 
- 
- const otp =
-  config.USE_OTP_TEST_MODE === true &&
-  adminEmail === config.OTP_TEST_EMAIL // <- Add this to config
-    ? config.OTP_TEST_VALUE
-    : crypto.randomInt(100000, 999999).toString();
+
+  const otp =
+    config.USE_OTP_TEST_MODE === true &&
+      adminEmail === config.OTP_TEST_EMAIL // <- Add this to config
+      ? config.OTP_TEST_VALUE
+      : crypto.randomInt(100000, 999999).toString();
 
 
   try {
@@ -815,7 +815,7 @@ const sendOtpToAdmin = async (req, res) => {
 const verifyOtpAndRegisterAdmin = async (req, res) => {
   const { adminEmail, otp } = req.body;
 
-  if (!adminEmail || !otp ) {
+  if (!adminEmail || !otp) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
@@ -832,7 +832,7 @@ const verifyOtpAndRegisterAdmin = async (req, res) => {
 
   try {
     const role = Number(ADMIN_ROLE) || 400;
-    const admin = await Admin.create({ adminEmail,  role });
+    const admin = await Admin.create({ adminEmail, role });
     // const createdAdmin = await Admin.findById(admin._id).select("-password");
 
     return res.status(201).json({
@@ -857,11 +857,11 @@ const sendAdminForgotPasswordOtp = async (req, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
 
   try {
-   
- await redis.set(`forgot_otp:${adminEmail.toLowerCase()}`, otp, 'EX', 300);// expires in 5 min
+
+    await redis.set(`forgot_otp:${adminEmail.toLowerCase()}`, otp, 'EX', 300);// expires in 5 min
     console.log(`✅ OTP for ${adminEmail}: ${otp}`);
 
-    
+
     const msg = {
       to: adminEmail,
       from: config.SENDGRID_SENDER_EMAIL,
@@ -885,12 +885,12 @@ const verifyAdminForgotPasswordOtp = async (req, res) => {
     return res.status(400).json({ message: "Email and OTP are required" });
   }
   const emailKey = adminEmail.toLowerCase();
- const storedOtp = await redis.get(`forgot_otp:${emailKey}`);
-if (!storedOtp || storedOtp !== otp) {
-  return res.status(400).json({ message: "Invalid or expired OTP" });
-}
-await redis.del(`forgot_otp:${emailKey}`);
-await redis.set(`reset_session:${emailKey}`, true, "EX", 600); // valid for 10 minutes
+  const storedOtp = await redis.get(`forgot_otp:${emailKey}`);
+  if (!storedOtp || storedOtp !== otp) {
+    return res.status(400).json({ message: "Invalid or expired OTP" });
+  }
+  await redis.del(`forgot_otp:${emailKey}`);
+  await redis.set(`reset_session:${emailKey}`, true, "EX", 600); // valid for 10 minutes
 
   return res.status(200).json({ message: "OTP verified. You may now reset your password." });
 };
@@ -902,10 +902,10 @@ const resetAdminPassword = async (req, res) => {
   }
 
   const emailKey = adminEmail.toLowerCase();
-const sessionValid = await redis.get(`reset_session:${emailKey}`);
-if (!sessionValid) {
-  return res.status(403).json({ message: "Session expired or OTP not verified" });
-}
+  const sessionValid = await redis.get(`reset_session:${emailKey}`);
+  if (!sessionValid) {
+    return res.status(403).json({ message: "Session expired or OTP not verified" });
+  }
 
 
   try {
@@ -922,6 +922,25 @@ if (!sessionValid) {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+const getAllAdmins = async (req, res) => {
+  try {
+    const getallAdmins = await Admin.find();
+    res.status(200).json({ message: "Fetched All Admins", data: getallAdmins })
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error", error: error.message })
+  }
+}
+
+const deleteAdmins = async (req, res) => {
+  try {
+    const id = req.params.id
+    const deletedAdmin = await Admin.findByIdAndDelete(id);
+    res.status(200).json({ message: "Deleted Admin", data: deletedAdmin })
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error", error: error.message })
+  }
+}
 
 
 // const getAssignedCoupon
@@ -944,5 +963,5 @@ export {
   verifyOtpAndRegisterAdmin,
   sendAdminForgotPasswordOtp,
   verifyAdminForgotPasswordOtp,
-  resetAdminPassword
+  resetAdminPassword, getAllAdmins, deleteAdmins
 };
