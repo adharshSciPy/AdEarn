@@ -91,7 +91,7 @@ function AdminUpdate() {
                                                         style={{ flex: 1 }}
                                                     />
                                                 </div>
-                                                <label htmlFor="phone" className={styles.label}>
+                                                <label htmlFor="phone" className={styles.label} style={{ marginTop: "10px" }}>
                                                     Address
                                                 </label>
                                                 <div
@@ -113,7 +113,7 @@ function AdminUpdate() {
                                                         style={{ flex: 1 }}
                                                     />
                                                 </div>
-                                                <label htmlFor="phone" className={styles.label}>
+                                                <label htmlFor="phone" className={styles.label} style={{ marginTop: "10px" }}>
                                                     Email
                                                 </label>
                                                 <div
@@ -135,7 +135,7 @@ function AdminUpdate() {
                                                         style={{ flex: 1 }}
                                                     />
                                                 </div>
-                                                <label htmlFor="phone" className={styles.label}>
+                                                <label htmlFor="phone" className={styles.label} style={{ marginTop: "10px" }}>
                                                     Password
                                                 </label>
                                                 <div
