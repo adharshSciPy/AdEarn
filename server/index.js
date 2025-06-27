@@ -19,6 +19,7 @@ import { VideoAd } from "./model/videoadModel.js";
 import { SurveyAd } from "./model/surveyadModel.js";
 import notificationRouter from "./routes/notificationRoute.js";
 import authMiddleware from "./auth/authMiddleware.js";
+import kyc from "./model/kycModel.js";
 
 
 dotenv.config();
@@ -69,7 +70,7 @@ app.use('/api/v1/notifications',
     req.connectedUsers = connectedUsers; 
     next();
   },
-  authMiddleware, // Explicitly add auth middleware here
+  authMiddleware,
   notificationRouter
 );
 // app.get("/api/test-protected", authMiddleware, (req, res) => {
@@ -168,7 +169,31 @@ cron.schedule("0 0 * * *", async () => {
 
   console.log(`[${new Date().toISOString()}] ✅ Daily maintenance job complete`);
 });
+cron.schedule("* * * * *", async () => {
+  const timeoutThreshold = new Date(Date.now() - 5 * 60 * 1000); // 5 min ago
 
+  try {
+    const expiredAssignments = await kyc.updateMany(
+      {
+        kycStatus: "pending",
+        assignedAdminId: { $ne: null },
+        assignmentTime: { $lt: timeoutThreshold },
+      },
+      {
+        $set: {
+          assignedAdminId: null,
+          assignmentTime: null,
+        },
+      }
+    );
+
+    if (expiredAssignments.modifiedCount > 0) {
+      console.log(`🔄 Unassigned ${expiredAssignments.modifiedCount} stale KYC requests`);
+    }
+  } catch (error) {
+    console.error("❌ Error in KYC cleanup cron:", error);
+  }
+});
 
 const PORT = process.env.PORT || 8000;
 
