@@ -61,6 +61,15 @@ kycStatus: {
   type: String,
   default: null,
 },
+assignedAdminId: {
+  type: Schema.Types.ObjectId,
+  ref: "Admin",
+  default: null,
+},
+assignmentTime: {
+  type: Date,
+  default: null,
+}
 
 },{timestamps:true})
 export default mongoose.model("kyc",kycSchema)
