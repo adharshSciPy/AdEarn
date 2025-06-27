@@ -39,10 +39,6 @@ const contestEntrySchema = new mongoose.Schema({
     enum: ["Active", "Ended"],
     default: "Active"
   },
-  result: {
-    type: String,
-    default: "Pending"
-  },
   prizeImages: {
     type: [String], 
     validate: {

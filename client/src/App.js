@@ -146,7 +146,7 @@ function App() {
 
 
           {/* SuperAdmin */}
-          <Route path='/SuperadminDash' element={<SuperadminDash />} />
+          <Route path='/        ' element={<SuperadminDash />} />
           <Route path='/manageadmin' element={<ManageAdmin />} />
           <Route path='/superadminadsuser' element={<SuperAdminAdUser />} />
           <Route path='/Superadminotp' element={<Superadminotp />} />
