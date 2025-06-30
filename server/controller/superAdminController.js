@@ -1131,8 +1131,11 @@ const resetSuperAdminPassword = async (req, res) => {
   }
 };
 const getAdminJobStats = async (req, res) => {
-  const { adminId } = req.params;
-  const { type, value } = req.body; 
+  const adminId = req.params.id;
+
+  // Accept dates from either body or query
+  const startDate = req.body?.startDate || req.query?.startDate;
+  const endDate = req.body?.endDate || req.query?.endDate;
 
   try {
     const admin = await Admin.findById(adminId);
@@ -1145,32 +1148,36 @@ const getAdminJobStats = async (req, res) => {
     let approvedKycs = admin.kycsVerified || [];
     let rejectedKycs = [];
 
-    if (type && value) {
-      // If filter exists, apply date filtering
-      const { startDate, endDate } = getDateRange(type, value);
+    const isFiltering = startDate && endDate;
 
-      const filterByDate = (arr, dateField) => {
-        return arr.filter(entry => {
-          const date = new Date(entry[dateField]);
-          return date >= startDate && date < endDate;
-        });
-      };
+    const start = isFiltering ? new Date(startDate) : null;
+    const end = isFiltering ? new Date(new Date(endDate).setHours(23, 59, 59, 999)) : null;
 
+    const filterByDate = (arr, dateField) => {
+      return arr.filter(entry => {
+        const date = new Date(entry[dateField]);
+        return date >= start && date <= end;
+      });
+    };
+
+    if (isFiltering) {
       verifiedAds = filterByDate(verifiedAds, "verifiedAt").filter(a => a.status === "verified");
       rejectedAds = filterByDate(admin.verifiedAds || [], "verifiedAt").filter(a => a.status === "rejected");
+
       approvedKycs = filterByDate(approvedKycs, "verifiedAt").filter(k => k.status === "approved");
       rejectedKycs = filterByDate(admin.kycsVerified || [], "verifiedAt").filter(k => k.status === "rejected");
     } else {
-      // No filter: return all data
+      // If no filter applied, just separate by status
       rejectedAds = verifiedAds.filter(a => a.status === "rejected");
       verifiedAds = verifiedAds.filter(a => a.status === "verified");
+
       rejectedKycs = approvedKycs.filter(k => k.status === "rejected");
       approvedKycs = approvedKycs.filter(k => k.status === "approved");
     }
 
     return res.status(200).json({
-      message: type && value
-        ? `Admin job stats filtered by ${type}: ${value}`
+      message: isFiltering
+        ? `Admin job stats filtered from ${startDate} to ${endDate}`
         : "All admin job logs (no date filter applied)",
       verifiedAds,
       rejectedAds,
@@ -1182,6 +1189,9 @@ const getAdminJobStats = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
+
 
 
 
