@@ -6,9 +6,11 @@ import { Button, Flex, Progress, Tooltip, Pagination, Select } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import baseUrl from '../../../baseurl';
 import axios from "axios"
+import { useParams } from 'react-router-dom';
 
 function KYCVerify() {
 
+  const id = useParams();
   const [kycRequested, setKycRequested] = useState([])
   const [verifyKYC, setVerifyKYC] = useState([])
 
@@ -25,6 +27,19 @@ function KYCVerify() {
 
     verifyKYC()
   }, [])
+
+  const assignToadmin = async (kycId) => {
+    console.log("kycid", kycId)
+    const adminId = id.id;
+    console.log("adminid", adminId)
+    try {
+      const response = await axios.post(`${baseUrl}/api/v1/admin/assign-kyc-admin/${adminId}`, { kycId });
+      setKycRequested((prev) => prev.filter((kyc) => kyc._id !== kycId))
+      console.log(response)
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   const verifyKyc = async (id) => {
     try {
@@ -237,23 +252,23 @@ function KYCVerify() {
                     <tr>
                       <th>User</th>
                       <th>Date</th>
-                      <th>Kyc Verification</th>
+                      <th>Move to Admin</th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginatedVerifyAds.map((ad) => (
                       <tr key={ad._id}>
                         <td>
-                          {ad.firstName}{" "}{ad.lastName}<br />
+                          {ad.fullName}<br />
                           {ad.uniqueUserId}
                         </td>
                         <td>{formatDate(ad.updatedAt)}</td>
                         <td>
                           <button
                             className={styles.redeemBtn}
-                            onClick={() => verifyKyc(ad._id)}
+                            onClick={() => assignToadmin(ad._id)}
                           >
-                            {'Verify'}
+                            {'Send'}
                           </button>
                         </td>
                       </tr>
