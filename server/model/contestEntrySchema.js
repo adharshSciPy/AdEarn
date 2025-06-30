@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 
 
-const contestEntrySchema = new mongoose.Schema({
+const contestEntrySchema = new Schema({
   contestName: {
     type: String,
     required: true

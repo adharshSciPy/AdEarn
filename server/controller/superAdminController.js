@@ -330,10 +330,13 @@ const distributeWelcomeBonus = async (newUserId) => {
   }
 };
 
+
+
 const createContest = async (req, res) => {
   try {
-    console.log("BODY:", req.body); // 👈 Add here
+    console.log("BODY:", req.body);
     console.log("FILES:", req.files);
+
     const {
       contestName,
       contestNumber,
@@ -342,6 +345,7 @@ const createContest = async (req, res) => {
       entryStars,
       maxParticipants,
       result,
+      winnerSelectionType // <-- new field
     } = req.body;
 
     // Basic required fields validation
@@ -356,6 +360,12 @@ const createContest = async (req, res) => {
       return res
         .status(400)
         .json({ message: "All required fields must be filled" });
+    }
+
+    // Validate winnerSelectionType
+    const validTypes = ["Manual", "Automatic"];
+    if (winnerSelectionType && !validTypes.includes(winnerSelectionType)) {
+      return res.status(400).json({ message: "Invalid winnerSelectionType" });
     }
 
     // Check for existing contest number
@@ -384,17 +394,23 @@ const createContest = async (req, res) => {
       totalEntries: 0,
       result: result || "Pending",
       prizeImages,
+      winnerSelectionType: winnerSelectionType || "Manual" // default to Manual
     });
 
     await contest.save();
+
     return res
       .status(201)
       .json({ message: "Contest created successfully", contest });
+
   } catch (error) {
     console.error("Error creating contest:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export default createContest;
+
 const generateCoupons = async (req, res) => {
   const { couponCount, perStarCount, generationDate, expiryDate, requestNote } =
     req.body;
