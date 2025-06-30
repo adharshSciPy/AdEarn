@@ -7,13 +7,13 @@ import SuperAdminWallet from "../model/superAdminWallet.js";
 import Coupon from "../model/couponModel.js";
 import WelcomeBonusSetting from "../model/WelcomeBonusSetting.js";
 import ContestEntry from "../model/contestEntrySchema.js";
+import ContestParticipant from "../model/contestParticipantsSchema.js"
 // import userEntrySchema from "../model/superAdminWallet.js"
 import { UserWallet } from "../model/userWallet.js";
 import kyc from "../model/kycModel.js";
 import { passwordValidator } from "../utils/passwordValidator.js";
 import { sendNotification } from "../utils/sendNotifications.js";
 import CouponBatch from "../model/couponBatchModel.js";
-
 import mongoose from "mongoose";
 import couponBatchModel from "../model/couponBatchModel.js";
 import sgMail from "@sendgrid/mail";
@@ -807,7 +807,62 @@ const registerUserToContest = async (req, res) => {
       .json({ message: "Server error", error: error.message });
   }
 };
+const autoSelectWinners = async (req, res) => {
+  const { contestId } = req.params;
+  const numberOfWinners = parseInt(req.query.count) || 3; // Optional ?count=3
 
+  try {
+    if (!ObjectId.isValid(contestId)) {
+      return res.status(400).json({ message: "Invalid contest ID" });
+    }
+
+    const contest = await ContestEntry.findById(contestId);
+    if (!contest) {
+      return res.status(404).json({ message: "Contest not found" });
+    }
+
+    const participants = await ContestParticipant.find({ contestId });
+
+    if (participants.length < numberOfWinners) {
+      return res.status(400).json({ message: "Not enough participants to select winners" });
+    }
+
+    // Randomize and pick winners
+    const shuffled = participants.sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, numberOfWinners);
+
+    // Update each winner
+    const winnerEntries = [];
+
+    for (let i = 0; i < selected.length; i++) {
+      const winner = selected[i];
+
+      await ContestParticipant.findByIdAndUpdate(winner._id, {
+        isWinner: true,
+        position: i + 1,
+      });
+
+      winnerEntries.push({
+        userId: winner.userId,
+        position: i + 1
+      });
+    }
+
+    // Update contest
+    contest.winners = winnerEntries;
+    contest.status = "Ended";
+    contest.winnerSelectionType = "Automatic";
+    await contest.save();
+
+    res.status(200).json({
+      message: "Winners selected automatically",
+      winners: winnerEntries
+    });
+  } catch (err) {
+    console.error("Auto Winner Selection Error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
 // to delete users
 
 const deleteUser = async (req, res) => {
@@ -1145,6 +1200,7 @@ export {
   topUpCompanyRewardStars,
   patchSuperAdminWallet,
   registerUserToContest,
+  autoSelectWinners,
   deleteUser,
   blacklistUser,
   getAllCoupons,
