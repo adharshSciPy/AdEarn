@@ -58,6 +58,7 @@ superAdminRouter
   .route("/forgot-password/reset-password")
   .post(resetSuperAdminPassword);
 superAdminRouter.route('/admin-job-status/:id').get(getAdminJobStats)
+superAdminRouter.route('/admin-job-status/:id').get(getAdminJobStats)
 
 
 export default superAdminRouter;
