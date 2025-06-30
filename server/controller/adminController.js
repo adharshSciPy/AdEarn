@@ -948,10 +948,10 @@ const deleteAdmins = async (req, res) => {
 // const getAssignedCoupon
 
 
-// to assign into respectiveadmins dash
+// to assign kyc into respectiveadmins dash for verification with 5min timeout
 const assignKycToAdmin = async (req, res) => {
   const { kycId } = req.body;
-  const adminId = req.params.id; // ✅ correct way to access adminId from the route
+  const adminId = req.params.id; 
 
   try {
     const kycDoc = await kyc.findById(kycId);
@@ -985,6 +985,139 @@ const assignKycToAdmin = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+// to assign ads into respectiveadmins dash for verification with 5min timeout
+const assignAdToAdmin = async (req, res) => {
+  const { adId } = req.body; 
+  const adminId = req.params.id;
+
+  try {
+    const adDoc = await Ad.findById(adId)
+      .populate("imgAdRef")
+      .populate("videoAdRef")
+      .populate("surveyAdRef");
+
+    if (!adDoc) {
+      return res.status(404).json({ message: "Ad not found" });
+    }
+
+    
+    const adTypeRef =
+      adDoc.imgAdRef || adDoc.videoAdRef || adDoc.surveyAdRef;
+
+    if (!adTypeRef) {
+      return res.status(400).json({ message: "No associated ad found in this wrapper" });
+    }
+
+    
+    if (adTypeRef.isAdVerified || adTypeRef.isAdRejected) {
+      return res.status(400).json({ message: "Ad is already processed" });
+    }
+
+    // Prevent reassigning if still within the 5 minute lock window
+    if (
+      adTypeRef.assignedAdminId &&
+      new Date() - new Date(adTypeRef.assignmentTime) < 5 * 60 * 1000
+    ) {
+      return res.status(409).json({ message: "Ad is already assigned" });
+    }
+
+    // Assign the ad
+    adTypeRef.assignedAdminId = adminId;
+    adTypeRef.assignmentTime = new Date();
+    await adTypeRef.save();
+
+    return res.status(200).json({
+      message: "Ad assigned to admin",
+      ad: adTypeRef,
+    });
+
+  } catch (err) {
+    console.error("Error assigning ad:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+const fetchKycsAssignedToAdmin = async (req, res) => {
+  const adminId = req.params.id;
+
+  try {
+    const assignedKycs = await kyc.find({
+      assignedAdminId: adminId,
+      kycStatus: "pending",
+      assignmentTime: { $gte: new Date(Date.now() - 5 * 60 * 1000) }, 
+    }).populate("userId");
+
+    if (!assignedKycs.length) {
+      return res.status(404).json({ message: "No KYCs assigned to this admin" });
+    }
+
+    return res.status(200).json({
+      message: "Fetched KYCs assigned to admin",
+      data: assignedKycs,
+    });
+  } catch (error) {
+    console.error("Error fetching assigned KYCs:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+const fetchAdsAssignedToAdmin = async (req, res) => {
+  const adminId = req.params.id;
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
+  try {
+    const ads = await Ad.find()
+      .populate({
+        path: "imgAdRef",
+        match: {
+          assignedAdminId: adminId,
+          assignmentTime: { $gte: fiveMinutesAgo },
+          isAdVerified: false,
+          isAdRejected: false,
+        },
+      })
+      .populate({
+        path: "videoAdRef",
+        match: {
+          assignedAdminId: adminId,
+          assignmentTime: { $gte: fiveMinutesAgo },
+          isAdVerified: false,
+          isAdRejected: false,
+        },
+      })
+      .populate({
+        path: "surveyAdRef",
+        match: {
+          assignedAdminId: adminId,
+          assignmentTime: { $gte: fiveMinutesAgo },
+          isAdVerified: false,
+          isAdRejected: false,
+        },
+      });
+
+    const assignedAds = ads.filter(
+      (ad) => ad.imgAdRef || ad.videoAdRef || ad.surveyAdRef
+    );
+
+    if (!assignedAds.length) {
+      return res.status(404).json({ message: "No ads assigned to this admin" });
+    }
+
+    const result = assignedAds.map((ad) => ({
+      _id: ad._id,
+      imageAd: ad.imgAdRef || null,
+      videoAd: ad.videoAdRef || null,
+      surveyAd: ad.surveyAdRef || null,
+    }));
+
+    return res.status(200).json({
+      message: "Fetched ads assigned to admin",
+      ads: result,
+    });
+  } catch (err) {
+    console.error("Error fetching assigned ads:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 
 
 
@@ -1011,5 +1144,8 @@ export {
   resetAdminPassword, 
   getAllAdmins, 
   deleteAdmins,
-  assignKycToAdmin
+  assignKycToAdmin,
+  assignAdToAdmin,
+  fetchAdsAssignedToAdmin,
+  fetchKycsAssignedToAdmin
 };
