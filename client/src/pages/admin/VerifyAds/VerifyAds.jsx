@@ -92,14 +92,21 @@ function VerifyAds() {
                     src={`${baseUrl}${unverifiedAd.videoAd.videoUrl}`}
                     controls
                   />
-                ) : (
+                ) : unverifiedAd?.imageAd?.imageUrl ? (
                   <img
                     className={styles.image}
-                    src={`${baseUrl}${unverifiedAd?.imageAd?.imageUrl || ""}`}
+                    src={`${baseUrl}${unverifiedAd.imageAd.imageUrl}`}
                     alt=""
                   />
-                )}
+                ) : unverifiedAd?.surveyAd?.imageUrl ? (
+                  <img
+                    className={styles.image}
+                    src={`${baseUrl}${unverifiedAd.surveyAd.imageUrl}`}
+                    alt=""
+                  />
+                ) : null}
               </div>
+
               <div className={styles.previewtwo}>
                 <div
                   style={{
@@ -137,6 +144,8 @@ function VerifyAds() {
                         <p>{unverifiedAd?.imageAd?.userViewsNeeded}</p>
                       ) : unverifiedAd?.videoAd?.userViewsNeeded ? (
                         <p>{unverifiedAd?.videoAd?.userViewsNeeded}</p>
+                      ) : unverifiedAd?.surveyAd?.userViewsNeeded ? (
+                        <p>{unverifiedAd?.surveyAd?.userViewsNeeded}</p>
                       ) : null}
                     </div>
                   </div>
@@ -157,6 +166,8 @@ function VerifyAds() {
                         <p>{unverifiedAd?.imageAd?.userViewsNeeded}</p>
                       ) : unverifiedAd?.videoAd?.userViewsNeeded ? (
                         <p>{unverifiedAd?.videoAd?.userViewsNeeded}</p>
+                      ) : unverifiedAd?.surveyAd?.userViewsNeeded ? (
+                        <p>{unverifiedAd?.surveyAd?.userViewsNeeded}</p>
                       ) : null}
                     </div>
                   </div>
@@ -169,6 +180,8 @@ function VerifyAds() {
                         <p>{unverifiedAd?.imageAd?.totalStarsAllocated}</p>
                       ) : unverifiedAd?.videoAd?.totalStarsAllocated ? (
                         <p>{unverifiedAd?.videoAd?.totalStarsAllocated}</p>
+                      ) : unverifiedAd?.surveyAd?.totalStarsAllocated ? (
+                        <p>{unverifiedAd?.surveyAd?.totalStarsAllocated}</p>
                       ) : null}
                     </div>
                   </div>
@@ -189,6 +202,8 @@ function VerifyAds() {
                         <p>{unverifiedAd?.imageAd?.createdAt}</p>
                       ) : unverifiedAd?.videoAd?.createdAt ? (
                         <p>{unverifiedAd?.videoAd?.createdAt}</p>
+                      ) : unverifiedAd?.surveyAd?.createdAt ? (
+                        <p>{unverifiedAd?.surveyAd?.createdAt}</p>
                       ) : null}
                     </div>
                   </div>
@@ -206,7 +221,7 @@ function VerifyAds() {
                       <p>{unverifiedAd?.imageAd?.title}</p>
                     ) : unverifiedAd?.videoAd?.title ? (
                       <p>{unverifiedAd?.videoAd?.title}</p>
-                    ) :unverifiedAd?.surveyAd?.title ? (
+                    ) : unverifiedAd?.surveyAd?.title ? (
                       <p>{unverifiedAd?.surveyAd?.title}</p>
                     ) : null}
                   </div>
@@ -220,7 +235,7 @@ function VerifyAds() {
                       <p>{unverifiedAd?.imageAd?.description}</p>
                     ) : unverifiedAd?.videoAd?.description ? (
                       <p>{unverifiedAd?.videoAd?.description}</p>
-                    ) :unverifiedAd?.surveyAd?.description ? (
+                    ) : unverifiedAd?.surveyAd?.description ? (
                       <p>{unverifiedAd?.surveyAd?.description}</p>
                     ) : null}
                   </div>
@@ -250,6 +265,43 @@ function VerifyAds() {
                     </div>
                   </div>
                 )}
+                <div className={styles.adsnametext}>
+                  <div>
+                    <h1>Ads Question</h1>
+                  </div>
+                  <div>
+                    <div>
+                      {unverifiedAd?.surveyAd?.questions?.map((item, index) => (
+                        <div key={index} style={{ marginBottom: "15px" }}>
+                          <p style={{ fontSize: "20px", fontWeight: "bold" }}>
+                            {item.questionText}
+                          </p>
+                          <div style={{display:"flex"}}>
+                            {item.options?.map((ans, i) => (
+                            <div className="" >
+                              <label 
+                                key={i}
+                                style={{ display: "block", marginTop: "10px",marginLeft:"10px" }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  disabled
+                                  style={{
+                                    marginRight: "8px",
+                                    marginTop: "10px",
+                                  }}
+                                />
+                                {ans}
+                              </label>
+                            </div>
+                          ))}
+                          </div>
+                          
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 

@@ -80,6 +80,7 @@ import Userstar from './pages/superadmin/StarDistribution/UserStar/UserStar';
 import WelcomeStar from './pages/superadmin/StarDistribution/WelcomeStar/WelcomeStar'
 import Contest from './pages/superadmin/Contest/Contest';
 import ContestWinner from './pages/superadmin/ContestWinner/ContestWinner';
+import AdminListing from './pages/superadmin/AdminListing/AdminListing';
 
 
 
@@ -181,6 +182,8 @@ function App() {
           <Route path='/superadmincontest' element={<Contest />} />
           <Route path='/superadmincontestwinner' element={<ContestWinner />} />
           <Route path='/SuperadminLogin' element={<SuperAdminLogin />} />
+          <Route path='/Superadminadminlist' element={<AdminListing />} />
+
 
 
 

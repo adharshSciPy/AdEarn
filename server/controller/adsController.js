@@ -644,13 +644,18 @@ const fetchSingleUnverifiedAd = async (req, res) => {
 // fetching all the ads with isVerified:false for verification
 const fetchAdsForVerification = async (req, res) => {
   try {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
     const allAds = await Ad.find()
       .populate({
         path: "imgAdRef",
         match: {
           isAdVerified: false,
           isAdRejected: false,
-          adRejectedTime: { $exists: false },
+          $or: [
+            { assignedAdminId: null },
+            { assignmentTime: { $lt: fiveMinutesAgo } }
+          ]
         },
       })
       .populate({
@@ -658,7 +663,10 @@ const fetchAdsForVerification = async (req, res) => {
         match: {
           isAdVerified: false,
           isAdRejected: false,
-          adRejectedTime: { $exists: false },
+          $or: [
+            { assignedAdminId: null },
+            { assignmentTime: { $lt: fiveMinutesAgo } }
+          ]
         },
       })
       .populate({
@@ -666,19 +674,19 @@ const fetchAdsForVerification = async (req, res) => {
         match: {
           isAdVerified: false,
           isAdRejected: false,
-          adRejectedTime: { $exists: false },
+          $or: [
+            { assignedAdminId: null },
+            { assignmentTime: { $lt: fiveMinutesAgo } }
+          ]
         },
       });
 
-    // Filter out ads where all refs are null (due to population matching)
     const validAds = allAds.filter(
       (ad) => ad.imgAdRef || ad.videoAdRef || ad.surveyAdRef
     );
 
-    if (validAds.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No unverified and non-rejected ads found" });
+    if (!validAds.length) {
+      return res.status(404).json({ message: "No ads available for verification" });
     }
 
     const adsWithVerificationStatus = validAds.map((ad) => ({
@@ -703,12 +711,14 @@ const fetchAdsForVerification = async (req, res) => {
         : null,
     }));
 
-    res.status(200).json({ ads: adsWithVerificationStatus });
+    return res.status(200).json({ ads: adsWithVerificationStatus });
+
   } catch (error) {
     console.error("Error fetching ads for verification:", error);
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 // fetching all the ads with isVerified:true to display to users (ads that have been verified by Admin)
 const fetchVerifiedAds = async (req, res) => {
   try {

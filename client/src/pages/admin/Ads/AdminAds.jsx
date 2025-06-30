@@ -100,9 +100,12 @@ function AdminAds() {
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedMonth, selectedYear]);
- const filteredAds = (ads) => {
+  const filteredAds = (ads) => {
     return ads.filter((ad) => {
-      const dateStr = ad.imageAd?.createdAt || ad.videoAd?.createdAt || ad.surveyAd?.createdAt;
+      const dateStr =
+        ad.imageAd?.createdAt ||
+        ad.videoAd?.createdAt ||
+        ad.surveyAd?.createdAt;
       if (!dateStr) return false;
       const date = new Date(dateStr);
       const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -200,16 +203,11 @@ function AdminAds() {
                     {filteredVerifiedAds.map((ad, index) => (
                       <tr key={index}>
                         <td>
-                          <td>
-                            {ad.imageAd?.title ? (
-                              <p>{ad.imageAd.title}</p>
-                            ) : ad.videoAd?.title ? (
-                              <p>{ad.videoAd.title}</p>
-                            ) : ad.surveyAd?.title ? (
-                              <p>{ad.surveyAd.title}</p>
-                            ) : null}
-                          </td>
+                          {ad.imageAd?.title ||
+                            ad.videoAd?.title ||
+                            ad.surveyAd?.title}
                         </td>
+
                         <td>
                           {ad.imageAd?.userViewsNeeded ? (
                             <p>{ad.imageAd?.userViewsNeeded}</p>
@@ -273,19 +271,40 @@ function AdminAds() {
                       <th>Ads Verification</th>
                     </tr>
                   </thead>
-                   <tbody>
+                  <tbody>
                     {filteredAds(unverifiedAds).map((ad, index) => (
                       <tr key={index}>
-                        <td>{
-                          new Date(ad.imageAd?.createdAt || ad.videoAd?.createdAt || ad.surveyAd?.createdAt)
-                            .toISOString()
-                            .split("T")[0]
-                        }</td>
-                        <td>{ad.imageAd?.title || ad.videoAd?.title || ad.surveyAd?.title}</td>
-                        <td>{ad.imageAd?.userViewsNeeded || ad.videoAd?.userViewsNeeded || ad.surveyAd?.userViewsNeeded}</td>
-                        <td>{ad.imageAd?.totalStarsAllocated || ad.videoAd?.totalStarsAllocated || ad.surveyAd?.totalStarsAllocated}</td>
                         <td>
-                          <button className={styles.redeemBtn} onClick={() => handlenavigate(ad._id)}>
+                          {
+                            new Date(
+                              ad.imageAd?.createdAt ||
+                                ad.videoAd?.createdAt ||
+                                ad.surveyAd?.createdAt
+                            )
+                              .toISOString()
+                              .split("T")[0]
+                          }
+                        </td>
+                        <td>
+                          {ad.imageAd?.title ||
+                            ad.videoAd?.title ||
+                            ad.surveyAd?.title}
+                        </td>
+                        <td>
+                          {ad.imageAd?.userViewsNeeded ||
+                            ad.videoAd?.userViewsNeeded ||
+                            ad.surveyAd?.userViewsNeeded}
+                        </td>
+                        <td>
+                          {ad.imageAd?.totalStarsAllocated ||
+                            ad.videoAd?.totalStarsAllocated ||
+                            ad.surveyAd?.totalStarsAllocated}
+                        </td>
+                        <td>
+                          <button
+                            className={styles.redeemBtn}
+                            onClick={() => handlenavigate(ad._id)}
+                          >
                             Verify Now
                           </button>
                         </td>

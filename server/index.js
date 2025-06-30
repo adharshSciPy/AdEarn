@@ -194,6 +194,37 @@ cron.schedule("* * * * *", async () => {
     console.error("❌ Error in KYC cleanup cron:", error);
   }
 });
+cron.schedule("* * * * *", async () => {
+  const timeoutThreshold = new Date(Date.now() - 5 * 60 * 1000);
+
+  try {
+    const models = [ImageAd, VideoAd, SurveyAd];
+
+    for (const Model of models) {
+      const result = await Model.updateMany(
+        {
+          isAdVerified: false,
+          isAdRejected: false,
+          assignedAdminId: { $ne: null },
+          assignmentTime: { $lt: timeoutThreshold },
+        },
+        {
+          $set: {
+            assignedAdminId: null,
+            assignmentTime: null,
+          },
+        }
+      );
+
+      if (result.modifiedCount > 0) {
+        console.log(`🔄 Unassigned ${result.modifiedCount} stale ${Model.modelName} ads`);
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error in Ad cleanup cron:", error);
+  }
+});
+
 
 const PORT = process.env.PORT || 8000;
 
