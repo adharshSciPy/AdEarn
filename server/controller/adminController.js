@@ -198,31 +198,33 @@ const getSingleUser = async (req, res) => {
 // to fetch users who have requested for Kyc verification
 const fetchKycUploadedUsers = async (req, res) => {
   try {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
 
-    const usersWithKyc = await User.find({
-      kycDetails: { $exists: true, $ne: null }
-    }).populate({
-      path: 'kycDetails',
-      match: { kycStatus: 'pending' }
-    });
+    const pendingKycs = await kyc.find({
+      kycStatus: "pending",
+      $or: [
+        { assignedAdminId: null },
+        { assignmentTime: { $lte: fiveMinutesAgo } }
+      ]
+    }).populate("userId");
 
-
-    const pendingUsers = usersWithKyc.filter(user => user.kycDetails);
-
-    if (pendingUsers.length === 0) {
-      return res.status(400).json({ message: "No pending KYC verification requests" });
+    if (!pendingKycs.length) {
+      return res.status(404).json({ message: "No pending KYC verification requests" });
     }
 
     return res.status(200).json({
-      message: "Fetched users with pending KYC",
-      totalPendingUsers: pendingUsers.length,
-      data: pendingUsers,
+      message: "Fetched unassigned or expired pending KYCs",
+      totalPendingUsers: pendingKycs.length,
+      data: pendingKycs,
     });
   } catch (error) {
     console.error("Error in fetchKycUploadedUsers:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
+
 
 // to view each induvidual for kyc verification
 const fetchSingleKycUploadUser = async (req, res) => {
@@ -944,6 +946,49 @@ const deleteAdmins = async (req, res) => {
 
 
 // const getAssignedCoupon
+
+
+// to assign into respectiveadmins dash
+const assignKycToAdmin = async (req, res) => {
+  const { kycId } = req.body;
+  const adminId = req.params.id; // ✅ correct way to access adminId from the route
+
+  try {
+    const kycDoc = await kyc.findById(kycId);
+
+    if (!kycDoc || kycDoc.kycStatus !== "pending") {
+      return res.status(400).json({ message: "Invalid or already processed KYC" });
+    }
+
+    console.log("Before Assignment:", kycDoc.assignedAdminId);
+    console.log("Admin to assign:", adminId);
+
+    // If already assigned and within 5 mins, block re-assignment
+    if (
+      kycDoc.assignedAdminId &&
+      new Date() - new Date(kycDoc.assignmentTime) < 5 * 60 * 1000
+    ) {
+      return res.status(409).json({ message: "KYC is already assigned" });
+    }
+
+    // Assign the KYC to the admin
+    kycDoc.assignedAdminId = adminId;
+    kycDoc.assignmentTime = new Date();
+    await kycDoc.save();
+
+    console.log("Assigned Admin (after save):", kycDoc.assignedAdminId);
+
+    return res.status(200).json({ message: "KYC assigned to admin", kycDoc });
+
+  } catch (error) {
+    console.error("Error in assignKycToAdmin:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
+
 export {
   registerAdmin,
   adminLogin,
@@ -963,5 +1008,8 @@ export {
   verifyOtpAndRegisterAdmin,
   sendAdminForgotPasswordOtp,
   verifyAdminForgotPasswordOtp,
-  resetAdminPassword, getAllAdmins, deleteAdmins
+  resetAdminPassword, 
+  getAllAdmins, 
+  deleteAdmins,
+  assignKycToAdmin
 };

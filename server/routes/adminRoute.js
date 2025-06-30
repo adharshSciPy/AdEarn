@@ -1,7 +1,8 @@
 import { Router } from "express";
 import {
     registerAdmin, adminLogin, getAllUsers, fetchKycUploadedUsers, fetchSingleKycUploadUser, getSingleUser, verifyKyc, rejectKyc, verifyAdById, getAdminWallet, rejectAdById, kycVerifiedUsers, fetchUserKycStatus, sendOtpToAdmin, verifyOtpAndRegisterAdmin, sendAdminForgotPasswordOtp, resetAdminPassword, verifyAdminForgotPasswordOtp,
-    getAllAdmins, deleteAdmins
+    getAllAdmins, deleteAdmins,
+    assignKycToAdmin
 } from "../controller/adminController.js";
 const adminRouter = Router()
 
@@ -25,7 +26,10 @@ adminRouter.route('/forgot-password/send-otp').post(sendAdminForgotPasswordOtp);
 adminRouter.route('/forgot-password/verify-otp').post(verifyAdminForgotPasswordOtp);
 adminRouter.route('/forgot-password/reset-password').post(resetAdminPassword);
 adminRouter.route('/getallAdmins').get(getAllAdmins);
-adminRouter.route('/deleteAdmin/:id').delete(deleteAdmins)
+adminRouter.route('/deleteAdmin/:id').delete(deleteAdmins);
+adminRouter.route('/assign-kyc-admin/:id').post(assignKycToAdmin);//admin can mannually select kyc to verify ;
+
+
 
 
 
