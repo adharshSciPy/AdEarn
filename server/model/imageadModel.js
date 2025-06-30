@@ -143,6 +143,16 @@ const imageAd = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    assignedAdminId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Admin",
+  default: null,
+},
+assignmentTime: {
+  type: Date,
+  default: null,
+}
+
     
   },
 
