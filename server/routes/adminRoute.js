@@ -2,7 +2,10 @@ import { Router } from "express";
 import {
     registerAdmin, adminLogin, getAllUsers, fetchKycUploadedUsers, fetchSingleKycUploadUser, getSingleUser, verifyKyc, rejectKyc, verifyAdById, getAdminWallet, rejectAdById, kycVerifiedUsers, fetchUserKycStatus, sendOtpToAdmin, verifyOtpAndRegisterAdmin, sendAdminForgotPasswordOtp, resetAdminPassword, verifyAdminForgotPasswordOtp,
     getAllAdmins, deleteAdmins,
-    assignKycToAdmin
+    assignKycToAdmin,
+    assignAdToAdmin,
+    fetchKycsAssignedToAdmin,
+    fetchAdsAssignedToAdmin
 } from "../controller/adminController.js";
 const adminRouter = Router()
 
@@ -28,6 +31,9 @@ adminRouter.route('/forgot-password/reset-password').post(resetAdminPassword);
 adminRouter.route('/getallAdmins').get(getAllAdmins);
 adminRouter.route('/deleteAdmin/:id').delete(deleteAdmins);
 adminRouter.route('/assign-kyc-admin/:id').post(assignKycToAdmin);//admin can mannually select kyc to verify ;
+adminRouter.route('/assign-ads-admin/:id').post(assignAdToAdmin);//admin can mannually select kyc to verify ;
+adminRouter.route('/assigned-kyc/:id').get(fetchKycsAssignedToAdmin);
+adminRouter.route('/assigned-ads/:id').get(fetchAdsAssignedToAdmin);
 
 
 
