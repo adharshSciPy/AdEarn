@@ -12,6 +12,7 @@ import {
     PushpinFilled,
 } from "@ant-design/icons";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 const { SubMenu } = Menu;
 
 
@@ -21,6 +22,7 @@ function Sidebar() {
     const location = useLocation();
     const [openKeys, setOpenKeys] = useState([]);
     const pathname = location.pathname;
+    const id = useSelector((state) => state.admin.id)
 
     const onOpenChange = (keys) => {
         const latestOpenKey = keys.find(key => !openKeys.includes(key));
@@ -57,18 +59,18 @@ function Sidebar() {
                 key: "home", label: "Home", icon: <HomeOutlined />, path: "/Admindashboard",
             },
             {
-                key: "ads", label: "Ads", icon: <UserOutlined />, path: "/AdminAds",
+                key: "ads", label: "Ads", icon: <UserOutlined />, path: `/AdminAds/${id}`,
             },
             {
                 key: "coupons", label: "Coupons", icon: <UserOutlined />,
                 children: [
-                    { key: "coupons-all", label: "All Coupons", path: "/AdminCoupon" },
+                    { key: "coupons-all", label: "All Coupons", path: `/AdminCoupon/${id}` },
                     { key: "coupons-new", label: "New Coupons", path: "/demo" },
                 ]
 
             },
             {
-                key: "adminkyc", label: "KYCVerify", icon: <UserOutlined />, path: "/AdminKYC",
+                key: "adminkyc", label: "KYCVerify", icon: <UserOutlined />, path: `/AdminKYC/${id}`,
             },
             {
                 key: "contest", label: "Contest", icon: <UserOutlined />,

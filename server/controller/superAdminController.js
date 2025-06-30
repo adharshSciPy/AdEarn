@@ -7,19 +7,20 @@ import SuperAdminWallet from "../model/superAdminWallet.js";
 import Coupon from "../model/couponModel.js";
 import WelcomeBonusSetting from "../model/WelcomeBonusSetting.js";
 import ContestEntry from "../model/contestEntrySchema.js";
+import ContestParticipant from "../model/contestParticipantsSchema.js"
 // import userEntrySchema from "../model/superAdminWallet.js"
 import { UserWallet } from "../model/userWallet.js";
 import kyc from "../model/kycModel.js";
 import { passwordValidator } from "../utils/passwordValidator.js";
 import { sendNotification } from "../utils/sendNotifications.js";
 import CouponBatch from "../model/couponBatchModel.js";
-
 import mongoose from "mongoose";
 import couponBatchModel from "../model/couponBatchModel.js";
 import sgMail from "@sendgrid/mail";
 import crypto from "crypto";
 import redis from "../redisClient.js";
 import config from "../config.js";
+import getDateRange from "../utils/getDateRange.js";
 const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
@@ -330,10 +331,13 @@ const distributeWelcomeBonus = async (newUserId) => {
   }
 };
 
+
+
 const createContest = async (req, res) => {
   try {
-    console.log("BODY:", req.body); // 👈 Add here
+    console.log("BODY:", req.body);
     console.log("FILES:", req.files);
+
     const {
       contestName,
       contestNumber,
@@ -342,6 +346,7 @@ const createContest = async (req, res) => {
       entryStars,
       maxParticipants,
       result,
+      winnerSelectionType // <-- new field
     } = req.body;
 
     // Basic required fields validation
@@ -356,6 +361,12 @@ const createContest = async (req, res) => {
       return res
         .status(400)
         .json({ message: "All required fields must be filled" });
+    }
+
+    // Validate winnerSelectionType
+    const validTypes = ["Manual", "Automatic"];
+    if (winnerSelectionType && !validTypes.includes(winnerSelectionType)) {
+      return res.status(400).json({ message: "Invalid winnerSelectionType" });
     }
 
     // Check for existing contest number
@@ -384,17 +395,23 @@ const createContest = async (req, res) => {
       totalEntries: 0,
       result: result || "Pending",
       prizeImages,
+      winnerSelectionType: winnerSelectionType || "Manual" // default to Manual
     });
 
     await contest.save();
+
     return res
       .status(201)
       .json({ message: "Contest created successfully", contest });
+
   } catch (error) {
     console.error("Error creating contest:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export default createContest;
+
 const generateCoupons = async (req, res) => {
   const { couponCount, perStarCount, generationDate, expiryDate, requestNote } =
     req.body;
@@ -791,7 +808,62 @@ const registerUserToContest = async (req, res) => {
       .json({ message: "Server error", error: error.message });
   }
 };
+const autoSelectWinners = async (req, res) => {
+  const { contestId } = req.params;
+  const numberOfWinners = parseInt(req.query.count) || 3; // Optional ?count=3
 
+  try {
+    if (!ObjectId.isValid(contestId)) {
+      return res.status(400).json({ message: "Invalid contest ID" });
+    }
+
+    const contest = await ContestEntry.findById(contestId);
+    if (!contest) {
+      return res.status(404).json({ message: "Contest not found" });
+    }
+
+    const participants = await ContestParticipant.find({ contestId });
+
+    if (participants.length < numberOfWinners) {
+      return res.status(400).json({ message: "Not enough participants to select winners" });
+    }
+
+    // Randomize and pick winners
+    const shuffled = participants.sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, numberOfWinners);
+
+    // Update each winner
+    const winnerEntries = [];
+
+    for (let i = 0; i < selected.length; i++) {
+      const winner = selected[i];
+
+      await ContestParticipant.findByIdAndUpdate(winner._id, {
+        isWinner: true,
+        position: i + 1,
+      });
+
+      winnerEntries.push({
+        userId: winner.userId,
+        position: i + 1
+      });
+    }
+
+    // Update contest
+    contest.winners = winnerEntries;
+    contest.status = "Ended";
+    contest.winnerSelectionType = "Automatic";
+    await contest.save();
+
+    res.status(200).json({
+      message: "Winners selected automatically",
+      winners: winnerEntries
+    });
+  } catch (err) {
+    console.error("Auto Winner Selection Error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
 // to delete users
 
 const deleteUser = async (req, res) => {
@@ -1113,6 +1185,70 @@ const resetSuperAdminPassword = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+const getAdminJobStats = async (req, res) => {
+  const adminId = req.params.id;
+
+  // Accept dates from either body or query
+  const startDate = req.body?.startDate || req.query?.startDate;
+  const endDate = req.body?.endDate || req.query?.endDate;
+
+  try {
+    const admin = await Admin.findById(adminId);
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    let verifiedAds = admin.verifiedAds || [];
+    let rejectedAds = [];
+    let approvedKycs = admin.kycsVerified || [];
+    let rejectedKycs = [];
+
+    const isFiltering = startDate && endDate;
+
+    const start = isFiltering ? new Date(startDate) : null;
+    const end = isFiltering ? new Date(new Date(endDate).setHours(23, 59, 59, 999)) : null;
+
+    const filterByDate = (arr, dateField) => {
+      return arr.filter(entry => {
+        const date = new Date(entry[dateField]);
+        return date >= start && date <= end;
+      });
+    };
+
+    if (isFiltering) {
+      verifiedAds = filterByDate(verifiedAds, "verifiedAt").filter(a => a.status === "verified");
+      rejectedAds = filterByDate(admin.verifiedAds || [], "verifiedAt").filter(a => a.status === "rejected");
+
+      approvedKycs = filterByDate(approvedKycs, "verifiedAt").filter(k => k.status === "approved");
+      rejectedKycs = filterByDate(admin.kycsVerified || [], "verifiedAt").filter(k => k.status === "rejected");
+    } else {
+      // If no filter applied, just separate by status
+      rejectedAds = verifiedAds.filter(a => a.status === "rejected");
+      verifiedAds = verifiedAds.filter(a => a.status === "verified");
+
+      rejectedKycs = approvedKycs.filter(k => k.status === "rejected");
+      approvedKycs = approvedKycs.filter(k => k.status === "approved");
+    }
+
+    return res.status(200).json({
+      message: isFiltering
+        ? `Admin job stats filtered from ${startDate} to ${endDate}`
+        : "All admin job logs (no date filter applied)",
+      verifiedAds,
+      rejectedAds,
+      approvedKycs,
+      rejectedKycs,
+    });
+  } catch (error) {
+    console.error("Error fetching admin job stats:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
+
+
 
 export {
   registerSuperAdmin,
@@ -1129,6 +1265,7 @@ export {
   topUpCompanyRewardStars,
   patchSuperAdminWallet,
   registerUserToContest,
+  autoSelectWinners,
   deleteUser,
   blacklistUser,
   getAllCoupons,
@@ -1138,4 +1275,5 @@ export {
   sendSuperAdminForgotPasswordOtp,
   verifySuperAdminForgotPasswordOtp,
   resetSuperAdminPassword,
+  getAdminJobStats
 };

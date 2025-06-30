@@ -258,7 +258,8 @@ const fetchSingleKycUploadUser = async (req, res) => {
 
 // kyc verification
 const verifyKyc = async (req, res) => {
-  const { id, adminId } = req.body;//this id is userId vishvannaa(id:userId)
+  const { id } = req.body;//this id is userId vishvannaa(id:userId)
+  const adminId=req.params.id
   const { io, connectedUsers } = req;
 
   try {
@@ -284,11 +285,11 @@ const verifyKyc = async (req, res) => {
       return res.status(400).json({ message: "User KYC is already approved." });
     }
 
-    const updatedKyc = await kyc.findByIdAndUpdate(
-      user.kycDetails,
-      { kycStatus: "approved" },
-      { new: true }
-    );
+   existingKyc.kycStatus = "approved";
+    existingKyc.assignedAdminId = adminId;
+    existingKyc.assignmentTime = new Date(); 
+      const updatedKyc = await existingKyc.save();
+
     if (adminId) {
       await Admin.findByIdAndUpdate(
         adminId,
@@ -321,7 +322,8 @@ const verifyKyc = async (req, res) => {
 };
 // kyc rejection
 const rejectKyc = async (req, res) => {
-  const { id, rejectionReason, adminId } = req.body;
+  const { id, rejectionReason} = req.body;
+  const adminId=req.params.id;
   const { io, connectedUsers } = req;
 
   if (!rejectionReason || rejectionReason.trim() === "") {
@@ -351,14 +353,12 @@ const rejectKyc = async (req, res) => {
       return res.status(400).json({ message: "User KYC is already rejected." });
     }
 
-    const updatedKyc = await kyc.findByIdAndUpdate(
-      user.kycDetails,
-      {
-        kycStatus: "rejected",
-        rejectionReason: rejectionReason.trim(),
-      },
-      { new: true }
-    );
+   existingKyc.kycStatus = "rejected";
+    existingKyc.rejectionReason = rejectionReason.trim();
+    existingKyc.assignedAdminId = adminId;
+    existingKyc.assignmentTime = new Date();
+    const updatedKyc = await existingKyc.save();
+
     if (adminId) {
       await Admin.findByIdAndUpdate(
         adminId,
@@ -420,7 +420,8 @@ const kycVerifiedUsers = async (req, res) => {
 
 // to verify ads
 const verifyAdById = async (req, res) => {
-  const { adId, adminId } = req.body;
+  const { adId} = req.body;
+  const adminId=req.params.id;
   const { io, connectedUsers } = req;
 
   if (!adId) {
@@ -598,7 +599,8 @@ const getSuperAdminWallet = async (req, res) => {
   }
 };
 const rejectAdById = async (req, res) => {
-  const { adId, reason, adminId } = req.body;
+  const { adId, reason } = req.body;
+  const adminId=req.params.id;
   const { io, connectedUsers } = req;
 
   if (!adId) {
@@ -710,6 +712,20 @@ const rejectAdById = async (req, res) => {
       console.warn("⚠️ Wallet not found or zero refund stars");
     }
 
+    // ✅ Log to Admin's verifiedAds with status "rejected"
+    if (adminId) {
+      await Admin.findByIdAndUpdate(adminId, {
+        $push: {
+          verifiedAds: {
+            adId: ad._id,
+            verifiedAt: rejectedTime,
+            userId: createdBy?._id || createdBy,
+            status: "rejected",
+          },
+        },
+      });
+    }
+
     // ✅ Notification with refund info
     if (createdBy) {
       const formattedTime = new Date(adPostedTime).toLocaleString("en-IN", {
@@ -738,6 +754,7 @@ const rejectAdById = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 // kyc user details
 const fetchUserKycStatus = async (req, res) => {
   try {
@@ -1118,6 +1135,116 @@ const fetchAdsAssignedToAdmin = async (req, res) => {
   }
 };
 
+const getAdsVerifiedByAdmin = async (req, res) => {
+  const  adminId  = req.params.id;
+
+  try {
+    const admin = await Admin.findById(adminId)
+      .populate({
+        path: "verifiedAds.adId",
+        populate: [
+          { path: "imgAdRef" },
+          { path: "videoAdRef" },
+          { path: "surveyAdRef" },
+        ],
+      })
+      .populate("verifiedAds.userId", "username adminEmail phoneNumber");
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    const verified = admin.verifiedAds.filter((entry) => entry.status === "verified");
+
+    return res.status(200).json({
+      message: "Ads verified by admin",
+      data: verified,
+    });
+  } catch (error) {
+    console.error("Error fetching verified ads:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const getAdsRejectedByAdmin = async (req, res) => {
+  const adminId = req.params.id;
+
+  try {
+    const admin = await Admin.findById(adminId)
+      .populate({
+        path: "verifiedAds.adId",
+        populate: [
+          { path: "imgAdRef" },
+          { path: "videoAdRef" },
+          { path: "surveyAdRef" },
+        ],
+      })
+      .populate("verifiedAds.userId", "username adminEmail phoneNumber");
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    const rejected = admin.verifiedAds.filter((entry) => entry.status === "rejected");
+
+    return res.status(200).json({
+      message: "Ads rejected by admin",
+      data: rejected,
+    });
+  } catch (error) {
+    console.error("Error fetching rejected ads:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+const getKycsVerifiedByAdmin = async (req, res) => {
+  const  adminId = req.params.id;
+
+  try {
+    const admin = await Admin.findById(adminId)
+      .populate("kycsVerified.kycId")
+      .populate("kycsVerified.userId", "username adminEmail phoneNumber");
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    const verified = admin.kycsVerified.filter((entry) => entry.status === "approved");
+
+    return res.status(200).json({
+      message: "KYCs approved by admin",
+      data: verified,
+    });
+  } catch (error) {
+    console.error("Error fetching approved KYCs:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const getKycsRejectedByAdmin = async (req, res) => {
+  const  adminId  = req.params.id;
+
+  try {
+    const admin = await Admin.findById(adminId)
+      .populate("kycsVerified.kycId")
+      .populate("kycsVerified.userId", "username adminEmail phoneNumber");
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    const rejected = admin.kycsVerified.filter((entry) => entry.status === "rejected");
+
+    return res.status(200).json({
+      message: "KYCs rejected by admin",
+      data: rejected,
+    });
+  } catch (error) {
+    console.error("Error fetching rejected KYCs:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 
 
 
@@ -1147,5 +1274,9 @@ export {
   assignKycToAdmin,
   assignAdToAdmin,
   fetchAdsAssignedToAdmin,
-  fetchKycsAssignedToAdmin
+  fetchKycsAssignedToAdmin,
+  getAdsVerifiedByAdmin,
+  getAdsRejectedByAdmin,
+  getKycsVerifiedByAdmin,
+  getKycsRejectedByAdmin
 };

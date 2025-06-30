@@ -20,6 +20,8 @@ import {
   sendSuperAdminForgotPasswordOtp,
   verifySuperAdminForgotPasswordOtp,
   resetSuperAdminPassword,
+  autoSelectWinners,
+  getAdminJobStats
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
 import welcomeBonusUpload from "../multer/welBonusMulter.js";
@@ -44,6 +46,8 @@ superAdminRouter.route("/set-welcome-bonus").post(wrapMulter(welcomeBonusUpload)
 superAdminRouter.route("/all-coupons").get(getAllCoupons);
 superAdminRouter.route("/distribute-coupon").post(couponDistribution);
 superAdminRouter.route("/all-coupon-batch").get(getAllCouponBatches);
+superAdminRouter.route("/contest/auto-select/:contestId").get(autoSelectWinners);
+
 superAdminRouter
   .route("/forgot-password/send-otp")
   .post(sendSuperAdminForgotPasswordOtp);
@@ -53,5 +57,8 @@ superAdminRouter
 superAdminRouter
   .route("/forgot-password/reset-password")
   .post(resetSuperAdminPassword);
+superAdminRouter.route('/admin-job-status/:id').get(getAdminJobStats)
+superAdminRouter.route('/admin-job-status/:id').get(getAdminJobStats)
+
 
 export default superAdminRouter;

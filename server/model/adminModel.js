@@ -39,21 +39,26 @@ const adminSchema = new Schema(
       type: Date,
     },
     verifiedAds: [
-      {
-        adId: { type: Schema.Types.ObjectId, ref: "Ad" },
-        verifiedAt: { type: Date, default: Date.now },
-        userId: { type: Schema.Types.ObjectId, ref: "User" },
-        status: { type: String },
-      },
-    ],
-    kycsVerified: [
-      {
-        kycId: { type: Schema.Types.ObjectId, ref: "kyc" },
-        verifiedAt: { type: Date, default: Date.now },
-        userId: { type: Schema.Types.ObjectId, ref: "User" },
-        status: { type: String },
-      },
-    ],
+  {
+    adId: { type: Schema.Types.ObjectId, ref: "Ad" },
+    type: { type: String, enum: ["image", "video", "survey"] },
+    status: { type: String, enum: ["verified", "rejected"], required: true },
+    verifiedAt: { type: Date, default: Date.now },
+    reason: { type: String },
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
+  },
+],
+
+  kycsVerified: [
+  {
+    kycId: { type: Schema.Types.ObjectId, ref: "kyc" },
+    status: { type: String, enum: ["approved", "rejected"], required: true },
+    verifiedAt: { type: Date, default: Date.now },
+    reason: { type: String },
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
+  },
+],
+
 assignedCouponBatches: [
   {
     batchId: { type: Schema.Types.ObjectId, ref: "CouponBatch" },
