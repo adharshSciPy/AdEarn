@@ -11,6 +11,7 @@ import {
     getKycsVerifiedByAdmin,
     getKycsRejectedByAdmin
 } from "../controller/adminController.js";
+
 const adminRouter = Router()
 
 adminRouter.route('/admin-register').post(registerAdmin)

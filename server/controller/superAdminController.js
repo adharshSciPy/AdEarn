@@ -20,6 +20,7 @@ import sgMail from "@sendgrid/mail";
 import crypto from "crypto";
 import redis from "../redisClient.js";
 import config from "../config.js";
+import getDateRange from "../utils/getDateRange.js";
 const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
@@ -1129,6 +1130,60 @@ const resetSuperAdminPassword = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+const getAdminJobStats = async (req, res) => {
+  const { adminId } = req.params;
+  const { type, value } = req.body; 
+
+  try {
+    const admin = await Admin.findById(adminId);
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    let verifiedAds = admin.verifiedAds || [];
+    let rejectedAds = [];
+    let approvedKycs = admin.kycsVerified || [];
+    let rejectedKycs = [];
+
+    if (type && value) {
+      // If filter exists, apply date filtering
+      const { startDate, endDate } = getDateRange(type, value);
+
+      const filterByDate = (arr, dateField) => {
+        return arr.filter(entry => {
+          const date = new Date(entry[dateField]);
+          return date >= startDate && date < endDate;
+        });
+      };
+
+      verifiedAds = filterByDate(verifiedAds, "verifiedAt").filter(a => a.status === "verified");
+      rejectedAds = filterByDate(admin.verifiedAds || [], "verifiedAt").filter(a => a.status === "rejected");
+      approvedKycs = filterByDate(approvedKycs, "verifiedAt").filter(k => k.status === "approved");
+      rejectedKycs = filterByDate(admin.kycsVerified || [], "verifiedAt").filter(k => k.status === "rejected");
+    } else {
+      // No filter: return all data
+      rejectedAds = verifiedAds.filter(a => a.status === "rejected");
+      verifiedAds = verifiedAds.filter(a => a.status === "verified");
+      rejectedKycs = approvedKycs.filter(k => k.status === "rejected");
+      approvedKycs = approvedKycs.filter(k => k.status === "approved");
+    }
+
+    return res.status(200).json({
+      message: type && value
+        ? `Admin job stats filtered by ${type}: ${value}`
+        : "All admin job logs (no date filter applied)",
+      verifiedAds,
+      rejectedAds,
+      approvedKycs,
+      rejectedKycs,
+    });
+  } catch (error) {
+    console.error("Error fetching admin job stats:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 
 export {
   registerSuperAdmin,
@@ -1154,4 +1209,5 @@ export {
   sendSuperAdminForgotPasswordOtp,
   verifySuperAdminForgotPasswordOtp,
   resetSuperAdminPassword,
+  getAdminJobStats
 };
