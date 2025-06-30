@@ -5,6 +5,8 @@ import Header from '../../../components/Header/Header'
 import CanvasJSReact from '@canvasjs/react-charts';
 import { FileTextOutlined, TagOutlined, UserAddOutlined, ProjectOutlined } from "@ant-design/icons"
 import { Tabs, Table, Button, Avatar, Tag } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import { useSelector } from "react-redux";
 
 const { TabPane } = Tabs;
 
@@ -12,6 +14,8 @@ const CanvasJSChart = CanvasJSReact.CanvasJSChart;
 
 
 function AdminHome() {
+  const navigate = useNavigate();
+  const id = useSelector((state) => state.admin.id)
   const [selectedMonth, setSelectedMonth] = useState("All");
 
   const handleMonthChange = (e) => {
@@ -190,7 +194,8 @@ function AdminHome() {
             <CanvasJSChart options={options} />
           </div>
           <div style={{ width: '100%', maxWidth: '1550px', height: 'auto', padding: '30px', gap: '10px' }} className={styles.cards}>
-            <div className={styles.cardone}>
+
+            <div className={styles.cardone} onClick={() => navigate(`/AdminAds/${id}`)}>
               <div className={styles.cardoneTop}></div>
               <div className={styles.iconWrapper}>
                 <div className={styles.iconCircle}>
@@ -202,7 +207,7 @@ function AdminHome() {
               <h6>Total Order</h6>
               <p>+5% from yesterday</p>
             </div>
-            <div className={styles.cardtwo}>
+            <div className={styles.cardtwo} onClick={() => navigate(`/AdminCoupon/${id}`)}>
               <div className={styles.cardtwoTop}></div>
               <div className={styles.iconWrapper}>
                 <div className={styles.iconCircleGreen}>
@@ -214,7 +219,7 @@ function AdminHome() {
               <h6>Product Sold</h6>
               <p>+1,2% from yesterday</p>
             </div>
-            <div className={styles.cardthree}>
+            <div className={styles.cardthree} onClick={() => navigate(`/AdminKYC/${id}`)}>
               <div className={styles.cardthreeTop}></div>
               <div className={styles.iconWrapper}>
                 <div className={styles.iconCirclePurple}>
@@ -226,7 +231,7 @@ function AdminHome() {
               <h6>New Customers</h6>
               <p>+0,5% from yesterday</p>
             </div>
-            <div className={styles.cardfour}>
+            {/* <div className={styles.cardfour}>
               <div className={styles.cardfourTop}></div>
               <div className={styles.iconWrapper}>
                 <div className={styles.iconCircleBlue}>
@@ -236,7 +241,7 @@ function AdminHome() {
               <h3>Gallery</h3>
               <h6>Total Sales</h6>
               <p>+8% from yesterday</p>
-            </div>
+            </div> */}
 
             <div className={styles.allusertab}>
               <h2>All Users</h2>
