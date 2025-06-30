@@ -7,8 +7,10 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import baseUrl from "../../../baseurl";
 import { useMemo } from "react";
+import { useParams } from "react-router-dom";
 
 function AdminAds() {
+  const id = useParams()
   const [unverifiedAds, setunverifiedAds] = useState([]);
   const [verifiedAd, setVerifiedAd] = useState([]);
 
@@ -37,8 +39,17 @@ function AdminAds() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  const handlenavigate = (adId) => {
-    navigate(`/VerifyAds/${adId}`);
+  const assignToadmin = async (adId) => {
+    console.log("adID", adId)
+    const adminId = id.id;
+    console.log("adminid", adminId)
+    try {
+      const response = await axios.post(`${baseUrl}/api/v1/admin/assign-ads-admin/${adminId}`, { adId });
+      setunverifiedAds((prevAds) => prevAds.filter((ad) => ad._id !== adId));
+      console.log(response)
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   const [activeTab, setActiveTab] = useState("Ads");
@@ -268,7 +279,7 @@ function AdminAds() {
                       <th>Ads</th>
                       <th>Views</th>
                       <th>Total amount</th>
-                      <th>Ads Verification</th>
+                      <th>Move to Admin</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -278,8 +289,8 @@ function AdminAds() {
                           {
                             new Date(
                               ad.imageAd?.createdAt ||
-                                ad.videoAd?.createdAt ||
-                                ad.surveyAd?.createdAt
+                              ad.videoAd?.createdAt ||
+                              ad.surveyAd?.createdAt
                             )
                               .toISOString()
                               .split("T")[0]
@@ -303,9 +314,9 @@ function AdminAds() {
                         <td>
                           <button
                             className={styles.redeemBtn}
-                            onClick={() => handlenavigate(ad._id)}
+                            onClick={() => assignToadmin(ad._id)}
                           >
-                            Verify Now
+                            Send
                           </button>
                         </td>
                       </tr>
