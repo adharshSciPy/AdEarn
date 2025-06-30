@@ -64,7 +64,11 @@
 .backButton {
   margin-top: 20px;
 }
-
+.backButton button{
+    padding: 10px;
+    border-radius: 10px;
+    border:none;
+}
 .details {
   background: #f9f9f9;
   padding: 20px;
