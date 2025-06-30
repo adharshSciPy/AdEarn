@@ -80,6 +80,7 @@ import Userstar from './pages/superadmin/StarDistribution/UserStar/UserStar';
 import WelcomeStar from './pages/superadmin/StarDistribution/WelcomeStar/WelcomeStar'
 import Contest from './pages/superadmin/Contest/Contest';
 import ContestWinner from './pages/superadmin/ContestWinner/ContestWinner';
+import AdminListing from './pages/superadmin/AdminListing/AdminListing';
 
 
 
@@ -96,9 +97,9 @@ function App() {
           <Route path='/adminemail' element={<Adminemailregister />} />
 
           <Route path='/Admindashboard' element={<AdminHome />} />
-          <Route path='/AdminAds' element={<AdminAds />} />
-          <Route path='/AdminCoupon' element={<AdminCoupon />} />
-          <Route path='/AdminKYC' element={<KYCVerify />} />
+          <Route path='/AdminAds/:id' element={<AdminAds />} />
+          <Route path='/AdminCoupon/:id' element={<AdminCoupon />} />
+          <Route path='/AdminKYC/:id' element={<KYCVerify />} />
           <Route path='/AdminContest' element={<AdminContest />} />
           <Route path='/AdminReport' element={<AdminReport />} />
           <Route path='/AdminSettings' element={<AdminSettings />} />
@@ -146,7 +147,7 @@ function App() {
 
 
           {/* SuperAdmin */}
-          <Route path='/SuperadminDash' element={<SuperadminDash />} />
+          <Route path='/        ' element={<SuperadminDash />} />
           <Route path='/manageadmin' element={<ManageAdmin />} />
           <Route path='/superadminadsuser' element={<SuperAdminAdUser />} />
           <Route path='/Superadminotp' element={<Superadminotp />} />
@@ -181,6 +182,8 @@ function App() {
           <Route path='/superadmincontest' element={<Contest />} />
           <Route path='/superadmincontestwinner' element={<ContestWinner />} />
           <Route path='/SuperadminLogin' element={<SuperAdminLogin />} />
+          <Route path='/Superadminadminlist' element={<AdminListing />} />
+
 
 
 

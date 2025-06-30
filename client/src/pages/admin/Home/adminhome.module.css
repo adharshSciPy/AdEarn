@@ -66,6 +66,7 @@
   font-family: "Inter", sans-serif;
   background-color: #fff6e6;
   gap: 8px;
+  cursor: pointer;
 }
 
 .iconWrapper {
@@ -217,7 +218,7 @@
   background-color: #ffe2e5;
 }
 
-.allusertab{
+.allusertab {
   display: flex;
   flex-direction: column;
   justify-content: center;

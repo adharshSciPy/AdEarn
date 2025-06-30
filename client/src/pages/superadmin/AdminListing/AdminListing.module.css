@@ -1,0 +1,76 @@
+.container {
+  padding: 24px;
+  max-width: 100%;
+  display: flex;
+}
+.heading {
+  font-size: 22px;
+  margin-bottom: 16px;
+}
+.list {
+  list-style: none;
+  padding: 0;
+}
+.adminItem {
+  padding: 14px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.adminItem:hover {
+  background: #f5f5f5;
+}
+.details {
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+.adminList{
+    width: 100%;
+}
+.subContainer{
+    width: 100%;
+}
+.mainHead{
+    margin-bottom: 40px;
+}
+.tabSection {
+  margin-top: 20px;
+}
+
+.details {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 10px;
+}
+.backButton{
+    margin-top: 40px;
+    display: flex;
+    justify-content: end;
+}
+.filterRow {
+  display: flex;
+  gap: 16px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.selectBox {
+  min-width: 150px;
+}
+
+.backButton {
+  margin-top: 20px;
+}
+
+.details {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.tabSection {
+  margin-top: 20px;
+}

@@ -13,6 +13,7 @@ import kyc from "../model/kycModel.js";
 import { passwordValidator } from "../utils/passwordValidator.js";
 import { sendNotification } from "../utils/sendNotifications.js";
 import CouponBatch from "../model/couponBatchModel.js";
+import ContestParticipant from "../model/contestParticipantsSchema.js";
 
 import mongoose from "mongoose";
 import couponBatchModel from "../model/couponBatchModel.js";
@@ -680,7 +681,7 @@ const registerUserToContest = async (req, res) => {
 
     const now = new Date();
 
-    // Fetch contest
+    // Fetch contest by number
     const contest = await ContestEntry.findOne({ contestNumber });
     if (!contest) {
       return res.status(404).json({ message: "Contest not found" });
@@ -688,17 +689,13 @@ const registerUserToContest = async (req, res) => {
 
     const starsUsed = contest.entryStars;
 
-    // Check if user already registered
-    const existingEntry = await SuperAdminWallet.findOne({
-      "contestEntryWallet.collectedFromUsers": {
-        $elemMatch: {
-          userId: new ObjectId(userId),
-          contestId: contest._id,
-        },
-      },
+    // Check if user already registered in ContestParticipant
+    const alreadyJoined = await ContestParticipant.findOne({
+      userId,
+      contestId: contest._id
     });
 
-    if (existingEntry) {
+    if (alreadyJoined) {
       return res
         .status(400)
         .json({ message: "User already registered for this contest" });
@@ -720,7 +717,7 @@ const registerUserToContest = async (req, res) => {
       return res.status(400).json({ message: "Contest is full" });
     }
 
-    // Get user and wallet (populate wallet reference)
+    // Get user and wallet
     const user = await User.findById(userId).populate("userWalletDetails");
     if (!user || !user.userWalletDetails) {
       return res.status(404).json({ message: "User or user wallet not found" });
@@ -741,7 +738,7 @@ const registerUserToContest = async (req, res) => {
     userWallet.totalStars -= starsUsed;
     await userWallet.save();
 
-    // Update contest participation
+    // Update contest stats
     contest.currentParticipants += 1;
     contest.totalEntries += 1;
 
@@ -779,6 +776,12 @@ const registerUserToContest = async (req, res) => {
     adminWallet.totalStars += starsUsed;
 
     await adminWallet.save();
+
+    // ✅ Register user in ContestParticipant
+    await ContestParticipant.create({
+      userId,
+      contestId: contest._id,
+    });
 
     return res.status(200).json({
       message: "User registered successfully",
@@ -1113,7 +1116,62 @@ const resetSuperAdminPassword = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+const autoSelectWinners = async (req, res) => {
+  const { contestId } = req.params;
+  const numberOfWinners = parseInt(req.query.count) || 3; // Optional ?count=3
 
+  try {
+    if (!ObjectId.isValid(contestId)) {
+      return res.status(400).json({ message: "Invalid contest ID" });
+    }
+
+    const contest = await ContestEntry.findById(contestId);
+    if (!contest) {
+      return res.status(404).json({ message: "Contest not found" });
+    }
+
+    const participants = await ContestParticipant.find({ contestId });
+
+    if (participants.length < numberOfWinners) {
+      return res.status(400).json({ message: "Not enough participants to select winners" });
+    }
+
+    // Randomize and pick winners
+    const shuffled = participants.sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, numberOfWinners);
+
+    // Update each winner
+    const winnerEntries = [];
+
+    for (let i = 0; i < selected.length; i++) {
+      const winner = selected[i];
+
+      await ContestParticipant.findByIdAndUpdate(winner._id, {
+        isWinner: true,
+        position: i + 1,
+      });
+
+      winnerEntries.push({
+        userId: winner.userId,
+        position: i + 1
+      });
+    }
+
+    // Update contest
+    contest.winners = winnerEntries;
+    contest.status = "Ended";
+    contest.winnerSelectionType = "Automatic";
+    await contest.save();
+
+    res.status(200).json({
+      message: "Winners selected automatically",
+      winners: winnerEntries
+    });
+  } catch (err) {
+    console.error("Auto Winner Selection Error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
 export {
   registerSuperAdmin,
   superAdminLogin,
@@ -1138,4 +1196,5 @@ export {
   sendSuperAdminForgotPasswordOtp,
   verifySuperAdminForgotPasswordOtp,
   resetSuperAdminPassword,
+  autoSelectWinners
 };
