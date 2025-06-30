@@ -528,11 +528,11 @@ const createSurveyAd = async (req, res) => {
     const total3Stars = viewsNeeded - total2Stars;
 
     const starPayoutPlan = [
-      ...Array(total2Stars).fill(2),
       ...Array(total3Stars).fill(3),
+      ...Array(total2Stars).fill(2),
     ];
 
-    const starsToBeDeducted = (total2Stars * 2) + (total3Stars * 3);
+    const starsToBeDeducted = (total3Stars * 3) + (total2Stars * 2);
 
     if (userWallet.totalStars < starsToBeDeducted) {
       const starsShort = starsToBeDeducted - userWallet.totalStars;
