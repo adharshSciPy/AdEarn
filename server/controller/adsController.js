@@ -422,13 +422,14 @@ const createSurveyAd = async (req, res) => {
     districts,
     locations,
   } = req.body;
+
   const { id } = req.params;
 
   if (!id) return res.status(400).json({ message: "User ID is required" });
   if (!title || !description || !questions || !userViewsNeeded)
     return res.status(400).json({ message: "Missing required fields" });
 
-  // Parse JSON fields sent as strings
+  // Parse JSON fields
   let parsedQuestions, parsedStates, parsedDistricts, parsedLocations;
 
   try {
@@ -441,7 +442,6 @@ const createSurveyAd = async (req, res) => {
     parsedDistricts = typeof districts === "string" ? JSON.parse(districts) : districts || [];
     parsedLocations = typeof locations === "string" ? JSON.parse(locations) : locations || [];
 
-    // Validate each question
     for (const [index, q] of parsedQuestions.entries()) {
       const { questionText, questionType, options } = q;
 
@@ -489,7 +489,7 @@ const createSurveyAd = async (req, res) => {
       targetRegions.push({
         location: {
           type: "Point",
-          coordinates: [latitude, longitude],
+          coordinates: [latitude, longitude], // Note: GeoJSON requires [lng, lat]
         },
         radius,
       });
@@ -556,6 +556,8 @@ const createSurveyAd = async (req, res) => {
       questions: parsedQuestions,
       createdBy: user._id,
       userViewsNeeded: viewsNeeded,
+      totalViewCount: 0,
+      isViewsReached: false,
       totalStarsAllocated: starsToBeDeducted,
       starPayoutPlan,
       adPeriod: adRepetition ? parsedAdPeriod : 0,
@@ -563,7 +565,7 @@ const createSurveyAd = async (req, res) => {
       targetRegions,
       targetStates: parsedStates,
       targetDistricts: parsedDistricts,
-      imageUrl: imageUrl,
+      imageUrl,
     });
 
     const ad = await Ad.create({ surveyAdRef: surveyAd._id });
@@ -837,8 +839,8 @@ const fetchSingleVerifiedAd = async (req, res) => {
 const fetchVerifiedImgAd = async (req, res) => {
   try {
     const { userId } = req.params;
-    const userLat = parseFloat(req.query.lat);
-    const userLng = parseFloat(req.query.lng);
+    let userLat = parseFloat(req.query.lat);
+    let userLng = parseFloat(req.query.lng);
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -1006,8 +1008,8 @@ const fetchVerifiedImgAd = async (req, res) => {
 const fetchVerifiedVideoAd = async (req, res) => {  
   try {
     const { userId } = req.params;
-    const userLat = parseFloat(req.query.lat);
-    const userLng = parseFloat(req.query.lng);
+    let userLat = parseFloat(req.query.lat);
+    let userLng = parseFloat(req.query.lng);
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -1175,11 +1177,20 @@ const fetchVerifiedVideoAd = async (req, res) => {
 const fetchVerifiedSurveyAd = async (req, res) => {
   try {
     const { userId } = req.params;
-    const userLat = parseFloat(req.query.lat);
-    const userLng = parseFloat(req.query.lng);
+
+    let userLat = parseFloat(req.query.lat); // ✅ use let, not const
+    let userLng = parseFloat(req.query.lng);
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Fallback to profile coordinates
+    if (isNaN(userLat) || isNaN(userLng)) {
+      if (user.locationCoordinates) {
+        userLat = user.locationCoordinates.lat;
+        userLng = user.locationCoordinates.lng;
+      }
+    }
 
     const profileCoords = user.locationCoordinates
       ? { lat: user.locationCoordinates.lat, lng: user.locationCoordinates.lng }
@@ -1195,8 +1206,7 @@ const fetchVerifiedSurveyAd = async (req, res) => {
       !userDistrict
     ) {
       return res.status(400).json({
-        message:
-          "No valid user location or region data available for ad matching",
+        message: "No valid user location or region data available for ad matching",
       });
     }
 
@@ -1205,35 +1215,30 @@ const fetchVerifiedSurveyAd = async (req, res) => {
     const verifiedSurveyAds = [];
 
     for (const ad of allAds) {
-      const surveyAd = ad.surveyAdRef;
-      if (!surveyAd || surveyAd.createdBy?.toString() === userId) continue;
+      let surveyAd = ad.surveyAdRef;
+      if (!surveyAd) continue;
+      if (surveyAd.createdBy?.toString() === userId) continue;
 
-      // ✅ Region-based targeting
+      //  Region-based targeting
       const isUserInTargetRegion = surveyAd.targetRegions?.some((region) => {
         if (!region?.location?.coordinates) return false;
 
-        const [targetLat, targetLng] = region.location.coordinates;
+        const [lat, lng] = region.location.coordinates;
         const radiusMeters = region.radius * 1000;
 
         const withinLiveLocation =
           userLat &&
           userLng &&
-          calculateDistance(userLat, userLng, targetLat, targetLng) <=
-            radiusMeters;
+          calculateDistance(userLat, userLng, lat, lng) <= radiusMeters;
 
         const withinProfileLocation =
           profileCoords &&
-          calculateDistance(
-            profileCoords.lat,
-            profileCoords.lng,
-            targetLat,
-            targetLng
-          ) <= radiusMeters;
+          calculateDistance(profileCoords.lat, profileCoords.lng, lat, lng) <= radiusMeters;
 
         return withinLiveLocation || withinProfileLocation;
       });
 
-      // ✅ State + District Targeting
+      // State & District targeting
       let isUserInTargetState = false;
       let isUserInTargetDistrict = false;
 
@@ -1246,11 +1251,9 @@ const fetchVerifiedSurveyAd = async (req, res) => {
           const normalizedDistricts = surveyAd.targetDistricts.map((d) =>
             d.toLowerCase()
           );
-          if (normalizedDistricts.includes("all")) {
-            isUserInTargetDistrict = true;
-          } else {
-            isUserInTargetDistrict = normalizedDistricts.includes(userDistrict);
-          }
+          isUserInTargetDistrict =
+            normalizedDistricts.includes("all") ||
+            normalizedDistricts.includes(userDistrict);
         }
       }
 
@@ -1261,17 +1264,17 @@ const fetchVerifiedSurveyAd = async (req, res) => {
 
       if (!matchesLocation) continue;
 
-      // ✅ Already completed check
+      // Check if already completed
       const hasUserCompleted = surveyAd.usersCompleted?.some(
         (entry) => entry.userId.toString() === userId
       );
 
-      // ✅ Active status
+      // ✅ Check ad is active
       const adIsActive =
         surveyAd.isAdVerified &&
         surveyAd.isAdVisible &&
         surveyAd.isAdOn &&
-        surveyAd.totalResponses < surveyAd.responseLimit &&
+        surveyAd.totalViewCount < surveyAd.userViewsNeeded &&
         (!surveyAd.adExpirationTime || surveyAd.adExpirationTime > currentDate);
 
       if (adIsActive) {
@@ -1281,8 +1284,7 @@ const fetchVerifiedSurveyAd = async (req, res) => {
           const userSchedule = surveyAd.repeatSchedule?.find(
             (entry) => entry.userId.toString() === userId
           );
-          if (userSchedule && userSchedule.nextScheduledAt > currentDate)
-            continue;
+          if (userSchedule && userSchedule.nextScheduledAt > currentDate) continue;
         }
 
         verifiedSurveyAds.push({
@@ -1293,14 +1295,15 @@ const fetchVerifiedSurveyAd = async (req, res) => {
           },
         });
       } else {
+        // 🔄 Update status if needed
         const updateFields = {};
         let shouldUpdate = false;
 
         if (
-          surveyAd.totalResponses >= surveyAd.responseLimit &&
-          !surveyAd.isResponsesReached
+          surveyAd.totalViewCount >= surveyAd.userViewsNeeded &&
+          !surveyAd.isViewsReached
         ) {
-          updateFields.isResponsesReached = true;
+          updateFields.isViewsReached = true;
           shouldUpdate = true;
         }
 
@@ -1321,8 +1324,7 @@ const fetchVerifiedSurveyAd = async (req, res) => {
 
     if (verifiedSurveyAds.length === 0) {
       return res.status(404).json({
-        message:
-          "No verified and eligible survey ads found for your location or region",
+        message: "No verified and eligible survey ads found for your location or region",
       });
     }
 
@@ -1331,10 +1333,15 @@ const fetchVerifiedSurveyAd = async (req, res) => {
       ads: verifiedSurveyAds,
     });
   } catch (error) {
-    console.error("Error fetching verified survey ads:", error);
+    console.error("❌ Error fetching verified survey ads:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
+
+
+
 
 // to watch ads,star split,view count
 const viewAd = async (req, res) => {

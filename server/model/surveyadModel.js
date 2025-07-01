@@ -2,23 +2,14 @@ import mongoose from "mongoose";
 
 const surveyAdSchema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: true,
-    },
-     description: {
-      type: String,
-      required: true,
-    },
-    imageUrl: {
-      type: String,
-    },
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    imageUrl: { type: String },
+    audioUrl: { type: String },
+
     questions: [
       {
-        questionText: {
-          type: String,
-          required: true,
-        },
+        questionText: { type: String, required: true },
         questionType: {
           type: String,
           enum: ["yesno", "multiple"],
@@ -30,94 +21,55 @@ const surveyAdSchema = new mongoose.Schema(
           validate: {
             validator: function (val) {
               if (this.questionType === "yesno") {
-                return (
-                  val.length === 2 && val.includes("Yes") && val.includes("No")
-                );
+                return val.length === 2 && val.includes("Yes") && val.includes("No");
               }
-              if (this.questionType === "multiple") {
-                return val.length >= 2;
-              }
-              return false;
+              return val.length >= 2;
             },
             message: "Invalid options for the question type.",
           },
         },
       },
     ],
-    userViewsNeeded: {
-      type: Number,
-      required: true,
+
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
-    isViewsReached: {
-      type: Boolean,
-      default: false,
-    },
-    isAdVisible: {
-      type: Boolean,
-      default: true,
-    },
-    isAdVerified: {
-      type: Boolean,
-      default: false,
-    },
-    isAdRejected: {
-      type: Boolean,
-      default: false,
-    },
-    adRejectionReason: {
-      type: String,
-    },
-    adRejectedTime: {
-      type: Date,
-    },
-    adVerifiedTime: {
-      type: Date,
-    },
-    adExpirationTime: {
-      type: Date,
-    },
-    adPeriod: {
-      type: Number,
-    },
-    adRepetition: {
-      type: Boolean,
-      default: false,
-    },
+
+    userViewsNeeded: { type: Number, required: true },
+    totalViewCount: { type: Number, default: 0 },
+    isViewsReached: { type: Boolean, default: false },
+
+    isAdVerified: { type: Boolean, default: false },
+    isAdRejected: { type: Boolean, default: false },
+    adRejectionReason: { type: String },
+    adRejectedTime: { type: Date },
+    adVerifiedTime: { type: Date },
+    adExpirationTime: { type: Date },
+
+    isAdVisible: { type: Boolean, default: true },
+    isAdOn: { type: Boolean, default: true },
+
+    adPeriod: { type: Number },
+    adRepetition: { type: Boolean, default: false },
     adRepeatSchedule: [
       {
-        userId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-        },
-        viewsRepatitionCount: {
-          type: Number,
-          default: 0,
-        },
-        nextScheduledAt: {
-          type: Date,
-        },
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        viewsRepatitionCount: { type: Number, default: 0 },
+        nextScheduledAt: { type: Date },
       },
     ],
-    totalStarsAllocated: {
-      type: Number,
-      required: true,
-    },
-    starPayoutPlan: {
-      type: [Number],
-      default: [],
-    },
-    audioUrl: {
-      type: String,
-    },
+
     viewersRewarded: [
       {
-        userId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-        },
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         starsGiven: Number,
       },
     ],
+
+    totalStarsAllocated: { type: Number, required: true },
+    starPayoutPlan: { type: [Number], default: [] },
+
     targetRegions: [
       {
         location: {
@@ -126,37 +78,23 @@ const surveyAdSchema = new mongoose.Schema(
             enum: ["Point"],
             default: "Point",
           },
-          coordinates: {
-            type: [Number], // [lng, lat]
-            required: true,
-          },
+          coordinates: { type: [Number], required: true }, // [lng, lat]
         },
-        radius: {
-          type: Number,
-          required: true,
-        },
+        radius: { type: Number, required: true },
       },
     ],
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
     targetStates: [String],
     targetDistricts: [String],
-    isAdOn: {
-      type: Boolean,
-      default: true,
-    },
-    assignedAdminId: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "Admin",
-  default: null,
-},
-assignmentTime: {
-  type: Date,
-  default: null,
-}
 
+    assignedAdminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Admin",
+      default: null,
+    },
+    assignmentTime: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
