@@ -20,6 +20,7 @@ import { SurveyAd } from "./model/surveyadModel.js";
 import notificationRouter from "./routes/notificationRoute.js";
 import authMiddleware from "./auth/authMiddleware.js";
 import kyc from "./model/kycModel.js";
+import subscriptionRouter from "./routes/subscriptionRoute.js";
 
 
 dotenv.config();
@@ -73,6 +74,10 @@ app.use('/api/v1/notifications',
   authMiddleware,
   notificationRouter
 );
+
+app.use('/api/v1/subscription', (req, res, next) => {
+  req.io = io; req.connectedUsers = connectedUsers; next();
+}, subscriptionRouter);
 // app.get("/api/test-protected", authMiddleware, (req, res) => {
 //   res.json({ message: "You are authenticated", user: req.user });
 // });

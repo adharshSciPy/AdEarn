@@ -486,13 +486,14 @@ const createSurveyAd = async (req, res) => {
         return res.status(400).json({ message: "Invalid location format" });
       }
 
-      targetRegions.push({
-        location: {
-          type: "Point",
-          coordinates: [latitude, longitude],
-        },
-        radius,
-      });
+     targetRegions.push({
+  location: {
+    type: "Point",
+    coordinates: [longitude, latitude], 
+  },
+  radius,
+});
+
     }
   } catch (err) {
     return res.status(400).json({ message: "Error parsing locations", error: err.message });
@@ -1208,11 +1209,11 @@ const fetchVerifiedSurveyAd = async (req, res) => {
       const surveyAd = ad.surveyAdRef;
       if (!surveyAd || surveyAd.createdBy?.toString() === userId) continue;
 
-      // ✅ Region-based targeting
+      // ✅ FIXED: GeoJSON coordinates are [longitude, latitude]
       const isUserInTargetRegion = surveyAd.targetRegions?.some((region) => {
         if (!region?.location?.coordinates) return false;
 
-        const [targetLat, targetLng] = region.location.coordinates;
+        const [targetLng, targetLat] = region.location.coordinates; // ✅ FIXED order
         const radiusMeters = region.radius * 1000;
 
         const withinLiveLocation =
@@ -1246,11 +1247,10 @@ const fetchVerifiedSurveyAd = async (req, res) => {
           const normalizedDistricts = surveyAd.targetDistricts.map((d) =>
             d.toLowerCase()
           );
-          if (normalizedDistricts.includes("all")) {
-            isUserInTargetDistrict = true;
-          } else {
-            isUserInTargetDistrict = normalizedDistricts.includes(userDistrict);
-          }
+
+          isUserInTargetDistrict =
+            normalizedDistricts.includes("all") ||
+            normalizedDistricts.includes(userDistrict);
         }
       }
 
@@ -1335,6 +1335,7 @@ const fetchVerifiedSurveyAd = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 // to watch ads,star split,view count
 const viewAd = async (req, res) => {
