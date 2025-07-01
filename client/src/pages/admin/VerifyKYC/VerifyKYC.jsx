@@ -64,7 +64,7 @@ function VerifyKYC() {
       try {
         console.log("admin id", adminId)
         const response = await axios.get(`${baseUrl}/api/v1/admin/kyc-requested-single-user`, { params: { id } })
-        console.log("response", response.data.data)
+        console.log("response", response)
         setKycData(response.data.data)
         console.log("kyc state", kycData)
       } catch (error) {
