@@ -87,7 +87,7 @@ function AssignedKyc() {
                                             <td>
                                                 <button
                                                     className={styles.redeemBtn}
-                                                    onClick={() => handlenavigate(ad._id)}
+                                                    onClick={() => handlenavigate(ad.userId._id)}
                                                 >
                                                     {'Verify'}
                                                 </button>
