@@ -16,6 +16,8 @@ import VerifyKYC from './pages/admin/VerifyKYC/VerifyKYC';
 import ContestForm from './pages/admin/ContestForm/ContestForm';
 import Adminemailregister from "./pages/admin/Emailregister/Adminemailregister"
 import ViewKYC from './pages/admin/VerifyKYC/ViewKYC';
+import ResendOtpAdmin from './pages/admin/ResendOtpAdmin/ResendOtpAdmin';
+import ResetPassAdmin from './pages/admin/ResetPassAdmin/ResetPassAdmin';
 
 
 
@@ -43,6 +45,8 @@ import VideoAdForm from './pages/user/VideoAdForm/VideoAdForm';
 import Adspage from './pages/user/AdsPage/Adspage';
 import AdEdit from './pages/user/AdEdit/AdEdit'
 import VideoAdEdit from './pages/user/VideoAdsEdit/VideoAdEdit';
+import ResendOtp from './pages/user/ResendOtp/ResendOtp';
+import PasswordResetForm from './pages/user/PasswordResetForm/PasswordResetForm';
 
 
 import SuperAdminLogin from './pages/superadmin/SuperAdminLogin/SuperAdminLogin';
@@ -83,7 +87,6 @@ import ContestWinner from './pages/superadmin/ContestWinner/ContestWinner';
 import AdminListing from './pages/superadmin/AdminListing/AdminListing';
 
 
-
 function App() {
   return (
     <div className="App">
@@ -107,6 +110,10 @@ function App() {
           <Route path='/VerifyKYC/:id' element={<VerifyKYC />} />
           <Route path='/ContestForm' element={<ContestForm />} />
           <Route path='/ViewKYC/:id' element={<ViewKYC />} />
+          <Route path='/resendOtpAdmin/:email' element={<ResendOtpAdmin />} />
+          <Route path='/resetPassAdmin/:email' element={<ResetPassAdmin />} />
+
+
 
 
 
@@ -118,6 +125,8 @@ function App() {
           <Route path='/' element={<LoginUser />} />
           <Route path='/phonesignup' element={<PhoneLogin />} />
           <Route path='/phoneotp' element={<PhoneOtp />} />
+          <Route path='/resendotp/:phone' element={<ResendOtp />} />
+
           <Route path='/emailRegistration' element={<EmailRegistration />} />
           <Route path='/referalPage' element={<ReferalCode />} />
           <Route path='/form1/:id' element={<Form1 />} />
@@ -133,6 +142,7 @@ function App() {
           <Route path='/templateEditor' element={<TemplateEditor />} />
           <Route path='/adform/:id' element={<AdForm />} />
           <Route path='/videoform/:id' element={<VideoAdForm />} />
+          <Route path='/passwordresetformuser/:phone' element={<PasswordResetForm />} />
 
           <Route path='/adreportuser' element={<UserReport />} />
           <Route path='/surveyaduser/:id' element={<SurveyAds />} />
