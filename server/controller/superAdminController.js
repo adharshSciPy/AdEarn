@@ -34,6 +34,19 @@ function generateRandomCode(length) {
   }
   return result;
 }
+// to calculate the coupon amount
+function getCouponAmount(starCount) {
+  switch (starCount) {
+    case 5: return 5.00;
+    case 10: return 7.50;
+    case 25: return 12.50;
+    case 50: return 20.00;
+    case 100: return 40.00;
+    case 250: return 100.00;
+    default: return starCount; // fallback logic (₹1 per star)
+  }
+}
+
 
 // register super admin
 const registerSuperAdmin = async (req, res) => {
@@ -452,86 +465,95 @@ const createContest = async (req, res) => {
 export default createContest;
 
 const generateCoupons = async (req, res) => {
-  const { couponCount, perStarCount, generationDate, expiryDate, requestNote } =
-    req.body;
+  const {
+    couponCount,
+    perStarCount,
+    generationDate,
+    expiryDate,
+    requestNote,
+    assignedToAdminId
+  } = req.body;
 
   try {
     const totalStarsNeeded = couponCount * perStarCount;
+    const perCouponAmount = getCouponAmount(perStarCount);
+    const totalAmountInRupees = couponCount * perCouponAmount;
 
-    // Find Super Admin Wallet
     const superAdminWallet = await SuperAdminWallet.findOne();
     if (!superAdminWallet) {
-      return res.status(404).json({ message: "Super admin wallet not found" });
+      return res.status(404).json({ message: "Super Admin wallet not found" });
     }
 
-    // Check for enough stars
     if (superAdminWallet.totalStars < totalStarsNeeded) {
       return res.status(400).json({
-        message: "Insufficient stars in Super Admin Wallet to generate coupons",
+        message: `Insufficient stars in Super Admin wallet. Needed: ${totalStarsNeeded}, Available: ${superAdminWallet.totalStars}`,
       });
     }
 
-    // Create empty batch first
-    const generationDateObj = new Date(generationDate);
+    const generationDateObj = generationDate ? new Date(generationDate) : new Date();
     const expiryDateObj = expiryDate ? new Date(expiryDate) : null;
 
+    // Create the batch
     const newBatch = new CouponBatch({
-      coupons: [], // will be filled later
+      coupons: [],
       couponCount,
       totalStarsSpent: totalStarsNeeded,
+      amountInRupees: totalAmountInRupees,
       generationDate: generationDateObj,
       expiryDate: expiryDateObj,
-      generatedBy: null, // optional, if you track superadmin ID
-      createdByRole: "admin",
+      generatedBy: null,
+      createdByRole: "superadmin",
       requestNote: requestNote || "",
+      assignedTo: assignedToAdminId,
+      assignedAt: new Date(),
     });
 
     await newBatch.save();
 
-    // Create each coupon individually
-    const couponsToCreate = [];
-    const couponCodes = [];
-
-    for (let i = 0; i < couponCount; i++) {
+    // Generate coupons
+    const couponsToCreate = Array.from({ length: couponCount }).map(() => {
       const code = generateRandomCode(10);
-      couponCodes.push(code);
-      couponsToCreate.push({
+      return {
         code,
         perStarCount,
         generationDate: generationDateObj,
         expiryDate: expiryDateObj,
-        createdByRole: "admin",
+        createdByRole: "superadmin",
         batchId: newBatch._id,
-      });
-    }
+      };
+    });
 
     const createdCoupons = await Coupon.insertMany(couponsToCreate);
 
-    // Update the batch with coupon IDs
-    newBatch.coupons = createdCoupons.map((c) => c._id);
+    newBatch.coupons = createdCoupons.map(c => c._id);
     await newBatch.save();
 
-    // Deduct stars from SuperAdmin Wallet
+    // Deduct stars and log transaction
     superAdminWallet.totalStars -= totalStarsNeeded;
     superAdminWallet.transactions.push({
       starsReceived: -totalStarsNeeded,
-      reason: `Coupon Generation of ${couponCount} coupons`,
-      addedBy: null, // If you track which admin added, fill it here
+      reason: `Generated ${couponCount} coupons (each ${perStarCount} stars)`,
+      addedBy: null,
+      type: "deduct",
+      reference: {
+        type: "CouponBatch",
+        id: newBatch._id,
+      },
+      createdAt: new Date(),
     });
 
     await superAdminWallet.save();
 
-    // Send success response
     return res.status(200).json({
-      message: "Coupons generated and wallet updated successfully",
-      count: createdCoupons.length,
-      couponCodes,
-      starsDeducted: totalStarsNeeded,
-      totalStars: superAdminWallet.totalStars,
+      message: "✅ Coupons generated successfully",
       batchId: newBatch._id,
+      totalStarsSpent: totalStarsNeeded,
+      totalAmountInRupees,
+      remainingStars: superAdminWallet.totalStars,
+      couponCodes: createdCoupons.map((c) => c.code),
     });
   } catch (error) {
-    console.error("Error generating coupons:", error);
+    console.error("❌ Error generating coupons:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -1104,7 +1126,8 @@ const getAllCouponBatches = async (req, res) => {
 
 const couponDistribution = async (req, res) => {
   // const { adminId } = req.params;
-  const { batchId, adminId } = req.body;
+  const { batchId, adminId,note} = req.body;
+  const{io,connectedUsers}=req;
   try {
     const admin = await Admin.findById(adminId);
     if (!admin) {
@@ -1121,9 +1144,17 @@ const couponDistribution = async (req, res) => {
     admin.assignedCouponBatches.push({
       batchId: couponBatch._id,
       assignedAt: new Date(),
+      note
     });
     await admin.save();
-
+  await sendNotification(
+      admin._id,
+      ADMIN_ROLE,
+      `A new coupon batch (ID: ${couponBatch._id}) has been assigned to you.${note ? " Note: " + note : ""}`,
+      io,
+      connectedUsers,
+      `/admin/coupons/${couponBatch._id}` // or appropriate frontend route
+    );
     res.status(200).json({
       success: true,
       message: "Coupon batch assigned successfully",
@@ -1138,21 +1169,27 @@ const couponDistribution = async (req, res) => {
   }
 };
 const couponFetchById = async (req, res) => {
-  const { batchId } = req.body;
+  const { id: batchId } = req.params;
+
   try {
-    const coupons = await couponBatchModel.findById(batchId).populate("Coupon");
-    if (!coupons) {
-      return res.status(404).json({ message: "Coupons not found" });
+    const batch = await couponBatchModel.findById(batchId);
+    if (!batch) {
+      return res.status(404).json({ message: "Batch not found" });
     }
+
+    const populatedBatch = await couponBatchModel.findById(batchId).populate("coupons");
+
     return res.status(200).json({
-      message: "Coupons fetched succesfully",
-      data: coupons,
+      message: "Coupons fetched successfully",
+      data: populatedBatch,
     });
   } catch (error) {
     console.error("Error fetching coupon batch:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+
 // password reset for superAdmin
 const sendSuperAdminForgotPasswordOtp = async (req, res) => {
   const { email } = req.body;

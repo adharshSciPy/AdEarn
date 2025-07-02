@@ -62,7 +62,8 @@ const adminSchema = new Schema(
 assignedCouponBatches: [
   {
     batchId: { type: Schema.Types.ObjectId, ref: "CouponBatch" },
-    assignedAt: { type: Date, default: Date.now }
+    assignedAt: { type: Date, default: Date.now },
+    note:{type:String}
   }
 ]
 

@@ -109,10 +109,9 @@ io.on("connection", (socket) => {
 cron.schedule("0 0 * * *", async () => {
   console.log(`[${new Date().toISOString()}] 🕓 Running daily maintenance job...`);
 
-  try {
-    // 1. Run expired coupon refunds
-    await runRefundExpiredCoupons();
-    console.log("✅ Expired coupon refund completed");
+ try {
+    const { refundedCoupons, starsRefunded } = await runRefundExpiredCoupons();
+    console.log(`✅ Refunded ${starsRefunded} stars for coupons:`, refundedCoupons);
   } catch (err) {
     console.error("❌ Coupon refund error:", err.message);
   }
