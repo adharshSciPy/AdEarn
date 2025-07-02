@@ -84,11 +84,10 @@ function VerifyKYC() {
     try {
       console.log("approve userid", id)
       console.log("approve admin id", adminId)
-      const approveres = await axios.post(`${baseUrl}/api/v1/admin/kyc-approval`, {
-        id: id,
-        adminId: adminId
+      const approveres = await axios.post(`${baseUrl}/api/v1/admin/kyc-approval/${adminId}`, {
+        id: id
       })
-      navigate("/AdminKYC")
+      navigate(`/AdminKYC/${adminId}`)
       console.log("approveres", approveres)
     } catch (error) {
       console.log(error)

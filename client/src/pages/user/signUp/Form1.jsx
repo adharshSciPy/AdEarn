@@ -711,7 +711,6 @@ function Form1() {
                           id="location"
                           name="referalCode"
                           placeholder="Referral Code"
-                          required
                           className={styles.input}
                           value={form.referalCode}
                           onChange={handleChange}

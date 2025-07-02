@@ -17,7 +17,9 @@ import ContestForm from './pages/admin/ContestForm/ContestForm';
 import Adminemailregister from "./pages/admin/Emailregister/Adminemailregister"
 import ViewKYC from './pages/admin/VerifyKYC/ViewKYC';
 import AssignedAds from './pages/admin/AssignAds/AssignedAds';
-import AssignedKyc from './pages/admin/AssignKyc/AssignedKyc';
+import AssignedKyc from './pages/admin/AssignKyc/AssignedKyc';import ResendOtpAdmin from './pages/admin/ResendOtpAdmin/ResendOtpAdmin';
+import ResetPassAdmin from './pages/admin/ResetPassAdmin/ResetPassAdmin';
+
 
 
 import LoginUser from './pages/user/Login/LoginUser';
@@ -44,6 +46,8 @@ import VideoAdForm from './pages/user/VideoAdForm/VideoAdForm';
 import Adspage from './pages/user/AdsPage/Adspage';
 import AdEdit from './pages/user/AdEdit/AdEdit'
 import VideoAdEdit from './pages/user/VideoAdsEdit/VideoAdEdit';
+import ResendOtp from './pages/user/ResendOtp/ResendOtp';
+import PasswordResetForm from './pages/user/PasswordResetForm/PasswordResetForm';
 
 
 import SuperAdminLogin from './pages/superadmin/SuperAdminLogin/SuperAdminLogin';
@@ -82,6 +86,7 @@ import WelcomeStar from './pages/superadmin/StarDistribution/WelcomeStar/Welcome
 import Contest from './pages/superadmin/Contest/Contest';
 import ContestWinner from './pages/superadmin/ContestWinner/ContestWinner';
 import AdminListing from './pages/superadmin/AdminListing/AdminListing';
+import ResetPassSuper from './pages/superadmin/ResetPassSuper/ResetPassSuper';
 
 
 
@@ -110,6 +115,10 @@ function App() {
           <Route path='/ViewKYC/:id' element={<ViewKYC />} />
           <Route path='/AssignedAds' element={<AssignedAds />} />
           <Route path='/AssignedKyc' element={<AssignedKyc />} />
+          <Route path='/resendOtpAdmin/:email' element={<ResendOtpAdmin />} />
+          <Route path='/resetPassAdmin/:email' element={<ResetPassAdmin />} />
+
+
 
 
 
@@ -121,6 +130,8 @@ function App() {
           <Route path='/' element={<LoginUser />} />
           <Route path='/phonesignup' element={<PhoneLogin />} />
           <Route path='/phoneotp' element={<PhoneOtp />} />
+          <Route path='/resendotp/:phone' element={<ResendOtp />} />
+
           <Route path='/emailRegistration' element={<EmailRegistration />} />
           <Route path='/referalPage' element={<ReferalCode />} />
           <Route path='/form1/:id' element={<Form1 />} />
@@ -136,6 +147,7 @@ function App() {
           <Route path='/templateEditor' element={<TemplateEditor />} />
           <Route path='/adform/:id' element={<AdForm />} />
           <Route path='/videoform/:id' element={<VideoAdForm />} />
+          <Route path='/passwordresetformuser/:phone' element={<PasswordResetForm />} />
 
           <Route path='/adreportuser' element={<UserReport />} />
           <Route path='/surveyaduser/:id' element={<SurveyAds />} />
@@ -150,10 +162,10 @@ function App() {
 
 
           {/* SuperAdmin */}
-          <Route path='/        ' element={<SuperadminDash />} />
+          <Route path='/SuperadminDash' element={<SuperadminDash />} />
           <Route path='/manageadmin' element={<ManageAdmin />} />
           <Route path='/superadminadsuser' element={<SuperAdminAdUser />} />
-          <Route path='/Superadminotp' element={<Superadminotp />} />
+          <Route path='/Superadminotp/:email' element={<Superadminotp />} />
           <Route path='/Companyaccounts' element={<CompanyAccounts />} />
           <Route path='/StarDistribution' element={<StarDistributionPage />} />
           <Route path='/superadminuseraccount' element={<SuperAdminUserAccount />} />
@@ -186,6 +198,7 @@ function App() {
           <Route path='/superadmincontestwinner' element={<ContestWinner />} />
           <Route path='/SuperadminLogin' element={<SuperAdminLogin />} />
           <Route path='/Superadminadminlist' element={<AdminListing />} />
+          <Route path='/resetPassSuper/:email' element={<ResetPassSuper />} />
 
 
 

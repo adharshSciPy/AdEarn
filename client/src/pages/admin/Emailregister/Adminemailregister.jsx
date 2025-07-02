@@ -7,17 +7,20 @@ import baseUrl from "../../../baseurl";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setAdmin } from "../../../components/features/adminSlice";
+import { Modal, Input, message } from "antd";
 
 function Adminemailregister() {
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
-  const [form, setForm] = useState(
-    {
-      adminEmail: "",
-      password: ""
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const showModal = () => setIsModalOpen(true);
 
-    }
-  )
+  const handleCancel = () => setIsModalOpen(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [form, setForm] = useState({
+    adminEmail: "",
+    password: "",
+  });
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({
@@ -28,20 +31,44 @@ function Adminemailregister() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${baseUrl}/api/v1/admin/admin-login`, form)
+      const response = await axios.post(
+        `${baseUrl}/api/v1/admin/admin-login`,
+        form
+      );
       const adminres = response.data;
-      console.log("res", response.data)
+      console.log("res", response.data);
       dispatch(setAdmin(adminres));
 
       setForm({
         adminEmail: "",
-        password: ""
+        password: "",
       });
-      navigate("/admindashboard")
+      navigate("/admindashboard");
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-
+  };
+  const handleForgotSubmit = async () => {
+    if (!email ) {
+      message.error("Please enter a valid email .");
+      return;
+    }
+    try {
+      console.log(email);
+      
+      const response = await axios.post(
+        `${baseUrl}/api/v1/admin/forgot-password/send-otp`,
+        {
+          adminEmail: email,
+        }
+      );
+      if (response.status === 200) {
+        navigate(`/resendOtpAdmin/${email}`);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    setIsModalOpen(false);
   };
   return (
     <div>
@@ -60,7 +87,7 @@ function Adminemailregister() {
                     <h2>Welcome Back</h2>
                   </div>
                   <div className={styles.paraContent}>
-                    <p>This is a demo content</p>
+                    <p>Admin Login</p>
                   </div>
                   <div className={styles.formContainer}>
                     <form className="form" onSubmit={handleSubmit}>
@@ -101,23 +128,15 @@ function Adminemailregister() {
                       </div>
 
                       <div className={styles.forgotPassContainer}>
-                        <Link className={styles.linkStyle}>Forgot Password?</Link>
+                        <Link className={styles.linkStyle} onClick={showModal}>
+                          Forgot Password?
+                        </Link>
                       </div>
 
                       <div className={styles.buttonContainer}>
                         <button type="submit">Login</button>
                       </div>
                     </form>
-                  </div>
-
-                  <div className={styles.seperator}>
-                    <div className={styles.hr}></div>
-                    <p>Or</p>
-                    <div className={styles.hr}></div>
-                  </div>
-                  <div className={styles.signup}>
-                    <p>Don't you have an account?</p>
-                    <Link className={styles.linkStyle} to={'/phoneregister'}>Sign Up</Link>
                   </div>
                 </div>
               </div>
@@ -129,6 +148,19 @@ function Adminemailregister() {
           </div>
         </div>
       </div>
+      <Modal
+        title="Reset Password"
+        open={isModalOpen}
+        onOk={handleForgotSubmit}
+        onCancel={handleCancel}
+        okText="Send Reset Link"
+      >
+        <Input
+          placeholder="Enter your email number"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </Modal>
     </div>
   );
 }

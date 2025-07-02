@@ -19,21 +19,6 @@ function AssignedKyc() {
         navigate(`/VerifyKYC/${id}`)
     }
 
-    const verifyKyc = async (id) => {
-        try {
-            console.log("idid", id);
-
-            const response = await axios.get(`${baseUrl}/api/v1/admin/kyc-requested-single-user`, {
-                params: { id }
-            });
-            const kycData = response.data.data
-            navigate(`/VerifyKYC/${id}`, { state: { kycData } });
-
-            console.log("response", response.data.data);
-        } catch (error) {
-            console.error("Axios error:", error.response?.data?.message || error.message);
-        }
-    };
 
     useEffect(() => {
         console.log("admin id store", adminId)
