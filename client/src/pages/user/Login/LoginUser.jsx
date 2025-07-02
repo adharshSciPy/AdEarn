@@ -3,21 +3,23 @@ import logo from "../../../assets/Logo.png";
 import styles from "./userlogin.module.css";
 import { Link, useNavigate } from "react-router-dom";
 import baseUrl from "../../../baseurl";
-import axios from "axios"
+import axios from "axios";
 import { setUser } from "../../../components/features/slice";
-import { useDispatch } from 'react-redux';
-
+import { useDispatch } from "react-redux";
+import { Modal, Input, message } from "antd";
 
 function LoginUser() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [form, setForm] = useState(
-    {
-      email: "",
-      password: ""
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const showModal = () => setIsModalOpen(true);
+  const handleCancel = () => setIsModalOpen(false);
+  const [phone, setPhone] = useState("");
 
-    }
-  )
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({
@@ -26,31 +28,51 @@ function LoginUser() {
     }));
   };
   const handleSubmit = async (e) => {
-
     e.preventDefault();
     try {
-      const response = await axios.post(`${baseUrl}/api/v1/user/login`, form)
+      const response = await axios.post(`${baseUrl}/api/v1/user/login`, form);
       if (response.status === 200) {
         const id = response.data.user._id;
-        navigate(`/userhome/${id}`)
-        dispatch(setUser({
-          id: response.data.user._id,
-          token: response.data.accessToken,
-          role: response.data.role,
-        }));
+        navigate(`/userhome/${id}`);
+        dispatch(
+          setUser({
+            id: response.data.user._id,
+            token: response.data.accessToken,
+            role: response.data.role,
+          })
+        );
       }
-
     } catch (error) {
       console.log(error);
-
     }
 
     console.log("Submitted:", form);
     setForm({
       email: "",
-      password: ""
+      password: "",
     });
   };
+  const handleForgotSubmit = async () => {
+    if (!phone || phone.length < 10) {
+      message.error("Please enter a valid phone number.");
+      return;
+    }
+    try {
+      const response = await axios.post(
+        `${baseUrl}/api/v1/user/forgot-password/send-otp`,
+        {
+          phoneNumber: phone,
+        }
+      );
+      if(response.status===200){
+        navigate(`/resendotp/${phone}`)
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    setIsModalOpen(false);
+  };
+
   return (
     <div>
       <div className={styles.containerOneUser}>
@@ -109,7 +131,9 @@ function LoginUser() {
                       </div>
 
                       <div className={styles.forgotPassContainer}>
-                        <Link className={styles.linkStyle}>Forgot Password?</Link>
+                        <Link className={styles.linkStyle} onClick={showModal}>
+                          Forgot Password?
+                        </Link>
                       </div>
 
                       <div className={styles.buttonContainer}>
@@ -125,7 +149,9 @@ function LoginUser() {
                   </div>
                   <div className={styles.signup}>
                     <p>Don't you have an account?</p>
-                    <Link className={styles.linkStyle} to={'/phonesignup'}>Sign Up</Link>
+                    <Link className={styles.linkStyle} to={"/phonesignup"}>
+                      Sign Up
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -137,6 +163,20 @@ function LoginUser() {
           </div>
         </div>
       </div>
+      <Modal
+        title="Reset Password"
+        open={isModalOpen}
+        onOk={handleForgotSubmit}
+        onCancel={handleCancel}
+        okText="Send Reset Link"
+      >
+        <Input
+          placeholder="Enter your phone number"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          maxLength={10}
+        />
+      </Modal>
     </div>
   );
 }

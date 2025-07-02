@@ -194,6 +194,23 @@ const contestEntryWalletSchema = new Schema(
   { _id: false }
 );
 
+const subscriptionLogSchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
+    userName: { type: String, required: true },
+    starsUsed: { type: Number, required: true },
+    subscriptionStatus: {
+      type: String,
+      enum: ["active", "expired"],
+      default: "active",
+    },
+    subscriptionStartDate: { type: Date, required: true },
+    subscriptionEndDate: { type: Date, required: true },
+    renewedAt: { type: Date, default: null },
+    loggedAt: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
 
 // ✅ Final Schema with integrated wallets
 
@@ -215,8 +232,13 @@ const superAdminWalletSchema = new Schema(
     // ✅ New fields below
     companyRewardWallet: companyRewardWalletSchema,
     contestEntryWallet: contestEntryWalletSchema,
-    userEntry: userEntrySchema
+    userEntry: [userEntrySchema],
+    blacklistedUserStars:[blacklistedUserStarsSchema],
+    subscriptionLogs: [subscriptionLogSchema],
+    
+    
   },
+  
   { timestamps: true }
 );
 

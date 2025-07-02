@@ -156,6 +156,8 @@ function Sidebar() {
       children: [
         { key: "admin-add", label: "Add Admin ", path: "/superadminaddadmin" },
         { key: "admin-delete", label: " Delete Admin", path: "/manageadmin" },
+        { key: "admin-list", label: " List Admin", path: "/Superadminadminlist" },
+
       ],
     },
     {

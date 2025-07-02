@@ -18,6 +18,7 @@ import  {sendNotification } from "../utils/sendNotifications.js";
 import Redis from "ioredis";
 import crypto from "crypto";
 import config from "../config.js";
+import subscriptionSettings from "../model/subscriptionSettingsModel.js";
 
 
 // function to create referal code
@@ -1162,7 +1163,69 @@ user.password=newPassword
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+// to renew the subscription
+ const activateSubscription = async (req, res) => {
+  const userId = req.user.id; // vishva using auth middleware aane 
 
+  try {
+    const user = await User.findById(userId).populate("userWalletDetails");
+    if (!user || !user.userWalletDetails) {
+      return res.status(404).json({ message: "User or wallet not found" });
+    }
+
+    const settings = await subscriptionSettings.findOne();
+    if (!settings) {
+      return res.status(404).json({ message: "Subscription settings not found" });
+    }
+
+    const { starCountRequired, subscriptionDurationDays } = settings;
+    const wallet = user.userWalletDetails;
+
+    if (wallet.totalStars < starCountRequired) {
+      return res.status(400).json({
+        message: `You need at least ${starCountRequired} stars to activate subscription.`,
+      });
+    }
+
+    // Deduct stars
+    wallet.totalStars -= starCountRequired;
+    await wallet.save();
+
+    const now = new Date();
+    const endDate = new Date(now.getTime() + subscriptionDurationDays * 24 * 60 * 60 * 1000);
+
+    user.isSubscribed = true;
+    user.subscriptionStartDate = now;
+    user.subscriptionEndDate = endDate;
+    await user.save();
+
+    // ✅ Log in SuperAdminWallet
+    const superWallet = await SuperAdminWallet.findOne();
+    if (superWallet) {
+       superWallet.totalStars += starCountRequired;
+      superWallet.subscriptionLogs.push({
+        userId: user._id,
+        userName: `${user.firstName} ${user.lastName}`.trim(),
+        starsUsed: starCountRequired,
+        subscriptionStatus: "active",
+        subscriptionStartDate: now,
+        subscriptionEndDate: endDate,
+        renewedAt: now,
+        loggedAt: new Date(),
+      });
+      await superWallet.save();
+    }
+
+    return res.status(200).json({
+      message: `Subscription activated for ${subscriptionDurationDays} days.`,
+      subscriptionEndDate: endDate,
+      remainingStars: wallet.totalStars,
+    });
+  } catch (err) {
+    console.error("Error activating subscription:", err.message);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 
 
@@ -1184,7 +1247,8 @@ export {
   verifyOTP,
   sendPasswordResetOTP,
   verifyPasswordResetOTP,
-  resetPassword
+  resetPassword,
+  activateSubscription
 
 
 };
