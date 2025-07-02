@@ -16,10 +16,12 @@ function VerifyAds() {
   const [selectedAd, setSelectedAd] = useState(null);
   const [IsModalVisibleReject, setIsModalVisibleReject] = useState(false);
   const [reason, setReason] = useState("");
+
   const { adId } = useParams();
   const navigate = useNavigate();
   const getUnVerifyAd = async () => {
     try {
+      console.log("iidd", adId)
       const response = await axios.get(
         `${baseUrl}/api/v1/ads/unverified-ads/${adId}`
       );
@@ -68,6 +70,15 @@ function VerifyAds() {
       console.log(error);
     }
   };
+
+  function formatDate(isoString) {
+    const date = new Date(isoString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
   return (
     <div className={styles.verifyadsmain}>
       <div className={styles.verifyadscontainer}>
@@ -156,6 +167,15 @@ function VerifyAds() {
                     <div>
                       <p>Ad</p>
                     </div>
+                    <div>
+                      {unverifiedAd?.imageAd?.title ? (
+                        <p>{unverifiedAd?.imageAd?.title}</p>
+                      ) : unverifiedAd?.videoAd?.title ? (
+                        <p>{unverifiedAd?.videoAd?.title}</p>
+                      ) : unverifiedAd?.surveyAd?.title ? (
+                        <p>{unverifiedAd?.surveyAd?.title}</p>
+                      ) : null}
+                    </div>
                   </div>
                   <div className={styles.listitems}>
                     <div>
@@ -187,10 +207,18 @@ function VerifyAds() {
                   </div>
                   <div className={styles.listitems}>
                     <div>
-                      <p>Ads Status</p>
+                      <p>Needed View Count</p>
                     </div>
                     <div>
-                      <p>Not Verified</p>
+                      {unverifiedAd?.imageAd?.userViewsNeeded !== undefined ? (
+                        <p>{unverifiedAd.imageAd.userViewsNeeded}</p>
+                      ) : unverifiedAd?.videoAd?.userViewsNeeded !== undefined ? (
+                        <p>{unverifiedAd.videoAd.userViewsNeeded}</p>
+                      ) : unverifiedAd?.surveyAd?.userViewsNeeded !== undefined ? (
+                        <p>{unverifiedAd.surveyAd.userViewsNeeded}</p>
+                      ) : (
+                        <p>Not available</p>
+                      )}
                     </div>
                   </div>
                   <div className={styles.listitems}>
@@ -199,11 +227,11 @@ function VerifyAds() {
                     </div>
                     <div>
                       {unverifiedAd?.imageAd?.createdAt ? (
-                        <p>{unverifiedAd?.imageAd?.createdAt}</p>
+                        <p>{formatDate(unverifiedAd.imageAd.createdAt)}</p>
                       ) : unverifiedAd?.videoAd?.createdAt ? (
-                        <p>{unverifiedAd?.videoAd?.createdAt}</p>
+                        <p>{formatDate(unverifiedAd.videoAd.createdAt)}</p>
                       ) : unverifiedAd?.surveyAd?.createdAt ? (
-                        <p>{unverifiedAd?.surveyAd?.createdAt}</p>
+                        <p>{formatDate(unverifiedAd.surveyAd.createdAt)}</p>
                       ) : null}
                     </div>
                   </div>
@@ -242,29 +270,29 @@ function VerifyAds() {
                 </div>
                 {(unverifiedAd?.imageAd?.audioUrl ||
                   unverifiedAd?.videoAd?.audioUrl) && (
-                  <div className={styles.adsnametext}>
-                    <div>
-                      <h1>Audio</h1>
+                    <div className={styles.adsnametext}>
+                      <div>
+                        <h1>Audio</h1>
+                      </div>
+                      <div>
+                        {unverifiedAd?.imageAd?.audioUrl ? (
+                          <audio controls>
+                            <source
+                              src={`${baseUrl}${unverifiedAd.imageAd.audioUrl}`}
+                            />
+                            Your browser does not support the audio element.
+                          </audio>
+                        ) : (
+                          <audio controls>
+                            <source
+                              src={`${baseUrl}${unverifiedAd.videoAd.audioUrl}`}
+                            />
+                            Your browser does not support the audio element.
+                          </audio>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      {unverifiedAd?.imageAd?.audioUrl ? (
-                        <audio controls>
-                          <source
-                            src={`${baseUrl}${unverifiedAd.imageAd.audioUrl}`}
-                          />
-                          Your browser does not support the audio element.
-                        </audio>
-                      ) : (
-                        <audio controls>
-                          <source
-                            src={`${baseUrl}${unverifiedAd.videoAd.audioUrl}`}
-                          />
-                          Your browser does not support the audio element.
-                        </audio>
-                      )}
-                    </div>
-                  </div>
-                )}
+                  )}
                 <div className={styles.adsnametext}>
                   <div>
                     <h1>Ads Question</h1>
@@ -276,27 +304,27 @@ function VerifyAds() {
                           <p style={{ fontSize: "20px", fontWeight: "bold" }}>
                             {item.questionText}
                           </p>
-                          <div style={{display:"flex"}}>
+                          <div style={{ display: "flex" }}>
                             {item.options?.map((ans, i) => (
-                            <div className="" >
-                              <label 
-                                key={i}
-                                style={{ display: "block", marginTop: "10px",marginLeft:"10px" }}
-                              >
-                                <input
-                                  type="checkbox"
-                                  disabled
-                                  style={{
-                                    marginRight: "8px",
-                                    marginTop: "10px",
-                                  }}
-                                />
-                                {ans}
-                              </label>
-                            </div>
-                          ))}
+                              <div className="" >
+                                <label
+                                  key={i}
+                                  style={{ display: "block", marginTop: "10px", marginLeft: "10px" }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    disabled
+                                    style={{
+                                      marginRight: "8px",
+                                      marginTop: "10px",
+                                    }}
+                                  />
+                                  {ans}
+                                </label>
+                              </div>
+                            ))}
                           </div>
-                          
+
                         </div>
                       ))}
                     </div>
