@@ -65,6 +65,45 @@ const registerSuperAdmin = async (req, res) => {
       email,
       password,
     });
+
+    // ✅ Automatically create SuperAdminWallet
+    await SuperAdminWallet.create({
+  totalStars: 0,
+  perUserWelcomeBonus: 0,
+  transactions: [],
+  expiredCouponRefunds: [],
+  deletedUserStars: [],
+  welcomeBonusWallet: {
+    totalReceived: 0,
+    remainingStars: 0,
+    given: [],
+    logs: [],
+  },
+  companyRewardWallet: {
+    totalReceived: 0,
+    remainingStars: 0,
+    companyDeposits: [],
+    givenToWinners: [],
+  },
+  contestEntryWallet: {
+    totalReceived: 0,
+    totalEntries: 0,
+    collectedFromUsers: [],
+  },
+  // Provide a default valid entry if starsUsed is required
+  userEntry: {
+    userId: newAdmin._id,
+    starsUsed: 0,
+    contestId: null,
+  },
+  blacklistedUserStars: {
+    userId: newAdmin._id,
+    starsTransferred: 0,
+  },
+  subscriptionLogs: [],
+});
+
+
     const token = jwt.sign(
       { id: newAdmin._id, role: newAdmin.role },
       process.env.ACCESS_TOKEN_SECRET,
