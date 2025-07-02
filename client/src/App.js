@@ -86,6 +86,8 @@ import WelcomeStar from './pages/superadmin/StarDistribution/WelcomeStar/Welcome
 import Contest from './pages/superadmin/Contest/Contest';
 import ContestWinner from './pages/superadmin/ContestWinner/ContestWinner';
 import AdminListing from './pages/superadmin/AdminListing/AdminListing';
+import ResetPassSuper from './pages/superadmin/ResetPassSuper/ResetPassSuper';
+
 
 
 function App() {
@@ -160,10 +162,10 @@ function App() {
 
 
           {/* SuperAdmin */}
-          <Route path='/        ' element={<SuperadminDash />} />
+          <Route path='/SuperadminDash' element={<SuperadminDash />} />
           <Route path='/manageadmin' element={<ManageAdmin />} />
           <Route path='/superadminadsuser' element={<SuperAdminAdUser />} />
-          <Route path='/Superadminotp' element={<Superadminotp />} />
+          <Route path='/Superadminotp/:email' element={<Superadminotp />} />
           <Route path='/Companyaccounts' element={<CompanyAccounts />} />
           <Route path='/StarDistribution' element={<StarDistributionPage />} />
           <Route path='/superadminuseraccount' element={<SuperAdminUserAccount />} />
@@ -196,6 +198,7 @@ function App() {
           <Route path='/superadmincontestwinner' element={<ContestWinner />} />
           <Route path='/SuperadminLogin' element={<SuperAdminLogin />} />
           <Route path='/Superadminadminlist' element={<AdminListing />} />
+          <Route path='/resetPassSuper/:email' element={<ResetPassSuper />} />
 
 
 

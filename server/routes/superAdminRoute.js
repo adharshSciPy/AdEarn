@@ -21,7 +21,8 @@ import {
   verifySuperAdminForgotPasswordOtp,
   resetSuperAdminPassword,
   autoSelectWinners,
-  getAdminJobStats
+  getAdminJobStats,
+  couponFetchById,
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
 import welcomeBonusUpload from "../multer/welBonusMulter.js";
@@ -34,7 +35,6 @@ superAdminRouter.route("/all-admins").get(getAllAdmins);
 superAdminRouter.route("/toggle-user-status").post(toggleUserStatus);
 superAdminRouter.route("/toggle-admin-status").post(toggleAdminStatus);
 superAdminRouter.route("/superadmin-wallet").get(getSuperAdminWallet);
-superAdminRouter.route("/generate-coupons").post(generateCoupons);
 // superAdminRouter.route("/set-welcome-bonus").post(setWelcomeBonusAmount);
 superAdminRouter.route("/topup-welcome-stars").post(topUpWelcomeBonusStars);
 superAdminRouter.route("/create-contest").post(wrapMulter(contestPrizeUpload.array("prizeImages", 5)), createContest);
@@ -44,21 +44,17 @@ superAdminRouter.route("/delete-user").delete(deleteUser);
 superAdminRouter.route("/blacklist-user").patch(blacklistUser);
 superAdminRouter.route("/set-welcome-bonus").post(wrapMulter(welcomeBonusUpload), setWelcomeBonusAmount);
 superAdminRouter.route("/all-coupons").get(getAllCoupons);
-superAdminRouter.route("/distribute-coupon").post(couponDistribution);
-superAdminRouter.route("/all-coupon-batch").get(getAllCouponBatches);
 superAdminRouter.route("/contest/auto-select/:contestId").get(autoSelectWinners);
+superAdminRouter.route("/forgot-password/send-otp").post(sendSuperAdminForgotPasswordOtp);
+superAdminRouter.route("/forgot-password/verify-otp").post(verifySuperAdminForgotPasswordOtp);
+superAdminRouter.route("/forgot-password/reset-password").post(resetSuperAdminPassword);
+superAdminRouter.route("/admin-job-status/:id").get(getAdminJobStats);
+// superAdminRouter.route('/admin-job-status/:id').get(getAdminJobStats)
+superAdminRouter.route("/generate-coupons").post(generateCoupons);//to generate coupons for superadmin
+superAdminRouter.route("/all-coupon-batch").get(getAllCouponBatches);//to get all  coupon batches to dispaly over superadmin as table 
+superAdminRouter.route("/distribute-coupon").post(couponDistribution);// to distribute coupon batches to admin by superadmin
+superAdminRouter.route("/coupon-batch/:id").get(couponFetchById);//to view coupons inside a batch on admin side
 
-superAdminRouter
-  .route("/forgot-password/send-otp")
-  .post(sendSuperAdminForgotPasswordOtp);
-superAdminRouter
-  .route("/forgot-password/verify-otp")
-  .post(verifySuperAdminForgotPasswordOtp);
-superAdminRouter
-  .route("/forgot-password/reset-password")
-  .post(resetSuperAdminPassword);
-superAdminRouter.route('/admin-job-status/:id').get(getAdminJobStats)
-superAdminRouter.route('/admin-job-status/:id').get(getAdminJobStats)
 
 
 export default superAdminRouter;
