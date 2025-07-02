@@ -62,16 +62,17 @@ function VerifyKYC() {
   useEffect(() => {
     const verifyKyc = async () => {
       try {
-        console.log("admin id", adminId)
         const response = await axios.get(`${baseUrl}/api/v1/admin/kyc-requested-single-user`, { params: { id } })
-        console.log("response", response.data.data)
+        console.log("response", response)
         setKycData(response.data.data)
         console.log("kyc state", kycData)
       } catch (error) {
         console.log(error)
       }
     }
-    if (id) verifyKyc();
+    if (id) {
+      verifyKyc()
+    }
 
   }, [id])
 
@@ -81,7 +82,8 @@ function VerifyKYC() {
 
   const approveKyc = async () => {
     try {
-      console.log("userid", id)
+      console.log("approve userid", id)
+      console.log("approve admin id", adminId)
       const approveres = await axios.post(`${baseUrl}/api/v1/admin/kyc-approval`, {
         id: id,
         adminId: adminId

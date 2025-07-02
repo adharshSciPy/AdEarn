@@ -16,7 +16,8 @@ import VerifyKYC from './pages/admin/VerifyKYC/VerifyKYC';
 import ContestForm from './pages/admin/ContestForm/ContestForm';
 import Adminemailregister from "./pages/admin/Emailregister/Adminemailregister"
 import ViewKYC from './pages/admin/VerifyKYC/ViewKYC';
-
+import AssignedAds from './pages/admin/AssignAds/AssignedAds';
+import AssignedKyc from './pages/admin/AssignKyc/AssignedKyc';
 
 
 import LoginUser from './pages/user/Login/LoginUser';
@@ -107,6 +108,8 @@ function App() {
           <Route path='/VerifyKYC/:id' element={<VerifyKYC />} />
           <Route path='/ContestForm' element={<ContestForm />} />
           <Route path='/ViewKYC/:id' element={<ViewKYC />} />
+          <Route path='/AssignedAds' element={<AssignedAds />} />
+          <Route path='/AssignedKyc' element={<AssignedKyc />} />
 
 
 

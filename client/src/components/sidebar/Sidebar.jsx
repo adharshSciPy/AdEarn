@@ -59,7 +59,12 @@ function Sidebar() {
                 key: "home", label: "Home", icon: <HomeOutlined />, path: "/Admindashboard",
             },
             {
-                key: "ads", label: "Ads", icon: <UserOutlined />, path: `/AdminAds/${id}`,
+                key: "ads", label: "Ads", icon: <UserOutlined />,
+                children: [
+                    { key: "ads", label: "All Ads", path: `/AdminAds/${id}` },
+                    { key: "assigned-ads", label: "Assigned Ads", path: "/AssignedAds" },
+                ]
+
             },
             {
                 key: "coupons", label: "Coupons", icon: <UserOutlined />,
@@ -70,7 +75,11 @@ function Sidebar() {
 
             },
             {
-                key: "adminkyc", label: "KYCVerify", icon: <UserOutlined />, path: `/AdminKYC/${id}`,
+                key: "adminkyc", label: "KYC", icon: <UserOutlined />,
+                children: [
+                    { key: "all-kyc", label: "All KYC", path: `/AdminKYC/${id}` },
+                    { key: "assigned-kyc", label: "Assigned Kyc", path: "/AssignedKyc" },
+                ]
             },
             {
                 key: "contest", label: "Contest", icon: <UserOutlined />,
