@@ -52,7 +52,7 @@ function AssignedAds() {
           <div style={{ width: '100%', maxWidth: '1550px', height: '600px', padding: '30px' }} className={styles.AssignSection}>
 
             <section className={styles.payoutTableSection}>
-              <h1 style={{ fontSize: "25px", padding: '10px' }}>Verify KYC</h1>
+              <h1 style={{ fontSize: "25px", padding: '10px' }}>Verify Ads</h1>
               <table className={styles.payoutTable}>
                 <thead>
                   <tr>

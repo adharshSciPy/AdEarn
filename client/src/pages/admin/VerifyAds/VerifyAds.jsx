@@ -9,6 +9,7 @@ import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import baseUrl from "../../../baseurl";
 import { Modal } from "antd";
+import { useSelector } from "react-redux";
 
 function VerifyAds() {
   const [unverifiedAd, setUnVerifiedAd] = useState();
@@ -16,6 +17,8 @@ function VerifyAds() {
   const [selectedAd, setSelectedAd] = useState(null);
   const [IsModalVisibleReject, setIsModalVisibleReject] = useState(false);
   const [reason, setReason] = useState("");
+
+  const adminId = useSelector((state) => state.admin.id)
 
   const { adId } = useParams();
   const navigate = useNavigate();
@@ -45,11 +48,13 @@ function VerifyAds() {
   };
   const handleApprove = async () => {
     try {
-      const response = await axios.post(`${baseUrl}/api/v1/admin/verify-ad`, {
+      console.log("approve adId", selectedAd);
+      console.log("approve adminId", adminId)
+      const response = await axios.post(`${baseUrl}/api/v1/admin/verify-ad/${adminId}`, {
         adId: selectedAd,
       });
       if (response.status === 200) {
-        navigate("/AdminAds");
+        navigate(`/AdminAds${adminId}`);
       }
       console.log(response);
     } catch (error) {
@@ -58,12 +63,12 @@ function VerifyAds() {
   };
   const handleRejection = async () => {
     try {
-      const response = await axios.post(`${baseUrl}/api/v1/admin/reject-ad`, {
+      const response = await axios.post(`${baseUrl}/api/v1/admin/reject-ad/${adminId}`, {
         adId: selectedAd,
         reason: reason,
       });
       if (response.status === 200) {
-        navigate("/AdminAds");
+        navigate(`/AdminAds${adminId}`);
       }
       console.log(response);
     } catch (error) {
