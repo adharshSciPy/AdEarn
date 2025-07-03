@@ -385,84 +385,6 @@ const distributeWelcomeBonus = async (newUserId) => {
 
 
 
-const createContest = async (req, res) => {
-  try {
-    console.log("BODY:", req.body);
-    console.log("FILES:", req.files);
-
-    const {
-      contestName,
-      contestNumber,
-      startDate,
-      endDate,
-      entryStars,
-      maxParticipants,
-      result,
-      winnerSelectionType // <-- new field
-    } = req.body;
-
-    // Basic required fields validation
-    if (
-      !contestName ||
-      !contestNumber ||
-      !startDate ||
-      !endDate ||
-      !entryStars ||
-      !maxParticipants
-    ) {
-      return res
-        .status(400)
-        .json({ message: "All required fields must be filled" });
-    }
-
-    // Validate winnerSelectionType
-    const validTypes = ["Manual", "Automatic"];
-    if (winnerSelectionType && !validTypes.includes(winnerSelectionType)) {
-      return res.status(400).json({ message: "Invalid winnerSelectionType" });
-    }
-
-    // Check for existing contest number
-    const existing = await ContestEntry.findOne({ contestNumber });
-    if (existing) {
-      return res.status(400).json({ message: "Contest number already exists" });
-    }
-
-    // Handle prize images if provided
-    let prizeImages = [];
-    if (req.files && req.files.length > 0) {
-      prizeImages = req.files.map(
-        (file) => `/contestPrizeImages/${file.filename}`
-      );
-    }
-
-    // Create new contest entry
-    const contest = new ContestEntry({
-      contestName,
-      contestNumber,
-      startDate,
-      endDate,
-      entryStars,
-      maxParticipants,
-      currentParticipants: 0,
-      totalEntries: 0,
-      result: result || "Pending",
-      prizeImages,
-      winnerSelectionType: winnerSelectionType || "Manual" // default to Manual
-    });
-
-    await contest.save();
-
-    return res
-      .status(201)
-      .json({ message: "Contest created successfully", contest });
-
-  } catch (error) {
-    console.error("Error creating contest:", error);
-    return res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
-export default createContest;
 
 const generateCoupons = async (req, res) => {
   const {
@@ -1149,7 +1071,7 @@ const couponDistribution = async (req, res) => {
     await admin.save();
   await sendNotification(
       admin._id,
-      ADMIN_ROLE,
+      process.env.ADMIN_ROLE, // edit on 03-07
       `A new coupon batch (ID: ${couponBatch._id}) has been assigned to you.${note ? " Note: " + note : ""}`,
       io,
       connectedUsers,
@@ -1323,7 +1245,211 @@ const getAdminJobStats = async (req, res) => {
 
 
 
+const createContest = async (req, res) => {
+  try {
+    console.log("BODY:", req.body);
+    console.log("FILES:", req.files);
 
+    const {
+      contestName,
+      contestNumber,
+      startDate,
+      entryStars,
+      maxParticipants,
+      result,
+      winnerSelectionType
+    } = req.body;
+
+    // Required field validation
+    if (
+      !contestName ||
+      !contestNumber ||
+      !startDate ||
+      !entryStars ||
+      !maxParticipants
+    ) {
+      return res
+        .status(400)
+        .json({ message: "All required fields must be filled" });
+    }
+
+    // Validate winnerSelectionType if provided
+    const validTypes = ["Manual", "Automatic"];
+    if (winnerSelectionType && !validTypes.includes(winnerSelectionType)) {
+      return res.status(400).json({ message: "Invalid winnerSelectionType" });
+    }
+
+    // Check for duplicate contest number
+    const existing = await ContestEntry.findOne({ contestNumber });
+    if (existing) {
+      return res
+        .status(400)
+        .json({ message: "Contest number already exists" });
+    }
+
+    // Handle prize images (optional)
+    let prizeImages = [];
+    if (req.files && req.files.length > 0) {
+      prizeImages = req.files.map(
+        (file) => `/contestPrizeImages/${file.filename}`
+      );
+    }
+
+    // Create new contest
+    const contest = new ContestEntry({
+      contestName,
+      contestNumber,
+      startDate,
+      entryStars,
+      maxParticipants,
+      currentParticipants: 0,
+      totalEntries: 0,
+      result: result || "Pending",
+      prizeImages,
+      winnerSelectionType: winnerSelectionType || "Manual",
+      status: "Active",
+      manuallyStopped: false
+    });
+
+    await contest.save();
+
+    return res
+      .status(201)
+      .json({ message: "Contest created successfully", contest });
+
+  } catch (error) {
+    console.error("Error creating contest:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+const selectAutomaticWinners = async (req, res) => {
+  const { contestId, numberOfWinners } = req.body;
+
+  try {
+    if (!contestId || !numberOfWinners) {
+      return res.status(400).json({ message: "Missing contestId or numberOfWinners" });
+    }
+
+    const contest = await ContestEntry.findById(contestId);
+    if (!contest) {
+      return res.status(404).json({ message: "Contest not found" });
+    }
+
+   if (contest.status === "Ended" && contest.winners.length > 0) {
+  return res.status(400).json({ message: "Winners already selected for this contest" });
+}
+    if (contest.winnerSelectionType !== "Automatic") {
+      return res.status(400).json({ message: "This contest is not set for automatic selection" });
+    }
+
+    // Get all entries from SuperAdminWallet
+    const adminWallet = await SuperAdminWallet.findOne();
+    const allEntries = adminWallet.contestEntryWallet?.collectedFromUsers || [];
+
+    // Filter entries specific to this contest
+    const contestEntries = allEntries.filter(entry =>
+      entry.contestId.toString() === contestId.toString()
+    );
+
+    if (contestEntries.length < numberOfWinners) {
+      return res.status(400).json({ message: "Not enough participants to choose winners" });
+    }
+
+    // Shuffle entries randomly
+    const shuffled = contestEntries.sort(() => 0.5 - Math.random());
+
+    // Pick top N winners
+    const selected = shuffled.slice(0, numberOfWinners);
+
+    // Save to contest.winners
+    contest.winners = selected.map((entry, index) => ({
+      userId: entry.userId,
+      position: index + 1,
+    }));
+
+    contest.status = "Ended";
+    await contest.save();
+
+    return res.status(200).json({
+      message: "Winners selected successfully",
+      winners: contest.winners,
+    });
+
+  } catch (error) {
+    console.error("Automatic Winner Selection Error:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+
+const stopContestManually = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const contest = await ContestEntry.findById(id);
+    if (!contest) return res.status(404).json({ message: "Contest not found" });
+
+    if (contest.status === "Ended") {
+      return res.status(400).json({ message: "Contest already ended" });
+    }
+
+    contest.status = "Ended";
+    contest.manuallyStopped = true;
+    await contest.save();
+
+    // ✅ Skip refund if winners already selected
+    if (contest.winners && contest.winners.length > 0) {
+      return res.status(200).json({
+        message: "Contest manually stopped, but winners already selected. No refunds issued.",
+        contest
+      });
+    }
+
+    const adminWallet = await SuperAdminWallet.findOne();
+    if (!adminWallet) {
+      return res.status(404).json({ message: "SuperAdmin Wallet not found" });
+    }
+
+    const contestEntries = adminWallet.contestEntryWallet?.collectedFromUsers?.filter(
+      (entry) => entry.contestId.toString() === contest._id.toString()
+    ) || [];
+
+    const starsToRefund = contest.entryStars;
+    const refundedUsers = [];
+
+    for (const entry of contestEntries) {
+      const user = await User.findById(entry.userId).populate("userWalletDetails");
+      if (!user || !user.userWalletDetails) continue;
+
+      user.userWalletDetails.totalStars += starsToRefund;
+      await user.userWalletDetails.save();
+
+      refundedUsers.push(user._id.toString());
+    }
+
+    // Remove refunded entries from admin wallet
+    adminWallet.contestEntryWallet.collectedFromUsers = adminWallet.contestEntryWallet.collectedFromUsers.filter(
+      (entry) => entry.contestId.toString() !== contest._id.toString()
+    );
+
+    adminWallet.contestEntryWallet.totalReceived -= refundedUsers.length * starsToRefund;
+    adminWallet.contestEntryWallet.totalEntries -= refundedUsers.length;
+    adminWallet.totalStars -= refundedUsers.length * starsToRefund;
+
+    await adminWallet.save();
+
+    return res.status(200).json({
+      message: "Contest manually stopped and stars refunded to users",
+      refundedUsers,
+      contest
+    });
+
+  } catch (err) {
+    console.error("Manual Stop Error:", err);
+    res.status(500).json({ message: "Internal Server Error", error: err.message });
+  }
+};
 
 
 export {
@@ -1351,5 +1477,7 @@ export {
   sendSuperAdminForgotPasswordOtp,
   verifySuperAdminForgotPasswordOtp,
   resetSuperAdminPassword,
-  getAdminJobStats
+  getAdminJobStats,
+  selectAutomaticWinners,
+  stopContestManually
 };

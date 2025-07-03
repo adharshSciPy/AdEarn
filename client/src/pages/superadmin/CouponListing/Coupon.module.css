@@ -87,3 +87,57 @@ input {
   border-radius: 6px;
   cursor: pointer;
 }
+.tableContainer {
+  padding: 20px;
+  overflow-x: auto;
+}
+
+.customTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.customTable th {
+  background-color: #5325b5; /* purple */
+  color: white;
+  padding: 12px;
+  text-align: left;
+  font-weight: bold;
+}
+
+.customTable td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.customTable tr:hover {
+  background-color: #f9f9f9;
+}
+
+.approveBtn {
+  background-color: #5325b5;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.approveBtn:hover {
+  background-color: #5325b5;
+}
+.selectInput {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  font-size: 14px;
+}
+.customTable th,
+.customTable td {
+  text-align: center;
+  vertical-align: middle;
+}
