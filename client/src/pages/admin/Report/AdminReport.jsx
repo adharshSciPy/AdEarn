@@ -9,6 +9,8 @@ import baseUrl from '../../../baseurl'
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useSelector } from 'react-redux';
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 
 
@@ -18,7 +20,8 @@ function AdminReport() {
   const adminId = useSelector((state) => state.admin.id)
   const [verifyads, setVerifyads] = useState([])
   const [verifykyc, setVerifykyc] = useState([])
-  const [assignedadminid, setAssignedadminid] = useState("")
+  const [adminName, setAdminName] = useState("")
+
 
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
@@ -36,23 +39,23 @@ function AdminReport() {
   };
 
   useEffect(() => {
-    const assignedAdmin = async () => {
+    const getadmin = async () => {
       try {
-        const response = await axios.get(`${baseUrl}/api/v1/admin`);
-        console.log("res", response)
+        const adminres = await axios.get(`${baseUrl}/api/v1/admin/adminget/${adminId}`);
+        console.log("adminres", adminres.data)
+        setAdminName(adminres.data.username)
       } catch (error) {
         console.log(error)
       }
     }
 
-    assignedAdmin()
+    getadmin()
   }, [])
 
 
   useEffect(() => {
     const adminVerifiedads = async () => {
       try {
-        console.log("assignedid", assignedadminid)
         const getads = await axios.get(`${baseUrl}/api/v1/admin/ads-verified/${adminId}`);
         setVerifyads(getads.data.data)
         console.log("getads", getads)
@@ -67,11 +70,10 @@ function AdminReport() {
   useEffect(() => {
     const adminVerifiedkyc = async () => {
       try {
-        console.log("admin id", adminId)
         const getkycs = await axios.get(`${baseUrl}/api/v1/admin/kycs-verified/${adminId}`);
-        setVerifykyc(getkycs.data.data)
-        setAssignedadminid(verifykyc.kycId.assignedAdminId)
         console.log("getkycs", getkycs)
+        setVerifykyc(getkycs.data.data)
+
       } catch (error) {
         console.log(error)
       }
@@ -131,6 +133,61 @@ function AdminReport() {
   };
 
 
+
+  //download it in sheet
+
+  const handleDownloadReport = () => {
+    const wb = XLSX.utils.book_new();
+    const sheetData = [];
+    // Add admin name as the first row
+    sheetData.push([`Admin Name: ${adminName}`]); // Full row
+
+    // Add empty row for spacing
+    sheetData.push([]);
+
+    if (activeTab === "Verified Ads") {
+      const verifiedAdsSheet = paginatedVerifiedAds.map((ad) => {
+        const adRef = ad.adId.surveyAdRef || ad.adId.videoAdRef || ad.adId.imageAdRef || {};
+        return {
+          Name: adRef.title || 'N/A',
+          Views: adRef.totalViewCount ?? 0,
+          "Total Stars": adRef.totalStarsAllocated ?? 0,
+          "Start Date": adRef.createdAt ? new Date(adRef.createdAt).toLocaleDateString() : '',
+          "Verified Time": adRef.adVerifiedTime ? getTime(adRef.adVerifiedTime) : ''
+        };
+      });
+
+      const dataSheet = XLSX.utils.json_to_sheet(verifiedAdsSheet, { origin: sheetData.length });
+      const ws = XLSX.utils.aoa_to_sheet(sheetData);
+      XLSX.utils.sheet_add_json(ws, verifiedAdsSheet, { origin: -1 });
+      XLSX.utils.book_append_sheet(wb, ws, "Verified Ads");
+
+    } else if (activeTab === "Verified Kyc") {
+      const verifiedKycSheet = paginatedVerifiedKyc.map((kyc) => {
+        const kycRef = kyc.kycId || {};
+        return {
+          Name: kycRef.fullName || 'N/A',
+          Status: kycRef.kycStatus ?? 'N/A',
+          "Assign Time": getTime(kycRef.assignmentTime) || '',
+          "ID Proof": kycRef.documentType || 'N/A',
+        };
+      });
+
+      const dataSheet = XLSX.utils.json_to_sheet(verifiedKycSheet, { origin: sheetData.length });
+      const ws = XLSX.utils.aoa_to_sheet(sheetData);
+      XLSX.utils.sheet_add_json(ws, verifiedKycSheet, { origin: -1 });
+      XLSX.utils.book_append_sheet(wb, ws, "Verified KYC");
+    }
+
+    // Write and trigger download
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([wbout], { type: "application/octet-stream" });
+    saveAs(blob, `${activeTab.replace(" ", "_")}_Report.xlsx`);
+  };
+
+
+
+
   return (
     <div className={styles.adminreport}>
       <div className={styles.adminreportcontainer}>
@@ -141,7 +198,7 @@ function AdminReport() {
 
             <div className={styles.headsection}>
               <h1>Reports</h1>
-              <Button>Download</Button>
+              <Button onClick={handleDownloadReport}>Download</Button>
             </div>
 
             <div className={styles.Adminads}>
@@ -228,19 +285,18 @@ function AdminReport() {
                           <th>Status</th>
                           <th>Assign Time</th>
                           <th>ID Proof</th>
-                          <th>Move to Admin</th>
                         </tr>
                       </thead>
                       <tbody>
                         {paginatedVerifiedKyc.map((ad, index) => {
                           const adRef = ad.kycId || {};
+
                           return (
                             <tr key={index}>
                               <td>{adRef.fullName || 'N/A'}</td>
                               <td>{adRef.kycStatus ?? 0}</td>
                               <td>{getTime(adRef.assignmentTime)}</td>
                               <td>{adRef.documentType}</td>
-                              <td>{getTime(adRef.adVerifiedTime)}</td>
                             </tr>
                           );
                         })}
