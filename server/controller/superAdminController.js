@@ -1149,7 +1149,7 @@ const couponDistribution = async (req, res) => {
     await admin.save();
   await sendNotification(
       admin._id,
-      ADMIN_ROLE,
+      process.env.ADMIN_ROLE, // edit on 03-07
       `A new coupon batch (ID: ${couponBatch._id}) has been assigned to you.${note ? " Note: " + note : ""}`,
       io,
       connectedUsers,

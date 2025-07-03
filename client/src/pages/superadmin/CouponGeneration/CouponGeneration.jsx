@@ -22,21 +22,21 @@ function CouponGeneration() {
 
     const payload = {
       couponCount: formData.couponCount,
-      perStarCount:formData.perStarCount,
+      perStarCount: formData.perStarCount,
       generationDate: formData.date,
       expiryDate: formData.expiryDate,
     };
     console.log(payload);
-    
+
     try {
       const response = await axios.post(
         `${baseUrl}/api/v1/super-admin/generate-coupons`,
         payload
       );
-
-      if (response.status === 201) {
+      console.log(response);
+      
+      if (response.status === 200) {
         console.log("Success:", response.data);
-        // toast.success("Coupons generated successfully!");
         setFormData({
           couponCount: "",
           perStarCount: "",
@@ -69,13 +69,21 @@ function CouponGeneration() {
             />
 
             <label>Enter each coupon star count</label>
-            <input
-              type="number"
+            <select
               name="perStarCount"
               value={formData.perStarCount}
               onChange={handleChange}
-              placeholder="Enter star count"
-            />
+              className={styles.dropDown}
+            >
+              <option value="">Select star count</option>
+              <option value="5">5 Star</option>
+              <option value="10">10 Stars</option>
+              <option value="25">25 Stars</option>
+              <option value="50">50 Stars</option>
+              <option value="100">100 Stars</option>
+              <option value="250">250 Stars</option>
+
+            </select>
 
             <label>Enter Start Date</label>
             <input
