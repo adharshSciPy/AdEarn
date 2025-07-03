@@ -20,9 +20,11 @@ import {
   sendSuperAdminForgotPasswordOtp,
   verifySuperAdminForgotPasswordOtp,
   resetSuperAdminPassword,
-  autoSelectWinners,
+  // autoSelectWinners,
   getAdminJobStats,
   couponFetchById,
+  stopContestManually,
+  selectAutomaticWinners
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
 import welcomeBonusUpload from "../multer/welBonusMulter.js";
@@ -44,7 +46,7 @@ superAdminRouter.route("/delete-user").delete(deleteUser);
 superAdminRouter.route("/blacklist-user").patch(blacklistUser);
 superAdminRouter.route("/set-welcome-bonus").post(wrapMulter(welcomeBonusUpload), setWelcomeBonusAmount);
 superAdminRouter.route("/all-coupons").get(getAllCoupons);
-superAdminRouter.route("/contest/auto-select/:contestId").get(autoSelectWinners);
+// superAdminRouter.route("/contest/auto-select/:contestId").get(autoSelectWinners);
 superAdminRouter.route("/forgot-password/send-otp").post(sendSuperAdminForgotPasswordOtp);
 superAdminRouter.route("/forgot-password/verify-otp").post(verifySuperAdminForgotPasswordOtp);
 superAdminRouter.route("/forgot-password/reset-password").post(resetSuperAdminPassword);
@@ -54,6 +56,8 @@ superAdminRouter.route("/generate-coupons").post(generateCoupons);//to generate 
 superAdminRouter.route("/all-coupon-batch").get(getAllCouponBatches);//to get all  coupon batches to dispaly over superadmin as table 
 superAdminRouter.route("/distribute-coupon").post(couponDistribution);// to distribute coupon batches to admin by superadmin
 superAdminRouter.route("/coupon-batch/:id").get(couponFetchById);//to view coupons inside a batch on admin side
+superAdminRouter.route("/stop/:id").post(stopContestManually);
+superAdminRouter.route("/select-automatic-winners").post(selectAutomaticWinners);
 
 
 
