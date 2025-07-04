@@ -21,6 +21,7 @@ import crypto from "crypto";
 import redis from "../redisClient.js";
 import config from "../config.js";
 import getDateRange from "../utils/getDateRange.js";
+import getCouponAmount from "../utils/getCouponAmount.js";
 const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
@@ -35,17 +36,17 @@ function generateRandomCode(length) {
   return result;
 }
 // to calculate the coupon amount
-function getCouponAmount(starCount) {
-  switch (starCount) {
-    case 5: return 5.00;
-    case 10: return 7.50;
-    case 25: return 12.50;
-    case 50: return 20.00;
-    case 100: return 40.00;
-    case 250: return 100.00;
-    default: return starCount; // fallback logic (₹1 per star)
-  }
-}
+// function getCouponAmount(starCount) {
+//   switch (starCount) {
+//     case 5: return 5.00;
+//     case 10: return 7.50;
+//     case 25: return 12.50;
+//     case 50: return 20.00;
+//     case 100: return 40.00;
+//     case 250: return 100.00;
+//     default: return starCount; // fallback logic (₹1 per star)
+//   }
+// }
 
 
 // register super admin
@@ -1047,36 +1048,55 @@ const getAllCouponBatches = async (req, res) => {
 };
 
 const couponDistribution = async (req, res) => {
-  // const { adminId } = req.params;
-  const { batchId, adminId,note} = req.body;
-  const{io,connectedUsers}=req;
+  const { batchId, adminId, note } = req.body;
+  const { io, connectedUsers } = req;
+
   try {
+    // Find the admin
     const admin = await Admin.findById(adminId);
     if (!admin) {
       return res.status(404).json({ message: "Admin not found" });
     }
+
+    // Find the coupon batch
     const couponBatch = await couponBatchModel.findById(batchId);
     if (!couponBatch) {
-      return res.status(404).json({ message: "Coupons not found" });
+      return res.status(404).json({ message: "Coupon batch not found" });
     }
+
+    // Check if the batch is already assigned
+    if (couponBatch.assignedTo) {
+      return res.status(400).json({
+        success: false,
+        message: "Coupon batch is already assigned to another admin.",
+        assignedTo: couponBatch.assignedTo
+      });
+    }
+
+    // Assign the batch to the admin
     couponBatch.assignedTo = admin._id;
     couponBatch.assignedAt = new Date();
     await couponBatch.save();
 
+    // Update the admin's assigned batch record
     admin.assignedCouponBatches.push({
       batchId: couponBatch._id,
       assignedAt: new Date(),
       note
     });
     await admin.save();
-  await sendNotification(
+
+    // Send real-time notification
+    await sendNotification(
       admin._id,
-      process.env.ADMIN_ROLE, // edit on 03-07
+      process.env.ADMIN_ROLE,
       `A new coupon batch (ID: ${couponBatch._id}) has been assigned to you.${note ? " Note: " + note : ""}`,
       io,
       connectedUsers,
-      `/admin/coupons/${couponBatch._id}` // or appropriate frontend route
+      `/admin/coupons/${couponBatch._id}`
     );
+
+    // Respond
     res.status(200).json({
       success: true,
       message: "Coupon batch assigned successfully",
@@ -1090,6 +1110,7 @@ const couponDistribution = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 const couponFetchById = async (req, res) => {
   const { id: batchId } = req.params;
 
