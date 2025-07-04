@@ -6,7 +6,15 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 function AdminCouponReq() {
     const [bundles, setBundles] = useState([]);
-  
+  const getCoupons=async()=>{
+    try {
+      const response=await axios.get(``)
+      
+    } catch (error) {
+      console.log(error);
+      
+    }
+  }
   return (
     <div className={styles.UserAccount}>
       <Sidebar />
