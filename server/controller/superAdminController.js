@@ -1257,7 +1257,9 @@ const createContest = async (req, res) => {
       entryStars,
       maxParticipants,
       result,
-      winnerSelectionType
+      winnerSelectionType,
+      winnerReward,
+      numberOfWinners,
     } = req.body;
 
     // Required field validation
@@ -1266,7 +1268,9 @@ const createContest = async (req, res) => {
       !contestNumber ||
       !startDate ||
       !entryStars ||
-      !maxParticipants
+      !maxParticipants ||
+      !winnerReward ||
+      !numberOfWinners
     ) {
       return res
         .status(400)
@@ -1279,6 +1283,21 @@ const createContest = async (req, res) => {
       return res.status(400).json({ message: "Invalid winnerSelectionType" });
     }
 
+    // Validate numbers
+    const parsedReward = Number(winnerReward);
+    const parsedNumWinners = Number(numberOfWinners);
+
+    if (
+      isNaN(parsedReward) ||
+      isNaN(parsedNumWinners) ||
+      parsedReward <= 0 ||
+      parsedNumWinners <= 0
+    ) {
+      return res.status(400).json({ message: "Invalid reward or winner count" });
+    }
+
+    const contestRewardTotal = parsedReward * parsedNumWinners;
+
     // Check for duplicate contest number
     const existing = await ContestEntry.findOne({ contestNumber });
     if (existing) {
@@ -1286,6 +1305,33 @@ const createContest = async (req, res) => {
         .status(400)
         .json({ message: "Contest number already exists" });
     }
+
+    // Fetch SuperAdmin wallet
+    const adminWallet = await SuperAdminWallet.findOne();
+    if (!adminWallet) {
+      return res.status(404).json({ message: "SuperAdmin wallet not found" });
+    }
+
+    if (adminWallet.totalStars < contestRewardTotal) {
+      return res
+        .status(400)
+        .json({ message: "Not enough stars in SuperAdmin wallet" });
+    }
+
+    // Deduct stars for reward pool
+    adminWallet.totalStars -= contestRewardTotal;
+
+    if (!adminWallet.contestEntryWallet) {
+      adminWallet.contestEntryWallet = {
+        totalReceived: 0,
+        totalEntries: 0,
+        collectedFromUsers: [],
+      };
+    }
+
+    adminWallet.contestEntryWallet.totalReceived += contestRewardTotal;
+
+    await adminWallet.save();
 
     // Handle prize images (optional)
     let prizeImages = [];
@@ -1308,14 +1354,18 @@ const createContest = async (req, res) => {
       prizeImages,
       winnerSelectionType: winnerSelectionType || "Manual",
       status: "Active",
-      manuallyStopped: false
+      manuallyStopped: false,
+      winnerReward: parsedReward,
+      numberOfWinners: parsedNumWinners,
+      contestEntryWallet: contestRewardTotal,
     });
 
     await contest.save();
 
-    return res
-      .status(201)
-      .json({ message: "Contest created successfully", contest });
+    return res.status(201).json({
+      message: "Contest created successfully",
+      contest,
+    });
 
   } catch (error) {
     console.error("Error creating contest:", error);
