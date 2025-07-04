@@ -1243,8 +1243,14 @@ const getKycsRejectedByAdmin = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-
-
+// const distributeCoupon=async(req,res)=>{
+//   const {userId,batchId}=req.body;
+//   try {
+//     const user=await user.findById(userId)
+//   } catch (error) {
+    
+//   }
+// }
 
 
 
