@@ -19,7 +19,7 @@ import ViewKYC from './pages/admin/VerifyKYC/ViewKYC';
 import AssignedAds from './pages/admin/AssignAds/AssignedAds';
 import AssignedKyc from './pages/admin/AssignKyc/AssignedKyc';import ResendOtpAdmin from './pages/admin/ResendOtpAdmin/ResendOtpAdmin';
 import ResetPassAdmin from './pages/admin/ResetPassAdmin/ResetPassAdmin';
-
+import AdminCouponReq from './pages/admin/AdminCouponReq/AdminCouponReq';
 
 
 import LoginUser from './pages/user/Login/LoginUser';
@@ -48,6 +48,7 @@ import AdEdit from './pages/user/AdEdit/AdEdit'
 import VideoAdEdit from './pages/user/VideoAdsEdit/VideoAdEdit';
 import ResendOtp from './pages/user/ResendOtp/ResendOtp';
 import PasswordResetForm from './pages/user/PasswordResetForm/PasswordResetForm';
+import CouponPage from './pages/user/Couponpage/CouponPage';
 
 
 import SuperAdminLogin from './pages/superadmin/SuperAdminLogin/SuperAdminLogin';
@@ -91,6 +92,7 @@ import CouponListing from './pages/superadmin/CouponListing/CouponListing';
 
 
 
+
 function App() {
   return (
     <div className="App">
@@ -118,6 +120,10 @@ function App() {
           <Route path='/AssignedKyc' element={<AssignedKyc />} />
           <Route path='/resendOtpAdmin/:email' element={<ResendOtpAdmin />} />
           <Route path='/resetPassAdmin/:email' element={<ResetPassAdmin />} />
+          <Route path='/AdminCouponReq/:id' element={<AdminCouponReq />} />
+          <Route path='/AdminCouponAssignment/:id' element={<AdminCouponReq />} />
+
+
 
 
 
@@ -149,13 +155,14 @@ function App() {
           <Route path='/adform/:id' element={<AdForm />} />
           <Route path='/videoform/:id' element={<VideoAdForm />} />
           <Route path='/passwordresetformuser/:phone' element={<PasswordResetForm />} />
-
           <Route path='/adreportuser' element={<UserReport />} />
           <Route path='/surveyaduser/:id' element={<SurveyAds />} />
           <Route path='/adspreview/:id/:adId' element={<AdsPreview />} />
           <Route path='/ads/:type' element={<Adspage />} />
           <Route path='/adedit/:id' element={<AdEdit />} />
           <Route path='/videoadedit/:id' element={<VideoAdEdit />} />
+          <Route path='/coupon' element={<CouponPage/>} />
+
 
 
 

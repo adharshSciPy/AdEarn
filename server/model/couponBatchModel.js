@@ -31,17 +31,23 @@ const couponBatchSchema = new Schema({
   assignedTo: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Admin",
-    default: null, // <-- optional now
+    default: null,
   },
 
   assignedAt: {
     type: Date,
-    default: null, // <-- optional now
+    default: null,
   },
   amountInRupees: {
   type: Number,
   required: true,
 },
+status: {
+  type: String,
+  enum: ['pending', 'completed', 'cancelled'],
+  default: 'pending',
+}
+
 }, { timestamps: true });
 
 export default mongoose.model("CouponBatch", couponBatchSchema);

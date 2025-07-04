@@ -70,7 +70,9 @@ function Sidebar() {
                 key: "coupons", label: "Coupons", icon: <UserOutlined />,
                 children: [
                     { key: "coupons-all", label: "All Coupons", path: `/AdminCoupon/${id}` },
-                    { key: "coupons-new", label: "New Coupons", path: "/demo" },
+                    { key: "coupons-new", label: "Coupon Requests", path: `/AdminCouponReq/${id}`},
+                    { key: "coupons-assigned", label: "Coupon Assigned", path: `/AdminCouponAssignment/${id}`},
+
                 ]
 
             },

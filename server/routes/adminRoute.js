@@ -10,7 +10,10 @@ import {
     getAdsRejectedByAdmin,
     getKycsVerifiedByAdmin,
     getKycsRejectedByAdmin,
-    getAdminById
+    getAdminById,
+    fetchAllCouponRequest,
+    fetchSingleCouponRequest,
+    assignBatchToAdmin
 } from "../controller/adminController.js";
 
 const adminRouter = Router()
@@ -45,6 +48,11 @@ adminRouter.route('/ads-rejected/:id').get(getAdsRejectedByAdmin);//fetch reject
 adminRouter.route('/kycs-verified/:id').get(getKycsVerifiedByAdmin);//fetch verified kyc;
 adminRouter.route('/kycs-rejected/:id').get(getKycsRejectedByAdmin);//fetch rejected kyc;
 adminRouter.route("/adminget/:id").get(getAdminById);
+adminRouter.route("/coupons-requests").get(fetchAllCouponRequest);//to fetch all coupon requests from user
+adminRouter.route("/coupon/single-request").get(fetchSingleCouponRequest);//to fetch single coupon request from user
+adminRouter.route('/assign-coupon-admin/:id').post(assignBatchToAdmin);//admin can mannually select coupons  to verify ;
+
+
 
 
 
