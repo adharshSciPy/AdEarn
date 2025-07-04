@@ -87,6 +87,7 @@ import Contest from './pages/superadmin/Contest/Contest';
 import ContestWinner from './pages/superadmin/ContestWinner/ContestWinner';
 import AdminListing from './pages/superadmin/AdminListing/AdminListing';
 import ResetPassSuper from './pages/superadmin/ResetPassSuper/ResetPassSuper';
+import CouponListing from './pages/superadmin/CouponListing/CouponListing';
 
 
 
@@ -199,6 +200,8 @@ function App() {
           <Route path='/SuperadminLogin' element={<SuperAdminLogin />} />
           <Route path='/Superadminadminlist' element={<AdminListing />} />
           <Route path='/resetPassSuper/:email' element={<ResetPassSuper />} />
+          <Route path='/Superadmincouponlisting' element={<CouponListing />} />
+
 
 
 

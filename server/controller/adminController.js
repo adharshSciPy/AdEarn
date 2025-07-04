@@ -1251,9 +1251,30 @@ const getKycsRejectedByAdmin = async (req, res) => {
     
 //   }
 // }
+//edit on 03-07-2025
 
+const getAdminById = async (req, res) => {
+  const { id } = req.params;
 
+  try {
+    const admin = await Admin.findById(id)
+      //  .select("-password -otp") // exclude sensitive fields
+      // .populate("verifiedAds.adId")
+      // .populate("verifiedAds.userId")
+      // .populate("kycsVerified.kycId")
+      // .populate("kycsVerified.userId")
+      // .populate("assignedCouponBatches.batchId");
 
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    return res.status(200).json(admin);
+  } catch (error) {
+    console.error("Error fetching admin:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 export {
   registerAdmin,
@@ -1284,5 +1305,6 @@ export {
   getAdsVerifiedByAdmin,
   getAdsRejectedByAdmin,
   getKycsVerifiedByAdmin,
-  getKycsRejectedByAdmin
+  getKycsRejectedByAdmin,
+  getAdminById
 };

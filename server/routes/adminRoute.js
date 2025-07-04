@@ -9,7 +9,8 @@ import {
     getAdsVerifiedByAdmin,
     getAdsRejectedByAdmin,
     getKycsVerifiedByAdmin,
-    getKycsRejectedByAdmin
+    getKycsRejectedByAdmin,
+    getAdminById
 } from "../controller/adminController.js";
 
 const adminRouter = Router()
@@ -43,7 +44,7 @@ adminRouter.route('/ads-verified/:id').get(getAdsVerifiedByAdmin);//fetch verifi
 adminRouter.route('/ads-rejected/:id').get(getAdsRejectedByAdmin);//fetch rejected ads;
 adminRouter.route('/kycs-verified/:id').get(getKycsVerifiedByAdmin);//fetch verified kyc;
 adminRouter.route('/kycs-rejected/:id').get(getKycsRejectedByAdmin);//fetch rejected kyc;
-
+adminRouter.route("/adminget/:id").get(getAdminById);
 
 
 

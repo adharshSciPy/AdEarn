@@ -1,5 +1,5 @@
-import mongoose, { Schema } from "mongoose";
 
+import mongoose, { Schema } from "mongoose";
 
 const contestEntrySchema = new Schema({
   contestName: {
@@ -12,10 +12,6 @@ const contestEntrySchema = new Schema({
     unique: true
   },
   startDate: {
-    type: Date,
-    required: true
-  },
-  endDate: {
     type: Date,
     required: true
   },
@@ -44,14 +40,12 @@ const contestEntrySchema = new Schema({
     type: [String],
     validate: {
       validator: function (val) {
-        return val.length <= 5; // Allow 0 to 5 images
+        return val.length <= 5;
       },
       message: "You can upload a maximum of 5 prize images"
     },
     default: []
   },
-
-  // ✅ New fields added below
   winnerSelectionType: {
     type: String,
     enum: ["Automatic", "Manual"],
@@ -65,7 +59,11 @@ const contestEntrySchema = new Schema({
       },
       position: Number
     }
-  ]
+  ],
+  manuallyStopped: {
+    type: Boolean,
+    default: false
+  }
 
 }, { timestamps: true });
 

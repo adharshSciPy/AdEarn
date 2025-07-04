@@ -14,6 +14,17 @@ function AdminAds() {
   const [unverifiedAds, setunverifiedAds] = useState([]);
   const [verifiedAd, setVerifiedAd] = useState([]);
 
+  const [selectedMonth, setSelectedMonth] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(null);
+
+  const [currentAdsPage, setCurrentAdsPage] = useState(1);
+  const [verifyAdsPage, setVerifyAdsPage] = useState(1);
+
+  const [activeTab, setActiveTab] = useState("Ads");
+  const tabs = ["Ads", "Verify Ads"];
+
+
+
   const getunverifiedAds = async () => {
     try {
       const response = await axios.get(`${baseUrl}/api/v1/ads/ads-to-verify`);
@@ -32,12 +43,10 @@ function AdminAds() {
       console.log(error);
     }
   };
-  const [selectedMonth, setSelectedMonth] = useState(null);
-  const [selectedYear, setSelectedYear] = useState(null);
 
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   const assignToadmin = async (adId) => {
     console.log("adID", adId)
@@ -52,13 +61,11 @@ function AdminAds() {
     }
   };
 
-  const [activeTab, setActiveTab] = useState("Ads");
 
   const handleTabClick = (tabName) => {
     setActiveTab(tabName);
   };
 
-  const tabs = ["Ads", "Verify Ads"];
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -66,7 +73,7 @@ function AdminAds() {
 
   const filteredVerifiedAds = useMemo(() => {
     return verifiedAd.filter((ad) => {
-      const dateStr = ad.imageAd?.createdAt || ad.videoAd?.createdAt;
+      const dateStr = ad.imageAd?.createdAt || ad.videoAd?.createdAt || ad.surveyAd?.createdAt;
       if (!dateStr) return false;
 
       const date = new Date(dateStr);
@@ -82,7 +89,7 @@ function AdminAds() {
 
   const filteredUnverifiedAds = useMemo(() => {
     return unverifiedAds.filter((ad) => {
-      const dateStr = ad.imageAd?.createdAt || ad.videoAd?.createdAt;
+      const dateStr = ad.imageAd?.createdAt || ad.videoAd?.createdAt || ad.surveyAd?.createdAt;
       if (!dateStr) return false;
 
       const date = new Date(dateStr);
@@ -109,24 +116,21 @@ function AdminAds() {
   }, []);
 
   useEffect(() => {
-    setCurrentPage(1);
+    setCurrentAdsPage(1);
+    setVerifyAdsPage(1);
   }, [selectedMonth, selectedYear]);
-  const filteredAds = (ads) => {
-    return ads.filter((ad) => {
-      const dateStr =
-        ad.imageAd?.createdAt ||
-        ad.videoAd?.createdAt ||
-        ad.surveyAd?.createdAt;
-      if (!dateStr) return false;
-      const date = new Date(dateStr);
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const year = String(date.getFullYear());
-      return (
-        (!selectedMonth || selectedMonth === month) &&
-        (!selectedYear || selectedYear === year)
-      );
-    });
-  };
+
+
+  const paginatedVerifiedAds = useMemo(() => {
+    const start = (currentAdsPage - 1) * pageSize;
+    return filteredVerifiedAds.slice(start, start + pageSize);
+  }, [filteredVerifiedAds, currentAdsPage]);
+
+  const paginatedUnverifiedAds = useMemo(() => {
+    const start = (verifyAdsPage - 1) * pageSize;
+    return filteredUnverifiedAds.slice(start, start + pageSize);
+  }, [filteredUnverifiedAds, verifyAdsPage]);
+
 
   return (
     <div className={styles.adminadsmain}>
@@ -206,12 +210,12 @@ function AdminAds() {
                     <tr>
                       <th>Ads</th>
                       <th>Views</th>
-                      <th>Total Amount</th>
+                      <th>Total Stars</th>
                       <th>Start Date</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredVerifiedAds.map((ad, index) => (
+                    {paginatedVerifiedAds.map((ad, index) => (
                       <tr key={index}>
                         <td>
                           {ad.imageAd?.title ||
@@ -220,10 +224,13 @@ function AdminAds() {
                         </td>
 
                         <td>
+
                           {ad.imageAd?.userViewsNeeded ? (
-                            <p>{ad.imageAd?.userViewsNeeded}</p>
+                            <p>{ad.imageAd.userViewsNeeded}</p>
                           ) : ad?.videoAd?.userViewsNeeded ? (
-                            <p>{ad.videoAd?.userViewsNeeded}</p>
+                            <p>{ad.videoAd.userViewsNeeded}</p>
+                          ) : ad?.surveyAd?.userViewsNeeded ? (
+                            <p>{ad.surveyAd.userViewsNeeded}</p>
                           ) : null}
                         </td>
                         <td>
@@ -231,6 +238,8 @@ function AdminAds() {
                             <p>{ad.imageAd?.totalStarsAllocated}</p>
                           ) : ad?.videoAd?.totalStarsAllocated ? (
                             <p>{ad.videoAd?.totalStarsAllocated}</p>
+                          ) : ad?.surveyAd?.totalStarsAllocated ? (
+                            <p>{ad.surveyAd.totalStarsAllocated}</p>
                           ) : null}
                         </td>
                         <td>
@@ -250,6 +259,14 @@ function AdminAds() {
                                   .split("T")[0]
                               }
                             </p>
+                          ) : ad.surveyAd?.createdAt ? (
+                            <p>
+                              {
+                                new Date(ad.surveyAd.createdAt)
+                                  .toISOString()
+                                  .split("T")[0]
+                              }
+                            </p>
                           ) : null}
                         </td>
                       </tr>
@@ -257,12 +274,20 @@ function AdminAds() {
                   </tbody>
                 </table>
                 <div className={styles.pagination}>
-                  {/* <Pagination
-                      current={currentPage}
-                      pageSize={pageSize}
-                      total={filteredAds.length}
-                      onChange={handlePageChange}
-                    /> */}
+                  <Pagination
+                    current={currentAdsPage}
+                    pageSize={pageSize}
+                    total={filteredVerifiedAds.length}
+                    showSizeChanger
+                    pageSizeOptions={['10', '20', '50', '100']}
+                    onChange={(page, newPageSize) => {
+                      // ✅ Stay on current page and apply new pageSize
+                      setPageSize(newPageSize);
+                      setCurrentAdsPage(page);
+                    }}
+                    style={{ marginTop: "20px", textAlign: "center" }}
+                  />
+
                 </div>
               </section>
             )}
@@ -283,7 +308,7 @@ function AdminAds() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredAds(unverifiedAds).map((ad, index) => (
+                    {paginatedUnverifiedAds.map((ad, index) => (
                       <tr key={index}>
                         <td>
                           {
@@ -324,12 +349,19 @@ function AdminAds() {
                   </tbody>
                 </table>
                 <div className={styles.pagination}>
-                  {/* <Pagination
-                      current={currentPage}
-                      pageSize={pageSize}
-                      total={filteredVerifyAds.length}
-                      onChange={handlePageChange}
-                    /> */}
+                  <Pagination
+                    current={verifyAdsPage}
+                    pageSize={pageSize}
+                    total={filteredUnverifiedAds.length}
+                    showSizeChanger
+                    pageSizeOptions={['10', '20', '50', '100']}
+                    onChange={(page, newPageSize) => {
+                      setPageSize(newPageSize);
+                      setVerifyAdsPage(page);
+                    }}
+                    style={{ marginTop: "20px", textAlign: "center" }}
+                  />
+
                 </div>
               </section>
             )}

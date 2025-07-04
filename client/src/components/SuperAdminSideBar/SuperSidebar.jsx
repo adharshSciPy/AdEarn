@@ -119,6 +119,8 @@ function Sidebar() {
       icon: <UserOutlined />,
       children: [
         { key: "generate-coupons", label: "Generate Coupons", path: "/superadmincoupongeneration" },
+        { key: "list-coupons", label: "List Coupons", path: "/Superadmincouponlisting" },
+
       ],
     },
     {
