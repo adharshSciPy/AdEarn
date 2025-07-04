@@ -21,6 +21,7 @@ import crypto from "crypto";
 import redis from "../redisClient.js";
 import config from "../config.js";
 import getDateRange from "../utils/getDateRange.js";
+import getCouponAmount from "../utils/getCouponAmount.js";
 const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
@@ -35,17 +36,17 @@ function generateRandomCode(length) {
   return result;
 }
 // to calculate the coupon amount
-function getCouponAmount(starCount) {
-  switch (starCount) {
-    case 5: return 5.00;
-    case 10: return 7.50;
-    case 25: return 12.50;
-    case 50: return 20.00;
-    case 100: return 40.00;
-    case 250: return 100.00;
-    default: return starCount; // fallback logic (₹1 per star)
-  }
-}
+// function getCouponAmount(starCount) {
+//   switch (starCount) {
+//     case 5: return 5.00;
+//     case 10: return 7.50;
+//     case 25: return 12.50;
+//     case 50: return 20.00;
+//     case 100: return 40.00;
+//     case 250: return 100.00;
+//     default: return starCount; // fallback logic (₹1 per star)
+//   }
+// }
 
 
 // register super admin
