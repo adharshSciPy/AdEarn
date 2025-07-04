@@ -176,6 +176,7 @@ function Sidebar() {
       icon: <ContainerOutlined />,
       children: [
         { key: "subscription", label: "Subscritions", path: "/superadminsubscritionplan" },
+        { key: "create-subscription", label: "Create Subscrition", path: "/createSubscrition" }
       ],
     },
     {
