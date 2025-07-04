@@ -28,6 +28,10 @@ const couponRequestSchema = new Schema({
     type: Date,
     default: Date.now
   },
+  isProcessed: {
+    type: Boolean,
+    default: false
+  },
   isApproved: {
     type: Boolean,
     default: false

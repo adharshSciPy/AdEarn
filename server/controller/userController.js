@@ -20,6 +20,7 @@ import crypto from "crypto";
 import config from "../config.js";
 import subscriptionSettings from "../model/subscriptionSettingsModel.js";
 import CouponRequest from "../model/couponRequestModel.js";
+import getCouponAmount from "../utils/getCouponAmount.js";
 
 
 // function to create referal code
@@ -1228,7 +1229,8 @@ user.password=newPassword
   }
 };
 const sendCouponRequest = async (req, res) => {
-  const { userId, couponCount, perStarCount, note } = req.body;
+  const{id:userId}=req.params;
+  const { couponCount, perStarCount, note } = req.body;
 
   try {
     if (!couponCount || !perStarCount) {
@@ -1237,8 +1239,8 @@ const sendCouponRequest = async (req, res) => {
 
     const totalStars = couponCount * perStarCount;
 
-    // Get per-coupon amount from some logic or helper
-    const perCouponAmount = getCouponAmount(perStarCount); // ensure this helper exists
+    
+    const perCouponAmount = getCouponAmount(perStarCount); 
     const amountToPay = couponCount * perCouponAmount;
 
     const request = await CouponRequest.create({
@@ -1252,15 +1254,14 @@ const sendCouponRequest = async (req, res) => {
     });
 
     return res.status(201).json({
-      message: "✅ Coupon request submitted successfully",
+      message: "Coupon request submitted successfully",
       data: request,
     });
   } catch (err) {
-    console.error("❌ Error sending coupon request:", err);
+    console.error("Error sending coupon request:", err);
     return res.status(500).json({ message: "Server error" });
   }
 };
-
 
 
 
@@ -1284,7 +1285,8 @@ export {
   verifyPasswordResetOTP,
   resetPassword,
   activateSubscription,
-  
+  sendCouponRequest
+
 
 
 };

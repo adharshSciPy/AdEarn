@@ -1,5 +1,5 @@
 import  Router  from "express";
-import { activateSubscription, addKyc, editUser, fetchAllMyAds, fetchMySingleAd, fetchUserWallet, getUserByUniqueId, getViewedAds, redeemCoupon, registerUser, resetPassword, sendOTP, sendPasswordResetOTP, starBuy, uploadProfilePicture, userLogin, userLogout, verifyOTP, verifyPasswordResetOTP, } from "../controller/userController.js";
+import { activateSubscription, addKyc, editUser, fetchAllMyAds, fetchMySingleAd, fetchUserWallet, getUserByUniqueId, getViewedAds, redeemCoupon, registerUser, resetPassword, sendCouponRequest, sendOTP, sendPasswordResetOTP, starBuy, uploadProfilePicture, userLogin, userLogout, verifyOTP, verifyPasswordResetOTP, } from "../controller/userController.js";
 import uploadUserImg from "../multer/userImgMulter.js";
 import userKyc from "../multer/kycVerificationMulter.js";
 import authMiddleware from "../auth/authMiddleware.js";
@@ -28,6 +28,8 @@ userRouter.route('/forgot-password/send-otp').post(sendPasswordResetOTP);
 userRouter.route('/forgot-password/verify-otp').post(verifyPasswordResetOTP);
 userRouter.route('/forgot-password/reset-password').post(resetPassword);
 userRouter.route('/activate-subscription').post(authMiddleware,activateSubscription);
+userRouter.route('/request-coupon/:id').post(sendCouponRequest);
+
 
 
 
