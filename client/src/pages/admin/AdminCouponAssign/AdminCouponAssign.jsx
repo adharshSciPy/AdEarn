@@ -5,15 +5,17 @@ import baseUrl from "../../../baseurl";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 function AdminCouponReq() {
-    const [bundles, setBundles] = useState([]);
-  const getRequest=async()=>{
+  const [bundles, setBundles] = useState([]);
+  const getRequest = async () => {
     try {
-      const response=await axios.get(``)
-      
+      const response = await axios.get(``);
     } catch (error) {
       console.log(error);
-      
     }
+  };
+  const sendReq=async()=>{
+    console.log("click");
+    
   }
   return (
     <div className={styles.UserAccount}>
@@ -24,26 +26,45 @@ function AdminCouponReq() {
         </div>
 
         <div className={styles.grid}>
-          {bundles.map((bundle) => (
-            <div
-              key={bundle._id}
-              className={styles.card}
-            >
-              <div className={styles.cardContent}>
-                <h4>Bundle ID: {bundle.batchId}</h4>
-                <div className={styles.viewDetails}>
-                  <span>Click to view details</span>
-                  <span className={styles.arrowIcon}>→</span>
-                </div>
-              </div>
-            </div>
-          ))}
+          <table className={styles.bundleTable}>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>UserName</th>
+                <th>Note</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bundles.length > 0 ? (
+                bundles.map((bundle, index) => (
+                  <tr key={bundle._id}>
+                    <td>{index + 1}</td>
+                    <td>{bundle.userName}</td>
+                    <td>{bundle.note}</td>
+                    <td>
+                      <button
+                        className={styles.sendButton}
+                        onClick={() => sendReq(bundle._id)}
+                      >
+                        Send
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" className={styles.noData}>
+                    No requests found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-
-        
       </div>
     </div>
-  )
+  );
 }
 
-export default AdminCouponReq
+export default AdminCouponReq;

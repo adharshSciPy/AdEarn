@@ -3,9 +3,11 @@ import styles from "./AdminReq.module.css";
 import Sidebar from "../../../components/sidebar/Sidebar";
 import baseUrl from "../../../baseurl";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 function AdminCouponReq() {
   const [bundles, setBundles] = useState([]);
+  const adminId = useSelector((state) => state.admin.id);
+
   const getCoupons = async () => {
     try {
       const response = await axios.get(
@@ -20,6 +22,22 @@ function AdminCouponReq() {
   useEffect(() => {
     getCoupons();
   }, []);
+  const sendReq = async (bundleId) => {
+    try {
+      const response = await axios.post(
+        `${baseUrl}/api/v1/admin/assign-coupon-admin/${adminId}`,
+        { batchId: bundleId }
+      );
+      console.log(response);
+      if (response.status === 200) {
+        getCoupons();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    // console.log("bundleId",bundleId);
+    // console.log("admin",adminId);
+  };
   return (
     <div className={styles.UserAccount}>
       <Sidebar />
@@ -39,18 +57,29 @@ function AdminCouponReq() {
               </tr>
             </thead>
             <tbody>
-              {bundles.map((bundle, index) => (
-                <tr key={bundle._id}>
-                  <td>{index + 1}</td>
-                  <td>{bundle.userName}</td>
-                  <td>
-                    {bundle.note}
-                  </td>
-                  <td>
-                    <button className={styles.sendButton}>Send</button>
+              {bundles.length > 0 ? (
+                bundles.map((bundle, index) => (
+                  <tr key={bundle._id}>
+                    <td>{index + 1}</td>
+                    <td>{bundle.userName}</td>
+                    <td>{bundle.note}</td>
+                    <td>
+                      <button
+                        className={styles.sendButton}
+                        onClick={() => sendReq(bundle._id)}
+                      >
+                        Send
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" className={styles.noData}>
+                    No requests found
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
