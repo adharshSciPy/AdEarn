@@ -1,4 +1,3 @@
-
 import mongoose, { Schema } from "mongoose";
 
 const contestEntrySchema = new Schema({
@@ -57,12 +56,26 @@ const contestEntrySchema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
       },
-      position: Number
+      position: Number,
+      stars: Number // ✅ store star value each winner receives
     }
   ],
   manuallyStopped: {
     type: Boolean,
     default: false
+  },
+
+  // ✅ New field for per-position reward tier
+  rewardStructure: [
+    {
+      position: { type: Number, required: true },
+      stars: { type: Number, required: true }
+    }
+  ],
+
+  contestEntryWallet: {
+    type: Number,
+    default: 0
   }
 
 }, { timestamps: true });
