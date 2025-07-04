@@ -1277,7 +1277,7 @@ const getAdminById = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-// to fetch all the user coupon request
+// to fetch all the user coupon requests
 const fetchAllCouponRequest = async (req, res) => {
   try {
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
@@ -1292,17 +1292,29 @@ const fetchAllCouponRequest = async (req, res) => {
           assignedAtForVerification: { $lte: fiveMinutesAgo }
         }
       ]
-    })
+    }).populate({
+      path: "userId",
+      select: "firstName lastName"
+    });
 
     if (!requests.length) {
       return res.status(404).json({ message: "No pending coupon requests found" });
     }
 
+    // Format response to include userName
+    const formattedRequests = requests.map(request => {
+      const { firstName = "", lastName = "" } = request.userId || {};
+      return {
+        ...request._doc,
+        userName: `${firstName} ${lastName}`.trim()
+      };
+    });
+
     return res.status(200).json({
       success: true,
       message: "Fetched unassigned or expired coupon requests",
-      totalPendingRequests: requests.length,
-      data: requests,
+      totalPendingRequests: formattedRequests.length,
+      data: formattedRequests
     });
 
   } catch (error) {
@@ -1310,6 +1322,7 @@ const fetchAllCouponRequest = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error", error });
   }
 };
+
 
 
 //to fetch each requests for verification
