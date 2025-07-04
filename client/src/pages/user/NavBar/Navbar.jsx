@@ -2,32 +2,49 @@ import React, { useEffect, useRef, useState } from "react";
 import styles from "./navbar.module.css";
 import logo from "../../../assets/Logo.png";
 import wallet from "../../../assets/wallet.png";
-import market from "../../../assets/marketing.png";
-import home from "../../../assets/home.png";
+import coupon from "../../../assets/coupon.png";
+import home from "../../../assets/home.jpg";
 import profile from "../../../assets/cardbackground.jpg";
 import notificationIcon from "../../../assets/navIcon.svg";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import socket from "../../../components/Socket/socket";
+import verificationIcon from "../../../assets/kyc.png";
+import notification from "../../../assets/notification.png";
+import ads from "../../../assets/add.png"
 
 function Navbar() {
   const [activeTab, setActiveTab] = useState("home");
   const [notifications, setNotifications] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-
-const dropdownRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   const userId = useSelector((state) => state.user.id);
   const navigate = useNavigate();
 
+  const KYCIcon = () => (
+    <img src={verificationIcon} alt="KYC" style={{objectFit:"contain",height:"100%",width:"100%"}} />
+  );
+const NotificationIcon = () => (
+    <img src={notification} alt="notification" style={{objectFit:"contain",height:"100%",width:"100%"}} />
+  );
+  const AdsIcon = () => (
+    <img src={ads} alt="notification" style={{objectFit:"contain",height:"100%",width:"100%"}} />
+  );
   const navItems = [
     { icon: home, label: `/userhome/${userId}` },
     { icon: wallet, label: `/walletpage/${userId}` },
-    { icon: market, label: `/adsmanageruser/${userId}` },
-    { icon: market, label: "market2" },
-    { icon: notificationIcon, label: "notification" },
+    { icon: <AdsIcon/>, label: `/adsmanageruser/${userId}` },
+    {
+      icon: <KYCIcon />,
+      label: "/kycverification",
+    },
+    { icon:<NotificationIcon/> , label: "notification" },
+    { icon: coupon, label: "/coupon" },
+
     { icon: profile, label: "/userprofile" },
+
   ];
 
   const handleBottomNavClick = (label) => {
@@ -44,18 +61,20 @@ const dropdownRef = useRef(null);
       navigate(label);
     }
   };
-useEffect(() => {
-  const handleClickOutside = (event) => {
-    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-      setShowDropdown(false);
-    }
-  };
 
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-  };
-}, []);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   useEffect(() => {
     if (!socket.connected) socket.connect();
     socket.emit("register", userId);
@@ -89,7 +108,11 @@ useEffect(() => {
                 onClick={() => handleBottomNavClick(item.label)}
               >
                 <div className={styles.iconWrapper}>
-                  <img src={item.icon} alt={item.label} />
+                  {typeof item.icon === "string" ? (
+                    <img src={item.icon} alt={item.label} />
+                  ) : (
+                    item.icon
+                  )}
                   {item.label === "notification" && unreadCount > 0 && (
                     <span className={styles.notificationDot}></span>
                   )}
@@ -124,7 +147,11 @@ useEffect(() => {
             }`}
             onClick={() => handleBottomNavClick(item.label)}
           >
-            <img src={item.icon} alt={item.label} />
+            {typeof item.icon === "string" ? (
+              <img src={item.icon} alt={item.label} />
+            ) : (
+              item.icon
+            )}
           </div>
         ))}
       </div>

@@ -1,16 +1,47 @@
 import React, { useState } from "react";
 import styles from "./Subscriptionplan.module.css";
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
+import SubscribeImg from "../../../assets/crown.png"
+import axios from "axios";
+import baseUrl from "../../../baseurl";
 
 function SubscritionPlan() {
   const [showModal, setShowModal] = useState(false);
   const [price, setPrice] = useState("");
   const [duration, setDuration] = useState("Month");
 
-  const handleSubmit = () => {
-    console.log("New price:", price);
-    console.log("Duration:", duration);
-    setShowModal(false);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const payload = {
+      starCountRequired: price,
+      subscriptionDurationDays:
+        duration === "Week"
+          ? 7
+          : duration === "Month"
+            ? 30
+            : duration === "Year"
+              ? 365
+              : 0,
+    };
+
+    console.log("Submitting payload:", payload);
+
+    try {
+      const response = await axios.put(
+        `${baseUrl}/api/v1/subscription/edit-subscriptions`,
+        payload
+      );
+      console.log("Subscription updated:", response.data);
+
+      // Reset state
+      setPrice("");
+      setDuration("Month");
+      setShowModal(false);
+    } catch (error) {
+      console.error("Error updating subscription:", error);
+      alert("Failed to update subscription.");
+    }
   };
 
   return (
@@ -23,9 +54,7 @@ function SubscritionPlan() {
 
         <div style={{ marginTop: "50px" }}>
           <div className={styles.card}>
-            <div className={styles.iconBox}>
-              <div className={styles.icon}></div>
-            </div>
+            <img src={SubscribeImg} alt="Subscribe" width="60px" />
             <div className={styles.tag}>Popular</div>
             <h4 className={styles.title}>
               <span>Pro</span>

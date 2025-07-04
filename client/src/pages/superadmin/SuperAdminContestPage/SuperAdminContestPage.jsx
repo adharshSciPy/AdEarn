@@ -2,21 +2,19 @@ import React, { useState } from "react";
 import styles from "./contestpage.module.css";
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
 import Header from "../../../components/Header/Header";
+import axios from "axios";
+import baseUrl from "../../../baseurl";
 
 function SuperAdminContestPage() {
   const [formData, setFormData] = useState({
-    couponNumber: "",
-    couponCount: "",
-    starCount: "",
-    date: "",
-    expiryDate: "",
     contestName: "",
     contestNumber: "",
     startDate: "",
-    endDate: "",
     entryStars: "",
-    totalEntry: "",
-    resultMode: "",
+    starCount: "",
+    maxParticipants: "",
+    result: "",
+    winnerSelectionType: "",
   });
 
   const handleChange = (e) => {
@@ -58,10 +56,42 @@ function SuperAdminContestPage() {
     setWinners([...winners, { label: newLabel, value: "", file: null }]);
   };
 
-  const submitHandle = () => {
-    console.log(winners);
-    alert("Submitted! Check console for data.");
+  const submitHandle = async (e) => {
+    e.preventDefault();
+
+    const data = new FormData();
+
+    // Append contest data
+    Object.entries(formData).forEach(([key, value]) => {
+      data.append(key, value);
+    });
+
+    // Append winner data
+    winners.forEach((winner, index) => {
+      if (winner.file) {
+        data.append("prizeImages", winner.file);
+      }
+      data.append(`prizeValues[${index}]`, winner.value);
+    });
+
+    try {
+      const response = await axios.post(
+        `${baseUrl}/api/v1/super-admin/create-contest`,
+        data,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log("Contest created successfully:", response.data);
+      alert("Contest created successfully!");
+    } catch (error) {
+      console.error("Error submitting contest:", error);
+      alert("Failed to create contest");
+    }
   };
+
 
   const handleCancel = () => {
     setWinners([
@@ -109,15 +139,6 @@ function SuperAdminContestPage() {
               placeholder="Enter Start Date"
             />
 
-            <label>Enter End Date</label>
-            <input
-              type="date"
-              name="endDate"
-              value={formData.endDate}
-              onChange={handleChange}
-              placeholder="Enter End Date"
-            />
-
             <label>Enter Entry Stars</label>
             <input
               type="text"
@@ -130,39 +151,39 @@ function SuperAdminContestPage() {
             <label>Total Entry</label>
             <input
               type="text"
-              name="totalEntry"
-              value={formData.totalEntry}
+              name="maxParticipants"
+              value={formData.maxParticipants}
               onChange={handleChange}
               placeholder="Total Entry"
             />
 
             <label>Winner Selection</label>
             <div className={styles.radioGroup}>
-              <div style={{ display: "flex", alignItems: "center",gap:"5px"  }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                 <input
-                    type="radio"
-                    name="resultMode"
-                    value="automatic"
-                    checked={formData.resultMode === "automatic"}
-                    onChange={handleChange}
-                  />
+                  type="radio"
+                  name="winnerSelectionType"
+                  value="Automatic"
+                  checked={formData.winnerSelectionType === "Automatic"}
+                  onChange={handleChange}
+                />
                 <label>
-                  
+
                   Automatic
                 </label>
-                
+
               </div>
 
-              <div style={{ display: "flex", alignItems: "center",gap:"5px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                 <input
-                    type="radio"
-                    name="resultMode"
-                    value="manual"
-                    checked={formData.resultMode === "manual"}
-                    onChange={handleChange}
-                  />
+                  type="radio"
+                  name="winnerSelectionType"
+                  value="Manual"
+                  checked={formData.winnerSelectionType === "Manual"}
+                  onChange={handleChange}
+                />
                 <label>
-                  
+
                   Manual
                 </label>
               </div>
@@ -177,6 +198,15 @@ function SuperAdminContestPage() {
                 <div className={styles.winnerrow} key={index}>
                   <span className={styles.label}>{winner.label}</span>
                   <p>Enter stars or other prices</p>
+
+                  <input
+                    type="text"
+                    value={winner.value}
+                    onChange={(e) => handleInputChange(index, e.target.value)}
+                    placeholder="Enter prize (e.g., 100 stars)"
+                    className={styles.prizeInput}
+                  />
+
                   <label className={styles.uploadbutton}>
                     Upload
                     <input
@@ -195,10 +225,10 @@ function SuperAdminContestPage() {
             </div>
 
             <div className={styles.buttons}>
-              <button type="button" className={styles.cancel}>
+              <button type="button" className={styles.cancel} onClick={handleCancel}>
                 Cancel
               </button>
-              <button type="submit" className={styles.submit}>
+              <button onClick={submitHandle} type="submit" className={styles.submit}>
                 Submit
               </button>
             </div>
