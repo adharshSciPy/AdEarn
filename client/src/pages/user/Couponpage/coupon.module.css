@@ -332,6 +332,100 @@
   color: red;
   font-size: 10px;
 }
+.couponCard {
+  max-width: 500px;
+  margin: 30px auto;
+  background: linear-gradient(135deg, #f8f9fb, #ffffff);
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.couponHeader h2 {
+  margin-bottom: 10px;
+  font-size: 24px;
+  color: #333;
+}
+
+.couponHeader p {
+  font-size: 14px;
+  color: #777;
+  margin-bottom: 20px;
+}
+
+.inputGroup {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: border 0.3s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.button {
+  padding: 12px 20px;
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.button:hover {
+  background-color: #0056b3;
+}
+
+.success {
+  color: green;
+  font-weight: 500;
+  margin-top: 10px;
+}
+
+.error {
+  color: red;
+  font-weight: 500;
+  margin-top: 10px;
+}
+.requestInputGroup {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  justify-content: center;
+  flex-direction: column;
+  flex-wrap: wrap;
+}
+.textarea{
+border-radius: 10px;
+padding: 10px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+}
+
+.field label {
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
 @media (max-width: 800px) {
   .firstMainrightContainer {
     display: none;

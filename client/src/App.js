@@ -19,7 +19,7 @@ import ViewKYC from './pages/admin/VerifyKYC/ViewKYC';
 import AssignedAds from './pages/admin/AssignAds/AssignedAds';
 import AssignedKyc from './pages/admin/AssignKyc/AssignedKyc';import ResendOtpAdmin from './pages/admin/ResendOtpAdmin/ResendOtpAdmin';
 import ResetPassAdmin from './pages/admin/ResetPassAdmin/ResetPassAdmin';
-
+import AdminCouponReq from './pages/admin/AdminCouponReq/AdminCouponReq';
 
 
 import LoginUser from './pages/user/Login/LoginUser';
@@ -118,7 +118,7 @@ function App() {
           <Route path='/AssignedAds' element={<AssignedAds />} />
           <Route path='/AssignedKyc' element={<AssignedKyc />} />
           <Route path='/resendOtpAdmin/:email' element={<ResendOtpAdmin />} />
-          <Route path='/resetPassAdmin/:email' element={<ResetPassAdmin />} />
+          <Route path='/AdminCoupon/:id' element={<CouponListing />} />
 
 
 
