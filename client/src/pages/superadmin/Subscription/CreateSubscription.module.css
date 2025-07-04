@@ -1,0 +1,50 @@
+.createsubscription {
+  height: max-content;
+  padding-bottom: 20px;
+}
+
+.createsubscriptionmain {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.subscriptionform {
+  width: calc(100% - 250px);
+  margin-left: 250px;
+  position: absolute;
+  top: 330px;
+  z-index: 999;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.subscribelayout {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.subscribesection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 40px;
+  border: 2px #4f2cc9;
+  border-radius: 10px;
+  box-shadow: rgba(100, 100, 111, 0.25) 0px 10px 40px 5px;
+  width: 700px;
+  height: 350px;
+}
+
+.formSubscribe {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 500px;
+  gap: 20px;
+  border-color: #4f2cc9;
+}

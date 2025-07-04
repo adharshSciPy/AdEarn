@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import styles from "./Subscriptionplan.module.css";
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
+import SubscribeImg from "../../../assets/crown.png"
 
 function SubscritionPlan() {
   const [showModal, setShowModal] = useState(false);
@@ -23,9 +24,7 @@ function SubscritionPlan() {
 
         <div style={{ marginTop: "50px" }}>
           <div className={styles.card}>
-            <div className={styles.iconBox}>
-              <div className={styles.icon}></div>
-            </div>
+            <img src={SubscribeImg} alt="Subscribe" width="60px" />
             <div className={styles.tag}>Popular</div>
             <h4 className={styles.title}>
               <span>Pro</span>
