@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
-import styles from "./AdminReq.module.css";
+import styles from "./AdminCouponAssign.module.css";
 import Sidebar from "../../../components/sidebar/Sidebar";
 import baseUrl from "../../../baseurl";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 function AdminCouponReq() {
     const [bundles, setBundles] = useState([]);
-  const getCoupons=async()=>{
+  const getRequest=async()=>{
     try {
-      const response=await axios.get(`${baseUrl}/api/v1/`)
+      const response=await axios.get(``)
       
     } catch (error) {
       console.log(error);
@@ -20,7 +20,7 @@ function AdminCouponReq() {
       <Sidebar />
       <div className={styles.wrapper}>
         <div className={styles.header}>
-          <h2>Coupon Requests</h2>
+          <h2>Coupon Assignment</h2>
         </div>
 
         <div className={styles.grid}>
