@@ -121,6 +121,8 @@ function App() {
           <Route path='/resendOtpAdmin/:email' element={<ResendOtpAdmin />} />
           <Route path='/resetPassAdmin/:email' element={<ResetPassAdmin />} />
           <Route path='/AdminCouponReq/:id' element={<AdminCouponReq />} />
+          <Route path='/AdminCouponAssignment/:id' element={<AdminCouponReq />} />
+
 
 
 
