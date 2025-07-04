@@ -1047,36 +1047,55 @@ const getAllCouponBatches = async (req, res) => {
 };
 
 const couponDistribution = async (req, res) => {
-  // const { adminId } = req.params;
-  const { batchId, adminId,note} = req.body;
-  const{io,connectedUsers}=req;
+  const { batchId, adminId, note } = req.body;
+  const { io, connectedUsers } = req;
+
   try {
+    // Find the admin
     const admin = await Admin.findById(adminId);
     if (!admin) {
       return res.status(404).json({ message: "Admin not found" });
     }
+
+    // Find the coupon batch
     const couponBatch = await couponBatchModel.findById(batchId);
     if (!couponBatch) {
-      return res.status(404).json({ message: "Coupons not found" });
+      return res.status(404).json({ message: "Coupon batch not found" });
     }
+
+    // Check if the batch is already assigned
+    if (couponBatch.assignedTo) {
+      return res.status(400).json({
+        success: false,
+        message: "Coupon batch is already assigned to another admin.",
+        assignedTo: couponBatch.assignedTo
+      });
+    }
+
+    // Assign the batch to the admin
     couponBatch.assignedTo = admin._id;
     couponBatch.assignedAt = new Date();
     await couponBatch.save();
 
+    // Update the admin's assigned batch record
     admin.assignedCouponBatches.push({
       batchId: couponBatch._id,
       assignedAt: new Date(),
       note
     });
     await admin.save();
-  await sendNotification(
+
+    // Send real-time notification
+    await sendNotification(
       admin._id,
-      process.env.ADMIN_ROLE, // edit on 03-07
+      process.env.ADMIN_ROLE,
       `A new coupon batch (ID: ${couponBatch._id}) has been assigned to you.${note ? " Note: " + note : ""}`,
       io,
       connectedUsers,
-      `/admin/coupons/${couponBatch._id}` // or appropriate frontend route
+      `/admin/coupons/${couponBatch._id}`
     );
+
+    // Respond
     res.status(200).json({
       success: true,
       message: "Coupon batch assigned successfully",
@@ -1090,6 +1109,7 @@ const couponDistribution = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 const couponFetchById = async (req, res) => {
   const { id: batchId } = req.params;
 
