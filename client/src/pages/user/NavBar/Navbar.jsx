@@ -41,9 +41,9 @@ const NotificationIcon = () => (
       label: "/kycverification",
     },
     { icon:<NotificationIcon/> , label: "notification" },
-    { icon: coupon, label: "/userprofile" },
+    { icon: coupon, label: "/coupon" },
 
-    { icon: profile, label: "/couponpage" },
+    { icon: profile, label: "/userprofile" },
 
   ];
 
