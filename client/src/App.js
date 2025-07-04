@@ -92,6 +92,7 @@ import CouponListing from './pages/superadmin/CouponListing/CouponListing';
 
 
 
+
 function App() {
   return (
     <div className="App">
@@ -120,6 +121,8 @@ function App() {
           <Route path='/resendOtpAdmin/:email' element={<ResendOtpAdmin />} />
           <Route path='/resetPassAdmin/:email' element={<ResetPassAdmin />} />
           <Route path='/AdminCouponReq/:id' element={<AdminCouponReq />} />
+          <Route path='/AdminCouponAssignment/:id' element={<AdminCouponReq />} />
+
 
 
 
