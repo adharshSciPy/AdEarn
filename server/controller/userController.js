@@ -19,6 +19,8 @@ import Redis from "ioredis";
 import crypto from "crypto";
 import config from "../config.js";
 import subscriptionSettings from "../model/subscriptionSettingsModel.js";
+import CouponRequest from "../model/couponRequestModel.js";
+import getCouponAmount from "../utils/getCouponAmount.js";
 
 
 // function to create referal code
@@ -1226,6 +1228,40 @@ user.password=newPassword
     res.status(500).json({ message: "Server error" });
   }
 };
+const sendCouponRequest = async (req, res) => {
+  const{id:userId}=req.params;
+  const { couponCount, perStarCount, note } = req.body;
+
+  try {
+    if (!couponCount || !perStarCount) {
+      return res.status(400).json({ message: "Coupon count and perStarCount are required" });
+    }
+
+    const totalStars = couponCount * perStarCount;
+
+    
+    const perCouponAmount = getCouponAmount(perStarCount); 
+    const amountToPay = couponCount * perCouponAmount;
+
+    const request = await CouponRequest.create({
+      userId,
+      starCountPerCoupon: perStarCount,
+      totalStars,
+      amountToPay,
+      note,
+      paymentStatus: "pending",
+      isProcessed: false,
+    });
+
+    return res.status(201).json({
+      message: "Coupon request submitted successfully",
+      data: request,
+    });
+  } catch (err) {
+    console.error("Error sending coupon request:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
 
 
 
@@ -1248,7 +1284,9 @@ export {
   sendPasswordResetOTP,
   verifyPasswordResetOTP,
   resetPassword,
-  activateSubscription
+  activateSubscription,
+  sendCouponRequest
+
 
 
 };
