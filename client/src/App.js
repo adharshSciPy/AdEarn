@@ -48,6 +48,7 @@ import AdEdit from './pages/user/AdEdit/AdEdit'
 import VideoAdEdit from './pages/user/VideoAdsEdit/VideoAdEdit';
 import ResendOtp from './pages/user/ResendOtp/ResendOtp';
 import PasswordResetForm from './pages/user/PasswordResetForm/PasswordResetForm';
+import CouponPage from './pages/user/Couponpage/CouponPage';
 
 
 import SuperAdminLogin from './pages/superadmin/SuperAdminLogin/SuperAdminLogin';
@@ -150,13 +151,14 @@ function App() {
           <Route path='/adform/:id' element={<AdForm />} />
           <Route path='/videoform/:id' element={<VideoAdForm />} />
           <Route path='/passwordresetformuser/:phone' element={<PasswordResetForm />} />
-
           <Route path='/adreportuser' element={<UserReport />} />
           <Route path='/surveyaduser/:id' element={<SurveyAds />} />
           <Route path='/adspreview/:id/:adId' element={<AdsPreview />} />
           <Route path='/ads/:type' element={<Adspage />} />
           <Route path='/adedit/:id' element={<AdEdit />} />
           <Route path='/videoadedit/:id' element={<VideoAdEdit />} />
+          <Route path='/coupon' element={<CouponPage/>} />
+
 
 
 
