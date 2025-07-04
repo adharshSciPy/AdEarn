@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import { type } from "os";
 
 const couponSchema = new Schema(
   {
@@ -21,6 +22,10 @@ const couponSchema = new Schema(
     isClaimed: {
       type: Boolean,
       default: false,
+    },
+    isApproved:{
+      type:Boolean,
+      default:false
     },
 
     // For future extensibility; null by default
@@ -52,7 +57,8 @@ const couponSchema = new Schema(
     refunded: {
   type: Boolean,
   default: false,
-}
+},
+
 
   },
   { timestamps: true }

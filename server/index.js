@@ -21,6 +21,7 @@ import notificationRouter from "./routes/notificationRoute.js";
 import authMiddleware from "./auth/authMiddleware.js";
 import kyc from "./model/kycModel.js";
 import subscriptionRouter from "./routes/subscriptionRoute.js";
+import couponBatchModel from "./model/couponBatchModel.js";
 
 
 dotenv.config();
@@ -226,6 +227,31 @@ cron.schedule("* * * * *", async () => {
     }
   } catch (error) {
     console.error("❌ Error in Ad cleanup cron:", error);
+  }
+});
+cron.schedule("* * * * *", async () => {
+  const timeoutThreshold = new Date(Date.now() - 5 * 60 * 1000); // 5 mins ago
+
+  try {
+    const result = await couponBatchModel.updateMany(
+      {
+        status: "pending", 
+        assignedTo: { $ne: null },
+        assignedAt: { $lt: timeoutThreshold },
+      },
+      {
+        $set: {
+          assignedTo: null,
+          assignedAt: null,
+        },
+      }
+    );
+
+    if (result.modifiedCount > 0) {
+      console.log(`🔄 Unassigned ${result.modifiedCount} stale pending CouponBatch(es)`);
+    }
+  } catch (error) {
+    console.error("Error in CouponBatch cleanup cron:", error);
   }
 });
 
