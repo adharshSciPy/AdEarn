@@ -11,10 +11,12 @@ import AdminWallet from "../model/adminwalletModel.js";
 import Notification from "../model/notificationsModel.js";
 import { sendNotification } from "../utils/sendNotifications.js";
 import { UserWallet } from "../model/userWallet.js";
+import couponRequestModel from "../model/couponRequestModel.js";
 import sgMail from "@sendgrid/mail";
 import crypto from "crypto";
 import redis from "../redisClient.js";
 import config from "../config.js";
+import couponBatchModel from "../model/couponBatchModel.js";
 
 const USER_ROLE = process.env.USER_ROLE;
 const ADMIN_ROLE = process.env.ADMIN_ROLE;
@@ -1275,6 +1277,102 @@ const getAdminById = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+// to fetch all the user coupon request
+const fetchAllCouponRequest = async (req, res) => {
+  try {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
+    const requests = await couponRequestModel.find({
+      paymentStatus: "pending",
+      isProcessed: false,
+      $or: [
+        { assignedForVerification: null },
+        {
+          assignedForVerification: { $ne: null },
+          assignedAtForVerification: { $lte: fiveMinutesAgo }
+        }
+      ]
+    })
+
+    if (!requests.length) {
+      return res.status(404).json({ message: "No pending coupon requests found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Fetched unassigned or expired coupon requests",
+      totalPendingRequests: requests.length,
+      data: requests,
+    });
+
+  } catch (error) {
+    console.error("Error in fetchAllCouponRequest:", error);
+    return res.status(500).json({ message: "Internal Server Error", error });
+  }
+};
+
+
+//to fetch each requests for verification
+const fetchSingleCouponRequest=async(req,res)=>{
+  const{couponId}=req.body;
+  if(!couponId){
+    return res.status(404).json({message:"Invalid Id "})
+  }
+  try {
+    const singleRequest=await couponRequestModel.findById(couponId);
+    if(!singleRequest){
+      return res.status(404).json({message:"No request found for the Id"})
+    }
+    return res.status(200).json({succes:true,message:"Request fetched succesfully",data:singleRequest})
+  } catch (error) {
+    return res.status(500).json({message:"Internal Server Error",error})
+  }
+}
+//assign to respective admin
+const assignBatchToAdmin = async (req, res) => {
+  const { batchId } = req.body;
+  const adminId = req.params.id;
+
+  try {
+    const batch = await couponRequestModel.findById(batchId);
+
+    if (!batch) {
+      return res.status(404).json({ message: "Coupon batch not found" });
+    }
+
+    // Check if already assigned within last 5 minutes
+    if (
+      batch.assignedForVerification &&
+      new Date() - new Date(batch.assignedAtForVerification) < 5 * 60 * 1000
+    ) {
+      return res.status(409).json({ message: "Batch already assigned recently" });
+    }
+
+    // Assign to admin
+    batch.assignedForVerification = adminId;
+    batch.assignedAtForVerification = new Date();
+    await batch.save();
+
+    return res.status(200).json({
+      message: "Coupon batch assigned to admin successfully",
+      batch
+    });
+
+  } catch (err) {
+    console.error("Error assigning batch:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+//to approve the batch by admin
+const approveCouponRequest=async(req,res)=>{
+  const{batchId}=req.body;
+  try {
+    
+  } catch (error) {
+    
+  }
+}
+
 
 export {
   registerAdmin,
@@ -1306,5 +1404,8 @@ export {
   getAdsRejectedByAdmin,
   getKycsVerifiedByAdmin,
   getKycsRejectedByAdmin,
-  getAdminById
+  getAdminById,
+  fetchAllCouponRequest,
+  fetchSingleCouponRequest,
+  assignBatchToAdmin
 };

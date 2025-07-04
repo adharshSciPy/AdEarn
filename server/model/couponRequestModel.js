@@ -44,7 +44,17 @@ const couponRequestSchema = new Schema({
   assignedCoupons: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "Coupon"
-  }]
+  }],
+  assignedForVerification: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Admin",
+  default: null,
+},
+assignedAtForVerification: {
+  type: Date,
+  default: null,
+},
+
 }, { timestamps: true });
 
 export default mongoose.model("CouponRequest", couponRequestSchema);
