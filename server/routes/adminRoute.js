@@ -21,7 +21,7 @@ import {
 const adminRouter = Router()
 
 adminRouter.route('/admin-register').post(registerAdmin)
-// adminRouter.route('/admin-edit/:id').patch(updateAdmin)
+adminRouter.route('/admin-edit/:id').patch(updateAdmin)
 adminRouter.route('/admin-login').post(adminLogin)
 adminRouter.route('/all-users').get(getAllUsers)
 adminRouter.route('/single-user').get(getSingleUser)
