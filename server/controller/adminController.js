@@ -1495,5 +1495,6 @@ export {
   fetchSingleCouponRequest,
   fetchCouponRequestsAssignedToAdmin,
   assignBatchToAdmin,
+  updateAdmin
   // approveCouponRequest
 };
