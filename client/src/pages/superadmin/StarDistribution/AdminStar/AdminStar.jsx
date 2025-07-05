@@ -2,20 +2,24 @@ import React, { useState, useEffect, useRef } from "react";
 import styles from "./AdminStar.module.css";
 import Sidebar from "../../../../components/SuperAdminSideBar/SuperSidebar";
 import Header from "../../../../components/Header/Header";
+import axios from "axios"
+import baseUrl from "../../../../baseurl";
+import { Pagination } from "antd";
+import { useMemo } from "react";
 
-const allPayoutRequests = Array.from({ length: 100 }, (_, i) => ({
-    id: i + 1,
-    name: `User name ${i + 1}`,
-    avatar: `https://api.dicebear.com/7.x/thumbs/svg?seed=User${i + 1}`,
-    star: 1000,
-    date: "02/06/2025",
-    status: "Disabled",
-}));
+
+
+
+
 function AdminStar() {
     const [showModal, setShowModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [payoutAmount, setPayoutAmount] = useState("");
     const [visibleCount, setVisibleCount] = useState(10);
+    const [totalStar, setTotalStar] = useState("")
+    const [data, setData] = useState([])
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
     const observerRef = useRef();
 
     const handleApprove = (user) => {
@@ -32,13 +36,24 @@ function AdminStar() {
 
     const lastRowRef = useRef();
 
+    function formatDate(isoString) {
+        const date = new Date(isoString);
+        const options = {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+        };
+        return date.toLocaleDateString('en-GB', options);
+    }
+
+
     useEffect(() => {
         if (observerRef.current) observerRef.current.disconnect();
         observerRef.current = new IntersectionObserver(
             (entries) => {
                 if (
                     entries[0].isIntersecting &&
-                    visibleCount < allPayoutRequests.length
+                    visibleCount < data.length
                 ) {
                     setVisibleCount((prev) => prev + 20);
                 }
@@ -47,6 +62,35 @@ function AdminStar() {
         );
         if (lastRowRef.current) observerRef.current.observe(lastRowRef.current);
     }, [visibleCount]);
+
+    useEffect(() => {
+        const adminwallets = async () => {
+            try {
+                const walletres = await axios.get(`${baseUrl}/api/v1/admin/admin-wallet`);
+                console.log("wallet", walletres);
+
+                const transactions = walletres.data.transactions;
+
+                // Extract all user IDs
+                const userIds = transactions.map(txn => txn.userId?._id);
+                console.log("All User IDs:", userIds);
+
+                setTotalStar(walletres.data.totalStars);
+                setData(transactions);
+            } catch (error) {
+                console.log(error);
+            }
+        };
+
+        adminwallets();
+    }, []);
+
+
+    const paginatedData = useMemo(() => {
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        return data.slice(startIndex, endIndex);
+    }, [data, currentPage, pageSize]);
 
     return (
         <div className={styles.UserAccount}>
@@ -60,7 +104,7 @@ function AdminStar() {
 
                 <div className={styles.amountCard}>
                     <div>
-                        <p>Total Star</p>
+                        <h2>Total Star</h2>
                     </div>
                     <div>
                         <h1>
@@ -72,7 +116,7 @@ function AdminStar() {
                                 xmlns="http://www.w3.org/2000/svg"
                             >
                                 <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                            </svg>5000</h1>
+                            </svg>{totalStar}</h1>
                     </div>
                     <div className={styles.rightText}>
                         <p>Company account</p>
@@ -89,13 +133,12 @@ function AdminStar() {
                 <div className={styles.table}>
                     <div className={styles.tableHeader}>
                         <div>User name</div>
-                        <div>Total Ads</div>
                         <div>Star</div>
                         <div>Date</div>
-                        <div>Total Amount</div>
+                        <div>Email</div>
                     </div>
 
-                    {allPayoutRequests.slice(0, visibleCount).map((user, index, arr) => (
+                    {paginatedData.map((user, index, arr) => (
                         <div
                             className={styles.tableRow}
                             key={user.id}
@@ -105,14 +148,26 @@ function AdminStar() {
                                 <img src={user.avatar} alt="avatar" className={styles.avatar} />
                                 <span>{user.name}</span>
                             </div>
-                            <div>1</div>
-                            <div>{user.star}</div>
-                            <div>{user.date}</div>
-                            <div>{user.star}</div>
-
-                            <div></div>
+                            <div>{user.starsReceived}</div>
+                            <div>{formatDate(user.date)}</div>
+                            <div>{data.email}</div>
                         </div>
                     ))}
+                </div>
+
+                <div className={styles.paginationWrapper}>
+                    <Pagination
+                        current={currentPage}
+                        pageSize={pageSize}
+                        total={data.length}
+                        showSizeChanger
+                        pageSizeOptions={['10', '20', '50']}
+                        onChange={(page) => setCurrentPage(page)}
+                        onShowSizeChange={(current, size) => {
+                            setPageSize(size);
+                            setCurrentPage(1);
+                        }}
+                    />
                 </div>
 
                 {showModal && (
