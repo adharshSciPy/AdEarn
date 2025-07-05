@@ -1505,7 +1505,7 @@ export {
   fetchSingleCouponRequest,
   fetchCouponRequestsAssignedToAdmin,
   assignBatchToAdmin,
-  updateAdmin
+  updateAdmin,
   // approveCouponRequest,
   getAssignedCoupons
 };
