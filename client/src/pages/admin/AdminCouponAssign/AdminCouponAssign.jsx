@@ -4,19 +4,26 @@ import Sidebar from "../../../components/sidebar/Sidebar";
 import baseUrl from "../../../baseurl";
 import axios from "axios";
 import { useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
+
 function AdminCouponReq() {
   const [bundles, setBundles] = useState([]);
+  const adminId = useSelector((state) => state.admin.id);
+
   const getRequest = async () => {
     try {
-      const response = await axios.get(``);
+      // const response = await axios.get(`${baseUrl}/api/v1/admin/assign-coupon-admin/${adminId}`);
+      // console.log(response);
+      
     } catch (error) {
-      console.log(error);
+      // console.log(error);
     }
   };
   const sendReq=async()=>{
     console.log("click");
     
   }
+  useEffect(()=>{getRequest()})
   return (
     <div className={styles.UserAccount}>
       <Sidebar />
