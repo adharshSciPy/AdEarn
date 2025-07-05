@@ -15,6 +15,7 @@ import {
     fetchSingleCouponRequest,
     assignBatchToAdmin,
     fetchCouponRequestsAssignedToAdmin,
+    updateAdmin
     // approveCouponRequest
 } from "../controller/adminController.js";
 

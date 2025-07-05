@@ -79,53 +79,53 @@ const registerAdmin = async (req, res) => {
   }
 };
 
-// const updateAdmin = async (req, res) => {
-//   const { id } = req.params;
-//   const { adminEmail, password, username, address } = req.body;
+const updateAdmin = async (req, res) => {
+  const { id } = req.params;
+  const { adminEmail, password, username, address } = req.body;
 
-//   try {
-//     const admin = await Admin.findById(id);
-//     if (!admin) {
-//       return res.status(404).json({ message: "Admin not found" });
-//     }
+  try {
+    const admin = await Admin.findById(id);
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
 
-//     // Update fields if provided
-//     if (adminEmail) {
-//       admin.adminEmail = adminEmail;
-//     }
+    // Update fields if provided
+    if (adminEmail) {
+      admin.adminEmail = adminEmail;
+    }
 
-//     if (username) {
-//       admin.username = username;
-//     }
+    if (username) {
+      admin.username = username;
+    }
 
-//     if (address) {
-//       admin.address = address;
-//     }
+    if (address) {
+      admin.address = address;
+    }
 
-//     if (password) {
-//       if (!passwordValidator(password)) {
-//         return res.status(400).json({
-//           message:
-//             "Password must be at least 8 characters long, contain one uppercase, one lowercase, one number, and one special character.",
-//         });
-//       }
-//       admin.password = password;
-//     }
+    if (password) {
+      if (!passwordValidator(password)) {
+        return res.status(400).json({
+          message:
+            "Password must be at least 8 characters long, contain one uppercase, one lowercase, one number, and one special character.",
+        });
+      }
+      admin.password = password;
+    }
 
-//     await admin.save();
+    await admin.save();
 
-//     // Return updated admin without password
-//     const updatedAdmin = await Admin.findById(id).select("-password");
+    // Return updated admin without password
+    const updatedAdmin = await Admin.findById(id).select("-password");
 
-//     res.status(200).json({
-//       message: "Admin updated successfully",
-//       data: updatedAdmin,
-//     });
-//   } catch (error) {
-//     console.error("Admin update error:", error);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// };
+    res.status(200).json({
+      message: "Admin updated successfully",
+      data: updatedAdmin,
+    });
+  } catch (error) {
+    console.error("Admin update error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 const adminLogin = async (req, res) => {
   const { adminEmail, password } = req.body;
