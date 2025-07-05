@@ -1,103 +1,118 @@
-import React from 'react'
-import styles from './AdminSettings.module.css'
-import Sidebar from '../../../components/sidebar/Sidebar'
-import Header from '../../../components/Header/Header'
-import { Button, Tabs } from 'antd'
-import { InboxOutlined } from '@ant-design/icons';
-import { Upload } from 'antd';
-import { Row, Col, Input } from 'antd';
+import React, { useState } from "react";
+import styles from "./AdminSettings.module.css";
+import Sidebar from "../../../components/sidebar/Sidebar";
+import Header from "../../../components/Header/Header";
+import { Button, Tabs } from "antd";
+import { Upload } from "antd";
+import { Input } from "antd";
+import { useSelector } from "react-redux";
+import axios from "axios";
+import baseUrl from "../../../baseurl";
 
 const { Dragger } = Upload;
 
 function AdminSettings() {
-    const onChange = key => {
-        console.log(key);
-    };
+  const adminId = useSelector((state) => state.admin.id);
 
-    const items = [
-        {
-            key: '1',
-            label: 'My Details',
-            children: (
-                <form className={styles.form}>
-                    <div className={styles.row}>
-                        <div className={styles.inputGroup}>
-                            <label>First name</label>
-                            <Input placeholder="Killan" />
-                        </div>
-                        <div className={styles.inputGroup}>
-                            <label>Last name</label>
-                            <Input placeholder="James" />
-                        </div>
-                    </div>
+  const [formData, setFormData] = useState({
+    adminEmail: "",
+    username: "",
+    lastName: "",
+  });
 
-                    <div className={styles.inputGroup}>
-                        <label>Email</label>
-                        <Input type="email" placeholder="killanjames@gmail.com" />
-                    </div>
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
 
-                    <div className={styles.uploadArea}>
-                        <Dragger
-                            name="file"
-                            multiple={false}
-                            action="https://660d2bd96ddfa2943b33731c.mockapi.io/api/upload"
-                            style={{ padding: '20px' }}
-                        >
-                            <p className="ant-upload-drag-icon">
-                                <InboxOutlined />
-                            </p>
-                            <p className="ant-upload-text">
-                                Click to upload or drag and drop
-                            </p>
-                            <p className="ant-upload-hint">
-                                SVG, PNG, JPG or GIF (max, 800x400px)
-                            </p>
-                        </Dragger>
-                    </div>
-                </form>
-            ),
-        },
-        {
-            key: '2',
-            label: 'Profile',
-            children: 'Content of Tab Profile',
-        },
-        {
-            key: '3',
-            label: 'Password',
-            children: 'Content of Tab Password',
-        },
-        {
-            key: '4',
-            label: 'Notification',
-            children: 'Content of Tab Notification',
-        },
-    ];
+  const handleSubmit = async () => {
+    try {
+      const response = await axios.patch(
+        `${baseUrl}/api/v1/admin/admin-edit/${adminId}`,
+        formData
+      );
 
-    return (
-        <div className={styles.adminmain}>
-            <div className={styles.adminsettingscontainermain}>
-                <Sidebar />
-                <Header />
-                <div className={styles.settings}>
-                    <div style={{ width: '100%', maxWidth: '1550px', height: '600px', padding: '30px' }} className={styles.settingimg}>
-                        <h1>Settings</h1>
-                        <div className={styles.head}>
-                            <div className={styles.headdesign}></div>
-                            <div className={styles.profileimg}></div>
-                        </div>
-                        <div className={styles.actionbuttons}>
-                            <Button>Cancel</Button>
-                            <Button style={{ backgroundColor: "#693bb8", color: "white" }}>Save</Button>
-                        </div>
-                        <div className={styles.tabs}>
-                            <Tabs defaultActiveKey="1" items={items} onChange={onChange} />
-                        </div>
-                    </div>
-                </div>
+      if (response.status === 200) {
+        setFormData({ adminEmail: "", username: "", lastName: "" });
+      }
+    } catch (error) {
+      console.error("Submission failed", error);
+    }
+  };
+
+  const items = [
+    {
+      key: "1",
+      label: "My Details",
+      children: (
+        <form className={styles.form}>
+          <div className={styles.row}>
+            <div className={styles.inputGroup}>
+              <label>First name</label>
+              <Input
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                placeholder="Killan"
+              />
             </div>
+            <div className={styles.inputGroup}>
+              <label>Last name</label>
+              <Input
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                placeholder="James"
+              />
+            </div>
+          </div>
+          <div className={styles.inputGroup}>
+            <label>Email</label>
+            <Input
+              name="adminEmail"
+              type="email"
+              value={formData.adminEmail}
+              onChange={handleChange}
+              placeholder="killanjames@gmail.com"
+            />
+          </div>
+        </form>
+      ),
+    },
+    // other tab items...
+  ];
+
+  return (
+    <div className={styles.adminmain}>
+      <div className={styles.adminsettingscontainermain}>
+        <Sidebar />
+        <Header />
+        <div className={styles.settings}>
+          <div className={styles.settingimg}>
+            <h1>Settings</h1>
+            <div className={styles.head}>
+              <div className={styles.headdesign}></div>
+              <div className={styles.profileimg}></div>
+            </div>
+            <div className={styles.actionbuttons}>
+              {/* <Button>Cancel</Button> */}
+              <Button
+                style={{ backgroundColor: "#693bb8", color: "white" }}
+                onClick={handleSubmit}
+              >
+                Save
+              </Button>
+            </div>
+            <div className={styles.tabs}>
+              <Tabs defaultActiveKey="1" items={items} />
+            </div>
+          </div>
         </div>
-    )
+      </div>
+    </div>
+  );
 }
 
-export default AdminSettings
+export default AdminSettings;
