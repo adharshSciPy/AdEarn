@@ -17,7 +17,8 @@ import {
     fetchCouponRequestsAssignedToAdmin,
     updateAdmin,
     getAssignedCoupons,
-    // approveCouponRequest
+    approveCouponRequest,
+    assignCouponsToUserRequest
 } from "../controller/adminController.js";
 
 const adminRouter = Router()
@@ -56,8 +57,9 @@ adminRouter.route("/coupons-requests").get(fetchAllCouponRequest);//to fetch all
 adminRouter.route("/coupon/single-request").get(fetchSingleCouponRequest);//to fetch single coupon request from user
 adminRouter.route("/assigned-coupon-requests/:id").get(fetchCouponRequestsAssignedToAdmin);//to fetch single coupon request from user
 adminRouter.route('/assign-coupon-admin/:id').post(assignBatchToAdmin);//admin can mannually select coupons  to verify ;
-// adminRouter.route('/approve-coupon/:id').post(approveCouponRequest)
-adminRouter.route('/assigned-coupons/:adminId').get(getAssignedCoupons);//to fetch coupons assigned by superadmin
+adminRouter.route('/approve-coupon/:id').post(approveCouponRequest)
+adminRouter.route('/assigned-coupons/:adminId').get(getAssignedCoupons);//to fetch coupons assigned by superadmin NOT USE IT ALREADY INTEGRATED
+adminRouter.route('/distribute-coupon/:id').post(assignCouponsToUserRequest)
 
 
 

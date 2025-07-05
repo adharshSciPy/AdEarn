@@ -17,7 +17,7 @@ import crypto from "crypto";
 import redis from "../redisClient.js";
 import config from "../config.js";
 import couponBatchModel from "../model/couponBatchModel.js";
-import couponModel from "../model/couponModel.js";
+import Coupon from "../model/couponModel.js";
 import path from "path";
 
 const USER_ROLE = process.env.USER_ROLE;
@@ -1401,46 +1401,146 @@ const assignBatchToAdmin = async (req, res) => {
   }
 };
 //to approve the batch by admin
-// const approveCouponRequest=async(req,res)=>{
-//   const{batchId}=req.body;
-//   const{adminId}=req.params.id;
+const approveCouponRequest = async (req, res) => {
+  const { reqId } = req.body;
+  const { id: adminId } = req.params;
 
-//   try {
-//    const request=await couponRequestModel.findById(batchId);
-//      if (!request) {
-//       return res.status(404).json({ message: "Coupon request not found" });
-//     }
-//      if (request.isApproved || request.isProcessed) {
-//       return res.status(400).json({ message: "Request already approved or processed" });
-//     }
-//     if (!request.assignedCoupons || request.assignedCoupons.length === 0) {
-//       return res.status(400).json({ message: "No coupons assigned to this request" });
-//     }
-//     await Coupon.updateMany(
-//   { _id: { $in: request.assignedCoupons } },
-//   {
-//     $set: {
-//       isApproved: true,
-//       requestedByUser: request.userId,
-//       isUserRequestApproved: true,
-//       requestNote: request.note,
-//     },
-//   }
-// );
-//  request.isApproved = true;
-//     // request.isProcessed = true;
-//     request.approvedByAdmin = adminId;
-//     await request.save();
-//       return res.status(200).json({
-//       message: "Coupon request and assigned coupons approved successfully",
-//       approvedCouponCount: request.assignedCoupons.length,
-//       request,
-//     });
-//   } catch (error) {
-//      console.error("Error approving coupon request:", error);
-//     return res.status(500).json({ message: "Internal server error", error });
-//   }
-// }
+  try {
+    const request = await couponRequestModel.findById(reqId);
+console.log("Fetched request:", request);
+console.log("Assigned Coupons:", request?.assignedCoupons);
+    if (!request) {
+      return res.status(404).json({ message: "Coupon request not found" });
+    }
+
+    if (request.isApproved || request.isProcessed) {
+      return res.status(400).json({ message: "Request already approved or processed" });
+    }
+
+    if (!request.assignedCoupons || request.assignedCoupons.length === 0) {
+      console.warn(`No coupons assigned to request ${reqId}`);
+      return res.status(400).json({ message: "No coupons assigned to this request" });
+    }
+
+    // Update coupons
+    await Coupon.updateMany(
+      { _id: { $in: request.assignedCoupons } },
+      {
+        $set: {
+          isApproved: true,
+          requestedByUser: request.userId,
+          isUserRequestApproved: true,
+          requestNote: request.note,
+        },
+      }
+    );
+
+    // Mark request as approved
+    request.isApproved = true;
+    request.approvedByAdmin = adminId;
+    await request.save();
+
+    // Log approval in admin record
+    await Admin.findByIdAndUpdate(adminId, {
+      $push: {
+        approvedCouponRequests: {
+          couponRequestId: request._id,
+          userId: request.userId,
+          totalCouponsApproved: request.assignedCoupons.length,
+          note: request.note || "",
+        },
+      },
+    });
+
+    return res.status(200).json({
+      message: "Coupon request and assigned coupons approved successfully",
+      approvedCouponCount: request.assignedCoupons.length,
+      request,
+    });
+
+  } catch (error) {
+    console.error("Error approving coupon request:", error);
+    return res.status(500).json({ message: "Internal server error", error });
+  }
+};
+// to distribute  coupons to user
+const assignCouponsToUserRequest = async (req, res) => {
+  const { requestId, starCountPerCoupon, couponCount } = req.body;
+  const { id:adminId } = req.params;
+
+  if (!requestId || !starCountPerCoupon || !couponCount) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  try {
+   const admin = await Admin.findById(adminId)
+  .populate({
+    path: "assignedCouponBatches.batchId",
+    populate: {
+      path: "coupons", 
+      model: "Coupon",  
+    },
+  });
+
+
+    if (!admin) return res.status(404).json({ message: "Admin not found" });
+
+    const request = await couponRequestModel.findById(requestId);
+    if (!request) return res.status(404).json({ message: "Coupon request not found" });
+
+    // Filter through all batches and coupons
+    const availableCoupons = [];
+
+    for (const batchEntry of admin.assignedCouponBatches) {
+      const batch = batchEntry.batchId;
+      if (!batch || !batch.coupons) continue;
+
+      for (const coupon of batch.coupons) {
+        if (
+          !coupon.isClaimed &&
+          !coupon.isApproved &&
+          coupon.perStarCount === starCountPerCoupon
+        ) {
+          availableCoupons.push(coupon._id);
+          if (availableCoupons.length === couponCount) break;
+        }
+      }
+      if (availableCoupons.length === couponCount) break;
+    }
+
+    if (availableCoupons.length < couponCount) {
+      return res.status(400).json({
+        message: `Only ${availableCoupons.length} coupons available, required ${couponCount}`,
+      });
+    }
+
+    // Assign coupons to request
+    request.assignedCoupons = availableCoupons;
+    await request.save();
+
+    // Update each coupon’s info
+    await Coupon.updateMany(
+      { _id: { $in: availableCoupons } },
+      {
+        $set: {
+          isClaimed: true,
+          assignedToRequest: requestId,
+        },
+      }
+    );
+
+    return res.status(200).json({
+      message: "Coupons assigned to user request successfully",
+      assignedCouponIds: availableCoupons,
+      requestId: request._id,
+    });
+
+  } catch (error) {
+    console.error("Error in assignCouponsToUserRequest:", error);
+    return res.status(500).json({ message: "Internal Server Error", error });
+  }
+};
+
 //to get assigned coupons from super admin
 const getAssignedCoupons = async (req, res) => {
   const { adminId } = req.params;
@@ -1506,6 +1606,9 @@ export {
   fetchCouponRequestsAssignedToAdmin,
   assignBatchToAdmin,
   updateAdmin,
-  // approveCouponRequest,
-  getAssignedCoupons
+  approveCouponRequest,
+  getAssignedCoupons,
+  assignCouponsToUserRequest
+  
+
 };
