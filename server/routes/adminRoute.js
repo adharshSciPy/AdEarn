@@ -15,6 +15,7 @@ import {
     fetchSingleCouponRequest,
     assignBatchToAdmin,
     fetchCouponRequestsAssignedToAdmin,
+    getAssignedCoupons,
     // approveCouponRequest
 } from "../controller/adminController.js";
 
@@ -55,6 +56,7 @@ adminRouter.route("/coupon/single-request").get(fetchSingleCouponRequest);//to f
 adminRouter.route("/assigned-coupon-requests/:id").get(fetchCouponRequestsAssignedToAdmin);//to fetch single coupon request from user
 adminRouter.route('/assign-coupon-admin/:id').post(assignBatchToAdmin);//admin can mannually select coupons  to verify ;
 // adminRouter.route('/approve-coupon/:id').post(approveCouponRequest)
+adminRouter.route('/assigned-coupons/:adminId').get(getAssignedCoupons);//to fetch coupons assigned by superadmin
 
 
 

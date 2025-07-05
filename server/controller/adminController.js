@@ -18,6 +18,7 @@ import redis from "../redisClient.js";
 import config from "../config.js";
 import couponBatchModel from "../model/couponBatchModel.js";
 import couponModel from "../model/couponModel.js";
+import path from "path";
 
 const USER_ROLE = process.env.USER_ROLE;
 const ADMIN_ROLE = process.env.ADMIN_ROLE;
@@ -1458,6 +1459,33 @@ const assignBatchToAdmin = async (req, res) => {
 //     return res.status(500).json({ message: "Internal server error", error });
 //   }
 // }
+//to get assigned coupons from super admin
+const getAssignedCoupons = async (req, res) => {
+  const { adminId } = req.params;
+  try {
+    const admin = await Admin.findById(adminId).populate({
+      path: "assignedCouponBatches.batchId",
+      populate: {
+        path: "coupons",
+        model: "Coupon",
+      },
+    });
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Assigned coupon batches fetched successfully",
+      data: admin.assignedCouponBatches,
+    });
+
+  } catch (error) {
+    console.error("Error fetching assigned coupons:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 
 export {
@@ -1495,5 +1523,6 @@ export {
   fetchSingleCouponRequest,
   fetchCouponRequestsAssignedToAdmin,
   assignBatchToAdmin,
-  // approveCouponRequest
+  // approveCouponRequest,
+  getAssignedCoupons
 };
