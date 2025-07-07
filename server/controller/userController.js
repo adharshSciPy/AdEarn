@@ -1286,7 +1286,4 @@ export {
   resetPassword,
   activateSubscription,
   sendCouponRequest
-
-
-
 };

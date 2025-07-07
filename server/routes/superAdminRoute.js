@@ -24,7 +24,8 @@ import {
   getAdminJobStats,
   couponFetchById,
   stopContestManually,
-  selectAutomaticWinners
+  getSuperAdminWelcomeBonusEarnings
+  // selectAutomaticWinners
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
 import welcomeBonusUpload from "../multer/welBonusMulter.js";
@@ -37,6 +38,7 @@ superAdminRouter.route("/all-admins").get(getAllAdmins);
 superAdminRouter.route("/toggle-user-status").post(toggleUserStatus);
 superAdminRouter.route("/toggle-admin-status").post(toggleAdminStatus);
 superAdminRouter.route("/superadmin-wallet").get(getSuperAdminWallet);
+superAdminRouter.route("/welcome-bonus-earnings").get(getSuperAdminWelcomeBonusEarnings);
 // superAdminRouter.route("/set-welcome-bonus").post(setWelcomeBonusAmount);
 superAdminRouter.route("/topup-welcome-stars").post(topUpWelcomeBonusStars);
 superAdminRouter.route("/create-contest").post(wrapMulter(contestPrizeUpload.array("prizeImages", 5)), createContest);
@@ -57,7 +59,7 @@ superAdminRouter.route("/all-coupon-batch").get(getAllCouponBatches);//to get al
 superAdminRouter.route("/distribute-coupon").post(couponDistribution);// to distribute coupon batches to admin by superadmin
 superAdminRouter.route("/coupon-batch/:id").get(couponFetchById);//to view coupons inside a batch on admin side
 superAdminRouter.route("/stop/:id").post(stopContestManually);
-superAdminRouter.route("/select-automatic-winners").post(selectAutomaticWinners);
+// superAdminRouter.route("/select-automatic-winners").post(selectAutomaticWinners);
 
 
 

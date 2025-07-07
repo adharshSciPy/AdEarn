@@ -31,6 +31,15 @@ const surveyAdSchema = new mongoose.Schema(
       },
     ],
 
+    questionStats: [
+      {
+        questionText: String,
+        options: [String],
+        counts: [Number], // parallel to options
+        respondentNames: [[String]], // parallel to options, stores names
+      },
+    ],
+
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
