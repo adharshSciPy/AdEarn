@@ -12,18 +12,19 @@ function AdminCouponReq() {
 
   const getRequest = async () => {
     try {
-      // const response = await axios.get(`${baseUrl}/api/v1/admin/assign-coupon-admin/${adminId}`);
-      // console.log(response);
+      const response = await axios.get(`${baseUrl}/api/v1/admin/assigned-coupon-requests/${adminId}`);
+      setBundles(response.data.data || [])
+      console.log(response);
       
     } catch (error) {
-      // console.log(error);
+      console.log(error);
     }
   };
   const sendReq=async()=>{
     console.log("click");
     
   }
-  useEffect(()=>{getRequest()})
+  useEffect(()=>{getRequest()},[])
   return (
     <div className={styles.UserAccount}>
       <Sidebar />

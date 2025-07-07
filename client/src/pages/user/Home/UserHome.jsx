@@ -96,7 +96,10 @@ function UserHome() {
   const viewAd = async (adId) => {
     navigate(`/adspreview/${id}/${adId}`);
   };
-
+const viewSurveyAd=async(adId)=>{
+ navigate(`/surveyadspreview/${id}/${adId}`)
+  
+}
   return (
     <div>
       <Navbar />
@@ -217,10 +220,10 @@ function UserHome() {
                 <h2>Surveys</h2>
               </div>
               <div className={styles.adcontainerSub}>
-                {[1, 2, 3, 4].map((_, idx) => (
-                  <div className={styles.adCard} key={idx}>
+                {surveyData.slice(0, 4).map((ad, idx) => (
+                  <div className={styles.adCard} key={idx} onClick={() => viewSurveyAd(ad._id)} >
                     <div className={styles.adHeading}>
-                      <p>Addprimary text</p>
+                      <p>{ad.surveyAd.title}</p>
                     </div>
                     <div className={styles.adContentDes}>
                       <div className={styles.adCardbottom}>
