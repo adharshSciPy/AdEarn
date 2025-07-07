@@ -935,6 +935,13 @@ const redeemCoupon = async (req, res) => {
       return res.status(400).json({ message: "Coupon has expired" });
     }
 
+    // ✅ Only allow redemption of user-requested coupons that are approved
+    if (coupon.requestedByUser && coupon.isUserRequestApproved !== true) {
+      return res.status(403).json({
+        message: "Coupon not approved yet. Please wait for admin approval.",
+      });
+    }
+
     // Find the user
     const user = await User.findById(userId).populate("userWalletDetails");
     if (!user) {
@@ -965,11 +972,13 @@ const redeemCoupon = async (req, res) => {
       totalStars: wallet.totalStars,
       couponStars: wallet.couponStars,
     });
+
   } catch (error) {
     console.error("Error redeeming coupon:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 // to fetch user wise wallet
 const fetchUserWallet=async(req,res)=>{
 const {id:userId}=req.params;

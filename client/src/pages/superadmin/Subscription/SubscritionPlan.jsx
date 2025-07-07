@@ -1,14 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./Subscriptionplan.module.css";
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
 import SubscribeImg from "../../../assets/crown.png"
+import CheckMark from "../../../assets/check-mark.png"
 import axios from "axios";
 import baseUrl from "../../../baseurl";
+import Header from "../../../components/Header/Header";
 
 function SubscritionPlan() {
   const [showModal, setShowModal] = useState(false);
   const [price, setPrice] = useState("");
   const [duration, setDuration] = useState("Month");
+  const [data, setData] = useState({})
+
+
+  const getSubscribe = async () => {
+    try {
+      const getres = await axios.get(`${baseUrl}/api/v1/subscription/get-subscriptions`);
+      console.log("hi", getres.data.settings);
+      setData(getres.data.settings);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    getSubscribe();
+  }, []);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,6 +52,7 @@ function SubscritionPlan() {
         payload
       );
       console.log("Subscription updated:", response.data);
+      await getSubscribe()
 
       // Reset state
       setPrice("");
@@ -47,6 +67,7 @@ function SubscritionPlan() {
   return (
     <div className={styles.UserAccount}>
       <SuperSidebar />
+      <Header />
       <div className={styles.wrapper}>
         <div className={styles.header}>
           <h2>Subscription Plan & Pricing</h2>
@@ -60,9 +81,19 @@ function SubscritionPlan() {
               <span>Pro</span>
             </h4>
             <div className={styles.price}>
-              <span className={styles.currency}>₹</span>
-              <span className={styles.amount}>5</span>
-              <span className={styles.period}>/ Monthly</span>
+              <span className={styles.currency}>Star Count: {data.starCountRequired}</span><br />
+              <span className={styles.currency}>Duration: {data.subscriptionDurationDays} days</span>
+              {/* <span className={styles.period}>/ Monthly</span> */}
+            </div>
+            <div className={styles.liststyle}>
+              <ul>
+                <li><img src={CheckMark} width="20px" />{" "}Helloo</li>
+                <li><img src={CheckMark} width="20px" />{" "}Helloo</li>
+                <li><img src={CheckMark} width="20px" />{" "}Helloo</li>
+                <li><img src={CheckMark} width="20px" />{" "}Helloo</li>
+                <li><img src={CheckMark} width="20px" />{" "}Helloo</li>
+
+              </ul>
             </div>
             <button className={styles.changeBtn} onClick={() => setShowModal(true)}>
               Change

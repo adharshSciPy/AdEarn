@@ -13,16 +13,21 @@ import {
     getAdminById,
     fetchAllCouponRequest,
     fetchSingleCouponRequest,
-    assignBatchToAdmin
+    assignBatchToAdmin,
+    fetchCouponRequestsAssignedToAdmin,
+    updateAdmin,
+    getAssignedCoupons,
+    approveCouponRequest,
+    assignCouponsToUserRequest
 } from "../controller/adminController.js";
 
 const adminRouter = Router()
 
 adminRouter.route('/admin-register').post(registerAdmin)
-// adminRouter.route('/admin-edit/:id').patch(updateAdmin)
+adminRouter.route('/admin-edit/:id').patch(updateAdmin)
 adminRouter.route('/admin-login').post(adminLogin)
-adminRouter.route('/all-users').get(getAllUsers)
-adminRouter.route('/single-user').get(getSingleUser)
+adminRouter.route('/all-users').get(getAllUsers) 
+adminRouter.route('/single-user/:id').get(getSingleUser) // change id from body to params
 adminRouter.route('/kyc-requested-users').get(fetchKycUploadedUsers)
 adminRouter.route('/kyc-requested-single-user').get(fetchSingleKycUploadUser)
 adminRouter.route('/kyc-approval/:id').post(verifyKyc)
@@ -50,7 +55,11 @@ adminRouter.route('/kycs-rejected/:id').get(getKycsRejectedByAdmin);//fetch reje
 adminRouter.route("/adminget/:id").get(getAdminById);
 adminRouter.route("/coupons-requests").get(fetchAllCouponRequest);//to fetch all coupon requests from user
 adminRouter.route("/coupon/single-request").get(fetchSingleCouponRequest);//to fetch single coupon request from user
+adminRouter.route("/assigned-coupon-requests/:id").get(fetchCouponRequestsAssignedToAdmin);//to fetch single coupon request from user
 adminRouter.route('/assign-coupon-admin/:id').post(assignBatchToAdmin);//admin can mannually select coupons  to verify ;
+adminRouter.route('/approve-coupon/:id').post(approveCouponRequest)
+adminRouter.route('/assigned-coupons/:adminId').get(getAssignedCoupons);//to fetch coupons assigned by superadmin NOT USE IT ALREADY INTEGRATED
+adminRouter.route('/distribute-coupon/:id').post(assignCouponsToUserRequest)
 
 
 

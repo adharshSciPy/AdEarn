@@ -12,14 +12,13 @@
   align-items: center;
 }
 .card {
-
   background: #4f2cc9;
   border-radius: 20px;
   padding: 30px 20px;
   color: white;
   max-width: 300px;
   position: relative;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: "Segoe UI", sans-serif;
 }
 
 .iconBox {
@@ -75,7 +74,7 @@
 }
 
 .currency {
-  font-size: 20px;
+  font-size: 25px;
 }
 
 .amount {
@@ -172,4 +171,12 @@ ul {
 .modalActions button:last-child {
   background-color: #4f2cc9;
   color: white;
+}
+
+.liststyle ul {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+  gap: 6px;
 }

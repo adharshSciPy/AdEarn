@@ -17,6 +17,8 @@ import crypto from "crypto";
 import redis from "../redisClient.js";
 import config from "../config.js";
 import couponBatchModel from "../model/couponBatchModel.js";
+import Coupon from "../model/couponModel.js";
+import path from "path";
 
 const USER_ROLE = process.env.USER_ROLE;
 const ADMIN_ROLE = process.env.ADMIN_ROLE;
@@ -78,53 +80,35 @@ const registerAdmin = async (req, res) => {
   }
 };
 
-// const updateAdmin = async (req, res) => {
-//   const { id } = req.params;
-//   const { adminEmail, password, username, address } = req.body;
+const updateAdmin = async (req, res) => {
+  const { id } = req.params;
+  const { adminEmail, username, lastName } = req.body;
 
-//   try {
-//     const admin = await Admin.findById(id);
-//     if (!admin) {
-//       return res.status(404).json({ message: "Admin not found" });
-//     }
+  try {
+    const admin = await Admin.findById(id);
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
 
-//     // Update fields if provided
-//     if (adminEmail) {
-//       admin.adminEmail = adminEmail;
-//     }
+    // Update only allowed fields
+    if (adminEmail) admin.adminEmail = adminEmail;
+    if (username) admin.username = username;
+    if (lastName) admin.lastName = lastName;
 
-//     if (username) {
-//       admin.username = username;
-//     }
+    await admin.save();
 
-//     if (address) {
-//       admin.address = address;
-//     }
+    const updatedAdmin = await Admin.findById(id).select("-password");
 
-//     if (password) {
-//       if (!passwordValidator(password)) {
-//         return res.status(400).json({
-//           message:
-//             "Password must be at least 8 characters long, contain one uppercase, one lowercase, one number, and one special character.",
-//         });
-//       }
-//       admin.password = password;
-//     }
+    res.status(200).json({
+      message: "Admin updated successfully",
+      data: updatedAdmin,
+    });
+  } catch (error) {
+    console.error("Admin update error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 
-//     await admin.save();
-
-//     // Return updated admin without password
-//     const updatedAdmin = await Admin.findById(id).select("-password");
-
-//     res.status(200).json({
-//       message: "Admin updated successfully",
-//       data: updatedAdmin,
-//     });
-//   } catch (error) {
-//     console.error("Admin update error:", error);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// };
 
 const adminLogin = async (req, res) => {
   const { adminEmail, password } = req.body;
@@ -181,7 +165,7 @@ const getAllUsers = async (req, res) => {
   }
 };
 const getSingleUser = async (req, res) => {
-  const { id } = req.body;
+  const { id } = req.params;
   try {
     const user = await User.findById(id);
     if (!user) {
@@ -1341,6 +1325,46 @@ const fetchSingleCouponRequest=async(req,res)=>{
     return res.status(500).json({message:"Internal Server Error",error})
   }
 }
+const fetchCouponRequestsAssignedToAdmin = async (req, res) => {
+  const adminId = req.params.id;
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
+  try {
+    const requests = await couponRequestModel.find({
+      assignedForVerification: adminId,
+      assignedAtForVerification: { $gte: fiveMinutesAgo },
+      paymentStatus: "pending",
+      isProcessed: false,
+    }).populate({
+      path: "userId",
+      select: "firstName lastName"
+    });
+
+    if (!requests.length) {
+      return res.status(404).json({ message: "No coupon requests assigned to this admin" });
+    }
+
+    const formattedRequests = requests.map(req => {
+      const { firstName = "", lastName = "" } = req.userId || {};
+      return {
+        ...req._doc,
+        userName: `${firstName} ${lastName}`.trim()
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Fetched coupon requests assigned to admin",
+      count:formattedRequests.length,
+      data: formattedRequests
+    });
+
+  } catch (error) {
+    console.error("Error fetching assigned coupon requests:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 //assign to respective admin
 const assignBatchToAdmin = async (req, res) => {
   const { batchId } = req.body;
@@ -1377,14 +1401,173 @@ const assignBatchToAdmin = async (req, res) => {
   }
 };
 //to approve the batch by admin
-const approveCouponRequest=async(req,res)=>{
-  const{batchId}=req.body;
+const approveCouponRequest = async (req, res) => {
+  const { reqId } = req.body;
+  const { id: adminId } = req.params;
+
   try {
-    
+    const request = await couponRequestModel.findById(reqId);
+console.log("Fetched request:", request);
+console.log("Assigned Coupons:", request?.assignedCoupons);
+    if (!request) {
+      return res.status(404).json({ message: "Coupon request not found" });
+    }
+
+    if (request.isApproved || request.isProcessed) {
+      return res.status(400).json({ message: "Request already approved or processed" });
+    }
+
+    if (!request.assignedCoupons || request.assignedCoupons.length === 0) {
+      console.warn(`No coupons assigned to request ${reqId}`);
+      return res.status(400).json({ message: "No coupons assigned to this request" });
+    }
+
+    // Update coupons
+    await Coupon.updateMany(
+      { _id: { $in: request.assignedCoupons } },
+      {
+        $set: {
+          isApproved: true,
+          requestedByUser: request.userId,
+          isUserRequestApproved: true,
+          requestNote: request.note,
+        },
+      }
+    );
+
+    // Mark request as approved
+    request.isApproved = true;
+    request.approvedByAdmin = adminId;
+    await request.save();
+
+    // Log approval in admin record
+    await Admin.findByIdAndUpdate(adminId, {
+      $push: {
+        approvedCouponRequests: {
+          couponRequestId: request._id,
+          userId: request.userId,
+          totalCouponsApproved: request.assignedCoupons.length,
+          note: request.note || "",
+        },
+      },
+    });
+
+    return res.status(200).json({
+      message: "Coupon request and assigned coupons approved successfully",
+      approvedCouponCount: request.assignedCoupons.length,
+      request,
+    });
+
   } catch (error) {
-    
+    console.error("Error approving coupon request:", error);
+    return res.status(500).json({ message: "Internal server error", error });
   }
-}
+};
+// to distribute  coupons to user
+const assignCouponsToUserRequest = async (req, res) => {
+  const { requestId, starCountPerCoupon, couponCount } = req.body;
+  const { id:adminId } = req.params;
+
+  if (!requestId || !starCountPerCoupon || !couponCount) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  try {
+   const admin = await Admin.findById(adminId)
+  .populate({
+    path: "assignedCouponBatches.batchId",
+    populate: {
+      path: "coupons", 
+      model: "Coupon",  
+    },
+  });
+
+
+    if (!admin) return res.status(404).json({ message: "Admin not found" });
+
+    const request = await couponRequestModel.findById(requestId);
+    if (!request) return res.status(404).json({ message: "Coupon request not found" });
+
+    // Filter through all batches and coupons
+    const availableCoupons = [];
+
+    for (const batchEntry of admin.assignedCouponBatches) {
+      const batch = batchEntry.batchId;
+      if (!batch || !batch.coupons) continue;
+
+      for (const coupon of batch.coupons) {
+        if (
+          !coupon.isClaimed &&
+          !coupon.isApproved &&
+          coupon.perStarCount === starCountPerCoupon
+        ) {
+          availableCoupons.push(coupon._id);
+          if (availableCoupons.length === couponCount) break;
+        }
+      }
+      if (availableCoupons.length === couponCount) break;
+    }
+
+    if (availableCoupons.length < couponCount) {
+      return res.status(400).json({
+        message: `Only ${availableCoupons.length} coupons available, required ${couponCount}`,
+      });
+    }
+
+    // Assign coupons to request
+    request.assignedCoupons = availableCoupons;
+    await request.save();
+
+    // Update each coupon’s info
+    await Coupon.updateMany(
+      { _id: { $in: availableCoupons } },
+      {
+        $set: {
+          isClaimed: true,
+          assignedToRequest: requestId,
+        },
+      }
+    );
+
+    return res.status(200).json({
+      message: "Coupons assigned to user request successfully",
+      assignedCouponIds: availableCoupons,
+      requestId: request._id,
+    });
+
+  } catch (error) {
+    console.error("Error in assignCouponsToUserRequest:", error);
+    return res.status(500).json({ message: "Internal Server Error", error });
+  }
+};
+
+//to get assigned coupons from super admin
+const getAssignedCoupons = async (req, res) => {
+  const { adminId } = req.params;
+  try {
+    const admin = await Admin.findById(adminId).populate({
+      path: "assignedCouponBatches.batchId",
+      populate: {
+        path: "coupons",
+        model: "Coupon",
+      },
+    });
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Assigned coupon batches fetched successfully",
+      data: admin.assignedCouponBatches,
+    });
+
+  } catch (error) {
+    console.error("Error fetching assigned coupons:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 
 export {
@@ -1420,5 +1603,12 @@ export {
   getAdminById,
   fetchAllCouponRequest,
   fetchSingleCouponRequest,
-  assignBatchToAdmin
+  fetchCouponRequestsAssignedToAdmin,
+  assignBatchToAdmin,
+  updateAdmin,
+  approveCouponRequest,
+  getAssignedCoupons,
+  assignCouponsToUserRequest
+  
+
 };
