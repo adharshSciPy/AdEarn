@@ -46,7 +46,7 @@ app.use("/userUploads", express.static(path.join(__dirname, "Uploads/userUploads
 app.use("/userKyc", express.static(path.join(__dirname, "Uploads/userKyc")));
 app.use("/imgAdUploads", express.static(path.join(__dirname, "Uploads/imageAdUploads")));
 app.use('/videoAdUploads', express.static(path.join(__dirname, 'Uploads/videoAdUploads')));
-app.use('/welcomeBonusUploads', express.static(path.join(__dirname, 'Uploads/welcomeBonusImages')));
+app.use('/Uploads/welcomeBonusImages', express.static(path.join(__dirname, 'Uploads/welcomeBonusImages')));
 app.use("/surveyAdUploads", express.static(path.join(__dirname, "Uploads/surveyAdImages")));
 app.use("/contestPrizeImages", express.static(path.join(__dirname, "Uploads/contestPrizeImages")));
 

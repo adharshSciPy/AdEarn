@@ -650,15 +650,12 @@ const submitSurveyResponse = async (req, res) => {
 
 const getSurveyAdStats = async (req, res) => {
   const { surveyAdId } = req.params;
-  const userId = req.user.id;
 
   try {
-    const ad = await SurveyAd.findById(surveyAdId)
-      .populate("questionStats.respondents", "name");
+    const ad = await SurveyAd.findById(surveyAdId);
 
-    if (!ad) return res.status(404).json({ message: "Ad not found" });
-    if (String(ad.createdBy) !== String(userId)) {
-      return res.status(403).json({ message: "Not authorized to view results" });
+    if (!ad) {
+      return res.status(404).json({ message: "Ad not found" });
     }
 
     if (!ad.isViewsReached) {
@@ -666,13 +663,10 @@ const getSurveyAdStats = async (req, res) => {
     }
 
     const totalResponses = ad.totalViewCount;
+
     const stats = ad.questionStats.map((q) => {
       const percentages = q.counts.map((count) =>
         totalResponses === 0 ? 0 : ((count / totalResponses) * 100).toFixed(2)
-      );
-
-      const respondentNames = q.respondents.map((respList) =>
-        respList.map((user) => user.name)
       );
 
       return {
@@ -680,15 +674,17 @@ const getSurveyAdStats = async (req, res) => {
         options: q.options,
         counts: q.counts,
         percentages,
-        respondentNames,
+        respondentNames: q.respondentNames, // Already names, not user refs
       };
     });
 
     return res.status(200).json({ surveyAdId, totalResponses, stats });
   } catch (error) {
+    console.error("getSurveyAdStats error:", error);
     return res.status(500).json({ message: "Failed to fetch stats", error: error.message });
   }
 };
+
 
 // fetch single unVerifiedAds
 const fetchSingleUnverifiedAd = async (req, res) => {
