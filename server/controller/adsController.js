@@ -489,7 +489,7 @@ const createSurveyAd = async (req, res) => {
       targetRegions.push({
         location: {
           type: "Point",
-          coordinates: [latitude, longitude], // Note: GeoJSON requires [lng, lat]
+          coordinates: [latitude, longitude],
         },
         radius,
       });
@@ -520,7 +520,6 @@ const createSurveyAd = async (req, res) => {
       return res.status(400).json({ message: "Invalid userViewsNeeded value" });
     }
 
-    // Star payout plan: 60% 2-star, 40% 3-star
     const percent2Star = 0.6;
     const percent3Star = 0.4;
 
@@ -541,7 +540,6 @@ const createSurveyAd = async (req, res) => {
       });
     }
 
-    // Deduct stars
     userWallet.totalStars -= starsToBeDeducted;
     await userWallet.save();
 
@@ -550,10 +548,18 @@ const createSurveyAd = async (req, res) => {
     const parsedAdPeriod = parseFloat(adPeriod);
     const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
 
+    const questionStats = parsedQuestions.map((q) => ({
+      questionText: q.questionText,
+      options: q.options,
+      counts: q.options.map(() => 0),
+      respondentNames: q.options.map(() => []),
+    }));
+
     const surveyAd = await SurveyAd.create({
       title,
       description,
       questions: parsedQuestions,
+      questionStats,
       createdBy: user._id,
       userViewsNeeded: viewsNeeded,
       totalViewCount: 0,
@@ -569,7 +575,6 @@ const createSurveyAd = async (req, res) => {
     });
 
     const ad = await Ad.create({ surveyAdRef: surveyAd._id });
-
     user.ads.push(ad._id);
     await user.save();
 
@@ -585,6 +590,103 @@ const createSurveyAd = async (req, res) => {
       message: "Failed to create survey ad",
       error: error.message,
     });
+  }
+};
+const submitSurveyResponse = async (req, res) => {
+  const { surveyAdId, responses, respondentName } = req.body;
+
+  if (!surveyAdId || !responses || !respondentName) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  try {
+    const surveyAd = await SurveyAd.findById(surveyAdId);
+    if (!surveyAd) {
+      return res.status(404).json({ message: "Survey Ad not found" });
+    }
+
+    if (!Array.isArray(surveyAd.questionStats)) {
+      return res.status(500).json({ message: "Survey Ad has no questionStats field" });
+    }
+
+    if (surveyAd.isViewsReached) {
+      return res.status(400).json({ message: "Survey has already ended" });
+    }
+
+    for (const [i, resItem] of responses.entries()) {
+      const { selectedOption } = resItem;
+      const stat = surveyAd.questionStats[i];
+
+      if (!stat || !stat.options.includes(selectedOption)) continue;
+
+      const optionIndex = stat.options.indexOf(selectedOption);
+
+      // Ensure respondentNames[optionIndex] exists
+      if (!stat.respondentNames[optionIndex]) {
+        stat.respondentNames[optionIndex] = [];
+      }
+
+      const alreadyVoted = stat.respondentNames[optionIndex].includes(respondentName);
+
+      if (!alreadyVoted) {
+        stat.counts[optionIndex] += 1;
+        stat.respondentNames[optionIndex].push(respondentName);
+      }
+    }
+
+    surveyAd.totalViewCount += 1;
+    if (surveyAd.totalViewCount >= surveyAd.userViewsNeeded) {
+      surveyAd.isViewsReached = true;
+    }
+
+    await surveyAd.save();
+
+    return res.status(200).json({ message: "Response submitted successfully" });
+  } catch (error) {
+    console.error("Submit survey error:", error);
+    return res.status(500).json({ message: "Failed to submit response", error: error.message });
+  }
+};
+
+const getSurveyAdStats = async (req, res) => {
+  const { surveyAdId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const ad = await SurveyAd.findById(surveyAdId)
+      .populate("questionStats.respondents", "name");
+
+    if (!ad) return res.status(404).json({ message: "Ad not found" });
+    if (String(ad.createdBy) !== String(userId)) {
+      return res.status(403).json({ message: "Not authorized to view results" });
+    }
+
+    if (!ad.isViewsReached) {
+      return res.status(400).json({ message: "Survey is still running" });
+    }
+
+    const totalResponses = ad.totalViewCount;
+    const stats = ad.questionStats.map((q) => {
+      const percentages = q.counts.map((count) =>
+        totalResponses === 0 ? 0 : ((count / totalResponses) * 100).toFixed(2)
+      );
+
+      const respondentNames = q.respondents.map((respList) =>
+        respList.map((user) => user.name)
+      );
+
+      return {
+        question: q.questionText,
+        options: q.options,
+        counts: q.counts,
+        percentages,
+        respondentNames,
+      };
+    });
+
+    return res.status(200).json({ surveyAdId, totalResponses, stats });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to fetch stats", error: error.message });
   }
 };
 
@@ -1772,6 +1874,8 @@ export {
   createImageAd,
   createVideoAd,
   createSurveyAd,
+  submitSurveyResponse,
+  getSurveyAdStats,
   fetchAdsForVerification,
   fetchVerifiedAds,
   fetchSingleUnverifiedAd,
