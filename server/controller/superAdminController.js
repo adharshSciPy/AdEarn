@@ -325,6 +325,7 @@ const distributeWelcomeBonus = async (newUserId) => {
         success: false,
         starsGiven: 0,
         message: "Welcome bonus is disabled or not set",
+        imageUrl: null,
       };
     }
 
@@ -340,6 +341,7 @@ const distributeWelcomeBonus = async (newUserId) => {
         success: false,
         starsGiven: 0,
         message: "Not enough welcome bonus stars in SuperAdmin wallet",
+        imageUrl: setting.companyImage || null,
       };
     }
 
@@ -353,6 +355,7 @@ const distributeWelcomeBonus = async (newUserId) => {
         success: false,
         starsGiven: 0,
         message: "User has already received the welcome bonus",
+        imageUrl: setting.companyImage || null,
       };
     }
 
@@ -362,13 +365,12 @@ const distributeWelcomeBonus = async (newUserId) => {
         success: false,
         starsGiven: 0,
         message: "User or wallet not found",
+        imageUrl: setting.companyImage || null,
       };
     }
 
     // ✅ Credit stars
     user.userWalletDetails.totalStars += starsToGive;
-
-    // ✅ Store welcome bonus info inside user's wallet
     user.userWalletDetails.welcomeBonus = starsToGive;
 
     await user.userWalletDetails.save();
@@ -378,9 +380,9 @@ const distributeWelcomeBonus = async (newUserId) => {
 
     // ✅ Push log entry
     wallet.welcomeBonusWallet.logs.push({
-      reason: "Welcome Bonus",
       starsAdded: -starsToGive,
-      date: new Date(),
+      source: "Welcome Bonus",
+      addedAt: new Date(),
     });
 
     // ✅ Record in given list
@@ -395,6 +397,7 @@ const distributeWelcomeBonus = async (newUserId) => {
     return {
       success: true,
       starsGiven: starsToGive,
+      imageUrl: setting.companyImage || null,
       message: "Welcome bonus applied successfully",
     };
   } catch (error) {
@@ -402,6 +405,7 @@ const distributeWelcomeBonus = async (newUserId) => {
     return {
       success: false,
       starsGiven: 0,
+      imageUrl: null,
       message: "Internal server error",
     };
   }
