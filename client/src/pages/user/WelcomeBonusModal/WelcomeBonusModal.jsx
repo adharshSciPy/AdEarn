@@ -30,9 +30,7 @@ const WelcomeBonusModal = ({ onClose, sponsorData }) => {
         <div className={styles.bonusContent}>
           <div className={styles.bonusBadge}>WELCOME BONUS</div>
           <h2 className={styles.bonusTitle}>{dynamicBonusText}</h2>
-          <p className={styles.bonusDescription}>
-            Thank you for joining {sponsorData.companyName}!
-          </p>
+        
           <button className={styles.claimButton} onClick={onClose}>
             CLAIM NOW
           </button>
