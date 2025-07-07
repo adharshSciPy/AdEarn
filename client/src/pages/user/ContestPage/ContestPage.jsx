@@ -40,6 +40,9 @@ const contests = [
 ];
 
 const ContestPage = () => {
+  
+
+  
   return (
     <>
     <Navbar/>

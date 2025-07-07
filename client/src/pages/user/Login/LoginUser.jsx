@@ -31,9 +31,14 @@ function LoginUser() {
     e.preventDefault();
     try {
       const response = await axios.post(`${baseUrl}/api/v1/user/login`, form);
+      console.log(response);
       if (response.status === 200) {
         const id = response.data.user._id;
-        navigate(`/userhome/${id}`);
+        navigate(`/userhome/${id}`, {
+          state: {
+            bonus: response.data.bonus,
+          },
+        });
         dispatch(
           setUser({
             id: response.data.user._id,
@@ -44,14 +49,15 @@ function LoginUser() {
       }
     } catch (error) {
       console.log(error);
+      message.error(error?.response?.data?.message || "Login failed");
     }
 
-    console.log("Submitted:", form);
     setForm({
       email: "",
       password: "",
     });
   };
+
   const handleForgotSubmit = async () => {
     if (!phone || phone.length < 10) {
       message.error("Please enter a valid phone number.");
@@ -64,8 +70,8 @@ function LoginUser() {
           phoneNumber: phone,
         }
       );
-      if(response.status===200){
-        navigate(`/resendotp/${phone}`)
+      if (response.status === 200) {
+        navigate(`/resendotp/${phone}`);
       }
     } catch (error) {
       console.log(error);
