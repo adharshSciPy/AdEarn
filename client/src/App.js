@@ -33,7 +33,7 @@ import Form2 from './pages/user/signUp/Form2';
 import UserHome from './pages/user/Home/UserHome';
 import Adsmanager from './pages/user/Adsmanager/Adsmanager';
 import AdTemplateSelector from "./pages/user/AdTemplateSelector/AdTemplateSelector"
-import ContestPage from './pages/user/ContextPage/ContestPage';
+import ContestPage from './pages/user/ContestPage/ContestPage';
 import WalletPage from './pages/user/WalletPage/WalletPage'
 import RefaralPage from './pages/user/ReferalPage/RefaralPage';
 import UserProfileEditForm from './pages/user/UserProfileEdit/UserProfileEdit'
@@ -147,7 +147,7 @@ function App() {
           <Route path='/userhome/:id' element={<UserHome />} />
           <Route path='/adsmanageruser/:id' element={<Adsmanager />} />
           <Route path='/adstemplate' element={<AdTemplateSelector />} />
-          <Route path='/contextpage' element={<ContestPage />} />
+          <Route path='/contestpage' element={<ContestPage />} />
           <Route path='/walletpage/:id' element={<WalletPage />} />
           <Route path='/referalpageuser' element={<RefaralPage />} />
           <Route path='/userprofile' element={<UserProfileEditForm />} />
