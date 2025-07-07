@@ -1,6 +1,5 @@
-.mainUserContainer{
-
-  background-color: #F6F7F9;
+.mainUserContainer {
+  background-color: #f6f7f9;
 }
 .mainContainer {
   width: 100%;
@@ -17,8 +16,7 @@
   margin: auto;
   padding-top: 50px;
   border-radius: 10px;
-  background-color: #F6F7F9;
-
+  background-color: #f6f7f9;
 }
 .firstMain {
   background-image: url("../../../assets/homeBackground.png");
@@ -104,8 +102,6 @@
   background-size: contain;
   background-repeat: no-repeat;
   transform: rotate(30deg);
-
-
 }
 .profileWrapper {
   width: 95%;
@@ -113,7 +109,7 @@
   padding: 2rem;
   height: max-content;
   padding: 0px 140px 80px 140px;
-    background-color: #F6F7F9;
+  background-color: #f6f7f9;
 
   border-radius: 10px;
   margin-top: 40px;
@@ -130,7 +126,7 @@
   border-radius: 16px;
   padding: 2rem;
   gap: 2rem;
-  border: 1px solid #3563E9;
+  border: 1px solid #3563e9;
 }
 
 .leftPanel,
@@ -139,6 +135,10 @@
   display: flex;
   flex-direction: column;
   padding: 30px 40px;
+}
+
+.rightPanel {
+  margin-top: 70px;
 }
 
 .userInfo {
@@ -164,37 +164,34 @@
   font-size: 14px;
   color: gray;
 }
-.avatarWrapper{
+.avatarWrapper {
   display: flex;
   align-items: center;
   margin-bottom: 20px;
 }
-.imgWrapper{
-  height:50px;
+.imgWrapper {
+  height: 50px;
   width: 50px;
   border-radius: 50px;
-  
-
 }
-.kycWrapper{
+.kycWrapper {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-top: 30px;
-  color: #5D32B9;
+  color: #5d32b9;
 }
-.detailWrapper{
+.detailWrapper {
   margin-left: 40px;
 }
-.kycButton{
+.kycButton {
   padding: 5px 10px;
   border-radius: 10px;
-  background-color: #5D32B9;
+  background-color: #5d32b9;
   border: none;
   color: white;
-
 }
-.imgWrapper img{
+.imgWrapper img {
   height: 100%;
   width: 100%;
   object-fit: cover;
@@ -263,26 +260,25 @@
 .saveBtn {
   margin-top: 2rem;
   align-self: flex-start;
-  background: #5D32B9;
+  background: #5d32b9;
   color: white;
   padding: 0.5rem 1.5rem;
   border-radius: 8px;
   border: none;
   cursor: pointer;
 }
-.profileHead{
+.profileHead {
   display: flex;
-  width:95%;
+  width: 95%;
   margin: auto;
   padding: 30px 0;
-
 }
-.editformHeading{
-  color: #5D32B9;
+.editformHeading {
+  color: #5d32b9;
   padding: 40px 0;
 }
 
-.editformHeading h2{
+.editformHeading h2 {
   font-size: 30px;
   font-weight: 600;
 }

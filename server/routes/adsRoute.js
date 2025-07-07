@@ -30,7 +30,7 @@ adsRouter.post("/image-ad/:id", wrapMulter(adMediaUpload), createImageAd);
 adsRouter.post("/video-ad/:id", wrapMulter(adVideoUpload), createVideoAd);
 adsRouter.post("/survey-ad/:id", wrapMulter(surveyAdUpload), createSurveyAd);
 adsRouter.post("/survey-response/submit", submitSurveyResponse);
-adsRouter.get("/survey-response/:adId/stats", authMiddleware, getSurveyAdStats);
+adsRouter.get("/survey-stats/:surveyAdId", getSurveyAdStats);
 adsRouter.get("/ads-to-verify", fetchAdsForVerification);
 adsRouter.get("/verified-ads", fetchVerifiedAds);
 adsRouter.get("/unverified-ads/:id", fetchSingleUnverifiedAd);
