@@ -593,9 +593,9 @@ const createSurveyAd = async (req, res) => {
   }
 };
 const submitSurveyResponse = async (req, res) => {
-  const { surveyAdId, responses, respondentName } = req.body;
+  const { surveyAdId, responses, userId } = req.body;
 
-  if (!surveyAdId || !responses || !respondentName) {
+  if (!surveyAdId || !responses || !userId) {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
@@ -613,6 +613,22 @@ const submitSurveyResponse = async (req, res) => {
       return res.status(400).json({ message: "Survey has already ended" });
     }
 
+    // ✅ Check if user already submitted
+    const alreadySubmitted = surveyAd.questionStats.some((q) =>
+      q.respondentNames?.some((arr) => Array.isArray(arr) && arr.includes(userId))
+    );
+
+    if (alreadySubmitted) {
+      return res.status(400).json({ message: "You have already submitted this survey." });
+    }
+
+    // 🧍 Find user and wallet
+    const user = await User.findById(userId).populate("userWalletDetails");
+    if (!user || !user.userWalletDetails) {
+      return res.status(404).json({ message: "User or wallet not found" });
+    }
+
+    // 🔄 Record response
     for (const [i, resItem] of responses.entries()) {
       const { selectedOption } = resItem;
       const stat = surveyAd.questionStats[i];
@@ -625,34 +641,21 @@ const submitSurveyResponse = async (req, res) => {
         stat.respondentNames[optionIndex] = [];
       }
 
-      const alreadyVoted = stat.respondentNames[optionIndex].includes(respondentName);
-
-      if (!alreadyVoted) {
-        stat.counts[optionIndex] += 1;
-        stat.respondentNames[optionIndex].push(respondentName);
-      }
+      stat.counts[optionIndex] += 1;
+      stat.respondentNames[optionIndex].push(userId); // Now using userId
     }
 
-    // 🎯 Star Reward Section
+    // ⭐ Reward logic
     let starReward = 0;
     if (Array.isArray(surveyAd.starPayoutPlan) && surveyAd.starPayoutPlan.length > 0) {
-      starReward = surveyAd.starPayoutPlan.shift(); // Remove first reward
-      surveyAd.markModified("starPayoutPlan"); // Tell Mongoose we mutated it
-      console.log(`User "${respondentName}" rewarded with: ${starReward}`);
-    } else {
-      console.log("No more rewards left in starPayoutPlan");
+      starReward = surveyAd.starPayoutPlan.shift();
+      surveyAd.markModified("starPayoutPlan");
     }
 
-    // 🧍 Find the user and reward them
-    const user = await User.findOne({ username: respondentName }).populate("userWalletDetails");
-    if (user && user.userWalletDetails) {
-      user.userWalletDetails.totalStars += starReward;
-      await user.userWalletDetails.save();
-    } else {
-      console.warn(`User not found or no wallet for username: ${respondentName}`);
-    }
+    user.userWalletDetails.totalStars += starReward;
+    await user.userWalletDetails.save();
 
-    // 🔢 Update view count
+    // ✅ Update view count
     surveyAd.totalViewCount += 1;
     if (surveyAd.totalViewCount >= surveyAd.userViewsNeeded) {
       surveyAd.isViewsReached = true;
@@ -669,6 +672,7 @@ const submitSurveyResponse = async (req, res) => {
     return res.status(500).json({ message: "Failed to submit response", error: error.message });
   }
 };
+
 const getSurveyAdStats = async (req, res) => {
   const { surveyAdId } = req.params;
 
@@ -679,23 +683,18 @@ const getSurveyAdStats = async (req, res) => {
       return res.status(404).json({ message: "Ad not found" });
     }
 
-    if (!ad.isViewsReached) {
-      return res.status(400).json({ message: "Survey is still running" });
-    }
-
     const totalResponses = ad.totalViewCount;
 
     const stats = ad.questionStats.map((q) => {
       const percentages = q.counts.map((count) =>
-        totalResponses === 0 ? 0 : ((count / totalResponses) * 100).toFixed(2)
+        totalResponses === 0 ? 0 : parseFloat(((count / totalResponses) * 100).toFixed(2))
       );
 
       return {
         question: q.questionText,
         options: q.options,
         counts: q.counts,
-        percentages,
-        respondentNames: q.respondentNames, // Already names, not user refs
+        percentages, // same order as options
       };
     });
 
@@ -705,6 +704,7 @@ const getSurveyAdStats = async (req, res) => {
     return res.status(500).json({ message: "Failed to fetch stats", error: error.message });
   }
 };
+
 
 
 // fetch single unVerifiedAds
