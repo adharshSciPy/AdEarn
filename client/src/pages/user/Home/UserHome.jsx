@@ -1,5 +1,5 @@
 import { React, useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import styles from "./userhome.module.css";
 import logo from "../../../assets/Logo.png";
 import Navbar from "../NavBar/Navbar";
@@ -7,14 +7,23 @@ import axios from "axios";
 import baseUrl from "../../../baseurl";
 import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
 import socket from "../../../components/Socket/socket.js";
+import WelcomeBonusModal from "../WelcomeBonusModal/WelcomeBonusModal.jsx";
+import { message } from "antd";
 
 function UserHome() {
   const navigate = useNavigate();
   const [imageAdData, setImageAd] = useState([]);
   const [videAdData, setVideoAd] = useState([]);
   const [surveyData, setSurveyData] = useState([]);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [bonusData, setBonusData] = useState(null);
+  const [bonusFetched, setBonusFetched] = useState(false);
 
   const { id } = useParams();
+  const location = useLocation();
+  const bonus = location.state?.bonus;
+  console.log(bonus);
+
   const [showPopup, setShowPopup] = useState(false);
 
   const getImageAdData = async () => {
@@ -63,7 +72,7 @@ function UserHome() {
       console.log(error);
     }
   };
-  const getSurveyData=async ()=>{
+const getSurveyData=async ()=>{
     try {
       const response = await axios.get(`${baseUrl}/api/v1/ads/survey-ads/${id}`);
       setSurveyData(response.data.ads);
@@ -96,10 +105,45 @@ function UserHome() {
   const viewAd = async (adId) => {
     navigate(`/adspreview/${id}/${adId}`);
   };
+<<<<<<< HEAD
 const viewSurveyAd=async(adId)=>{
  navigate(`/surveyadspreview/${id}/${adId}`)
   
 }
+=======
+  const viewSurveyAd=async(adId)=>{
+ navigate(`/surveyadspreview/${id}/${adId}`)
+  
+} 
+  useEffect(() => {
+    const showBonus = (bonus) => {
+      console.log(bonus);
+
+      setBonusData(bonus); 
+      setShowWelcomeModal(true);
+    };
+
+    if (bonus?.success && bonus?.starsGiven > 0) {
+      showBonus(bonus);
+      setBonusFetched(true);
+    } else if (!bonusFetched) {
+      const fetchBonus = async () => {
+        try {
+          const res = await axios.get(
+            `${baseUrl}/api/v1/user/welcome-bonus/${id}`
+          );
+          if (res.data?.success && res.data?.starsGiven > 0) {
+            showBonus(res.data);
+          }
+        } catch (err) {
+          console.log("Bonus fetch error:", err.message);
+        }
+      };
+      fetchBonus();
+    }
+  }, [bonus, id, bonusFetched]);
+
+>>>>>>> ec8e6c6050dab8fe55275f7b9e007a27bc0be206
   return (
     <div>
       <Navbar />
@@ -254,6 +298,12 @@ const viewSurveyAd=async(adId)=>{
           </div>
         </div>
       </div>
+      {showWelcomeModal && (
+        <WelcomeBonusModal
+          sponsorData={bonusData}
+          onClose={() => setShowWelcomeModal(false)}
+        />
+      )}
     </div>
   );
 }

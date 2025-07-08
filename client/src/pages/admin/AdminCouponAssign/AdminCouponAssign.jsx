@@ -13,15 +13,23 @@ function AdminCouponReq() {
   const getRequest = async () => {
     try {
       const response = await axios.get(`${baseUrl}/api/v1/admin/assigned-coupon-requests/${adminId}`);
-      setBundles(response.data.data || [])
-      console.log(response);
+      console.log(response);  
+      setBundles(response.data.data)
       
     } catch (error) {
       console.log(error);
     }
   };
-  const sendReq=async()=>{
-    console.log("click");
+  const sendReq=async(bundleId)=>{
+    try {
+      const response=await axios.post(`${baseUrl}/api/v1/admin/approve-coupon/${bundleId}`,{id:adminId})
+      console.log(response);
+      
+    } catch (error) {
+      console.log(error);
+      
+    }
+    console.log("click",bundleId);
     
   }
   useEffect(()=>{getRequest()},[])
@@ -55,7 +63,7 @@ function AdminCouponReq() {
                         className={styles.sendButton}
                         onClick={() => sendReq(bundle._id)}
                       >
-                        Send
+                        Verify
                       </button>
                     </td>
                   </tr>

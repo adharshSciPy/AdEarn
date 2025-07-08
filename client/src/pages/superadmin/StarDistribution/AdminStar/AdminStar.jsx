@@ -66,24 +66,40 @@ function AdminStar() {
     useEffect(() => {
         const adminwallets = async () => {
             try {
-                const walletres = await axios.get(`${baseUrl}/api/v1/admin/admin-wallet`);
-                console.log("wallet", walletres);
+                const walletRes = await axios.get(`${baseUrl}/api/v1/admin/admin-wallet`);
+                const transactions = walletRes.data.transactions;
+                const totalStars = walletRes.data.totalStars;
 
-                const transactions = walletres.data.transactions;
+                // Step 1: For each transaction, fetch user details
+                const enrichedTransactions = await Promise.all(
+                    transactions.map(async (txn) => {
+                        const userId = txn.userId?._id;
+                        if (!userId) return { ...txn, userDetails: null };
 
-                // Extract all user IDs
-                const userIds = transactions.map(txn => txn.userId?._id);
-                console.log("All User IDs:", userIds);
+                        try {
+                            const res = await axios.get(`${baseUrl}/api/v1/admin/single-user/${userId}`);
+                            console.log("user details response", res)
+                            return {
+                                ...txn,
+                                userDetails: res.data.data,
+                            };
+                        } catch (err) {
+                            console.error(`Error fetching user ${userId}:`, err);
+                            return { ...txn, userDetails: null };
+                        }
+                    })
+                );
 
-                setTotalStar(walletres.data.totalStars);
-                setData(transactions);
+                setTotalStar(totalStars);
+                setData(enrichedTransactions);
             } catch (error) {
-                console.log(error);
+                console.error("Error fetching admin wallet:", error);
             }
         };
 
         adminwallets();
     }, []);
+
 
 
     const paginatedData = useMemo(() => {
@@ -141,16 +157,15 @@ function AdminStar() {
                     {paginatedData.map((user, index, arr) => (
                         <div
                             className={styles.tableRow}
-                            key={user.id}
+                            key={user._id || index}
                             ref={index === arr.length - 1 ? lastRowRef : null}
                         >
                             <div className={styles.userCell}>
-                                <img src={user.avatar} alt="avatar" className={styles.avatar} />
-                                <span>{user.name}</span>
+                                <span>{user.userDetails?.firstName}{" "}{user.userDetails?.lastName}</span>
                             </div>
                             <div>{user.starsReceived}</div>
                             <div>{formatDate(user.date)}</div>
-                            <div>{data.email}</div>
+                            <div>{user.userDetails?.email}</div>
                         </div>
                     ))}
                 </div>

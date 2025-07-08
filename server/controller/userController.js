@@ -114,16 +114,16 @@ const registerUser = async (req, res) => {
     await user.save();
 
     // ✅ Distribute welcome bonus
-    let bonusResult = { success: false, starsGiven: 0, message: "Not applied" };
-    try {
-      bonusResult = await distributeWelcomeBonus(user._id);
-    } catch (bonusErr) {
-      console.error("Welcome bonus distribution failed:", bonusErr.message);
-      bonusResult = { success: false, starsGiven: 0, message: bonusErr.message };
-    }
+    // let bonusResult = { success: false, starsGiven: 0, message: "Not applied" };
+    // try {
+    //   bonusResult = await distributeWelcomeBonus(user._id);
+    // } catch (bonusErr) {
+    //   console.error("Welcome bonus distribution failed:", bonusErr.message);
+    //   bonusResult = { success: false, starsGiven: 0, message: bonusErr.message };
+    // }
 
     // ✅ Populate wallet with updated stars
-    await user.populate('userWalletDetails');
+    // await user.populate('userWalletDetails');
 
     return res.status(200).json({
       message: "User registered successfully",
@@ -138,8 +138,7 @@ const registerUser = async (req, res) => {
           walletId: user.userWalletDetails._id,
         },
       },
-      token,
-      bonus: bonusResult, // 👈 Bonus info with starsGiven
+      token// 👈 Bonus info with starsGiven
     });
   } catch (err) {
     console.error("Error during registration:", err);
@@ -220,14 +219,6 @@ const createUserAndRespond = async (phoneNumber, res) => {
 
     await user.save();
 
-    let bonusResult = { success: false, starsGiven: 0, message: "Not applied" };
-    try {
-      bonusResult = await distributeWelcomeBonus(user._id);
-    } catch (bonusErr) {
-      console.error("Bonus failed:", bonusErr.message);
-    }
-
-    await user.populate('userWalletDetails');
 
     return res.status(200).json({
       message: "User registered successfully",
@@ -243,7 +234,7 @@ const createUserAndRespond = async (phoneNumber, res) => {
         },
       },
       token,
-      bonus: bonusResult,
+      bonus: null,
     });
   } catch (err) {
     console.error("User creation error:", err);
@@ -412,34 +403,58 @@ const userLogin = async (req, res) => {
     if (!email?.trim() || !password?.trim()) {
       return res.status(400).json({ message: "All fields are required" });
     }
-    const user = await User.findOne({ email });
+
+    const user = await User.findOne({ email }).populate("userWalletDetails");
     if (!user) {
       return res.status(404).json({ message: "Email doesn't exists" });
     }
+
     const isMatch = await user.isPasswordCorrect(password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-     if (user.isBlacklisted) {
-      return res
-        .status(403)
-        .json({ message: "You are blacklisted by the admin and cannot login." });
+
+    if (user.isBlacklisted) {
+      return res.status(403).json({
+        message: "You are blacklisted by the admin and cannot login.",
+      });
     }
+
     if (!user.isUserEnabled) {
       return res
         .status(400)
         .json({ message: "User login has been blocked by Admin" });
     }
-   const accessToken = user.generateAccessToken();
+
+    // ✅ Check if welcome bonus already applied
+    const wallet = await SuperAdminWallet.findOne();
+    const alreadyGiven = wallet?.welcomeBonusWallet?.given.some(
+      (entry) => entry.userId?.toString() === user._id.toString()
+    );
+
+    let bonusInfo = { success: false, starsGiven: 0, message: "Not applied", imageUrl: null };
+
+    if (!alreadyGiven) {
+      try {
+        bonusInfo = await distributeWelcomeBonus(user._id);
+      } catch (bonusErr) {
+        console.error("Welcome bonus distribution failed:", bonusErr.message);
+      }
+    }
+
+    const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
+
     const userObj = user.toObject();
     delete userObj.password;
+
     return res.status(200).json({
       message: "Login successful",
       user: userObj,
       accessToken,
       refreshToken,
       role: process.env.USER_ROLE,
+      bonus: bonusInfo, // ✅ Send bonus info on first login
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -449,6 +464,7 @@ const userLogin = async (req, res) => {
     });
   }
 };
+
 // user logout
 const userLogout = async (req, res) => {
   const { id } = req.params;
@@ -1295,7 +1311,4 @@ export {
   resetPassword,
   activateSubscription,
   sendCouponRequest
-
-
-
 };
