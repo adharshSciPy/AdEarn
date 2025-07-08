@@ -619,38 +619,41 @@ function SurveyAds() {
   const handleClick = () => {
     navigate(`/userhome/${id}`);
   };
-  const searchPlace = async (query) => {
-    setLoading(true);
-    try {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-        query
-      )}`;
-      const response = await fetch(url);
-      const data = await response.json();
+const searchPlace = async (query) => {
+  setLoading(true);
+  try {
+    const res = await fetch(
+      `http://localhost:8000/api/v1/geocode?q=${encodeURIComponent(query)}`
+    );
+    const data = await res.json();
 
-      if (data.length > 0) {
-        const newPins = data.map((place) => ({
-          lat: parseFloat(place.lat),
-          lng: parseFloat(place.lon),
-          name: place.display_name,
-          radiusKm: 30,
-        }));
+    if (data.length > 0) {
+      const newPins = data.map((place) => ({
+        lat: parseFloat(place.lat),
+        lng: parseFloat(place.lon),
+        name: place.display_name,
+        radiusKm: 30,
+      }));
 
-        // Filter out duplicates
-        const filteredPins = newPins.filter(
-          (newPin) =>
-            !positions.some((p) => p.lat === newPin.lat && p.lng === newPin.lng)
-        );
+      const filteredPins = newPins.filter(
+        (newPin) =>
+          !positions.some((p) => p.lat === newPin.lat && p.lng === newPin.lng)
+      );
 
-        if (filteredPins.length > 0) {
-          setPositions((prev) => [...prev, ...filteredPins]);
-        }
+      if (filteredPins.length > 0) {
+        setPositions((prev) => [...prev, ...filteredPins]);
       }
-    } catch (error) {
-      console.error("Geocode error:", error);
+    } else {
+      alert("No results found.");
     }
+  } catch (error) {
+    console.error("Geocode error:", error);
+    alert("Failed to search location.");
+  } finally {
     setLoading(false);
-  };
+  }
+};
+
 
   // Submit form data
   const handleSubmit = async () => {

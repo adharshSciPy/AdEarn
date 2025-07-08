@@ -8,7 +8,6 @@ import baseUrl from "../../../baseurl";
 import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
 import socket from "../../../components/Socket/socket.js";
 import WelcomeBonusModal from "../WelcomeBonusModal/WelcomeBonusModal.jsx";
-import { message } from "antd";
 
 function UserHome() {
   const navigate = useNavigate();
