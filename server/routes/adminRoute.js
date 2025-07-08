@@ -19,8 +19,10 @@ import {
     getAssignedCoupons,
     approveCouponRequest,
     assignAndApproveCouponRequest,
-    getCouponRequestDetails
+    getCouponRequestDetails,
+    adminRequestCoupon
 } from "../controller/adminController.js";
+import { fetchAdminCouponsRequests } from "../controller/superAdminController.js";
 
 const adminRouter = Router()
 
@@ -62,6 +64,7 @@ adminRouter.route('/approve-coupon/:id').post(approveCouponRequest)
 adminRouter.route('/assigned-coupons/:adminId').get(getAssignedCoupons);//to fetch coupons assigned by superadmin NOT USE IT ALREADY INTEGRATED
 adminRouter.route('/distribute-coupon/:id').post(assignAndApproveCouponRequest)// this is the route to approve and distribute coupons to user for logging purpose
 adminRouter.route('/coupon/approved/request-details/:id').get(getCouponRequestDetails)
+adminRouter.route('/coupon/request/:id').post(adminRequestCoupon);//to request coupons from super admin
 
 
 
