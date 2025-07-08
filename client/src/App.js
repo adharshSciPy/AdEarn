@@ -51,6 +51,7 @@ import ResendOtp from './pages/user/ResendOtp/ResendOtp';
 import PasswordResetForm from './pages/user/PasswordResetForm/PasswordResetForm';
 import CouponPage from './pages/user/Couponpage/CouponPage';
 import SurveyAdPreview from './pages/user/SurveyAdPreview/SurveyAdPreview';
+import SurveyResponses from './pages/user/SurveyResponses/SurveyResponses';
 
 
 
@@ -166,6 +167,8 @@ function App() {
           <Route path='/videoadedit/:id' element={<VideoAdEdit />} />
           <Route path='/coupon' element={<CouponPage/>} />
           <Route path='/surveyadspreview/:id/:adId' element={<SurveyAdPreview />} />
+          <Route path='/surveyaddetails/:id/:adId' element={<SurveyResponses />} />
+
 
 
 
