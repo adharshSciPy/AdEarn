@@ -621,7 +621,6 @@ const submitSurveyResponse = async (req, res) => {
 
       const optionIndex = stat.options.indexOf(selectedOption);
 
-      // Ensure respondentNames[optionIndex] exists
       if (!stat.respondentNames[optionIndex]) {
         stat.respondentNames[optionIndex] = [];
       }
@@ -634,6 +633,26 @@ const submitSurveyResponse = async (req, res) => {
       }
     }
 
+    // 🎯 Star Reward Section
+    let starReward = 0;
+    if (Array.isArray(surveyAd.starPayoutPlan) && surveyAd.starPayoutPlan.length > 0) {
+      starReward = surveyAd.starPayoutPlan.shift(); // Remove first reward
+      surveyAd.markModified("starPayoutPlan"); // Tell Mongoose we mutated it
+      console.log(`User "${respondentName}" rewarded with: ${starReward}`);
+    } else {
+      console.log("No more rewards left in starPayoutPlan");
+    }
+
+    // 🧍 Find the user and reward them
+    const user = await User.findOne({ username: respondentName }).populate("userWalletDetails");
+    if (user && user.userWalletDetails) {
+      user.userWalletDetails.totalStars += starReward;
+      await user.userWalletDetails.save();
+    } else {
+      console.warn(`User not found or no wallet for username: ${respondentName}`);
+    }
+
+    // 🔢 Update view count
     surveyAd.totalViewCount += 1;
     if (surveyAd.totalViewCount >= surveyAd.userViewsNeeded) {
       surveyAd.isViewsReached = true;
@@ -641,13 +660,15 @@ const submitSurveyResponse = async (req, res) => {
 
     await surveyAd.save();
 
-    return res.status(200).json({ message: "Response submitted successfully" });
+    return res.status(200).json({
+      message: `Response submitted successfully. You earned ${starReward} star(s).`,
+      reward: starReward,
+    });
   } catch (error) {
     console.error("Submit survey error:", error);
     return res.status(500).json({ message: "Failed to submit response", error: error.message });
   }
 };
-
 const getSurveyAdStats = async (req, res) => {
   const { surveyAdId } = req.params;
 
