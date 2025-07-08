@@ -24,12 +24,15 @@ import {
   getAdminJobStats,
   couponFetchById,
   stopContestManually,
-  getSuperAdminWelcomeBonusEarnings
+  getSuperAdminWelcomeBonusEarnings,
+  fetchAdminCouponsRequests,
+  approveAndDistributeCouponForAdminRequest
   // selectAutomaticWinners
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
 import welcomeBonusUpload from "../multer/welBonusMulter.js";
 import contestPrizeUpload from "../multer/contestRewardMulter.js";
+import { assignAndApproveCouponRequest } from "../controller/adminController.js";
 
 const superAdminRouter = Router();
 superAdminRouter.route("/register").post(registerSuperAdmin);
@@ -60,6 +63,8 @@ superAdminRouter.route("/distribute-coupon").post(couponDistribution);// to dist
 superAdminRouter.route("/coupon-batch/:id").get(couponFetchById);//to view coupons inside a batch on admin side
 superAdminRouter.route("/stop/:id").post(stopContestManually);
 // superAdminRouter.route("/select-automatic-winners").post(selectAutomaticWinners);
+superAdminRouter.route("/coupon-requests").get(fetchAdminCouponsRequests);//to fetch coupon requests from admins
+superAdminRouter.route("/approve-assign-coupon").post(approveAndDistributeCouponForAdminRequest)
 
 
 

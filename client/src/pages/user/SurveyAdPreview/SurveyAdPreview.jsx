@@ -39,7 +39,7 @@ const SurveyAdPreview = () => {
 
     const payload = {
       surveyAdId: ad._id,
-      respondentName: id,
+      userId: id,
       responses: formattedResponses,
     };
     try {

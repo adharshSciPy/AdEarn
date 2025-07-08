@@ -1,10 +1,18 @@
 import mongoose,{Schema} from "mongoose";
 const couponRequestSchema = new Schema({
-
+  // Who made the request: user or admin
+  requestedByRole: {
+    type: String,
+    enum: ["user", "admin"],
+    required: true
+  },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true
+    ref: "User"
+  },
+  adminId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Admin"
   },
   starCountPerCoupon: {
     type: Number,
@@ -46,15 +54,15 @@ const couponRequestSchema = new Schema({
     ref: "Coupon"
   }],
   assignedForVerification: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "Admin",
-  default: null,
-},
-assignedAtForVerification: {
-  type: Date,
-  default: null,
-},
-
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Admin",
+    default: null
+  },
+  assignedAtForVerification: {
+    type: Date,
+    default: null
+  }
 }, { timestamps: true });
+
 
 export default mongoose.model("CouponRequest", couponRequestSchema);
