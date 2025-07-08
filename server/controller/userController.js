@@ -1254,29 +1254,38 @@ user.password=newPassword
   }
 };
 const sendCouponRequest = async (req, res) => {
-  const{id:userId}=req.params;
-  const { couponCount, perStarCount, note } = req.body;
+  const { id } = req.params; // could be userId or adminId
+  const { couponCount, perStarCount, note, role } = req.body;
 
   try {
-    if (!couponCount || !perStarCount) {
-      return res.status(400).json({ message: "Coupon count and perStarCount are required" });
+    if (!couponCount || !perStarCount || !role) {
+      return res.status(400).json({ message: "couponCount, perStarCount, and role are required" });
     }
 
     const totalStars = couponCount * perStarCount;
-
-    
     const perCouponAmount = getCouponAmount(perStarCount); 
     const amountToPay = couponCount * perCouponAmount;
 
-    const request = await CouponRequest.create({
-      userId,
+    const requestBody = {
       starCountPerCoupon: perStarCount,
       totalStars,
       amountToPay,
       note,
       paymentStatus: "pending",
       isProcessed: false,
-    });
+    };
+
+    if (role === 300) {
+      requestBody.userId = id;
+      requestBody.requestedByRole = "user";
+    } else if (role === 400) {
+      requestBody.adminId = id;
+      requestBody.requestedByRole = "admin";
+    } else {
+      return res.status(400).json({ message: "Invalid role. Must be 300 (user) or 400 (admin)" });
+    }
+
+    const request = await CouponRequest.create(requestBody);
 
     return res.status(201).json({
       message: "Coupon request submitted successfully",
@@ -1287,6 +1296,7 @@ const sendCouponRequest = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
 
 
 

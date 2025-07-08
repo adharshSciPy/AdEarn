@@ -22,6 +22,7 @@ import redis from "../redisClient.js";
 import config from "../config.js";
 import getDateRange from "../utils/getDateRange.js";
 import getCouponAmount from "../utils/getCouponAmount.js";
+import couponRequestModel from "../model/couponRequestModel.js";
 const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
@@ -1474,6 +1475,169 @@ const stopContestManually = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error", error: err.message });
   }
 };
+//to fetch admin coupon requests
+const fetchAdminCouponsRequests = async (req, res) => {
+  try {
+    const requests = await couponRequestModel.find({
+      adminId: { $ne: null },// Ensure it's an admin request
+      isApproved: false,               
+      isProcessed: false,
+      paymentStatus: "pending"
+    }).populate({
+      path: "adminId",
+      select: "adminName adminEmail"   
+    });
+
+    if (!requests.length) {
+      return res.status(404).json({ message: "No pending admin coupon requests found" });
+    }
+
+    // Format with admin name if needed
+    const formatted = requests.map(req => {
+      const adminName = req.adminId?.adminName || "Admin";
+      return {
+        ...req._doc,
+        adminName
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Fetched admin coupon requests",
+      count: formatted.length,
+      data: formatted
+    });
+
+  } catch (error) {
+    console.error("Error fetching admin coupon requests:", error);
+    return res.status(500).json({ message: "Internal server error", error });
+  }
+};
+//to approve and distribute the coupons for admins
+const approveAndDistributeCouponForAdminRequest = async (req, res) => {
+  const { adminId, requestId } = req.body;
+  const { io, connectedUsers } = req;
+
+  try {
+    // STEP 1: Validate Admin
+    const admin = await Admin.findById(adminId);
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    // STEP 2: Validate Request
+    const request = await couponRequestModel.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ message: "Coupon request not found" });
+    }
+
+    if (request.adminId.toString() !== adminId) {
+      return res.status(403).json({ message: "Request does not belong to this admin" });
+    }
+
+    if (request.isApproved || request.isProcessed) {
+      return res.status(400).json({ message: "Request already approved or processed" });
+    }
+
+    const { starCountPerCoupon, totalStars } = request;
+    const couponCount = totalStars / starCountPerCoupon;
+
+    // STEP 3: Get superadmin coupons
+    const batches = await couponBatchModel.find({ createdByRole: "superadmin" }).populate({
+      path: "coupons",
+      match: {
+        isClaimed: false,
+        isApproved: false,
+        perStarCount: starCountPerCoupon
+      }
+    });
+
+    const availableCoupons = [];
+    const usedBatchIds = new Set();
+
+    for (const batch of batches) {
+      for (const coupon of batch.coupons) {
+        availableCoupons.push(coupon);
+        usedBatchIds.add(coupon.batchId.toString());
+        if (availableCoupons.length === couponCount) break;
+      }
+      if (availableCoupons.length === couponCount) break;
+    }
+
+    if (availableCoupons.length < couponCount) {
+      const message =
+        availableCoupons.length === 0
+          ? `No coupons available for ${starCountPerCoupon} stars per coupon.`
+          : `Only ${availableCoupons.length} of ${couponCount} coupons available for ${starCountPerCoupon} stars per coupon.`;
+      return res.status(400).json({ success: false, message });
+    }
+
+    const couponIds = availableCoupons.map(c => c._id);
+
+    // STEP 4: Mark coupons as claimed and approved
+    await Coupon.updateMany(
+      { _id: { $in: couponIds } },
+      {
+        $set: {
+          isClaimed: true,
+          isApproved: true,
+          requestedByUser: adminId,
+          isUserRequestApproved: true,
+          assignedToRequest: request._id,
+          requestNote: request.note
+        }
+      }
+    );
+
+    // STEP 5: Update request
+    request.assignedCoupons = couponIds;
+    request.isApproved = true;
+    request.approvedByAdmin = null;
+    await request.save();
+
+    // STEP 6: Push batch info to admin's assignedCouponBatches
+    const batchLog = Array.from(usedBatchIds).map(batchId => ({
+      batchId,
+      assignedAt: new Date(),
+      note: request.note || ""
+    }));
+
+    await Admin.findByIdAndUpdate(admin._id, {
+      $push: {
+        assignedCouponBatches: { $each: batchLog }
+      }
+    });
+
+    // STEP 7: Notify admin
+    await sendNotification(
+      admin._id,
+      400,
+      `Your coupon request (${starCountPerCoupon} stars x ${couponCount}) has been approved.`,
+      io,
+      connectedUsers,
+      // `/admin/my-coupons`
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Admin coupon request approved and coupons distributed",
+      approvedCouponCount: availableCoupons.length,
+      requestId: request._id,
+      assignedCoupons: availableCoupons
+    });
+
+  } catch (error) {
+    console.error("Error in approveAndDistributeCouponForAdminRequest:", error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+      error: error.message
+    });
+  }
+};
+//api to fetch remaining coupons on 
+
+
+
 
 
 export {
@@ -1504,5 +1668,7 @@ export {
   getAdminJobStats,
   selectAutomaticWinnersInternal,
   stopContestManually,
-  getSuperAdminWelcomeBonusEarnings
+  getSuperAdminWelcomeBonusEarnings,
+  fetchAdminCouponsRequests,
+  approveAndDistributeCouponForAdminRequest
 };

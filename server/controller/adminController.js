@@ -1269,7 +1269,8 @@ const fetchAllCouponRequest = async (req, res) => {
     const requests = await couponRequestModel.find({
       paymentStatus: "pending",
       isProcessed: false,
-      isApproved:false,
+      isApproved: false,
+      userId: { $ne: null },  // ensures it's a user request
       $or: [
         { assignedForVerification: null },
         {
@@ -1283,10 +1284,9 @@ const fetchAllCouponRequest = async (req, res) => {
     });
 
     if (!requests.length) {
-      return res.status(404).json({ message: "No pending coupon requests found" });
+      return res.status(404).json({ message: "No pending user coupon requests found" });
     }
 
-    // Format response to include userName
     const formattedRequests = requests.map(request => {
       const { firstName = "", lastName = "" } = request.userId || {};
       return {
@@ -1297,7 +1297,7 @@ const fetchAllCouponRequest = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Fetched unassigned or expired coupon requests",
+      message: "Fetched unassigned or expired user coupon requests",
       totalPendingRequests: formattedRequests.length,
       data: formattedRequests
     });
@@ -1307,6 +1307,7 @@ const fetchAllCouponRequest = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error", error });
   }
 };
+
 
 
 
@@ -1401,7 +1402,7 @@ const assignBatchToAdmin = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-//to approve the batch by admin
+//to approve the batch by admin not this
 const approveCouponRequest = async (req, res) => {
   const { reqId } = req.body;
   const { id: adminId } = req.params;
@@ -1475,7 +1476,6 @@ const assignAndApproveCouponRequest = async (req, res) => {
   }
 
   try {
-    // 1. Fetch the request first (to get starCountPerCoupon, couponCount, userId)
     const request = await couponRequestModel.findById(requestId);
     if (!request) return res.status(404).json({ message: "Coupon request not found" });
 
@@ -1486,18 +1486,13 @@ const assignAndApproveCouponRequest = async (req, res) => {
     const { userId, starCountPerCoupon, totalStars } = request;
     const couponCount = totalStars / starCountPerCoupon;
 
-    // 2. Fetch Admin with assigned coupons populated
     const admin = await Admin.findById(adminId).populate({
       path: "assignedCouponBatches.batchId",
-      populate: {
-        path: "coupons",
-        model: "Coupon",
-      },
+      populate: { path: "coupons", model: "Coupon" },
     });
 
     if (!admin) return res.status(404).json({ message: "Admin not found" });
 
-    // 3. Filter available coupons
     const availableCoupons = [];
 
     for (const batchEntry of admin.assignedCouponBatches) {
@@ -1517,23 +1512,20 @@ const assignAndApproveCouponRequest = async (req, res) => {
 
       if (availableCoupons.length === couponCount) break;
     }
-if (availableCoupons.length < couponCount) {
-  const message =
-    availableCoupons.length === 0
-      ? `No coupons available at the moment.You need ${couponCount} coupons  with ${starCountPerCoupon} stars per coupon.;`
-      : `Only ${availableCoupons.length} coupons available.You need ${couponCount} coupons with ${starCountPerCoupon} stars per coupon .`;
 
-  return res.status(400).json({ message });
-}
+    if (availableCoupons.length < couponCount) {
+      const message =
+        availableCoupons.length === 0
+          ? `No coupons available. You need ${couponCount} coupons with ${starCountPerCoupon} stars per coupon.`
+          : `Only ${availableCoupons.length} coupons available. You need ${couponCount} with ${starCountPerCoupon} stars per coupon.`;
+      return res.status(400).json({ message });
+    }
 
-
-    // 4. Assign and approve the request
     request.assignedCoupons = availableCoupons;
     request.isApproved = true;
     request.approvedByAdmin = adminId;
     await request.save();
 
-    // 5. Update coupons
     await Coupon.updateMany(
       { _id: { $in: availableCoupons } },
       {
@@ -1548,7 +1540,6 @@ if (availableCoupons.length < couponCount) {
       }
     );
 
-    // 6. Log approval in admin record
     await Admin.findByIdAndUpdate(adminId, {
       $push: {
         approvedCouponRequests: {
@@ -1560,7 +1551,6 @@ if (availableCoupons.length < couponCount) {
       },
     });
 
-    // 7. Send socket notification
     const user = await User.findById(userId);
     const adminUser = await Admin.findById(adminId);
     const helpingNumber = adminUser?.phoneNumber || config.DEFAULT_HELPING_NUMBER;
@@ -1568,26 +1558,23 @@ if (availableCoupons.length < couponCount) {
     await sendNotification(
       user._id,
       USER_ROLE,
-      `Your coupon request has been approved by ${adminUser.admilEmail}. For any queries, contact: ${helpingNumber}`,
+      `Your coupon request has been approved by ${adminUser.email}. For queries, contact: ${helpingNumber}`,
       io,
       connectedUsers
     );
 
-    // 8. Success response
     return res.status(200).json({
       message: "Coupons assigned and request approved successfully",
       assignedCouponIds: availableCoupons,
       approvedCouponCount: availableCoupons.length,
       requestId: request._id,
     });
+
   } catch (error) {
     console.error("❌ Error in assignAndApproveCouponRequest:", error);
     return res.status(500).json({ message: "Internal Server Error", error });
   }
 };
-
-
-
 
 //to get assigned coupons from super admin
 const getAssignedCoupons = async (req, res) => {
@@ -1658,6 +1645,39 @@ const getCouponRequestDetails = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+//api to request coupons from admin side to superadmin side ;
+const adminRequestCoupon = async (req, res) => {
+  const { couponCount, starCountPerCoupon, note } = req.body;
+  const { id:adminId } = req.params;
+
+  if (!couponCount || !starCountPerCoupon || !adminId) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  const totalStars = couponCount * starCountPerCoupon;
+  const amountToPay = totalStars * 0.4; // or use your logic to calculate
+
+  try {
+    const newRequest = await couponRequestModel.create({
+      requestedByRole: "admin",
+      adminId,
+      starCountPerCoupon,
+      totalStars,
+      amountToPay,
+      note,
+      paymentStatus: "pending",
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Admin coupon request submitted",
+      data: newRequest,
+    });
+  } catch (error) {
+    console.error("Error in adminRequestCoupon:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 
 export {
@@ -1699,7 +1719,8 @@ export {
   approveCouponRequest,
   getAssignedCoupons,
   assignAndApproveCouponRequest,
-  getCouponRequestDetails
+  getCouponRequestDetails,
+  adminRequestCoupon
   
 
 };
