@@ -131,6 +131,7 @@ function Sidebar() {
         { key: "contest", label: "Contest", path: "/superadmincontest" },
         { key: "create-contest", label: "Create Contest", path: "/superadmincontestpage" },
         { key: "contest-winner", label: "Contest winner", path: "/superadmincontestwinner" },
+        { key: "select-winner", label: "Select Winner", path: "/selectwinner" }
       ],
     },
     // {
