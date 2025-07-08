@@ -1,3 +1,238 @@
-.div {
-  color: red;
+.game {
+  height: max-content;
+  padding-bottom: 200px;
+}
+
+.gamemain {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.gamecontainer {
+  width: calc(100% - 250px);
+  margin-left: 250px;
+  position: absolute;
+  top: 330px;
+  z-index: 999;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.gameasection {
+  margin-top: 15px;
+}
+
+.cardGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.userCard {
+  background: #f9f9f9;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 20px;
+  width: 250px;
+  cursor: pointer;
+  position: relative;
+  transition: 0.3s;
+}
+
+.userCard:hover {
+  background-color: #eef;
+}
+
+.selected {
+  border-color: #4caf50;
+  background: #e0ffe0;
+}
+
+.winnerBadge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #4caf50;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+.giftPopup {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  background-color: #ff4081;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  animation: gift-pop 1.5s ease-in-out;
+  z-index: 10;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes gift-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+}
+
+/* Crack animation */
+
+.popperContainer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 9;
+}
+
+.popper {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  animation: popper-burst 0.9s ease-out forwards;
+  opacity: 0.9;
+}
+
+/* Assign random colors */
+.pop1 {
+  background: #f44336;
+  transform: rotate(0deg);
+}
+.pop2 {
+  background: #e91e63;
+  transform: rotate(30deg);
+}
+.pop3 {
+  background: #9c27b0;
+  transform: rotate(60deg);
+}
+.pop4 {
+  background: #673ab7;
+  transform: rotate(90deg);
+}
+.pop5 {
+  background: #3f51b5;
+  transform: rotate(120deg);
+}
+.pop6 {
+  background: #2196f3;
+  transform: rotate(150deg);
+}
+.pop7 {
+  background: #03a9f4;
+  transform: rotate(180deg);
+}
+.pop8 {
+  background: #00bcd4;
+  transform: rotate(210deg);
+}
+.pop9 {
+  background: #009688;
+  transform: rotate(240deg);
+}
+.pop10 {
+  background: #4caf50;
+  transform: rotate(270deg);
+}
+.pop11 {
+  background: #cddc39;
+  transform: rotate(300deg);
+}
+.pop12 {
+  background: #ff9800;
+  transform: rotate(330deg);
+}
+
+@keyframes popper-burst {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(
+        calc(80px * cos(var(--angle))),
+        calc(80px * sin(var(--angle)))
+      )
+      scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* Fallback directional motion */
+.pop1 {
+  transform: translate(0, -40px);
+}
+.pop2 {
+  transform: translate(25px, -35px);
+}
+.pop3 {
+  transform: translate(40px, -20px);
+}
+.pop4 {
+  transform: translate(50px, 0);
+}
+.pop5 {
+  transform: translate(40px, 20px);
+}
+.pop6 {
+  transform: translate(25px, 35px);
+}
+.pop7 {
+  transform: translate(0px, 40px);
+}
+.pop8 {
+  transform: translate(-25px, 35px);
+}
+.pop9 {
+  transform: translate(-40px, 20px);
+}
+.pop10 {
+  transform: translate(-50px, 0);
+}
+.pop11 {
+  transform: translate(-40px, -20px);
+}
+.pop12 {
+  transform: translate(-25px, -35px);
+}
+
+.popper {
+  animation: popper-fly 0.8s ease-out forwards;
+}
+
+@keyframes popper-fly {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--x, 0), var(--y, 0)) scale(0.3);
+  }
 }

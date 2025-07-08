@@ -284,3 +284,12 @@
 .switchContainer.on .switchButton {
   left: 32px;
 }
+.moreBtn {
+  color: #007bff;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 500;
+}
+.moreBtn:hover {
+  color: #0056b3;
+}
