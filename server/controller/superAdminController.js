@@ -413,7 +413,6 @@ const distributeWelcomeBonus = async (newUserId) => {
 
 
 
-
 const generateCoupons = async (req, res) => {
   const {
     couponCount,
@@ -421,7 +420,6 @@ const generateCoupons = async (req, res) => {
     generationDate,
     expiryDate,
     requestNote,
-    assignedToAdminId
   } = req.body;
 
   try {
@@ -429,6 +427,7 @@ const generateCoupons = async (req, res) => {
     const perCouponAmount = getCouponAmount(perStarCount);
     const totalAmountInRupees = couponCount * perCouponAmount;
 
+    // Check super admin wallet
     const superAdminWallet = await SuperAdminWallet.findOne();
     if (!superAdminWallet) {
       return res.status(404).json({ message: "Super Admin wallet not found" });
@@ -443,7 +442,7 @@ const generateCoupons = async (req, res) => {
     const generationDateObj = generationDate ? new Date(generationDate) : new Date();
     const expiryDateObj = expiryDate ? new Date(expiryDate) : null;
 
-    // Create the batch
+    // Step 1: Create the coupon batch (unassigned)
     const newBatch = new CouponBatch({
       coupons: [],
       couponCount,
@@ -454,13 +453,13 @@ const generateCoupons = async (req, res) => {
       generatedBy: null,
       createdByRole: "superadmin",
       requestNote: requestNote || "",
-      assignedTo: assignedToAdminId,
-      assignedAt: new Date(),
+      assignedTo: null,        // explicitly unassigned
+      assignedAt: null,
     });
 
     await newBatch.save();
 
-    // Generate coupons
+    // Step 2: Generate coupons
     const couponsToCreate = Array.from({ length: couponCount }).map(() => {
       const code = generateRandomCode(10);
       return {
@@ -474,11 +473,10 @@ const generateCoupons = async (req, res) => {
     });
 
     const createdCoupons = await Coupon.insertMany(couponsToCreate);
-
     newBatch.coupons = createdCoupons.map(c => c._id);
     await newBatch.save();
 
-    // Deduct stars and log transaction
+    // Step 3: Deduct stars and log transaction
     superAdminWallet.totalStars -= totalStarsNeeded;
     superAdminWallet.transactions.push({
       starsReceived: -totalStarsNeeded,
@@ -491,11 +489,10 @@ const generateCoupons = async (req, res) => {
       },
       createdAt: new Date(),
     });
-
     await superAdminWallet.save();
 
     return res.status(200).json({
-      message: "✅ Coupons generated successfully",
+      message: "✅ Coupons generated successfully (unassigned batch)",
       batchId: newBatch._id,
       totalStarsSpent: totalStarsNeeded,
       totalAmountInRupees,
@@ -507,6 +504,8 @@ const generateCoupons = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+
 const getAllCoupons = async (req, res) => {
   try {
     const now = new Date();
