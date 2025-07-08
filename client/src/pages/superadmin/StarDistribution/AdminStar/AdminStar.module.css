@@ -221,3 +221,9 @@
   background-color: #5325b5;
   color: white;
 }
+
+.paginationWrapper {
+  display: flex;
+  justify-content: end;
+  margin-top: 20px;
+}

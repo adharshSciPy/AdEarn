@@ -65,7 +65,30 @@ assignedCouponBatches: [
     assignedAt: { type: Date, default: Date.now },
     note:{type:String}
   }
-]
+],
+approvedCouponRequests: [
+  {
+    couponRequestId: {
+      type: Schema.Types.ObjectId,
+      ref: "CouponRequest",
+    },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    approvedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    totalCouponsApproved: {
+      type: Number,
+    },
+    note: {
+      type: String,
+    }
+  }
+],
+
 
   },
   { timestamps: true }

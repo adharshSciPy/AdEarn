@@ -11,26 +11,18 @@ function SuperAdminContestPage() {
     contestNumber: "",
     startDate: "",
     entryStars: "",
-    starCount: "",
     maxParticipants: "",
-    result: "",
-    winnerSelectionType: "",
+    winnerSelectionType: "Manual",
   });
+
+  const [winners, setWinners] = useState([
+    { label: "1st winner", value: "", file: null },
+  ]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Form Submitted:", formData);
-    // You can call your API here
-  };
-
-  const [winners, setWinners] = useState([
-    { label: "1st winner", value: "", file: null },
-  ]);
 
   const numberToOrdinal = (n) => {
     const s = ["th", "st", "nd", "rd"],
@@ -40,7 +32,8 @@ function SuperAdminContestPage() {
 
   const handleInputChange = (index, value) => {
     const updated = [...winners];
-    updated[index].value = value;
+    // Allow only digits
+    updated[index].value = value.replace(/\D/g, "");
     setWinners(updated);
   };
 
@@ -56,8 +49,36 @@ function SuperAdminContestPage() {
     setWinners([...winners, { label: newLabel, value: "", file: null }]);
   };
 
+  const handleCancel = () => {
+    setFormData({
+      contestName: "",
+      contestNumber: "",
+      startDate: "",
+      entryStars: "",
+      maxParticipants: "",
+      winnerSelectionType: "Manual",
+    });
+
+    setWinners([{ label: "1st winner", value: "", file: null }]);
+  };
+
   const submitHandle = async (e) => {
     e.preventDefault();
+
+    // Validate stars
+    const rewardStructure = winners.map((winner, index) => ({
+      position: index + 1,
+      stars: Number(winner.value),
+    }));
+
+    const hasInvalidStars = rewardStructure.some(
+      (item) => isNaN(item.stars) || item.stars <= 0
+    );
+
+    if (hasInvalidStars) {
+      alert("Please enter valid stars (number > 0) for all winners.");
+      return;
+    }
 
     const data = new FormData();
 
@@ -66,12 +87,13 @@ function SuperAdminContestPage() {
       data.append(key, value);
     });
 
-    // Append winner data
-    winners.forEach((winner, index) => {
+    data.append("rewardStructure", JSON.stringify(rewardStructure));
+
+    // Append prize images
+    winners.forEach((winner) => {
       if (winner.file) {
         data.append("prizeImages", winner.file);
       }
-      data.append(`prizeValues[${index}]`, winner.value);
     });
 
     try {
@@ -84,22 +106,18 @@ function SuperAdminContestPage() {
           },
         }
       );
-      console.log("Contest created successfully:", response.data);
+
       alert("Contest created successfully!");
+      console.log("Contest created:", response.data);
+      handleCancel(); // Reset form
     } catch (error) {
-      console.error("Error submitting contest:", error);
-      alert("Failed to create contest");
+      console.error("Error creating contest:", error);
+      if (error.response?.data?.message) {
+        alert(`Failed: ${error.response.data.message}`);
+      } else {
+        alert("An unexpected error occurred");
+      }
     }
-  };
-
-
-  const handleCancel = () => {
-    setWinners([
-      { label: "1st winner", value: "", file: null },
-      { label: "2nd winner", value: "", file: null },
-      { label: "3rd winner", value: "", file: null },
-      { label: "4th winner", value: "", file: null },
-    ]);
   };
 
   return (
@@ -111,7 +129,7 @@ function SuperAdminContestPage() {
           <h2>Create Contest</h2>
         </div>
         <div className={styles.container}>
-          <form className={styles.form} onSubmit={handleSubmit}>
+          <form className={styles.form} onSubmit={submitHandle}>
             <label>Enter Contest Name</label>
             <input
               type="text"
@@ -119,6 +137,7 @@ function SuperAdminContestPage() {
               value={formData.contestName}
               onChange={handleChange}
               placeholder="Enter Contest Name"
+              required
             />
 
             <label>Enter Contest Number</label>
@@ -128,6 +147,7 @@ function SuperAdminContestPage() {
               value={formData.contestNumber}
               onChange={handleChange}
               placeholder="Enter Contest Number"
+              required
             />
 
             <label>Enter Start Date</label>
@@ -136,7 +156,7 @@ function SuperAdminContestPage() {
               name="startDate"
               value={formData.startDate}
               onChange={handleChange}
-              placeholder="Enter Start Date"
+              required
             />
 
             <label>Enter Entry Stars</label>
@@ -146,6 +166,7 @@ function SuperAdminContestPage() {
               value={formData.entryStars}
               onChange={handleChange}
               placeholder="Enter Entry Stars"
+              required
             />
 
             <label>Total Entry</label>
@@ -155,6 +176,7 @@ function SuperAdminContestPage() {
               value={formData.maxParticipants}
               onChange={handleChange}
               placeholder="Total Entry"
+              required
             />
 
             <label>Winner Selection</label>
@@ -167,11 +189,7 @@ function SuperAdminContestPage() {
                   checked={formData.winnerSelectionType === "Automatic"}
                   onChange={handleChange}
                 />
-                <label>
-
-                  Automatic
-                </label>
-
+                <label>Automatic</label>
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
@@ -182,36 +200,33 @@ function SuperAdminContestPage() {
                   checked={formData.winnerSelectionType === "Manual"}
                   onChange={handleChange}
                 />
-                <label>
-
-                  Manual
-                </label>
+                <label>Manual</label>
               </div>
             </div>
 
             <div className={styles.prizecontainer}>
-              <h3>Price distribution</h3>
+              <h3>Prize Distribution</h3>
               <p className={styles.note}>
-                *image size must be width : 10cm, height : 8cm
+                *Image size must be width: 10cm, height: 8cm
               </p>
               {winners.map((winner, index) => (
                 <div className={styles.winnerrow} key={index}>
                   <span className={styles.label}>{winner.label}</span>
-                  <p>Enter stars or other prices</p>
-
+                  <p>Enter stars or other prizes</p>
                   <input
                     type="text"
                     value={winner.value}
                     onChange={(e) => handleInputChange(index, e.target.value)}
                     placeholder="Enter prize (e.g., 100 stars)"
                     className={styles.prizeInput}
+                    required
                   />
-
                   <label className={styles.uploadbutton}>
                     Upload
                     <input
                       type="file"
                       hidden
+                      accept="image/*"
                       onChange={(e) =>
                         handleFileChange(index, e.target.files[0])
                       }
@@ -219,8 +234,8 @@ function SuperAdminContestPage() {
                   </label>
                 </div>
               ))}
-              <button className={styles.addbtn} onClick={addWinner}>
-                Add Winners
+              <button type="button" className={styles.addbtn} onClick={addWinner}>
+                Add Winner
               </button>
             </div>
 
@@ -228,7 +243,7 @@ function SuperAdminContestPage() {
               <button type="button" className={styles.cancel} onClick={handleCancel}>
                 Cancel
               </button>
-              <button onClick={submitHandle} type="submit" className={styles.submit}>
+              <button type="submit" className={styles.submit}>
                 Submit
               </button>
             </div>
