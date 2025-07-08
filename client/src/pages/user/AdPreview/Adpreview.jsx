@@ -4,9 +4,10 @@ import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { Modal, Button } from "antd";
 import axios from "axios";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import {  useNavigate, useParams } from "react-router-dom";
 import baseUrl from "../../../baseurl";
 import ScratchCom from "./ScratchComponent/ScratchCom";
+import Navbar from "../NavBar/Navbar";
 
 function AdPreview() {
   const { id, adId } = useParams();
@@ -125,6 +126,7 @@ function AdPreview() {
 
   return (
     <div className={styles.verifyadsmain}>
+      <Navbar/>
       <div className={styles.verifyadscontainer}>
         <div className={styles.adscontainer}>
           <div

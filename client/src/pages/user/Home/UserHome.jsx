@@ -105,10 +105,10 @@ const getSurveyData=async ()=>{
   const viewAd = async (adId) => {
     navigate(`/adspreview/${id}/${adId}`);
   };
-  const viewSurveyAd=async(adId)=>{
+const viewSurveyAd=async(adId)=>{
  navigate(`/surveyadspreview/${id}/${adId}`)
   
-} 
+}
   useEffect(() => {
     const showBonus = (bonus) => {
       console.log(bonus);
