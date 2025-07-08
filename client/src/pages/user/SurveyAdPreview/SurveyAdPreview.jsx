@@ -2,40 +2,95 @@ import React, { useEffect, useState } from "react";
 import styles from "./SurveyAd.module.css";
 import axios from "axios";
 import baseUrl from "../../../baseurl";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../NavBar/Navbar";
+import { Modal, Button } from "antd";
+
+import ScratchCard from "../AdPreview/ScratchComponent/ScratchCom";
 
 const SurveyAdPreview = () => {
   const [selectedOptions, setSelectedOptions] = useState({});
   const [submitted, setSubmitted] = useState(false);
-  const [ad, setad] = useState({});
-  const { id, adId } = useParams();
-
+  const [reward, setReward] = useState({});
+  const [showScratchModal, setShowScratchModal] = useState(false);
+  const [scratchCompleted, setScratchCompleted] = useState(false);
+  const [ad, setAd] = useState({});
+  const { adId } = useParams();
+  const { id } = useParams();
+  const navigate = useNavigate();
   const handleSelect = (questionId, option) => {
     setSelectedOptions((prev) => ({
       ...prev,
-      [questionId]: option,
+      [questionId]: option, // Only one option per question
     }));
   };
 
-  const handleSubmit = () => {
-    console.log("User responses:", selectedOptions);
-    setSubmitted(true);
+  const handleSubmit = async () => {
+    const allAnswered = ad.questions?.every((q) => selectedOptions[q._id]);
+
+    if (!allAnswered) {
+      alert("Please answer all questions before submitting.");
+      return;
+    }
+
+    const formattedResponses = ad.questions.map((q) => ({
+      selectedOption: selectedOptions[q._id],
+    }));
+
+    const payload = {
+      surveyAdId: ad._id,
+      respondentName: id,
+      responses: formattedResponses,
+    };
+    try {
+      const response = await axios.post(
+        `${baseUrl}/api/v1/ads/survey-response/submit`,
+        payload
+      );
+      console.log(response);
+      setSubmitted(true);
+      if (response.status === 200) {
+        setShowScratchModal(true);
+      }
+    } catch (error) {
+      console.error("Submit error:", error);
+      alert("Something went wrong. Please try again later.");
+    }
+  };
+  const getAddContribution = async () => {
+    try {
+      const response = await axios.post(
+        `${baseUrl}/api/v1/ads/view-ads/${id}/${adId}`
+      );
+      setReward(response.data);
+      console.log(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const handleScratchComplete = async () => {
+    setScratchCompleted(true);
+    await getAddContribution();
   };
   const getSurvey = async () => {
     try {
-      const respone = await axios.get(
+      const response = await axios.get(
         `${baseUrl}/api/v1/ads/single-verified/${adId}`
       );
-      // console.log(respone);
-      setad(respone.data.ad.surveyAd);
-    } catch (error) {}
+      setAd(response.data.ad.surveyAd);
+    } catch (error) {
+      console.error("Error fetching survey:", error);
+    }
   };
+
   useEffect(() => {
     getSurvey();
   }, []);
-  console.log(ad);
-
+  const handleModalClose = () => {
+    navigate(`/userhome/${id}`);
+    setShowScratchModal(false);
+    setScratchCompleted(false);
+  };
   return (
     <>
       <Navbar />
@@ -49,7 +104,7 @@ const SurveyAdPreview = () => {
           <h2 className={styles.title}>{ad.title}</h2>
 
           {ad.questions?.map((q, idx) => (
-            <div key={q.id} className={styles.questionBlock}>
+            <div key={q._id} className={styles.questionBlock}>
               <p className={styles.questionText}>
                 {idx + 1}. {q.questionText}
               </p>
@@ -59,9 +114,9 @@ const SurveyAdPreview = () => {
                   <button
                     key={opt}
                     className={`${styles.optionButton} ${
-                      selectedOptions[q.id] === opt ? styles.selected : ""
+                      selectedOptions[q._id] === opt ? styles.selected : ""
                     }`}
-                    onClick={() => handleSelect(q.id, opt)}
+                    onClick={() => handleSelect(q._id, opt)}
                     disabled={submitted}
                   >
                     {opt}
@@ -72,7 +127,11 @@ const SurveyAdPreview = () => {
           ))}
 
           {!submitted && (
-            <button className={styles.submitButton} onClick={handleSubmit}>
+            <button
+              className={styles.submitButton}
+              onClick={handleSubmit}
+              disabled={ad.questions?.some((q) => !selectedOptions[q._id])}
+            >
               Submit Survey
             </button>
           )}
@@ -81,6 +140,29 @@ const SurveyAdPreview = () => {
             <p className={styles.thankYou}>Thank you for your feedback!</p>
           )}
         </div>
+        <Modal
+          open={showScratchModal}
+          footer={null}
+          closable={scratchCompleted}
+          centered
+          onCancel={handleModalClose}
+          width={380}
+          bodyStyle={{ textAlign: "center" }}
+        >
+          <h2 style={{ marginBottom: 12, color: "#ff9900" }}>
+            Scratch to Reveal Your Reward!
+          </h2>
+          <ScratchCard onComplete={handleScratchComplete} reward={reward} />
+          {scratchCompleted && (
+            <Button
+              type="primary"
+              onClick={handleModalClose}
+              style={{ marginTop: 16 }}
+            >
+              Close
+            </Button>
+          )}
+        </Modal>
       </div>
     </>
   );
