@@ -105,16 +105,10 @@ const getSurveyData=async ()=>{
   const viewAd = async (adId) => {
     navigate(`/adspreview/${id}/${adId}`);
   };
-<<<<<<< HEAD
 const viewSurveyAd=async(adId)=>{
  navigate(`/surveyadspreview/${id}/${adId}`)
   
 }
-=======
-  const viewSurveyAd=async(adId)=>{
- navigate(`/surveyadspreview/${id}/${adId}`)
-  
-} 
   useEffect(() => {
     const showBonus = (bonus) => {
       console.log(bonus);
@@ -143,7 +137,6 @@ const viewSurveyAd=async(adId)=>{
     }
   }, [bonus, id, bonusFetched]);
 
->>>>>>> ec8e6c6050dab8fe55275f7b9e007a27bc0be206
   return (
     <div>
       <Navbar />

@@ -52,7 +52,6 @@ import PasswordResetForm from './pages/user/PasswordResetForm/PasswordResetForm'
 import CouponPage from './pages/user/Couponpage/CouponPage';
 import SurveyAdPreview from './pages/user/SurveyAdPreview/SurveyAdPreview';
 
-import SurveyAdPreview from './pages/user/SurveyAdPreview/SurveyAdPreview';
 
 
 import SuperAdminLogin from './pages/superadmin/SuperAdminLogin/SuperAdminLogin';
