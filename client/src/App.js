@@ -94,6 +94,7 @@ import AdminListing from './pages/superadmin/AdminListing/AdminListing';
 import ResetPassSuper from './pages/superadmin/ResetPassSuper/ResetPassSuper';
 import CouponListing from './pages/superadmin/CouponListing/CouponListing';
 import ContestGamification from './pages/superadmin/ContestGamification/ContestGamification'
+import SelectWinner from './pages/superadmin/SelectWinner/SelectWinner';
 
 
 
@@ -217,7 +218,8 @@ function App() {
           <Route path='/Superadminadminlist' element={<AdminListing />} />
           <Route path='/resetPassSuper/:email' element={<ResetPassSuper />} />
           <Route path='/Superadmincouponlisting' element={<CouponListing />} />
-          <Route path='/ContestGamification' element={<ContestGamification />} />
+          <Route path='/ContestGamification/:id' element={<ContestGamification />} />
+          <Route path='/selectwinner' element={<SelectWinner />} />
 
 
 
