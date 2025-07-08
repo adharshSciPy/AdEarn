@@ -1269,6 +1269,7 @@ const fetchAllCouponRequest = async (req, res) => {
     const requests = await couponRequestModel.find({
       paymentStatus: "pending",
       isProcessed: false,
+      isApproved:false,
       $or: [
         { assignedForVerification: null },
         {
