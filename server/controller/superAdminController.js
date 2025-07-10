@@ -1641,7 +1641,7 @@ const approveAndDistributeCouponForAdminRequest = async (req, res) => {
 };
 //to distribute stars to user 
 const distributeStarsToUser = async (req, res) => {
-  let { userId, starCount, note } = req.body;
+  let { userId, starCount,} = req.body;
 
   if (!userId || starCount == null) {
     return res.status(400).json({ message: "User ID and star count are required." });
@@ -1659,7 +1659,7 @@ const distributeStarsToUser = async (req, res) => {
     const wallet = user.userWalletDetails;
     if (!wallet) return res.status(404).json({ message: "User wallet not found" });
 
-    const saWallet = await SuperAdminWallet.findOne(); // assuming single wallet
+    const saWallet = await SuperAdminWallet.findOne();
     if (!saWallet) return res.status(500).json({ message: "Super admin wallet not found" });
 
     if (saWallet.totalStars < starCount) {

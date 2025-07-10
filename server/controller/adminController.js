@@ -1380,6 +1380,7 @@ const fetchCouponRequestsAssignedToAdmin = async (req, res) => {
       assignedAtForVerification: { $gte: fiveMinutesAgo },
       paymentStatus: "pending",
       isProcessed: false,
+      isApproved: false 
     }).populate({
       path: "userId",
       select: "firstName lastName"
@@ -1423,13 +1424,14 @@ const assignBatchToAdmin = async (req, res) => {
   const adminId = req.params.id;
 
   try {
+    // Fetch the coupon request
     const batch = await couponRequestModel.findById(batchId);
 
     if (!batch) {
-      return res.status(404).json({ message: "Coupon batch not found" });
+      return res.status(404).json({ message: "Coupon request not found" });
     }
 
-    // Check if already assigned within last 5 minutes
+    // Check if already assigned within the last 5 minutes
     if (
       batch.assignedForVerification &&
       new Date() - new Date(batch.assignedAtForVerification) < 5 * 60 * 1000
@@ -1437,21 +1439,25 @@ const assignBatchToAdmin = async (req, res) => {
       return res.status(409).json({ message: "Batch already assigned recently" });
     }
 
-    // Assign to admin
+    // Assign the batch to the current admin
     batch.assignedForVerification = adminId;
     batch.assignedAtForVerification = new Date();
+
+    // No need to modify `requestedByRole` here; it's already set at creation
+
     await batch.save();
 
     return res.status(200).json({
       message: "Coupon batch assigned to admin successfully",
-      batch
+      batch,
     });
 
   } catch (err) {
     console.error("Error assigning batch:", err);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error", error: err.message });
   }
 };
+
 //to approve the batch by admin not this
 const approveCouponRequest = async (req, res) => {
   const { reqId } = req.body;
