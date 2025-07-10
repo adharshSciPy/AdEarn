@@ -24,7 +24,7 @@
   border-radius: 6px;
   transition: 0.3s ease;
 }
-.headerContainer{
+.headerContainer {
   background-color: red;
   padding: 20px;
   position: relative;
@@ -167,4 +167,17 @@
 
 .activeTab {
   background-color: #f0f0f0;
+}
+
+.pagination {
+  display: flex;
+  justify-content: end;
+}
+
+.addstarsform {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
 }
