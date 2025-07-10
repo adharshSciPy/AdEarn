@@ -21,7 +21,7 @@ import AssignedKyc from './pages/admin/AssignKyc/AssignedKyc';import ResendOtpAd
 import ResetPassAdmin from './pages/admin/ResetPassAdmin/ResetPassAdmin';
 import AdminCouponReq from './pages/admin/AdminCouponReq/AdminCouponReq';
 import AdminCouponAssign from './pages/admin/AdminCouponAssign/AdminCouponAssign';
-
+import AdminReqCouponSuperAdmin from './pages/admin/AdminReqCoupon/AdminReqCoupon';
 
 import LoginUser from './pages/user/Login/LoginUser';
 import PhoneLogin from './pages/user/signUp/PhoneLogin';
@@ -93,6 +93,7 @@ import ContestWinner from './pages/superadmin/ContestWinner/ContestWinner';
 import AdminListing from './pages/superadmin/AdminListing/AdminListing';
 import ResetPassSuper from './pages/superadmin/ResetPassSuper/ResetPassSuper';
 import CouponListing from './pages/superadmin/CouponListing/CouponListing';
+import ContestGamification from './pages/superadmin/ContestGamification/ContestGamification'
 import SelectWinner from './pages/superadmin/SelectWinner/SelectWinner';
 
 
@@ -127,6 +128,8 @@ function App() {
           <Route path='/resetPassAdmin/:email' element={<ResetPassAdmin />} />
           <Route path='/AdminCouponReq/:id' element={<AdminCouponReq />} />
           <Route path='/AdminCouponAssignment/:id' element={<AdminCouponAssign/>} />
+          <Route path='/couponRequestSuperAdmin/:id' element={<AdminReqCouponSuperAdmin/>} />
+
 
 
 
