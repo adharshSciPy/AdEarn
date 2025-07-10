@@ -1380,6 +1380,7 @@ const fetchCouponRequestsAssignedToAdmin = async (req, res) => {
       assignedAtForVerification: { $gte: fiveMinutesAgo },
       paymentStatus: "pending",
       isProcessed: false,
+      isApproved: false 
     }).populate({
       path: "userId",
       select: "firstName lastName"
