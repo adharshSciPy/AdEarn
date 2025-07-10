@@ -177,6 +177,21 @@ const adExtraDeductionSchema = new mongoose.Schema(
   },
   { _id: false }
 );
+const couponGenerationLogSchema = new Schema(
+  {
+    starsSpent: { type: Number, required: true },
+    reason: { type: String, required: true },
+    reference: {
+      type: {
+        type: String, default: "CouponBatch"
+      },
+      id: { type: Schema.Types.ObjectId, refPath: "reference.type" }
+    },
+    createdAt: { type: Date, default: Date.now }
+  },
+  { _id: false }
+);
+
 
 // MAIN Schema
 const superAdminWalletSchema = new Schema(
@@ -194,6 +209,8 @@ const superAdminWalletSchema = new Schema(
     subscriptionLogs: [subscriptionLogSchema],
     starDistributions: [starDistributionLogSchema],
     adExtraDeductions: [adExtraDeductionSchema],
+    couponGenerationLogs: [couponGenerationLogSchema],
+
   },
   { timestamps: true }
 );

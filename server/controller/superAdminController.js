@@ -479,21 +479,20 @@ const generateCoupons = async (req, res) => {
 
     // Step 3: Deduct stars and log transaction
     superAdminWallet.totalStars -= totalStarsNeeded;
-    superAdminWallet.transactions.push({
-      starsReceived: -totalStarsNeeded,
-      reason: `Generated ${couponCount} coupons (each ${perStarCount} stars)`,
-      addedBy: null,
-      type: "deduct",
-      reference: {
-        type: "CouponBatch",
-        id: newBatch._id,
-      },
-      createdAt: new Date(),
-    });
+superAdminWallet.couponGenerationLogs.push({
+  starsSpent: totalStarsNeeded,
+  reason: `Generated ${couponCount} coupons (each ${perStarCount} stars)`,
+  reference: {
+    type: "CouponBatch",
+    id: newBatch._id
+  },
+  createdAt: new Date()
+});
+
     await superAdminWallet.save();
 
     return res.status(200).json({
-      message: "✅ Coupons generated successfully (unassigned batch)",
+      message: "Coupons generated successfully (unassigned batch)",
       batchId: newBatch._id,
       totalStarsSpent: totalStarsNeeded,
       totalAmountInRupees,

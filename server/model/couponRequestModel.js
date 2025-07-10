@@ -4,6 +4,7 @@ const couponRequestSchema = new Schema({
   requestedByRole: {
     type: String,
     enum: ["user", "admin"],
+    default:"user",
     required: true
   },
   userId: {
