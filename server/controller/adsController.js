@@ -434,7 +434,6 @@ const createSurveyAd = async (req, res) => {
   if (!title || !description || !questions || !userViewsNeeded)
     return res.status(400).json({ message: "Missing required fields" });
 
-  // Parse JSON fields
   let parsedQuestions, parsedStates, parsedDistricts, parsedLocations;
 
   try {
@@ -449,7 +448,6 @@ const createSurveyAd = async (req, res) => {
 
     for (const [index, q] of parsedQuestions.entries()) {
       const { questionText, questionType, options } = q;
-
       if (!questionText || !questionType || !options) {
         return res.status(400).json({ message: `Missing fields in question ${index + 1}` });
       }
@@ -476,12 +474,10 @@ const createSurveyAd = async (req, res) => {
     return res.status(400).json({ message: "Invalid JSON format", error: err.message });
   }
 
-  // Validate at least one target location
   let targetRegions = [];
   try {
     for (const loc of parsedLocations) {
       if (!loc.coords || !loc.radius) continue;
-
       const [latStr, lngStr] = loc.coords.split(",");
       const latitude = parseFloat(latStr);
       const longitude = parseFloat(lngStr);
@@ -525,27 +521,44 @@ const createSurveyAd = async (req, res) => {
       return res.status(400).json({ message: "Invalid userViewsNeeded value" });
     }
 
-    const percent2Star = 0.6;
-    const percent3Star = 0.4;
+    // ⭐ Deduction logic (same as video ad)
+    const starsDeductionRate = 2.4;
+    const baseDeductedStars = viewsNeeded * starsDeductionRate;
 
-    const total2Stars = Math.floor(viewsNeeded * percent2Star);
-    const total3Stars = viewsNeeded - total2Stars;
+    const viewsChunk = Math.floor(viewsNeeded / 100);
+    const extraDeductedStars = viewsChunk * 5;
 
-    const starPayoutPlan = [
-      ...Array(total3Stars).fill(3),
-      ...Array(total2Stars).fill(2),
-    ];
+    const totalStarsToBeDeducted = baseDeductedStars + extraDeductedStars;
 
-    const starsToBeDeducted = (total3Stars * 3) + (total2Stars * 2);
-
-    if (userWallet.totalStars < starsToBeDeducted) {
-      const starsShort = starsToBeDeducted - userWallet.totalStars;
+    if (userWallet.totalStars < totalStarsToBeDeducted) {
+      const starsShort = totalStarsToBeDeducted - userWallet.totalStars;
       return res.status(401).json({
         message: `Insufficient stars. You need ${starsShort} more stars to post this ad.`,
       });
     }
 
-    userWallet.totalStars -= starsToBeDeducted;
+    // Star payout plan distribution
+    const total3Stars = Math.floor((baseDeductedStars * 0.4) / 3);
+    const total2Stars = Math.floor((baseDeductedStars * 0.6) / 2);
+    const usedStars = total3Stars * 3 + total2Stars * 2;
+    let remainingStars = Math.floor(baseDeductedStars - usedStars);
+    if (remainingStars < 0) remainingStars = 0;
+
+    const highValueStars = [
+      ...Array(total3Stars).fill(3),
+      ...Array(total2Stars).fill(2),
+      ...Array(remainingStars).fill(1),
+    ];
+
+    const totalGiven = highValueStars.length;
+    let nullStarsCount = viewsNeeded - totalGiven;
+    if (nullStarsCount < 0) nullStarsCount = 0;
+
+    const nullStars = Array(nullStarsCount).fill(0);
+    const starPayoutPlan = [...highValueStars, ...nullStars];
+
+    // Deduct stars
+    userWallet.totalStars -= totalStarsToBeDeducted;
     await userWallet.save();
 
     const imageUrl = req.file ? `/surveyAdUploads/${req.file.filename}` : "";
@@ -569,7 +582,8 @@ const createSurveyAd = async (req, res) => {
       userViewsNeeded: viewsNeeded,
       totalViewCount: 0,
       isViewsReached: false,
-      totalStarsAllocated: starsToBeDeducted,
+      totalStarsAllocated: baseDeductedStars,
+      extraDeductedStars,
       starPayoutPlan,
       adPeriod: adRepetition ? parsedAdPeriod : 0,
       adRepetition,
@@ -587,6 +601,9 @@ const createSurveyAd = async (req, res) => {
       message: "Survey Ad created successfully and stars deducted",
       surveyAd,
       ad,
+      baseDeductedStars,
+      extraDeductedStars,
+      totalDeducted: totalStarsToBeDeducted,
       remainingStars: userWallet.totalStars,
     });
   } catch (error) {
@@ -597,6 +614,7 @@ const createSurveyAd = async (req, res) => {
     });
   }
 };
+
 const submitSurveyResponse = async (req, res) => {
   const { surveyAdId, responses, userId } = req.body;
 
