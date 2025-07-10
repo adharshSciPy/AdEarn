@@ -17,7 +17,8 @@ import ContestForm from './pages/admin/ContestForm/ContestForm';
 import Adminemailregister from "./pages/admin/Emailregister/Adminemailregister"
 import ViewKYC from './pages/admin/VerifyKYC/ViewKYC';
 import AssignedAds from './pages/admin/AssignAds/AssignedAds';
-import AssignedKyc from './pages/admin/AssignKyc/AssignedKyc';import ResendOtpAdmin from './pages/admin/ResendOtpAdmin/ResendOtpAdmin';
+import AssignedKyc from './pages/admin/AssignKyc/AssignedKyc';
+import ResendOtpAdmin from './pages/admin/ResendOtpAdmin/ResendOtpAdmin';
 import ResetPassAdmin from './pages/admin/ResetPassAdmin/ResetPassAdmin';
 import AdminCouponReq from './pages/admin/AdminCouponReq/AdminCouponReq';
 import AdminCouponAssign from './pages/admin/AdminCouponAssign/AdminCouponAssign';
@@ -98,6 +99,8 @@ import SelectWinner from './pages/superadmin/SelectWinner/SelectWinner';
 import CoupounRequest from './pages/superadmin/CouponRequestListing/CoupounRequest';
 
 
+import SubscriptionModal from './components/SubscriptionModal/SubscriptionModal';
+
 
 
 function App() {
@@ -105,6 +108,10 @@ function App() {
     <div className="App">
       <BrowserRouter>
         <Routes>
+
+
+          <Route path='/SubscriptionModal' element={<SubscriptionModal />} />
+
           {/* admin */}
 
           <Route path='/adminregister' element={<AdminSignup />} />
@@ -128,8 +135,8 @@ function App() {
           <Route path='/resendOtpAdmin/:email' element={<ResendOtpAdmin />} />
           <Route path='/resetPassAdmin/:email' element={<ResetPassAdmin />} />
           <Route path='/AdminCouponReq/:id' element={<AdminCouponReq />} />
-          <Route path='/AdminCouponAssignment/:id' element={<AdminCouponAssign/>} />
-          <Route path='/couponRequestSuperAdmin/:id' element={<AdminReqCouponSuperAdmin/>} />
+          <Route path='/AdminCouponAssignment/:id' element={<AdminCouponAssign />} />
+          <Route path='/couponRequestSuperAdmin/:id' element={<AdminReqCouponSuperAdmin />} />
 
 
 
@@ -170,7 +177,7 @@ function App() {
           <Route path='/ads/:type' element={<Adspage />} />
           <Route path='/adedit/:id' element={<AdEdit />} />
           <Route path='/videoadedit/:id' element={<VideoAdEdit />} />
-          <Route path='/coupon' element={<CouponPage/>} />
+          <Route path='/coupon' element={<CouponPage />} />
           <Route path='/surveyadspreview/:id/:adId' element={<SurveyAdPreview />} />
           <Route path='/surveyaddetails/:id/:adId' element={<SurveyResponses />} />
 
@@ -214,7 +221,7 @@ function App() {
           <Route path='/superadminreferalstar' element={<ReferealStar />} />
           <Route path='/superadminsubscriptionstar' element={<SubScriptionStar />} />
           <Route path='/superadminuserstar' element={<Userstar />} />
-          <Route path='/superadminwelcomestar' element={<WelcomeStar />} /> 
+          <Route path='/superadminwelcomestar' element={<WelcomeStar />} />
           <Route path='/superadmincontest' element={<Contest />} />
           <Route path='/superadmincontestwinner' element={<ContestWinner />} />
           <Route path='/SuperadminLogin' element={<SuperAdminLogin />} />
@@ -223,7 +230,7 @@ function App() {
           <Route path='/Superadmincouponlisting' element={<CouponListing />} />
           <Route path='/ContestGamification/:id' element={<ContestGamification />} />
           <Route path='/selectwinner' element={<SelectWinner />} />
-          <Route path='/couponreqSuperAdmin' element={< CoupounRequest/>} />
+          <Route path='/couponreqSuperAdmin' element={< CoupounRequest />} />
 
 
 

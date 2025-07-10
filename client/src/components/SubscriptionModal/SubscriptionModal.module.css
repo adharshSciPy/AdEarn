@@ -1,0 +1,11 @@
+.getsubscrip{
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px;
+    background-color: #3563E9;
+    border-radius: 10px;
+    font-size: large;
+    color: white;
+    margin-bottom: 10px;
+}
