@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import styles from "./superadsuser.module.css";
-import { Modal, Switch } from "antd";
+import { Modal, Switch, Pagination, Button, Input } from "antd";
 import { DeleteOutlined, HolderOutlined } from "@ant-design/icons";
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
 import Header from '../../../components/Header/Header'
 import baseUrl from "../../../baseurl"
 import axios from 'axios'
 
-const USERS_PER_LOAD = 20;
-
 function SuperAdminAdsUser() {
+
   const [allUsers, setAllUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [userStars, setUserStars] = useState({});
@@ -17,7 +16,6 @@ function SuperAdminAdsUser() {
 
   const [activeTab, setActiveTab] = useState("All Users");
   const [visibleUsers, setVisibleUsers] = useState([]);
-  const [loadedCount, setLoadedCount] = useState(1);
   const containerRef = useRef(null);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -25,6 +23,56 @@ function SuperAdminAdsUser() {
 
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [userToDelete, setUserToDelete] = useState();
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userId, setUserId] = useState("")
+
+
+  const [form, setForm] = useState({
+    superadminGiven: "",
+  })
+
+  const onChangeHandler = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: value
+    }))
+    console.log(form)
+  }
+
+  const modalCancel = () => {
+    setIsModalOpen(false);
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const submitStarForm = async () => {
+    try {
+      const response = await axios.post(`${baseUrl}/api/v1/super-admin/user/distribute-stars`, {
+        userId,
+        starCount: Number(form.superadminGiven)
+      });
+
+      const updatedStars = { ...userStars };
+      updatedStars[userId] = (userStars[userId] || 0) + Number(form.superadminGiven);
+      setUserStars(updatedStars);
+
+      // Reset form and close modal
+      setForm({ superadminGiven: "" });
+      setIsModalOpen(false);
+
+      console.log(response.data.message);
+    } catch (error) {
+      console.error("Failed to distribute stars:", error);
+    }
+  };
+
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -59,7 +107,7 @@ function SuperAdminAdsUser() {
 
 
   useEffect(() => {
-    setLoadedCount(1);
+    setCurrentPage(1);
     let users = [...allUsers];
 
     if (activeTab === "Ads Users") {
@@ -69,23 +117,15 @@ function SuperAdminAdsUser() {
     }
 
     setFilteredUsers(users);
-    setVisibleUsers(users.slice(0, USERS_PER_LOAD));
+    // setVisibleUsers(users.slice(0, USERS_PER_LOAD));
   }, [activeTab, allUsers]);
 
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    setVisibleUsers(filteredUsers.slice(startIndex, endIndex));
 
-
-  const handleScroll = () => {
-    const container = containerRef.current;
-    if (!container) return;
-    const nearBottom =
-      container.scrollTop + container.clientHeight >= container.scrollHeight - 20;
-    if (nearBottom && loadedCount * USERS_PER_LOAD < filteredUsers.length) {
-      const nextCount = loadedCount + 1;
-      const nextUsers = filteredUsers.slice(0, nextCount * USERS_PER_LOAD);
-      setVisibleUsers(nextUsers);
-      setLoadedCount(nextCount);
-    }
-  };
+  }, [currentPage, filteredUsers]);
 
   const showActivateModal = (user) => {
     setSelectedUser(user);
@@ -177,6 +217,7 @@ function SuperAdminAdsUser() {
 
 
 
+
   return (
     <div className={styles.adsuser}>
       <SuperSidebar />
@@ -184,7 +225,6 @@ function SuperAdminAdsUser() {
       <div
         className={styles.container}
         ref={containerRef}
-        onScroll={handleScroll}
       >
         <div className={styles.header}>
           <div>
@@ -283,12 +323,37 @@ function SuperAdminAdsUser() {
                       defaultChecked />
                     <DeleteOutlined className={styles.deleteIcon}
                       onClick={() => handleDeleteClick(user._id)} />
+                    <Button onClick={() => {
+                      setUserId(user._id);
+                      setIsModalOpen(true);
+                    }}>Add Stars</Button>
+
                   </>
                 )}
               </div>
             </div>
           ))}
         </div>
+
+        <Pagination
+          current={currentPage}
+          total={filteredUsers.length}
+          pageSize={pageSize}
+          showSizeChanger
+          pageSizeOptions={['10', '20', '50', '100']}
+          onChange={handlePageChange}
+          onShowSizeChange={(current, size) => {
+            setPageSize(size);
+            setCurrentPage(1);
+            const startIndex = 0;
+            const endIndex = size;
+            setVisibleUsers(filteredUsers.slice(startIndex, endIndex));
+          }}
+          className={styles.pagination}
+        />
+
+
+
 
         <Modal
           title="Activate User"
@@ -315,6 +380,19 @@ function SuperAdminAdsUser() {
             Are you sure you want to delete{" "}
             <strong>{userToDelete?.firstName} {userToDelete?.lastName}</strong>?
           </p>
+        </Modal>
+
+        <Modal
+          title="Add Stars to User"
+          closable={{ 'aria-label': 'Custom Close Button' }}
+          open={isModalOpen}
+          onOk={submitStarForm}
+          onCancel={modalCancel}
+          okText="Submit"
+        >
+          <div className={styles.addstarsform}>
+            <Input type="text" name="superadminGiven" value={form.superadminGiven} placeholder="Enter Star Count" onChange={onChangeHandler} />
+          </div>
         </Modal>
 
       </div>
