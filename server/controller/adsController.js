@@ -75,31 +75,24 @@ const createImageAd = async (req, res) => {
     locations,
     states,
     districts,
-    clickUrl, 
+    clickUrl,
   } = req.body;
 
   const { id } = req.params;
 
-  if (!id) {
-    return res.status(400).json({ message: "User ID is required" });
-  }
-
-  if (!title || !description || !userViewsNeeded) {
+  if (!id) return res.status(400).json({ message: "User ID is required" });
+  if (!title || !description || !userViewsNeeded)
     return res.status(400).json({ message: "Missing required fields" });
-  }
-
 
   const imageFile = req.files?.imageAd?.[0];
   const audioFile = req.files?.audioAd?.[0];
-
-  if (!imageFile) {
+  if (!imageFile)
     return res.status(400).json({ message: "Image file is required" });
-  }
 
   const parsedAdPeriod = parseFloat(adPeriod);
   const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
 
-  // Parse and validate locations
+  // Parse locations
   let targetRegions = [];
   let targetStates = [];
   let targetDistricts = [];
@@ -149,33 +142,37 @@ const createImageAd = async (req, res) => {
       });
     }
   } catch (err) {
-    return res
-      .status(400)
-      .json({ message: "Invalid location format", error: err.message });
+    return res.status(400).json({
+      message: "Invalid location format",
+      error: err.message,
+    });
   }
 
   try {
     const user = await User.findById(id).populate("userWalletDetails");
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     const userWallet = user.userWalletDetails;
-    if (!userWallet) {
+    if (!userWallet)
       return res.status(400).json({ message: "User wallet not found" });
-    }
 
+    //Deduction logic
     const starsDeductionRate = 0.6;
-    const starsToBeDeducted = userViewsNeeded * starsDeductionRate;
+    const baseDeductedStars = userViewsNeeded * starsDeductionRate;
 
-    if (userWallet.totalStars < starsToBeDeducted) {
-      const starsShort = starsToBeDeducted - userWallet.totalStars;
+    // Extra stars
+    const viewsChunk = Math.floor(userViewsNeeded / 100);
+    const extraDeductedStars = viewsChunk * 5;
+
+    const totalStarsToBeDeducted = baseDeductedStars + extraDeductedStars;
+    if (userWallet.totalStars < totalStarsToBeDeducted) {
+      const starsShort = totalStarsToBeDeducted - userWallet.totalStars;
       return res.status(401).json({
         message: `Insufficient stars. You need ${starsShort} more stars to post this ad.`,
       });
     }
 
-    // Generate star payout plan
+    //Star payout plan
     const highvalueArray = [5, 4, 3, 2];
     const highValueRepetitions = Math.floor(userViewsNeeded / 100);
     let highValueStars = [];
@@ -185,33 +182,38 @@ const createImageAd = async (req, res) => {
     }
 
     const highValueTotal = highValueStars.reduce((acc, val) => acc + val, 0);
-    const singleStarsCount = Math.floor(starsToBeDeducted - highValueTotal);
+    const singleStarsCount = Math.floor(baseDeductedStars - highValueTotal);
     const singleStars = Array(singleStarsCount).fill(1);
     const totalGiven = highValueStars.length + singleStars.length;
     const nullStarsCount = userViewsNeeded - totalGiven;
     const nullStars = Array(nullStarsCount).fill(0);
-    const starPayoutPlan = [...highValueStars, ...singleStars, ...nullStars];
 
-    // Deduct stars
-    userWallet.totalStars -= starsToBeDeducted;
+    const starPayoutPlan = [
+      ...highValueStars,
+      ...singleStars,
+      ...nullStars,
+    ];
+
+   
+    userWallet.totalStars -= totalStarsToBeDeducted;
     await userWallet.save();
 
-    // Save Ad URLs
+  
     const imageUrl = `/imgAdUploads/${imageFile.filename}`;
     const audioUrl = audioFile ? `/imgAdUploads/${audioFile.filename}` : null;
 
-    // ✅ Save image ad with clickUrl
     const imageAd = await ImageAd.create({
       title,
       description,
       imageUrl,
       audioUrl,
-      clickUrl: clickUrl?.trim() || null, // Add to DB
+      clickUrl: clickUrl?.trim() || null,
       adPeriod: adRepetition ? parsedAdPeriod : 0,
       adRepetition,
       createdBy: user._id,
       userViewsNeeded,
-      totalStarsAllocated: starsToBeDeducted,
+      totalStarsAllocated: baseDeductedStars,
+      extraDeductedStars, 
       starPayoutPlan,
       targetRegions,
       targetStates,
@@ -227,6 +229,9 @@ const createImageAd = async (req, res) => {
       message: "Image Ad created successfully and stars deducted",
       imageAd,
       ad,
+      baseDeductedStars,
+      extraDeductedStars,
+      totalDeducted: totalStarsToBeDeducted,
       remainingStars: userWallet.totalStars,
     });
   } catch (error) {
@@ -237,6 +242,7 @@ const createImageAd = async (req, res) => {
     });
   }
 };
+
 
 // ------------------- VIDEO AD -------------------
 
@@ -252,17 +258,10 @@ const createVideoAd = async (req, res) => {
   } = req.body;
   const { id } = req.params;
 
-  if (!id) {
-    return res.status(400).json({ message: "User ID is required" });
-  }
-
-  if (!req.file) {
-    return res.status(400).json({ message: "Video file is required" });
-  }
-
-  if (!title || !description || !userViewsNeeded) {
+  if (!id) return res.status(400).json({ message: "User ID is required" });
+  if (!req.file) return res.status(400).json({ message: "Video file is required" });
+  if (!title || !description || !userViewsNeeded)
     return res.status(400).json({ message: "Missing required fields" });
-  }
 
   const parsedAdPeriod = parseFloat(adPeriod);
   const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
@@ -272,7 +271,6 @@ const createVideoAd = async (req, res) => {
   let targetDistricts = [];
 
   try {
-    // Parse locations
     const parsedLocations =
       typeof locations === "string" ? JSON.parse(locations) : locations;
 
@@ -299,11 +297,9 @@ const createVideoAd = async (req, res) => {
       }
     }
 
-    // Parse states
     targetStates = typeof states === "string" ? JSON.parse(states) : states;
     if (!Array.isArray(targetStates)) targetStates = [];
 
-    // Parse districts
     targetDistricts =
       typeof districts === "string" ? JSON.parse(districts) : districts;
     if (!Array.isArray(targetDistricts)) targetDistricts = [];
@@ -337,21 +333,27 @@ const createVideoAd = async (req, res) => {
       return res.status(400).json({ message: "Invalid userViewsNeeded value" });
     }
 
+    //star deduction logic
     const starsDeductionRate = 2.4;
-    const starsToBeDeducted = viewsNeeded * starsDeductionRate;
+    const baseDeductedStars = viewsNeeded * starsDeductionRate;
 
-    if (userWallet.totalStars < starsToBeDeducted) {
-      const starsShort = starsToBeDeducted - userWallet.totalStars;
+    const viewsChunk = Math.floor(viewsNeeded / 100);
+    const extraDeductedStars = viewsChunk * 5;
+
+    const totalStarsToBeDeducted = baseDeductedStars + extraDeductedStars;
+
+    if (userWallet.totalStars < totalStarsToBeDeducted) {
+      const starsShort = totalStarsToBeDeducted - userWallet.totalStars;
       return res.status(401).json({
         message: `Insufficient stars. You need ${starsShort} more stars to post this ad.`,
       });
     }
 
-    // Star split logic: 40% 3-star, 60% 2-star
-    const total3Stars = Math.floor((starsToBeDeducted * 0.4) / 3);
-    const total2Stars = Math.floor((starsToBeDeducted * 0.6) / 2);
+    //  Star payout plan: 40% 3-star, 60% 2-star
+    const total3Stars = Math.floor((baseDeductedStars * 0.4) / 3);
+    const total2Stars = Math.floor((baseDeductedStars * 0.6) / 2);
     const usedStars = total3Stars * 3 + total2Stars * 2;
-    let remainingStars = Math.floor(starsToBeDeducted - usedStars);
+    let remainingStars = Math.floor(baseDeductedStars - usedStars);
     if (remainingStars < 0) remainingStars = 0;
 
     const highValueStars = [
@@ -365,14 +367,12 @@ const createVideoAd = async (req, res) => {
     if (nullStarsCount < 0) nullStarsCount = 0;
 
     const nullStars = Array(nullStarsCount).fill(0);
-
     const starPayoutPlan = [...highValueStars, ...nullStars];
-
-    // Deduct stars from wallet
-    userWallet.totalStars -= starsToBeDeducted;
+    userWallet.totalStars -= totalStarsToBeDeducted;
     await userWallet.save();
 
     const videoUrl = `/videoAdUploads/${req.file.filename}`;
+
     const videoAd = await VideoAd.create({
       title,
       description,
@@ -381,7 +381,8 @@ const createVideoAd = async (req, res) => {
       adRepetition,
       createdBy: user._id,
       userViewsNeeded: viewsNeeded,
-      totalStarsAllocated: starsToBeDeducted,
+      totalStarsAllocated: baseDeductedStars,
+      extraDeductedStars,
       starPayoutPlan,
       targetRegions,
       targetStates,
@@ -397,6 +398,9 @@ const createVideoAd = async (req, res) => {
       message: "Video Ad created successfully and stars deducted",
       videoAd,
       ad,
+      baseDeductedStars,
+      extraDeductedStars,
+      totalDeducted: totalStarsToBeDeducted,
       remainingStars: userWallet.totalStars,
     });
   } catch (error) {
@@ -407,6 +411,7 @@ const createVideoAd = async (req, res) => {
     });
   }
 };
+
 
 // ------------------- SURVEY AD -------------------
 

@@ -1495,9 +1495,15 @@ const fetchAdminCouponsRequests = async (req, res) => {
     // Format with admin name if needed
     const formatted = requests.map(req => {
       const adminName = req.adminId?.adminName || "Admin";
+          const starCountPerCoupon = req.starCountPerCoupon || 0;
+      const totalStars = req.totalStars || 0;
+      const couponCount = starCountPerCoupon > 0 ? totalStars / starCountPerCoupon : 0;
       return {
         ...req._doc,
-        adminName
+        adminName,
+         starCountPerCoupon,
+        totalStars,
+        couponCount
       };
     });
 
@@ -1636,45 +1642,50 @@ const approveAndDistributeCouponForAdminRequest = async (req, res) => {
 };
 //to distribute stars to user 
 const distributeStarsToUser = async (req, res) => {
-  const { userId, starCount, note } = req.body;
+  let { userId, starCount, note } = req.body;
 
-  if (!userId || !starCount) {
+  if (!userId || starCount == null) {
     return res.status(400).json({ message: "User ID and star count are required." });
+  }
+
+  starCount = Number(starCount);
+  if (isNaN(starCount) || starCount <= 0) {
+    return res.status(400).json({ message: "Invalid star count" });
   }
 
   try {
     const user = await User.findById(userId).populate("userWalletDetails");
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     const wallet = user.userWalletDetails;
+    if (!wallet) return res.status(404).json({ message: "User wallet not found" });
 
-    if (!wallet) {
-      return res.status(404).json({ message: "User wallet not found" });
+    const saWallet = await SuperAdminWallet.findOne(); // assuming single wallet
+    if (!saWallet) return res.status(500).json({ message: "Super admin wallet not found" });
+
+    if (saWallet.totalStars < starCount) {
+      return res.status(400).json({ message: "Insufficient stars in SuperAdmin wallet" });
     }
+    saWallet.totalStars -= starCount;
+    saWallet.starDistributions.push({
+      userId,
+      starsGiven: starCount,
+      note,
+      date: new Date(),
+    });
 
+    await saWallet.save();
+
+    
     const logEntry = {
       starCount,
       note,
       givenAt: new Date(),
     };
 
-    // Append log entry to wallet
-    if (!wallet.superadminGiven) {
-      wallet.superadminGiven = [logEntry];
-    } else {
-      wallet.superadminGiven.push(logEntry);
-    }
-
-    // Update totalStars in wallet
-    if (!wallet.totalStars) {
-      wallet.totalStars = starCount;
-    } else {
-      wallet.totalStars += starCount;
-    }
-
+    wallet.superadminGiven = wallet.superadminGiven || [];
+    wallet.superadminGiven.push(logEntry);
+    wallet.totalStars = (wallet.totalStars || 0) + starCount;
     await wallet.save();
 
     return res.status(200).json({
@@ -1682,6 +1693,7 @@ const distributeStarsToUser = async (req, res) => {
       message: `${starCount} stars successfully given to user`,
       userId: user._id,
       totalStars: wallet.totalStars,
+      superAdminRemainingStars: saWallet.totalStars,
       log: logEntry,
     });
 
@@ -1690,6 +1702,7 @@ const distributeStarsToUser = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 };
+
 
 
 

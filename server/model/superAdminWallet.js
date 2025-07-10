@@ -156,8 +156,29 @@ const subscriptionLogSchema = new Schema(
   },
   { _id: false }
 );
+const starDistributionLogSchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    starsGiven: { type: Number, required: true },
+    note: { type: String },
+    date: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+const adExtraDeductionSchema = new mongoose.Schema(
+  {
+    adId: { type: mongoose.Schema.Types.ObjectId, ref: "Ad" },
+    adType: { type: String, enum: ["Image Ad", "Video Ad", "Survey Ad"] },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    stars: { type: Number, required: true },
+    status: { type: String, enum: ["verified", "rejected"], required: true },
+    timestamp: { type: Date, default: Date.now },
+    rejectionReason: { type: String }, // Optional, only for rejected
+  },
+  { _id: false }
+);
 
-// ✅ Final Schema (no restructuring)
+// MAIN Schema
 const superAdminWalletSchema = new Schema(
   {
     totalStars: { type: Number, default: 0 },
@@ -171,6 +192,8 @@ const superAdminWalletSchema = new Schema(
     userEntry: [userEntrySchema],
     blacklistedUserStars: [blacklistedUserStarsSchema],
     subscriptionLogs: [subscriptionLogSchema],
+    starDistributions: [starDistributionLogSchema],
+    adExtraDeductions: [adExtraDeductionSchema],
   },
   { timestamps: true }
 );
