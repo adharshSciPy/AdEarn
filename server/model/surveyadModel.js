@@ -21,7 +21,9 @@ const surveyAdSchema = new mongoose.Schema(
           validate: {
             validator: function (val) {
               if (this.questionType === "yesno") {
-                return val.length === 2 && val.includes("Yes") && val.includes("No");
+                return (
+                  val.length === 2 && val.includes("Yes") && val.includes("No")
+                );
               }
               return val.length >= 2;
             },
@@ -77,6 +79,10 @@ const surveyAdSchema = new mongoose.Schema(
     ],
 
     totalStarsAllocated: { type: Number, required: true },
+    extraDeductedStars: {
+      type: Number,
+      default: 0,
+    },
     starPayoutPlan: { type: [Number], default: [] },
 
     targetRegions: [

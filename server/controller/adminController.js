@@ -19,6 +19,7 @@ import config from "../config.js";
 import couponBatchModel from "../model/couponBatchModel.js";
 import Coupon from "../model/couponModel.js";
 import path from "path";
+import superAdminWallet from "../model/superAdminWallet.js";
 
 const USER_ROLE = process.env.USER_ROLE;
 const ADMIN_ROLE = process.env.ADMIN_ROLE;
@@ -429,6 +430,7 @@ const verifyAdById = async (req, res) => {
     let adType = "";
     let adTitle = "";
     let adPostedTime = "";
+    let extraDeductedStars = 0;
 
     const verifiedTime = new Date();
 
@@ -457,7 +459,7 @@ const verifyAdById = async (req, res) => {
         },
         { new: true }
       );
-
+       extraDeductedStars = ad.imgAdRef.extraDeductedStars || 0;
       createdBy = ad.imgAdRef.createdBy;
       adType = "Image Ad";
       adTitle = ad.imgAdRef.title;
@@ -475,7 +477,7 @@ const verifyAdById = async (req, res) => {
         },
         { new: true }
       );
-
+       extraDeductedStars = ad.imgAdRef.extraDeductedStars || 0;
       createdBy = ad.videoAdRef.createdBy;
       adType = "Video Ad";
       adTitle = ad.videoAdRef.title;
@@ -493,13 +495,28 @@ const verifyAdById = async (req, res) => {
         },
         { new: true }
       );
-
+       extraDeductedStars = ad.imgAdRef.extraDeductedStars || 0;
       createdBy = ad.surveyAdRef.createdBy;
       adType = "Survey Ad";
       adTitle = ad.surveyAdRef.title;
       adPostedTime = ad.surveyAdRef.createdAt;
     } else {
       return res.status(200).json({ message: "Ad is already verified" });
+    }
+    if (extraDeductedStars > 0) {
+      const saWallet = await superAdminWallet.findOne(); 
+      if (saWallet) {
+        saWallet.totalStars += extraDeductedStars;
+        saWallet.adExtraDeductions.push({
+          adId: ad._id,
+          adType,
+          userId: createdBy,
+          stars: extraDeductedStars,
+          status: "verified",
+          timestamp: new Date(),
+        });
+        await saWallet.save();
+      }
     }
     if (adminId) {
       await Admin.findByIdAndUpdate(adminId, {
@@ -586,7 +603,7 @@ const getSuperAdminWallet = async (req, res) => {
 };
 const rejectAdById = async (req, res) => {
   const { adId, reason } = req.body;
-  const adminId=req.params.id;
+  const adminId = req.params.id;
   const { io, connectedUsers } = req;
 
   if (!adId) {
@@ -615,10 +632,12 @@ const rejectAdById = async (req, res) => {
     let adPostedTime = "";
     let createdBy = null;
     let totalStarsAllocated = 0;
+    let extraDeductedStars = 0;
+
     const rejectionReason = reason || "Rejected by admin";
     const rejectedTime = new Date();
 
-    // ✅ Image Ad
+    //Reject Image Ad
     if (ad.imgAdRef && !ad.imgAdRef.isAdVerified) {
       updatedAd = await ImageAd.findByIdAndUpdate(
         ad.imgAdRef._id,
@@ -635,7 +654,7 @@ const rejectAdById = async (req, res) => {
       adType = "Image Ad";
     }
 
-    // ✅ Video Ad
+    //Reject Video Ad
     else if (ad.videoAdRef && !ad.videoAdRef.isAdVerified) {
       updatedAd = await VideoAd.findByIdAndUpdate(
         ad.videoAdRef._id,
@@ -652,7 +671,7 @@ const rejectAdById = async (req, res) => {
       adType = "Video Ad";
     }
 
-    // ✅ Survey Ad
+    //Reject Survey Ad
     else if (ad.surveyAdRef && !ad.surveyAdRef.isAdVerified) {
       updatedAd = await SurveyAd.findByIdAndUpdate(
         ad.surveyAdRef._id,
@@ -678,9 +697,10 @@ const rejectAdById = async (req, res) => {
     createdBy = adDoc.createdBy;
     adTitle = adDoc.title;
     adPostedTime = adDoc.createdAt;
-    totalStarsAllocated = adDoc.totalStarsAllocated;
+    totalStarsAllocated = adDoc.totalStarsAllocated || 0;
+    extraDeductedStars = adDoc.extraDeductedStars || 0;
 
-    // ✅ Refund stars to user wallet (fallback safe)
+    //Refund totalStarsAllocated to user wallet
     const walletId =
       createdBy?.userWalletDetails?._id || createdBy?.userWalletDetails;
 
@@ -692,13 +712,31 @@ const rejectAdById = async (req, res) => {
       );
 
       console.log(
-        `✅ Refunded ${totalStarsAllocated} stars to wallet ${walletId}. New balance: ${updatedWallet?.totalStars}`
+        `Refunded ${totalStarsAllocated} stars to wallet ${walletId}. New balance: ${updatedWallet?.totalStars}`
       );
     } else {
-      console.warn("⚠️ Wallet not found or zero refund stars");
+      console.warn("Wallet not found or zero refund stars");
     }
 
-    // ✅ Log to Admin's verifiedAds with status "rejected"
+    //Log rejection in SuperAdminWallet if extraDeductedStars > 0
+    if (extraDeductedStars > 0) {
+      const saWallet = await superAdminWallet.findOne();
+      if (saWallet) {
+        saWallet.totalStars += extraDeductedStars;
+        saWallet.adExtraDeductions.push({
+          adId: ad._id,
+          adType,
+          userId: createdBy._id || createdBy,
+          stars: extraDeductedStars,
+          status: "rejected",
+          timestamp: new Date(),
+          rejectionReason,
+        });
+        await saWallet.save();
+      }
+    }
+
+    //Log in Admin's verifiedAds array
     if (adminId) {
       await Admin.findByIdAndUpdate(adminId, {
         $push: {
@@ -712,7 +750,7 @@ const rejectAdById = async (req, res) => {
       });
     }
 
-    // ✅ Notification with refund info
+    // Notification to user
     if (createdBy) {
       const formattedTime = new Date(adPostedTime).toLocaleString("en-IN", {
         timeZone: "Asia/Kolkata",
@@ -720,7 +758,10 @@ const rejectAdById = async (req, res) => {
         timeStyle: "short",
       });
 
-      const message = `Your ${adType} titled "${adTitle}" posted on ${formattedTime} has been rejected. Reason: ${rejectionReason}. Refunded ${totalStarsAllocated} stars to your wallet.`;
+      const message = `Your ${adType} titled "${adTitle}" posted on ${formattedTime} has been rejected. Reason: ${rejectionReason}. Refunded ${totalStarsAllocated} stars to your wallet. ${
+  extraDeductedStars > 0 ? `${extraDeductedStars} stars were deducted as compensatory fees.` : ''
+}`;
+
       await sendNotification(
         createdBy._id,
         USER_ROLE,
@@ -740,6 +781,8 @@ const rejectAdById = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
 
 // kyc user details
 const fetchUserKycStatus = async (req, res) => {

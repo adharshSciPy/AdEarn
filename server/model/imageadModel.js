@@ -82,6 +82,10 @@ const imageAd = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    extraDeductedStars: {
+  type: Number,
+  default: 0,
+},
     starPayoutPlan: {
       type: [Number],
       default: [],
