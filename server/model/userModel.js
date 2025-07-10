@@ -138,13 +138,7 @@ const userSchema = new Schema(
       type:Boolean,
       default:false
     },
-    superadminGiven: [
-  {
-    starCount: { type: Number},
-    note: { type: String },
-    givenAt: { type: Date, default: Date.now }
-  }
-],
+
 
   },
   { timestamps: true }

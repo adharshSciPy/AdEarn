@@ -52,6 +52,13 @@ const userWallet = new Schema({
       type: Number,
       default: 0,
   },
+  superadminGiven: [
+  {
+    starCount: Number,
+    note: String,
+    givenAt: Date,
+  }
+],
 });
 
 export const UserWallet = mongoose.model("UserWallet", userWallet, "userwallets");
