@@ -1634,7 +1634,65 @@ const approveAndDistributeCouponForAdminRequest = async (req, res) => {
     });
   }
 };
-//api to fetch remaining coupons on 
+//to distribute stars to user 
+const distributeStarsToUser = async (req, res) => {
+  const { userId, starCount, note } = req.body;
+
+  if (!userId || !starCount) {
+    return res.status(400).json({ message: "User ID and star count are required." });
+  }
+
+  try {
+    const user = await User.findById(userId).populate("userWalletDetails");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const wallet = user.userWalletDetails;
+
+    if (!wallet) {
+      return res.status(404).json({ message: "User wallet not found" });
+    }
+
+    const logEntry = {
+      starCount,
+      note,
+      givenAt: new Date(),
+    };
+
+    // Append log entry to wallet
+    if (!wallet.superadminGiven) {
+      wallet.superadminGiven = [logEntry];
+    } else {
+      wallet.superadminGiven.push(logEntry);
+    }
+
+    // Update totalStars in wallet
+    if (!wallet.totalStars) {
+      wallet.totalStars = starCount;
+    } else {
+      wallet.totalStars += starCount;
+    }
+
+    await wallet.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `${starCount} stars successfully given to user`,
+      userId: user._id,
+      totalStars: wallet.totalStars,
+      log: logEntry,
+    });
+
+  } catch (error) {
+    console.error("Error in distributeStarsToUser:", error);
+    return res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+};
+
+
+
 
 
 
@@ -1670,5 +1728,6 @@ export {
   stopContestManually,
   getSuperAdminWelcomeBonusEarnings,
   fetchAdminCouponsRequests,
-  approveAndDistributeCouponForAdminRequest
+  approveAndDistributeCouponForAdminRequest,
+  distributeStarsToUser
 };

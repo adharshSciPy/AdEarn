@@ -137,7 +137,9 @@ const userSchema = new Schema(
     isBlacklisted:{
       type:Boolean,
       default:false
-    }
+    },
+
+
   },
   { timestamps: true }
 );
