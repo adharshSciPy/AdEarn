@@ -56,3 +56,9 @@ padding: 10px;
   justify-content: center;
   align-items: center;
 }
+.button{
+  padding: 15px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+}

@@ -95,6 +95,7 @@ import ResetPassSuper from './pages/superadmin/ResetPassSuper/ResetPassSuper';
 import CouponListing from './pages/superadmin/CouponListing/CouponListing';
 import ContestGamification from './pages/superadmin/ContestGamification/ContestGamification'
 import SelectWinner from './pages/superadmin/SelectWinner/SelectWinner';
+import CoupounRequest from './pages/superadmin/CouponRequestListing/CoupounRequest';
 
 
 
@@ -213,7 +214,7 @@ function App() {
           <Route path='/superadminreferalstar' element={<ReferealStar />} />
           <Route path='/superadminsubscriptionstar' element={<SubScriptionStar />} />
           <Route path='/superadminuserstar' element={<Userstar />} />
-          <Route path='/superadminwelcomestar' element={<WelcomeStar />} />
+          <Route path='/superadminwelcomestar' element={<WelcomeStar />} /> 
           <Route path='/superadmincontest' element={<Contest />} />
           <Route path='/superadmincontestwinner' element={<ContestWinner />} />
           <Route path='/SuperadminLogin' element={<SuperAdminLogin />} />
@@ -222,6 +223,8 @@ function App() {
           <Route path='/Superadmincouponlisting' element={<CouponListing />} />
           <Route path='/ContestGamification/:id' element={<ContestGamification />} />
           <Route path='/selectwinner' element={<SelectWinner />} />
+          <Route path='/couponreqSuperAdmin' element={< CoupounRequest/>} />
+
 
 
 

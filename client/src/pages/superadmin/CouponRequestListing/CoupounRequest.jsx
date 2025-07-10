@@ -1,44 +1,49 @@
-import React, { useState, useEffect } from "react";
-import styles from "./AdminCouponAssign.module.css";
-import Sidebar from "../../../components/sidebar/Sidebar";
-import baseUrl from "../../../baseurl";
-import axios from "axios";
-import { useParams } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import Sidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
+import styles from "./CouponRequest.module.css";
 import { useSelector } from "react-redux";
+import axios from "axios";
+import baseUrl from "../../../baseurl";
 
-function AdminCouponReq() {
+function CoupounRequest() {
   const [bundles, setBundles] = useState([]);
   const adminId = useSelector((state) => state.admin.id);
 
-  const getRequest = async () => {
+  const getCoupons = async () => {
     try {
-      const response = await axios.get(`${baseUrl}/api/v1/admin/assigned-coupon-requests/${adminId}`);
-      console.log(response);  
-      setBundles(response.data.data)
-      
+      const response = await axios.get(
+        `${baseUrl}/api/v1/super-admin/coupon-requests`
+      );
+      console.log(response);
+      setBundles(response.data.data || []);
     } catch (error) {
       console.log(error);
     }
   };
-  const sendReq=async(bundleId)=>{
-    try {
-      const response=await axios.post(`${baseUrl}/api/v1/admin/distribute-coupon/${adminId}`,{requestId:bundleId})
-      console.log(response);
-      
-    } catch (error) {
-      console.log(error);
-      
-    }
-    console.log("click",bundleId);
+  useEffect(() => {
+    getCoupons();
+  }, []);
+  const sendReq = async (bundleId,adminId) => {
+    console.log("thisss",bundleId,adminId);
     
-  }
-  useEffect(()=>{getRequest()},[])
+    try {
+        const respone =await axios.post(`${baseUrl}/api/v1/super-admin/approve-assign-coupon`,{
+            requestId:bundleId,
+            adminId:adminId
+        })
+        console.log(respone);
+        
+    } catch (error) {
+        console.log(error);
+        
+    }
+  };
   return (
     <div className={styles.UserAccount}>
       <Sidebar />
       <div className={styles.wrapper}>
         <div className={styles.header}>
-          <h2>Coupon Assignment</h2>
+          <h2>Coupon Requests</h2>
         </div>
 
         <div className={styles.grid}>
@@ -48,6 +53,9 @@ function AdminCouponReq() {
                 <th>#</th>
                 <th>UserName</th>
                 <th>Note</th>
+                <th>Coupon Count</th>
+                <th>Stars Count Per Coupon</th>
+
                 <th>Action</th>
               </tr>
             </thead>
@@ -56,14 +64,16 @@ function AdminCouponReq() {
                 bundles.map((bundle, index) => (
                   <tr key={bundle._id}>
                     <td>{index + 1}</td>
-                    <td>{bundle.userName}</td>
+                    <td>{bundle.adminId?.adminEmail}</td>
                     <td>{bundle.note}</td>
+                    <td>{bundle.couponCount}</td>
+                    <td>{bundle.starCountPerCoupon}</td>
                     <td>
                       <button
                         className={styles.sendButton}
-                        onClick={() => sendReq(bundle._id)}
+                        onClick={() => sendReq(bundle._id,bundle.adminId?._id)}
                       >
-                        Verify
+                        Verify and Accept
                       </button>
                     </td>
                   </tr>
@@ -83,4 +93,4 @@ function AdminCouponReq() {
   );
 }
 
-export default AdminCouponReq;
+export default CoupounRequest;
