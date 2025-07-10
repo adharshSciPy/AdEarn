@@ -24,7 +24,9 @@ function AdminCouponReq() {
     try {
       const response=await axios.post(`${baseUrl}/api/v1/admin/distribute-coupon/${adminId}`,{requestId:bundleId})
       console.log(response);
-      
+      if(response.status===200){
+        getRequest()  
+      }
     } catch (error) {
       console.log(error);
       

@@ -5,6 +5,7 @@ import baseUrl from "../../../baseurl";
 import axios from "axios";
 
 function CouponGeneration() {
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     couponCount: "",
     perStarCount: "",
@@ -20,23 +21,43 @@ function CouponGeneration() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Validate required fields
+    if (!formData.couponCount || !formData.perStarCount) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    // Validate dates if both are provided
+    if (formData.date && formData.expiryDate) {
+      const startDate = new Date(formData.date);
+      const endDate = new Date(formData.expiryDate);
+
+      if (endDate <= startDate) {
+        alert("Expiry date must be after the start date");
+        return;
+      }
+    }
+
+    setIsLoading(true);
+
+    // Create payload with only filled fields
     const payload = {
       couponCount: formData.couponCount,
       perStarCount: formData.perStarCount,
-      generationDate: formData.date,
-      expiryDate: formData.expiryDate,
+      generationDate: formData.date || "",
+      expiryDate: formData.expiryDate || "",
     };
-    console.log(payload);
+
+    console.log("pay", payload);
 
     try {
       const response = await axios.post(
         `${baseUrl}/api/v1/super-admin/generate-coupons`,
         payload
       );
-      console.log(response);
-      
+
       if (response.status === 200) {
-        console.log("Success:", response.data);
+        alert("Coupons generated successfully!");
         setFormData({
           couponCount: "",
           perStarCount: "",
@@ -46,7 +67,9 @@ function CouponGeneration() {
       }
     } catch (error) {
       console.error("Error generating coupons:", error);
-      // toast.error(error?.response?.data?.message || "Failed to generate coupons!");
+      alert(error?.response?.data?.message || "Failed to generate coupons!");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -59,21 +82,24 @@ function CouponGeneration() {
         </div>
         <div className={styles.container}>
           <form className={styles.form} onSubmit={handleSubmit}>
-            <label>Enter generating coupon count</label>
+            <label>Enter generating coupon count *</label>
             <input
               type="number"
               name="couponCount"
               value={formData.couponCount}
               onChange={handleChange}
               placeholder="Enter generating coupon count"
+              required
+              min="1"
             />
 
-            <label>Enter each coupon star count</label>
+            <label>Enter each coupon star count *</label>
             <select
               name="perStarCount"
               value={formData.perStarCount}
               onChange={handleChange}
               className={styles.dropDown}
+              required
             >
               <option value="">Select star count</option>
               <option value="5">5 Star</option>
@@ -82,31 +108,47 @@ function CouponGeneration() {
               <option value="50">50 Stars</option>
               <option value="100">100 Stars</option>
               <option value="250">250 Stars</option>
-
             </select>
 
-            <label>Enter Start Date</label>
+            <label>Enter Start Date (optional)</label>
             <input
               type="date"
               name="date"
-              value={formData.date}
+              value={formData.date || ""}
               onChange={handleChange}
+              min={new Date().toISOString().split("T")[0]} // Optional: restrict to future dates
             />
 
-            <label>Enter Expiry Date</label>
+            <label>Enter Expiry Date (optional)</label>
             <input
               type="date"
               name="expiryDate"
-              value={formData.expiryDate}
+              value={formData.expiryDate || ""}
               onChange={handleChange}
+              min={formData.date || new Date().toISOString().split("T")[0]}
             />
 
             <div className={styles.buttons}>
-              <button type="button" className={styles.cancel}>
+              <button
+                type="button"
+                className={styles.cancel}
+                onClick={() =>
+                  setFormData({
+                    couponCount: "",
+                    perStarCount: "",
+                    date: "",
+                    expiryDate: "",
+                  })
+                }
+              >
                 Cancel
               </button>
-              <button type="submit" className={styles.submit}>
-                Submit
+              <button
+                type="submit"
+                className={styles.submit}
+                disabled={isLoading}
+              >
+                {isLoading ? "Processing..." : "Submit"}
               </button>
             </div>
           </form>
