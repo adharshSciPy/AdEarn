@@ -36,7 +36,6 @@ function CouponListing() {
     allAdmins();
   }, []);
 
-
   const handleAdminChange = (index, value) => {
     setAssignments((prev) => ({ ...prev, [index]: value }));
   };
@@ -45,44 +44,46 @@ function CouponListing() {
     couponData.coupons?.map((item) => <p>{item.perStarCount}</p>) || "nil"
   );
   const handleNoteChange = (index, value) => {
-  setNotes((prev) => ({ ...prev, [index]: value }));
-};
-const handleApprove = async (couponId, adminId, note, index) => {
-  if (!adminId) {
-    alert("Please select an admin before approving.");
-    return;
-  }
-
-  try {
-    const response = await axios.post(`${baseUrl}/api/v1/super-admin/distribute-coupon`, {
-      batchId: couponId,
-      adminId,
-      note
-    });
-
-    if (response.status === 200) {
-      alert("Admin assigned successfully");
-      console.log("coupons", response);
-
-      // 🧹 Clear selection and note for this row
-      setAssignments((prev) => {
-        const updated = { ...prev };
-        delete updated[index];
-        return updated;
-      });
-
-      setNotes((prev) => {
-        const updated = { ...prev };
-        delete updated[index];
-        return updated;
-      });
+    setNotes((prev) => ({ ...prev, [index]: value }));
+  };
+  const handleApprove = async (couponId, adminId, note, index) => {
+    if (!adminId) {
+      alert("Please select an admin before approving.");
+      return;
     }
-  } catch (err) {
-    console.error("Error assigning admin:", err);
-    alert("Failed to assign admin");
-  }
-};
 
+    try {
+      const response = await axios.post(
+        `${baseUrl}/api/v1/super-admin/distribute-coupon`,
+        {
+          batchId: couponId,
+          adminId,
+          note,
+        }
+      );
+
+      if (response.status === 200) {
+        alert("Admin assigned successfully");
+        console.log("coupons", response);
+
+        // 🧹 Clear selection and note for this row
+        setAssignments((prev) => {
+          const updated = { ...prev };
+          delete updated[index];
+          return updated;
+        });
+
+        setNotes((prev) => {
+          const updated = { ...prev };
+          delete updated[index];
+          return updated;
+        });
+      }
+    } catch (err) {
+      console.error("Error assigning admin:", err);
+      alert("Failed to assign admin");
+    }
+  };
 
   return (
     <div className={styles.UserAccount}>
@@ -115,7 +116,9 @@ const handleApprove = async (couponId, adminId, note, index) => {
                       {new Date(row.generationDate).toLocaleDateString("en-GB")}
                     </td>
                     <td>
-                      {new Date(row.expiryDate).toLocaleDateString("en-GB")}
+                      {row.expiryDate
+                        ? new Date(row.expiryDate).toLocaleDateString("en-GB")
+                        : "nil"}
                     </td>
 
                     <td>{row.coupons?.[0]?.perStarCount || "N/A"}</td>
@@ -149,7 +152,12 @@ const handleApprove = async (couponId, adminId, note, index) => {
                       <button
                         className={styles.approveBtn}
                         onClick={() =>
-                          handleApprove(row._id, assignments[index],notes[index],index)
+                          handleApprove(
+                            row._id,
+                            assignments[index],
+                            notes[index],
+                            index
+                          )
                         }
                       >
                         Approve

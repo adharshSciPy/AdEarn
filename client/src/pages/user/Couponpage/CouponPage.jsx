@@ -77,6 +77,7 @@ const handleRequestCoupon = async () => {
       couponCount,
       perStarCount,
       note,
+      role:300
     });
     console.log(response);
     

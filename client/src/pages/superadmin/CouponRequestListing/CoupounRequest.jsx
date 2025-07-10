@@ -9,35 +9,42 @@ function CoupounRequest() {
   const [bundles, setBundles] = useState([]);
   const adminId = useSelector((state) => state.admin.id);
 
+  // Fetch all coupon requests
   const getCoupons = async () => {
     try {
-      const response = await axios.get(
-        `${baseUrl}/api/v1/super-admin/coupon-requests`
-      );
-      console.log(response);
+      const response = await axios.get(`${baseUrl}/api/v1/super-admin/coupon-requests`);
       setBundles(response.data.data || []);
     } catch (error) {
       console.log(error);
     }
   };
+
   useEffect(() => {
     getCoupons();
   }, []);
-  const sendReq = async (bundleId,adminId) => {
-    console.log("thisss",bundleId,adminId);
-    
+
+  // Approve and assign coupon
+  const sendReq = async (bundleId, adminId) => {
     try {
-        const respone =await axios.post(`${baseUrl}/api/v1/super-admin/approve-assign-coupon`,{
-            requestId:bundleId,
-            adminId:adminId
-        })
-        console.log(respone);
-        
+      const response = await axios.post(`${baseUrl}/api/v1/super-admin/approve-assign-coupon`, {
+        requestId: bundleId,
+        adminId: adminId,
+      });
+
+      if (response.status === 200) {
+        // Optimistically update UI by removing approved item
+        setBundles((prevBundles) =>
+          prevBundles.filter((bundle) => bundle._id !== bundleId)
+        );
+
+        // Optional: re-fetch from backend after short delay to ensure sync
+        // setTimeout(() => getCoupons(), 500);
+      }
     } catch (error) {
-        console.log(error);
-        
+      console.log(error);
     }
   };
+
   return (
     <div className={styles.UserAccount}>
       <Sidebar />
@@ -55,7 +62,6 @@ function CoupounRequest() {
                 <th>Note</th>
                 <th>Coupon Count</th>
                 <th>Stars Count Per Coupon</th>
-
                 <th>Action</th>
               </tr>
             </thead>
@@ -71,7 +77,7 @@ function CoupounRequest() {
                     <td>
                       <button
                         className={styles.sendButton}
-                        onClick={() => sendReq(bundle._id,bundle.adminId?._id)}
+                        onClick={() => sendReq(bundle._id, bundle.adminId?._id)}
                       >
                         Verify and Accept
                       </button>
@@ -80,7 +86,7 @@ function CoupounRequest() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className={styles.noData}>
+                  <td colSpan="6" className={styles.noData}>
                     No requests found
                   </td>
                 </tr>
