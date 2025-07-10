@@ -3,13 +3,14 @@ import styles from "./AdminReqCoupon.module.css";
 import Sidebar from "../../../components/sidebar/Sidebar";
 import axios from "axios";
 import baseUrl from "../../../baseurl";
+import { useParams } from "react-router-dom";
 
 function AdminReqCoupon() {
   const [couponCount, setCouponCount] = useState("");
   const [perStarCount, setPerStarCount] = useState("");
   const [note, setNotes] = useState("");
   const [requestStatus, setRequestStatus] = useState(""); // "success", "error", "loading"
-
+  const { id } = useParams();
   const handleRequestCoupon = async () => {
     if (!couponCount || !perStarCount) {
       setRequestStatus("error");
@@ -17,15 +18,22 @@ function AdminReqCoupon() {
     }
 
     const payload = {
-      couponCount: parseInt(couponCount),
-      perStarCount: parseInt(perStarCount),
+      couponCount:couponCount,
+      starCountPerCoupon:perStarCount,
       note,
     };
-
+    
     try {
+      console.log(payload);
+      
       setRequestStatus("loading");
-      const res = await axios.post(`${baseUrl}/api/v1/coupons/request`, payload);
-      if (res.status === 200) {
+      const res = await axios.post(
+        `${baseUrl}/api/v1/admin/coupon/request/${id}`,
+        payload
+      );
+      console.log(res);
+      
+      if (res.status === 201) {
         setRequestStatus("success");
         setCouponCount("");
         setPerStarCount("");
@@ -46,8 +54,7 @@ function AdminReqCoupon() {
             <div className={styles.couponHeader}>
               <h2>📩 Request New Coupons</h2>
               <p>
-                Specify how many coupons you need and how many stars per
-                coupon.
+                Specify how many coupons you need and how many stars per coupon.
               </p>
             </div>
 

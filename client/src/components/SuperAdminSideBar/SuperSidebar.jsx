@@ -120,6 +120,8 @@ function Sidebar() {
       children: [
         { key: "generate-coupons", label: "Generate Coupons", path: "/superadmincoupongeneration" },
         { key: "list-coupons", label: "List Coupons", path: "/Superadmincouponlisting" },
+        { key: "list-coupons-req", label: "List Coupons Request", path: "/couponreqSuperAdmin" },
+
 
       ],
     },

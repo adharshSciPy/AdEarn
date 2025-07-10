@@ -22,7 +22,7 @@ function AdminCouponReq() {
   };
   const sendReq=async(bundleId)=>{
     try {
-      const response=await axios.post(`${baseUrl}/api/v1/admin/approve-coupon/${bundleId}`,{id:adminId})
+      const response=await axios.post(`${baseUrl}/api/v1/admin/distribute-coupon/${adminId}`,{requestId:bundleId})
       console.log(response);
       
     } catch (error) {
