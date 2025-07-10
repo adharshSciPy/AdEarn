@@ -72,6 +72,8 @@ function Sidebar() {
                     { key: "coupons-all", label: "All Coupons", path: `/AdminCoupon/${id}` },
                     { key: "coupons-new", label: "Coupon Requests", path: `/AdminCouponReq/${id}`},
                     { key: "coupons-assigned", label: "Coupon Assigned", path: `/AdminCouponAssignment/${id}`},
+                    { key: "coupons-request-admin", label: "Coupon Request", path: `/couponRequestSuperAdmin/${id}`},
+
 
                 ]
 
