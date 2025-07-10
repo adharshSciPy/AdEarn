@@ -1391,9 +1391,16 @@ const fetchCouponRequestsAssignedToAdmin = async (req, res) => {
 
     const formattedRequests = requests.map(req => {
       const { firstName = "", lastName = "" } = req.userId || {};
+        const starCountPerCoupon = req.starCountPerCoupon || 0;
+      const totalStars = req.totalStars || 0;
+        const couponCount = starCountPerCoupon > 0 ? totalStars / starCountPerCoupon : 0;
+
       return {
         ...req._doc,
-        userName: `${firstName} ${lastName}`.trim()
+        userName: `${firstName} ${lastName}`.trim(),
+          starCountPerCoupon,
+        totalStars,
+        couponCount
       };
     });
 

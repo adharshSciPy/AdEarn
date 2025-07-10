@@ -1495,9 +1495,15 @@ const fetchAdminCouponsRequests = async (req, res) => {
     // Format with admin name if needed
     const formatted = requests.map(req => {
       const adminName = req.adminId?.adminName || "Admin";
+          const starCountPerCoupon = req.starCountPerCoupon || 0;
+      const totalStars = req.totalStars || 0;
+      const couponCount = starCountPerCoupon > 0 ? totalStars / starCountPerCoupon : 0;
       return {
         ...req._doc,
-        adminName
+        adminName,
+         starCountPerCoupon,
+        totalStars,
+        couponCount
       };
     });
 
