@@ -1910,180 +1910,180 @@ return res.status(404).json({message:"Ad not found"});
 
 };
 // to post image ad with payment method
-// const createImageAdWithPayment = async (req, res) => {
-//   const {
-//     title,
-//     description,
-//     userViewsNeeded,
-//     adPeriod,
-//     locations,
-//     states,
-//     districts,
-//     clickUrl,
-//   } = req.body;
+const createImageAdWithPayment = async (req, res) => {
+  const {
+    title,
+    description,
+    userViewsNeeded,
+    adPeriod,
+    locations,
+    states,
+    districts,
+    clickUrl,
+  } = req.body;
 
-//   const { id } = req.params;
+  const { id } = req.params;
 
-//   if (!id) return res.status(400).json({ message: "User ID is required" });
+  if (!id) return res.status(400).json({ message: "User ID is required" });
 
-//   const imageFile = req.files?.imageAd?.[0];
-//   const audioFile = req.files?.audioAd?.[0];
-//   if (!imageFile)
-//     return res.status(400).json({ message: "Image file is required" });
+  const imageFile = req.files?.imageAd?.[0];
+  const audioFile = req.files?.audioAd?.[0];
+  if (!imageFile)
+    return res.status(400).json({ message: "Image file is required" });
 
-//   if (!title || !description || !userViewsNeeded)
-//     return res.status(400).json({ message: "Missing required fields" });
+  if (!title || !description || !userViewsNeeded)
+    return res.status(400).json({ message: "Missing required fields" });
 
-//   const parsedAdPeriod = parseFloat(adPeriod);
-//   const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
+  const parsedAdPeriod = parseFloat(adPeriod);
+  const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
 
-//   // Parse locations
-//   let targetRegions = [];
-//   let targetStates = [];
-//   let targetDistricts = [];
+  // Parse locations
+  let targetRegions = [];
+  let targetStates = [];
+  let targetDistricts = [];
 
-//   try {
-//     const parsedLocations =
-//       typeof locations === "string" ? JSON.parse(locations) : locations;
+  try {
+    const parsedLocations =
+      typeof locations === "string" ? JSON.parse(locations) : locations;
 
-//     if (Array.isArray(parsedLocations)) {
-//       for (const loc of parsedLocations) {
-//         if (!loc.coords || !loc.radius) continue;
+    if (Array.isArray(parsedLocations)) {
+      for (const loc of parsedLocations) {
+        if (!loc.coords || !loc.radius) continue;
 
-//         const [latStr, lngStr] = loc.coords.split(",");
-//         const latitude = parseFloat(latStr);
-//         const longitude = parseFloat(lngStr);
-//         const radius = parseFloat(loc.radius);
+        const [latStr, lngStr] = loc.coords.split(",");
+        const latitude = parseFloat(latStr);
+        const longitude = parseFloat(lngStr);
+        const radius = parseFloat(loc.radius);
 
-//         if (isNaN(latitude) || isNaN(longitude) || isNaN(radius)) {
-//           return res.status(400).json({ message: "Invalid location format" });
-//         }
+        if (isNaN(latitude) || isNaN(longitude) || isNaN(radius)) {
+          return res.status(400).json({ message: "Invalid location format" });
+        }
 
-//         targetRegions.push({
-//           location: {
-//             type: "Point",
-//             coordinates: [latitude, longitude],
-//           },
-//           radius,
-//         });
-//       }
-//     }
+        targetRegions.push({
+          location: {
+            type: "Point",
+            coordinates: [latitude, longitude],
+          },
+          radius,
+        });
+      }
+    }
 
-//     targetStates = typeof states === "string" ? JSON.parse(states) : states;
-//     if (!Array.isArray(targetStates)) targetStates = [];
+    targetStates = typeof states === "string" ? JSON.parse(states) : states;
+    if (!Array.isArray(targetStates)) targetStates = [];
 
-//     targetDistricts =
-//       typeof districts === "string" ? JSON.parse(districts) : districts;
-//     if (!Array.isArray(targetDistricts)) targetDistricts = [];
+    targetDistricts =
+      typeof districts === "string" ? JSON.parse(districts) : districts;
+    if (!Array.isArray(targetDistricts)) targetDistricts = [];
 
-//     if (
-//       targetRegions.length === 0 &&
-//       targetStates.length === 0 &&
-//       targetDistricts.length === 0
-//     ) {
-//       return res.status(400).json({
-//         message:
-//           "At least one target location (geo, state, or district) is required",
-//       });
-//     }
-//   } catch (err) {
-//     return res.status(400).json({
-//       message: "Invalid location format",
-//       error: err.message,
-//     });
-//   }
+    if (
+      targetRegions.length === 0 &&
+      targetStates.length === 0 &&
+      targetDistricts.length === 0
+    ) {
+      return res.status(400).json({
+        message:
+          "At least one target location (geo, state, or district) is required",
+      });
+    }
+  } catch (err) {
+    return res.status(400).json({
+      message: "Invalid location format",
+      error: err.message,
+    });
+  }
 
-//   try {
-//     const user = await User.findById(id);
-//     if (!user) return res.status(404).json({ message: "User not found" });
+  try {
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-//     // Payment calculation 
-//     const starsDeductionRate = 0.6;
-//     const baseDeductedStars = userViewsNeeded * starsDeductionRate;
-//     const extraDeductedStars =0;
+    // Payment calculation 
+    const starsDeductionRate = 0.6;
+    const baseDeductedStars = userViewsNeeded * starsDeductionRate;
+    const extraDeductedStars =0;
 
-//     const conversionRate = 4; // 1 Rupee = 4 Stars
-//     const percentageToUser = 60;
+    const conversionRate = 4; // 1 Rupee = 4 Stars
+    const percentageToUser = 60;
 
-//     const totalStarsGenerated = baseDeductedStars * (100 / percentageToUser);
-//     const rupeesToPay = totalStarsGenerated / conversionRate;
+    const totalStarsGenerated = baseDeductedStars * (100 / percentageToUser);
+    const rupeesToPay = totalStarsGenerated / conversionRate;
 
-//     const userShare = baseDeductedStars;
-//     const superAdminShare = totalStarsGenerated * 0.2;
-//     const adminShare = totalStarsGenerated * 0.1;
-//     const referredUserShare = totalStarsGenerated * 0.1;
+    const userShare = baseDeductedStars;
+    const superAdminShare = totalStarsGenerated * 0.2;
+    const adminShare = totalStarsGenerated * 0.1;
+    const referredUserShare = totalStarsGenerated * 0.1;
 
-//     // Star payout plan
-//     const highvalueArray = [5, 4, 3, 2];
-//     const highValueRepetitions = Math.floor(userViewsNeeded / 100);
-//     let highValueStars = [];
-//     for (const value of highvalueArray) {
-//       const repeatedStars = Array(highValueRepetitions).fill(value);
-//       highValueStars.push(...repeatedStars);
-//     }
+    // Star payout plan
+    const highvalueArray = [5, 4, 3, 2];
+    const highValueRepetitions = Math.floor(userViewsNeeded / 100);
+    let highValueStars = [];
+    for (const value of highvalueArray) {
+      const repeatedStars = Array(highValueRepetitions).fill(value);
+      highValueStars.push(...repeatedStars);
+    }
 
-//     const highValueTotal = highValueStars.reduce((acc, val) => acc + val, 0);
-//     const singleStarsCount = Math.floor(baseDeductedStars - highValueTotal);
-//     const singleStars = Array(singleStarsCount).fill(1);
-//     const totalGiven = highValueStars.length + singleStars.length;
-//     const nullStarsCount = userViewsNeeded - totalGiven;
-//     const nullStars = Array(nullStarsCount).fill(0);
-//     const starPayoutPlan = [...highValueStars, ...singleStars, ...nullStars];
+    const highValueTotal = highValueStars.reduce((acc, val) => acc + val, 0);
+    const singleStarsCount = Math.floor(baseDeductedStars - highValueTotal);
+    const singleStars = Array(singleStarsCount).fill(1);
+    const totalGiven = highValueStars.length + singleStars.length;
+    const nullStarsCount = userViewsNeeded - totalGiven;
+    const nullStars = Array(nullStarsCount).fill(0);
+    const starPayoutPlan = [...highValueStars, ...singleStars, ...nullStars];
 
-//     const imageUrl = `/imgAdUploads/${imageFile.filename}`;
-//     const audioUrl = audioFile ? `/imgAdUploads/${audioFile.filename}` : null;
+    const imageUrl = `/imgAdUploads/${imageFile.filename}`;
+    const audioUrl = audioFile ? `/imgAdUploads/${audioFile.filename}` : null;
 
-//     const imageAd = await ImageAd.create({
-//       title,
-//       description,
-//       imageUrl,
-//       audioUrl,
-//       clickUrl: clickUrl?.trim() || null,
-//       adPeriod: adRepetition ? parsedAdPeriod : 0,
-//       adRepetition,
-//       createdBy: user._id,
-//       userViewsNeeded,
-//       totalStarsAllocated: baseDeductedStars,
-//       extraDeductedStars, 
-//       starPayoutPlan,
-//       targetRegions,
-//       targetStates,
-//       targetDistricts,
+    const imageAd = await ImageAd.create({
+      title,
+      description,
+      imageUrl,
+      audioUrl,
+      clickUrl: clickUrl?.trim() || null,
+      adPeriod: adRepetition ? parsedAdPeriod : 0,
+      adRepetition,
+      createdBy: user._id,
+      userViewsNeeded,
+      totalStarsAllocated: baseDeductedStars,
+      extraDeductedStars, 
+      starPayoutPlan,
+      targetRegions,
+      targetStates,
+      targetDistricts,
 
-//       // Payment-specific fields
-//       paymentMode: "payment",
-//       isPaymentCompleted: false,
-//       amountToPay: rupeesToPay,
-//       userShare,
-//       superAdminShare,
-//       adminShare,
-//       referredUserShare,
-//     });
+      // Payment-specific fields
+      paymentMode: "payment",
+      isPaymentCompleted: false,
+      amountToPay: rupeesToPay,
+      userShare,
+      superAdminShare,
+      adminShare,
+      referredUserShare,
+    });
 
-//     const ad = await Ad.create({ imgAdRef: imageAd._id });
+    const ad = await Ad.create({ imgAdRef: imageAd._id });
 
-//     user.ads.push(ad._id);
-//     await user.save();
+    user.ads.push(ad._id);
+    await user.save();
 
-//     return res.status(200).json({
-//       message: "Image Ad created. Complete payment to proceed.",
-//       imageAd,
-//       ad,
-//       amountToPay: rupeesToPay.toFixed(2),
-//       starsCalculated: {
-//         baseDeductedStars,
-//         extraDeductedStars,
-//         totalStarsToBeDeducted: baseDeductedStars,
-//       },
-//     });
-//   } catch (error) {
-//     console.error("Error creating image ad:", error);
-//     return res.status(500).json({
-//       message: "Failed to create ad",
-//       error: error.message,
-//     });
-//   }
-// };
+    return res.status(200).json({
+      message: "Image Ad created. Complete payment to proceed.",
+      imageAd,
+      ad,
+      amountToPay: rupeesToPay.toFixed(2),
+      starsCalculated: {
+        baseDeductedStars,
+        extraDeductedStars,
+        totalStarsToBeDeducted: baseDeductedStars,
+      },
+    });
+  } catch (error) {
+    console.error("Error creating image ad:", error);
+    return res.status(500).json({
+      message: "Failed to create ad",
+      error: error.message,
+    });
+  }
+};
 
 
 
