@@ -93,8 +93,8 @@ function Sidebar() {
       label: "Star",
       icon: <UserOutlined />,
       children: [
-        { key: "user-star", label: "User Star", path: "/superadminuserstar" },
-        { key: "admin-star", label: "Admin Star", path: "/superadminadminstar" },
+        { key: "admin-star", label: "User Star", path: "/superadminadminstar" },
+        { key: "user-star", label: "Admin Star", path: "/superadminuserstar" },
         { key: "company-star", label: "Company Star", path: "/superadmincompanystar" },
         { key: "welcome-star", label: "Welcome Star", path: "/superadminwelcomestar" },
         {
