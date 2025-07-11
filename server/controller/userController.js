@@ -735,19 +735,15 @@ const starBuy = async (req, res) => {
       const firstUser = await User.findOne().sort({ createdAt: 1 }).populate("userWalletDetails");
 
       if (firstUser?.userWalletDetails) {
-        const firstWallet = firstUser.userWalletDetails;
+      const firstWallet = firstUser.userWalletDetails;
 
-        firstWallet.totalStars += Math.floor(referredUserShare);
-        firstWallet.starBought.push({
-          starsNeeded: Math.floor(referredUserShare),
-          paymentStatus: "completed",
-        });
-        firstWallet.referralTransactions.push({
-          fromUser: user._id,
-          starsReceived: Math.floor(referredUserShare),
-        });
+firstWallet.totalStars += Math.floor(referredUserShare);
+firstWallet.referralTransactions.push({
+  fromUser: user._id,
+  starsReceived: Math.floor(referredUserShare),
+});
+await firstWallet.save();
 
-        await firstWallet.save();
       }
     }
 
