@@ -5,6 +5,11 @@ import User from "../model/userModel.js";
 import { Ad } from "../model/AdsModel.js";
 import mongoose from "mongoose";
 import { UserWallet } from "../model/userWallet.js";
+import { sendNotification } from "../utils/sendNotifications.js";
+import AdminWallet from "../model/adminwalletModel.js";
+import SuperAdminWallet from "../model/superAdminWallet.js";
+import { Admin } from "../model/adminModel.js";
+import superAdminModel from "../model/superAdminModel.js";
 
 // function generateStarPayoutPlan(views, totalStars) {
 //   const payout = Array(views).fill(0);
@@ -64,6 +69,9 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
+const ADMIN_ROLE=process.env.ADMIN_ROLE;
+const USER_ROLE=process.env.USER_ROLE;
+const SUPER_ADMIN_ROLE=process.env.SUPER_ADMIN_ROLE;
 
 // ------------------- IMAGE AD -------------------
 const createImageAd = async (req, res) => {
@@ -218,6 +226,9 @@ const createImageAd = async (req, res) => {
       targetRegions,
       targetStates,
       targetDistricts,
+      paymentMode: "star",
+      isPaymentCompleted: true,
+      userShare: totalStarsToBeDeducted,
     });
 
     const ad = await Ad.create({ imgAdRef: imageAd._id });
@@ -794,6 +805,7 @@ const fetchAdsForVerification = async (req, res) => {
       .populate({
         path: "imgAdRef",
         match: {
+          isPaymentCompleted: true,
           isAdVerified: false,
           isAdRejected: false,
           $or: [
@@ -805,6 +817,7 @@ const fetchAdsForVerification = async (req, res) => {
       .populate({
         path: "videoAdRef",
         match: {
+          isPaymentCompleted: true,
           isAdVerified: false,
           isAdRejected: false,
           $or: [
@@ -816,6 +829,7 @@ const fetchAdsForVerification = async (req, res) => {
       .populate({
         path: "surveyAdRef",
         match: {
+          isPaymentCompleted: true,
           isAdVerified: false,
           isAdRejected: false,
           $or: [
@@ -855,13 +869,14 @@ const fetchAdsForVerification = async (req, res) => {
         : null,
     }));
 
-    return res.status(200).json({ ads: adsWithVerificationStatus });
+    return res.status(200).json({ count:adsWithVerificationStatus.length,ads: adsWithVerificationStatus });
 
   } catch (error) {
     console.error("Error fetching ads for verification:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 // fetching all the ads with isVerified:true to display to users (ads that have been verified by Admin)
 const fetchVerifiedAds = async (req, res) => {
@@ -1906,6 +1921,314 @@ return res.status(404).json({message:"Ad not found"});
   }
 
 };
+// to post image ad with payment method
+const createImageAdDraft = async (req, res) => {
+  const {
+    title,
+    description,
+    userViewsNeeded,
+    adPeriod,
+    locations,
+    states,
+    districts,
+    clickUrl,
+  } = req.body;
+
+  const { id: userId } = req.params;
+  const imageFile = req.files?.imageAd?.[0];
+  const audioFile = req.files?.audioAd?.[0];
+
+  if (!userId || !title || !description || !userViewsNeeded || !imageFile) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const parsedAdPeriod = parseFloat(adPeriod) || 0;
+    const adRepetition = parsedAdPeriod > 0;
+
+    // Parse location input
+    let targetRegions = [];
+    let targetStates = Array.isArray(states) ? states : JSON.parse(states || "[]");
+    let targetDistricts = Array.isArray(districts) ? districts : JSON.parse(districts || "[]");
+    const parsedLocations = Array.isArray(locations) ? locations : JSON.parse(locations || "[]");
+
+    for (const loc of parsedLocations) {
+      if (!loc.coords || !loc.radius) continue;
+      const [latStr, lngStr] = loc.coords.split(",");
+      const latitude = parseFloat(latStr);
+      const longitude = parseFloat(lngStr);
+      const radius = parseFloat(loc.radius);
+      if (!isNaN(latitude) && !isNaN(longitude) && !isNaN(radius)) {
+        targetRegions.push({
+          location: {
+            type: "Point",
+            coordinates: [latitude, longitude],
+          },
+          radius,
+        });
+      }
+    }
+
+    // Calculation
+    const starsDeductionRate = 0.6;
+    const baseDeductedStars = userViewsNeeded * starsDeductionRate;
+    const extraDeductedStars = 0;
+    const conversionRate = 4;
+    const percentageToUser = 60;
+
+    const totalStarsGenerated = baseDeductedStars * (100 / percentageToUser);
+    const rupeesToPay = totalStarsGenerated / conversionRate;
+
+    const userShare = baseDeductedStars;
+    const superAdminShare = totalStarsGenerated * 0.2;
+    const adminShare = totalStarsGenerated * 0.1;
+    const referredUserShare = totalStarsGenerated * 0.1;
+
+    // Star payout plan
+    const highvalueArray = [5, 4, 3, 2];
+    const highValueRepetitions = Math.floor(userViewsNeeded / 100);
+    let highValueStars = [];
+    for (const value of highvalueArray) {
+      highValueStars.push(...Array(highValueRepetitions).fill(value));
+    }
+    const highValueTotal = highValueStars.reduce((a, b) => a + b, 0);
+    const singleStarsCount = Math.floor(baseDeductedStars - highValueTotal);
+    const starPayoutPlan = [
+      ...highValueStars,
+      ...Array(singleStarsCount).fill(1),
+      ...Array(userViewsNeeded - (highValueStars.length + singleStarsCount)).fill(0),
+    ];
+
+    const imageUrl = `/imgAdUploads/${imageFile.filename}`;
+    const audioUrl = audioFile ? `/imgAdUploads/${audioFile.filename}` : null;
+
+    const imageAd = await ImageAd.create({
+      title,
+      description,
+      imageUrl,
+      audioUrl,
+      clickUrl: clickUrl?.trim() || null,
+      adPeriod: adRepetition ? parsedAdPeriod : 0,
+      adRepetition,
+      createdBy: user._id,
+      userViewsNeeded,
+      totalStarsAllocated: baseDeductedStars,
+      extraDeductedStars,
+      starPayoutPlan,
+      targetRegions,
+      targetStates,
+      targetDistricts,
+      paymentMode: "payment",
+      isPaymentCompleted: false,
+      amountToPay: rupeesToPay,
+      userShare,
+      superAdminShare,
+      adminShare,
+      referredUserShare,
+    });
+
+    const ad = await Ad.create({ imgAdRef: imageAd._id });
+    user.ads.push(ad._id);
+    await user.save();
+
+    return res.status(200).json({
+      message: "Ad draft created. Proceed to payment.",
+      adId: ad._id,
+      amountToPay: rupeesToPay.toFixed(2),
+      imageAd,
+    });
+  } catch (err) {
+    console.error("Error creating ad draft:", err);
+    return res.status(500).json({ message: "Internal server error", error: err.message });
+  }
+};
+
+//to confirm the status of the payment and to deliver star shares to respective wallets
+const confirmAdPayment = async (req, res) => {
+  const { adId } = req.params;
+  const { io, connectedUsers } = req;
+
+  try {
+    const ad = await Ad.findById(adId)
+      .populate("imgAdRef")
+      .populate("videoAdRef")
+      .populate("surveyAdRef");
+
+    if (!ad) return res.status(404).json({ message: "Ad not found" });
+
+    const adRef = ad.imgAdRef || ad.videoAdRef || ad.surveyAdRef;
+    if (!adRef) return res.status(404).json({ message: "No linked ad found" });
+    if (adRef.isPaymentCompleted) return res.status(400).json({ message: "Payment already confirmed" });
+
+    const user = await User.findById(adRef.createdBy)
+      .populate("userWalletDetails")
+      .populate("referedBy");
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const wallet = user.userWalletDetails;
+    if (!wallet) return res.status(404).json({ message: "User wallet not found" });
+
+    const {
+      userShare,
+      superAdminShare,
+      adminShare,
+      referredUserShare,
+    } = adRef;
+
+    // ✅ Update user wallet
+    wallet.totalStars += Math.floor(userShare);
+    wallet.starBought.push({
+      starsNeeded: Math.floor(userShare),
+      paymentStatus: "completed",
+    });
+    await wallet.save();
+
+    // ✅ Handle referred user
+    let referredUserNotification = null;
+    if (user.referedBy) {
+      const referredUser = await User.findById(user.referedBy).populate("userWalletDetails");
+      if (referredUser?.userWalletDetails) {
+        const referredWallet = referredUser.userWalletDetails;
+
+        referredWallet.totalStars += Math.floor(referredUserShare);
+        referredWallet.starBought.push({
+          starsNeeded: Math.floor(referredUserShare),
+          paymentStatus: "completed",
+        });
+        referredWallet.referralTransactions.push({
+          fromUser: user._id,
+          starsReceived: Math.floor(referredUserShare),
+        });
+
+        await referredWallet.save();
+
+        referredUser.referalCredits += Math.floor(referredUserShare);
+        await referredUser.save();
+
+        referredUserNotification = sendNotification(
+          referredUser._id,
+          USER_ROLE,
+          `You received ${Math.floor(referredUserShare)} stars as referral bonus from ${user.firstName}'s ad payment!`,
+          io,
+          connectedUsers
+        );
+      }
+    } else {
+      // ✅ Fallback to first user
+      const firstUser = await User.findOne().sort({ createdAt: 1 }).populate("userWalletDetails");
+      if (firstUser?.userWalletDetails) {
+        const firstWallet = firstUser.userWalletDetails;
+
+        firstWallet.totalStars += Math.floor(referredUserShare);
+        firstWallet.starBought.push({
+          starsNeeded: Math.floor(referredUserShare),
+          paymentStatus: "completed",
+        });
+        firstWallet.referralTransactions.push({
+          fromUser: user._id,
+          starsReceived: Math.floor(referredUserShare),
+        });
+
+        await firstWallet.save();
+      }
+    }
+
+    // ✅ Admin wallet
+    let adminWallet = await AdminWallet.findOne();
+    if (!adminWallet) {
+      adminWallet = new AdminWallet({
+        totalStars: Math.floor(adminShare),
+        transactions: [{
+          userId: user._id,
+          starsReceived: Math.floor(adminShare),
+        }],
+      });
+    } else {
+      adminWallet.totalStars += Math.floor(adminShare);
+      adminWallet.transactions.push({
+        userId: user._id,
+        starsReceived: Math.floor(adminShare),
+      });
+    }
+    await adminWallet.save();
+
+    // ✅ Super admin wallet
+    let superAdminWallet = await SuperAdminWallet.findOne(); 
+    if (!superAdminWallet) {
+      superAdminWallet = new SuperAdminWallet({
+        totalStars: Math.floor(superAdminShare),
+        transactions: [{
+          userId: user._id,
+          starsReceived: Math.floor(superAdminShare),
+        }],
+      });
+    } else {
+      superAdminWallet.totalStars += Math.floor(superAdminShare);
+      superAdminWallet.transactions.push({
+        userId: user._id,
+        starsReceived: Math.floor(superAdminShare),
+      });
+    }
+    await superAdminWallet.save();
+
+    // ✅ Send notifications
+    const adminUsers = await Admin.find({ adminRole: ADMIN_ROLE });
+    const superAdminUser = await superAdminModel.findOne({ role: SUPER_ADMIN_ROLE });
+
+    const notificationsToSend = [
+      sendNotification(
+        user._id,
+        USER_ROLE,
+        `Your ad payment succeeded. You received ${Math.floor(userShare)} stars.`,
+        io,
+        connectedUsers
+      ),
+      ...adminUsers.map((admin) =>
+        sendNotification(
+          admin._id,
+          ADMIN_ROLE,
+          `You received ${Math.floor(adminShare)} stars from ${user.firstName} ${user.lastName}'s ad payment.`,
+          io,
+          connectedUsers
+        )
+      ),
+      sendNotification(
+        superAdminUser?._id,
+        SUPER_ADMIN_ROLE,
+        `You received ${Math.floor(superAdminShare)} stars from ${user.firstName} ${user.lastName}'s ad payment.`,
+        io,
+        connectedUsers
+      )
+    ];
+
+    if (referredUserNotification) {
+      notificationsToSend.push(referredUserNotification);
+    }
+
+    await Promise.all(notificationsToSend);
+
+    // ✅ Mark payment as completed
+    adRef.isPaymentCompleted = true;
+    await adRef.save();
+
+    return res.status(200).json({
+      message: "Ad payment confirmed and shares distributed",
+      adType: ad.imgAdRef ? "ImageAd" : ad.videoAdRef ? "VideoAd" : "SurveyAd",
+      adId: adRef._id,
+    });
+
+  } catch (err) {
+    console.error("Error in confirmAdPayment:", err);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+};
 
 
 
@@ -1926,5 +2249,7 @@ export {
   viewAd,
   toggleAds,
   editImageAd,
-  editVideoAd
+  editVideoAd,
+  createImageAdDraft,
+  confirmAdPayment
 };
