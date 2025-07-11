@@ -1372,7 +1372,6 @@ const createContest = async (req, res) => {
   }
 };
 
-
 const selectAutomaticWinnersInternal = async (contestId) => {
   const contest = await ContestEntry.findById(contestId);
   if (!contest || contest.status === "Ended") return;
@@ -1431,9 +1430,6 @@ const selectAutomaticWinnersInternal = async (contestId) => {
   contest.contestEntryWallet -= totalReward;
   await contest.save();
 };
-
-
-
 
 const stopContestManually = async (req, res) => {
   const { id } = req.params;
@@ -1735,17 +1731,18 @@ const getContests = async (req, res) => {
   try {
     const { contestNumber } = req.query;
 
-    let query = {};
+    let query = { status: "Active" }; // 🔥 Only fetch contests with status Active
+
     if (contestNumber) {
       query.contestNumber = contestNumber;
     }
 
     const contests = await ContestEntry.find(query)
-      .sort({ startDate: -1 }) // optional: sort by date
-      .lean(); // improves read performance
+      .sort({ startDate: -1 })
+      .lean();
 
     return res.status(200).json({
-      message: contestNumber ? "Contest fetched" : "All contests fetched",
+      message: contestNumber ? "Contest fetched" : "Active contests fetched",
       contests
     });
   } catch (error) {
