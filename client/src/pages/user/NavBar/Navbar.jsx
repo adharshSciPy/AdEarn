@@ -7,11 +7,13 @@ import home from "../../../assets/home.jpg";
 import profile from "../../../assets/cardbackground.jpg";
 import notificationIcon from "../../../assets/navIcon.svg";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { useSelector } from "react-redux";
 import socket from "../../../components/Socket/socket";
 import verificationIcon from "../../../assets/kyc.png";
 import notification from "../../../assets/notification.png";
-import ads from "../../../assets/add.png"
+import ads from "../../../assets/add.png";
+import { addNotification } from "../../../components/features/notificationSlice";
 
 function Navbar() {
   const [activeTab, setActiveTab] = useState("home");
@@ -19,32 +21,43 @@ function Navbar() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef(null);
-
+  const dispatch = useDispatch();
   const userId = useSelector((state) => state.user.id);
   const navigate = useNavigate();
 
   const KYCIcon = () => (
-    <img src={verificationIcon} alt="KYC" style={{objectFit:"contain",height:"100%",width:"100%"}} />
+    <img
+      src={verificationIcon}
+      alt="KYC"
+      style={{ objectFit: "contain", height: "100%", width: "100%" }}
+    />
   );
-const NotificationIcon = () => (
-    <img src={notification} alt="notification" style={{objectFit:"contain",height:"100%",width:"100%"}} />
+  const NotificationIcon = () => (
+    <img
+      src={notification}
+      alt="notification"
+      style={{ objectFit: "contain", height: "100%", width: "100%" }}
+    />
   );
   const AdsIcon = () => (
-    <img src={ads} alt="notification" style={{objectFit:"contain",height:"100%",width:"100%"}} />
+    <img
+      src={ads}
+      alt="notification"
+      style={{ objectFit: "contain", height: "100%", width: "100%" }}
+    />
   );
   const navItems = [
     { icon: home, label: `/userhome/${userId}` },
     { icon: wallet, label: `/walletpage/${userId}` },
-    { icon: <AdsIcon/>, label: `/adsmanageruser/${userId}` },
+    { icon: <AdsIcon />, label: `/adsmanageruser/${userId}` },
     {
       icon: <KYCIcon />,
       label: "/kycverification",
     },
-    { icon:<NotificationIcon/> , label: "notification" },
+    { icon: <NotificationIcon />, label: "notification" },
     { icon: coupon, label: "/coupon" },
 
     { icon: profile, label: "/userprofile" },
-
   ];
 
   const handleBottomNavClick = (label) => {
@@ -83,12 +96,13 @@ const NotificationIcon = () => (
       console.log("🔔 Notification received on frontend:", data);
       setNotifications((prev) => [data, ...prev]);
       setUnreadCount((count) => count + 1);
+      dispatch(addNotification(data)); // dispatch to redux store
     });
 
     return () => {
       socket.off("notification");
     };
-  }, [userId]);
+  }, [userId, dispatch]);
 
   return (
     <>
