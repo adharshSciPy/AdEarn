@@ -16,7 +16,8 @@ import {
   editVideoAd,
   submitSurveyResponse,
   getSurveyAdStats,
-  createImageAdWithPayment
+  createImageAdDraft,
+  confirmAdPayment
 } from "../controller/adsController.js";
 import adMediaUpload from "../multer/adImageMulter.js";
 import adVideoUpload from "../multer/adVideoMulter.js";
@@ -43,7 +44,9 @@ adsRouter.post("/view-ads/:id/:adId", viewAd);
 adsRouter.post("/toggle-ad", toggleAds);
 adsRouter.patch("/edit-image-ad/:adId", wrapMulter(adMediaUpload), editImageAd);
 adsRouter.patch("/edit-video-ad/:adId", wrapMulter(adVideoUpload), editVideoAd);
-// adsRouter.post("/payment/image-ad/:id", wrapMulter(adMediaUpload), createImageAdWithPayment);
+adsRouter.post("/image-ad/draft/:id", wrapMulter(adMediaUpload), createImageAdDraft);
+adsRouter.post("/payment-verification/:adId", confirmAdPayment);
+
 
 
 export default adsRouter;

@@ -861,31 +861,44 @@ const sendOtpToAdmin = async (req, res) => {
 };
 // to verify otp and store the admin in db
 const verifyOtpAndRegisterAdmin = async (req, res) => {
-  const { adminEmail, otp } = req.body;
+  const { adminEmail, otp, password } = req.body;
 
-  if (!adminEmail || !otp) {
-    return res.status(400).json({ message: "All fields are required" });
+  if (!adminEmail || !otp || !password) {
+    return res.status(400).json({ message: "Email, OTP, and password are required" });
   }
 
-  const storedOtp = await redis.get(`admin_otp:${adminEmail}`);
-  if (!storedOtp) return res.status(400).json({ message: "OTP expired or not found" });
-  if (storedOtp !== otp) return res.status(400).json({ message: "Invalid OTP" });
-
-  await redis.del(`admin_otp:${adminEmail}`);
-
-
-
-  const existingAdmin = await Admin.findOne({ adminEmail });
-  if (existingAdmin) return res.status(409).json({ message: "Email already in use" });
+  if (!passwordValidator(password)) {
+    return res.status(400).json({
+      message:
+        "Password must be at least 8 characters long and include uppercase, lowercase, digit, and special character.",
+    });
+  }
 
   try {
-    const role = Number(ADMIN_ROLE) || 400;
-    const admin = await Admin.create({ adminEmail, role });
-    // const createdAdmin = await Admin.findById(admin._id).select("-password");
+    const storedOtp = await redis.get(`admin_otp:${adminEmail}`);
+    if (!storedOtp) return res.status(400).json({ message: "OTP expired or not found" });
+    if (storedOtp !== otp) return res.status(400).json({ message: "Invalid OTP" });
+
+    await redis.del(`admin_otp:${adminEmail}`);
+
+    const existingAdmin = await Admin.findOne({ adminEmail });
+    if (existingAdmin) return res.status(409).json({ message: "Email already in use" });
+
+    const role = Number(process.env.ADMIN_ROLE) || 400;
+
+    const newAdmin = await Admin.create({
+      adminEmail,
+      password,
+      adminRole: role,
+    });
 
     return res.status(201).json({
       message: "Admin registered successfully",
-      data: admin,
+      data: {
+        _id: newAdmin._id,
+        adminEmail: newAdmin.adminEmail,
+        role: newAdmin.adminRole,
+      },
     });
   } catch (err) {
     console.error("Admin Registration Error:", err);
