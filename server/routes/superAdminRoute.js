@@ -27,7 +27,8 @@ import {
   getSuperAdminWelcomeBonusEarnings,
   fetchAdminCouponsRequests,
   approveAndDistributeCouponForAdminRequest,
-  distributeStarsToUser
+  distributeStarsToUser,
+  getContests
   // selectAutomaticWinners
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
@@ -67,7 +68,7 @@ superAdminRouter.route("/stop/:id").post(stopContestManually);
 superAdminRouter.route("/coupon-requests").get(fetchAdminCouponsRequests);//to fetch coupon requests from admins
 superAdminRouter.route("/approve-assign-coupon").post(approveAndDistributeCouponForAdminRequest)
 superAdminRouter.route("/user/distribute-stars").post(distributeStarsToUser)
-
+superAdminRouter.route("/contests").get(getContests)
 
 
 
