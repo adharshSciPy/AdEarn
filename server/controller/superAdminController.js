@@ -723,7 +723,6 @@ const registerUserToContest = async (req, res) => {
       return res.status(404).json({ message: "SuperAdmin wallet not found" });
     }
 
-    // ✅ Check for duplicate entry
     const alreadyRegistered = adminWallet.contestEntryWallet.collectedFromUsers.find(
       entry =>
         entry.userId.toString() === userId.toString() &&
@@ -734,7 +733,15 @@ const registerUserToContest = async (req, res) => {
       return res.status(400).json({ message: "User already registered for this contest" });
     }
 
-    // ✅ Deduct stars from user
+    const participantExists = await ContestParticipant.findOne({
+      userId,
+      contestId: contest._id,
+    });
+
+    if (participantExists) {
+      return res.status(400).json({ message: "User already registered (participant exists)" });
+    }
+
     const user = await User.findById(userId).populate("userWalletDetails");
     if (!user || !user.userWalletDetails) {
       return res.status(404).json({ message: "User or user wallet not found" });
@@ -744,14 +751,15 @@ const registerUserToContest = async (req, res) => {
       return res.status(400).json({ message: "Not enough stars to enter the contest" });
     }
 
+    // ✅ Deduct stars
     user.userWalletDetails.totalStars -= contest.entryStars;
     await user.userWalletDetails.save();
 
-    // ✅ Add entry to admin wallet
+    // ✅ Add to SuperAdmin wallet
     adminWallet.contestEntryWallet.collectedFromUsers.push({
       userId,
       contestId: contest._id,
-      stars: contest.entryStars
+      stars: contest.entryStars,
     });
     adminWallet.contestEntryWallet.totalReceived += contest.entryStars;
     adminWallet.contestEntryWallet.totalEntries += 1;
@@ -763,10 +771,22 @@ const registerUserToContest = async (req, res) => {
     contest.totalEntries += 1;
     await contest.save();
 
-    // ✅ Auto end if max participants reached
+    // ✅ Create ContestParticipant entry
+    try {
+      console.log("➡ Attempting to create ContestParticipant...");
+      await ContestParticipant.create({
+        userId,
+        contestId: contest._id,
+      });
+      console.log("✅ Participant added");
+    } catch (err) {
+      console.error("❌ Failed to insert participant:", err.message);
+    }
+
+    // ✅ Auto-end if full
     if (contest.currentParticipants >= contest.maxParticipants) {
       if (contest.winnerSelectionType === "Automatic") {
-        console.log("Max participants reached. Triggering automatic winner selection.");
+        console.log("🎯 Max participants reached. Triggering automatic winner selection...");
         await selectAutomaticWinnersInternal(contest._id);
       } else {
         contest.status = "Ended";
@@ -774,14 +794,22 @@ const registerUserToContest = async (req, res) => {
       }
     }
 
-    return res.status(200).json({ message: "User registered to contest successfully" });
+    // ✅ Fetch all participants for the contest
+    const participants = await ContestParticipant.find({ contestId: contest._id })
+      .populate("userId", "name email") // Optional: user details
+      .sort({ joinedAt: 1 })
+      .lean();
+
+    return res.status(200).json({
+      message: "User registered to contest successfully",
+      participants,
+    });
 
   } catch (error) {
-    console.error("Error registering to contest:", error);
+    console.error("❌ Error registering to contest:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 
 // const autoSelectWinners = async (req, res) => {
@@ -1344,7 +1372,6 @@ const createContest = async (req, res) => {
   }
 };
 
-
 const selectAutomaticWinnersInternal = async (contestId) => {
   const contest = await ContestEntry.findById(contestId);
   if (!contest || contest.status === "Ended") return;
@@ -1403,9 +1430,6 @@ const selectAutomaticWinnersInternal = async (contestId) => {
   contest.contestEntryWallet -= totalReward;
   await contest.save();
 };
-
-
-
 
 const stopContestManually = async (req, res) => {
   const { id } = req.params;
@@ -1702,6 +1726,30 @@ const distributeStarsToUser = async (req, res) => {
   }
 };
 
+// GET all contests or by contestNumber
+const getContests = async (req, res) => {
+  try {
+    const { contestNumber } = req.query;
+
+    let query = { status: "Active" }; // 🔥 Only fetch contests with status Active
+
+    if (contestNumber) {
+      query.contestNumber = contestNumber;
+    }
+
+    const contests = await ContestEntry.find(query)
+      .sort({ startDate: -1 })
+      .lean();
+
+    return res.status(200).json({
+      message: contestNumber ? "Contest fetched" : "Active contests fetched",
+      contests
+    });
+  } catch (error) {
+    console.error("Error fetching contests:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 
 
@@ -1741,5 +1789,6 @@ export {
   getSuperAdminWelcomeBonusEarnings,
   fetchAdminCouponsRequests,
   approveAndDistributeCouponForAdminRequest,
-  distributeStarsToUser
+  distributeStarsToUser,
+  getContests
 };

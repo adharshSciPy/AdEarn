@@ -3,6 +3,7 @@ import styles from "./SelectWinner.module.css"
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar"
 import Header from "../../../components/Header/Header"
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios';
 
 const dummyContest = [
     { id: 1, name: "Contest One", email: "contest1@example.com" },
@@ -20,7 +21,13 @@ function SelectWinner() {
     const navigation = (id) => {
         navigate(`/ContestGamification/${id}`)
     }
-
+const getContest=async()=>{
+    try {
+        const res=await axios.get(``)
+    } catch (error) {
+        
+    }
+}
     return (
         <div className={styles.selectwinner}>
             <div className={styles.selectedwinnermain}>

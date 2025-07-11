@@ -1,5 +1,6 @@
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import NotificationsListener from './components/NotificationController/NotificationsListener';
 
 import AdminLogin from './pages/admin/Login/AdminOTP'
 import AdminSignup from './pages/admin/Register/AdminSignup'
@@ -106,6 +107,7 @@ import SubscriptionModal from './components/SubscriptionModal/SubscriptionModal'
 function App() {
   return (
     <div className="App">
+      <NotificationsListener/>
       <BrowserRouter>
         <Routes>
 
