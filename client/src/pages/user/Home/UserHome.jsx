@@ -8,6 +8,10 @@ import baseUrl from "../../../baseurl";
 import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
 import socket from "../../../components/Socket/socket.js";
 import WelcomeBonusModal from "../WelcomeBonusModal/WelcomeBonusModal.jsx";
+import Driver from 'driver.js';
+import 'driver.js/dist/driver.min.css';
+
+
 
 function UserHome() {
   const navigate = useNavigate();
@@ -71,12 +75,12 @@ function UserHome() {
       console.log(error);
     }
   };
-const getSurveyData=async ()=>{
+  const getSurveyData = async () => {
     try {
       const response = await axios.get(`${baseUrl}/api/v1/ads/survey-ads/${id}`);
       setSurveyData(response.data.ads);
       console.log(response);
-      
+
     } catch (error) {
       console.log(error);
     }
@@ -104,15 +108,15 @@ const getSurveyData=async ()=>{
   const viewAd = async (adId) => {
     navigate(`/adspreview/${id}/${adId}`);
   };
-const viewSurveyAd=async(adId)=>{
- navigate(`/surveyadspreview/${id}/${adId}`)
-  
-}
+  const viewSurveyAd = async (adId) => {
+    navigate(`/surveyadspreview/${id}/${adId}`)
+
+  }
   useEffect(() => {
     const showBonus = (bonus) => {
       console.log(bonus);
 
-      setBonusData(bonus); 
+      setBonusData(bonus);
       setShowWelcomeModal(true);
     };
 
@@ -136,6 +140,95 @@ const viewSurveyAd=async(adId)=>{
     }
   }, [bonus, id, bonusFetched]);
 
+
+  //driver.js
+
+  useEffect(() => {
+    const hasSeenTour = localStorage.getItem(`userHomeTourSeen_${id}`);
+
+    if (!hasSeenTour) {
+      let attempts = 0;
+
+      const interval = setInterval(() => {
+        const selectors = [
+          '#place-ads-btn',
+          '#image-ads-section',
+          '#video-ads-section',
+          '#survey-ads-section',
+        ];
+
+        const allExist = selectors.every(sel => document.querySelector(sel));
+        if (allExist || attempts > 5) {
+          clearInterval(interval);
+
+          if (allExist) {
+            const driver = new Driver({
+              animate: true,
+              opacity: 0.5,
+              stageBackground: 'rgba(0, 0, 0, 0.5)',
+              allowClose: true,
+              doneBtnText: 'Finish',
+              closeBtnText: 'Skip',
+              nextBtnText: 'Next',
+              prevBtnText: 'Previous',
+              onReset: () => {
+                localStorage.setItem(`userHomeTourSeen_${id}`, 'true');
+              }
+
+            });
+
+            driver.defineSteps([
+              {
+                element: '#place-ads-btn',
+                popover: {
+                  title: 'Place Your Ad',
+                  description: 'Click here to place a new advertisement.',
+                  position: 'bottom',
+                },
+              },
+              {
+                element: '#image-ads-section',
+                popover: {
+                  title: 'Image Ads',
+                  description: 'View image ads to earn stars.',
+                  position: 'top',
+                },
+              },
+              {
+                element: '#video-ads-section',
+                popover: {
+                  title: 'Video Ads',
+                  description: 'Watch short videos to earn more stars.',
+                  position: 'top',
+                },
+              },
+              {
+                element: '#survey-ads-section',
+                popover: {
+                  title: 'Surveys',
+                  description: 'Complete surveys for additional rewards.',
+                  position: 'top',
+                },
+              },
+            ]);
+
+            driver.start();
+          } else {
+            console.warn('Some tour elements not found.');
+          }
+        }
+
+        attempts++;
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [id]);
+
+
+
+
+
   return (
     <div>
       <Navbar />
@@ -157,7 +250,7 @@ const viewSurveyAd=async(adId)=>{
                       </p>
                     </div>
                     <div className={styles.firstMainbutton}>
-                      <button onClick={() => setShowPopup(true)}>
+                      <button id="place-ads-btn" onClick={() => setShowPopup(true)}>
                         Place Ads
                       </button>
                     </div>
@@ -171,7 +264,7 @@ const viewSurveyAd=async(adId)=>{
               </div>
             </div>
             {/* IMAGE ADS */}
-            <div className={styles.adContainerMain}>
+            <div className={styles.adContainerMain} id="image-ads-section">
               <div className={styles.imageAdHead}>
                 <h2>Image Ads</h2>
               </div>
@@ -211,7 +304,7 @@ const viewSurveyAd=async(adId)=>{
               </div>
             </div>
             {/* VIDEO ADS */}
-            <div className={styles.adContainerMain}>
+            <div className={styles.adContainerMain} id="video-ads-section">
               <div className={styles.imageAdHead}>
                 <h2>Video Ads</h2>
               </div>
@@ -251,7 +344,7 @@ const viewSurveyAd=async(adId)=>{
               </div>
             </div>
             {/* SURVEY ADS: replace with real data if available */}
-            <div className={styles.adContainerMain}>
+            <div className={styles.adContainerMain} id="survey-ads-section">
               <div className={styles.imageAdHead}>
                 <h2>Surveys</h2>
               </div>
