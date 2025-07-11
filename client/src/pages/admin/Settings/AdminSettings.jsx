@@ -55,7 +55,6 @@ function AdminSettings() {
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                placeholder="Killan"
               />
             </div>
             <div className={styles.inputGroup}>
@@ -64,7 +63,6 @@ function AdminSettings() {
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
-                placeholder="James"
               />
             </div>
           </div>
@@ -75,7 +73,6 @@ function AdminSettings() {
               type="email"
               value={formData.adminEmail}
               onChange={handleChange}
-              placeholder="killanjames@gmail.com"
             />
           </div>
         </form>
