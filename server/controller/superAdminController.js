@@ -25,6 +25,10 @@ import getCouponAmount from "../utils/getCouponAmount.js";
 import couponRequestModel from "../model/couponRequestModel.js";
 import UserContestEntry from "../model/userContestEntryModel.js"
 import adminwalletModel from "../model/adminwalletModel.js";
+import superAdminWallet from "../model/superAdminWallet.js";
+import { VideoAd } from "../model/videoadModel.js";
+import { ImageAd } from "../model/imageadModel.js";
+import { SurveyAd } from "../model/surveyadModel.js";
 const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
@@ -1825,14 +1829,94 @@ const getAdminAccountDetails = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-//to fetch coupon logs
-// const fetchCouponBatchModel=async(req,res)=>{
-//   try {
-//     const couponBatchModel
-//   } catch (error) {
-    
-//   }
-// }
+//to fetch subscription account details 
+const getSubscriptionAccountDetails = async (req, res) => {
+  try {
+    const superAdmin = await superAdminWallet.findOne();
+
+    if (!superAdmin) {
+      return res.status(404).json({
+        success: false,
+        message: "Super admin wallet not found",
+      });
+    }
+
+    const subscriptionLogs = superAdmin.subscriptionLogs || [];
+
+    return res.status(200).json({
+      success: true,
+      message: "Subscription account details fetched successfully",
+      subscriptionLogs,
+    });
+  } catch (error) {
+    console.error("Error fetching subscription account details:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+//to fetch adAccounts
+const getAllAdsWithUserAndDetails = async (req, res) => {
+  try {
+    const ads = await Ad.find();
+
+    const result = [];
+
+    for (const ad of ads) {
+      let adType = null;
+      let adDetails = null;
+
+      if (ad.videoAdRef) {
+        adType = "Video";
+        adDetails = await VideoAd.findById(ad.videoAdRef).populate("createdBy", "firstName lastName email phoneNumber");
+      } else if (ad.imgAdRef) {
+        adType = "Image";
+        adDetails = await ImageAd.findById(ad.imgAdRef).populate("createdBy", "firstName lastName email phoneNumber");
+      } else if (ad.surveyAdRef) {
+        adType = "Survey";
+        adDetails = await SurveyAd.findById(ad.surveyAdRef).populate("createdBy", "firstName lastName email phoneNumber");
+      }
+
+      if (!adDetails) continue;
+
+      const user = adDetails.createdBy;
+
+      result.push({
+        adId: adDetails._id,
+        adType,
+        title: adDetails.title,
+        starsSpent: (adDetails.totalStarsAllocated || 0) + (adDetails.extraDeductedStars || 0),
+        status: adDetails.isAdRejected
+          ? "Rejected"
+          : adDetails.isAdVerified
+          ? "Verified"
+          : "Pending",
+        createdAt: adDetails.createdAt,
+        verifiedAt: adDetails.adVerifiedTime || null,
+        rejectedAt: adDetails.adRejectedTime || null,
+
+        userId: user?._id,
+        name: `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
+        email: user?.email || "",
+        phoneNumber: user?.phoneNumber || "",
+      });
+    }
+
+    return res.status(200).json({
+      message: "All ads with user info fetched successfully",
+      totalAds: result.length,
+      data: result,
+    });
+  } catch (err) {
+    console.error("Error in getAllAdsWithUserAndDetails:", err);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+};
 
 
 export {
@@ -1868,5 +1952,7 @@ export {
   approveAndDistributeCouponForAdminRequest,
   distributeStarsToUser,
   getContests,
-  getAdminAccountDetails
+  getAdminAccountDetails,
+  getSubscriptionAccountDetails,
+  getAllAdsWithUserAndDetails
 };
