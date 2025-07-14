@@ -70,6 +70,24 @@ const ContestPage = () => {
       console.log(error);
     }
   };
+  const enterContest=async(contestNumber)=>{
+    try {
+      const response = await axios.post(`${baseUrl}/api/v1/user/contest/register`,{
+        userId:id,
+        contestNumber:contestNumber
+      })
+      if(response.status===200){
+        getContest();
+        getContestData();
+      }
+      console.log("regis",response);
+      
+    } catch (error) {
+      console.log(error);
+      
+    }
+    
+  }
   useEffect(() => {
     getContest();
     getContestData();
@@ -158,8 +176,11 @@ const ContestPage = () => {
                   <p>
                     <strong>Status:</strong> {item.status}
                   </p>
+                  <p>
+                    <strong>Remaining Slot:</strong> {item.slotsLeft}
+                  </p>
                   <div className={styles.buttonWrapper}>
-                    <button className={styles.enterButton}>Enter</button>
+                    <button className={styles.enterButton} onClick={()=>{enterContest(item.contestNumber)}}>Enter</button>
                   </div>
                 </div>
               </div>
@@ -256,12 +277,33 @@ const ContestPage = () => {
 
               <div className={styles.modalRow}>
                 <span>
-                  🏆 <strong>Winner:</strong>
+                  🏆 <strong>Winners:</strong>
                 </span>
                 <span>
-                  {selectedContest.winners?.length > 0
-                    ? selectedContest.winners.join(", ")
-                    : "Not declared yet"}
+                  {selectedContest.winners?.length > 0 ? (
+                    <div className={styles.winnerList}>
+                      {selectedContest.winners.map((a, i) => {
+                        // Ordinal suffix helper
+                        const getOrdinal = (num) => {
+                          const s = ["th", "st", "nd", "rd"];
+                          const v = num % 100;
+                          return num + (s[(v - 20) % 10] || s[v] || s[0]);
+                        };
+
+                        const medals = ["🥇", "🥈", "🥉"];
+                        const place = getOrdinal(i + 1);
+                        const medal = medals[i] || "🏅";
+
+                        return (
+                          <span key={i} className={styles.winnerItem}>
+                            {medal} <strong>{place}</strong> - {a.name}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    "Not declared yet"
+                  )}
                 </span>
               </div>
 

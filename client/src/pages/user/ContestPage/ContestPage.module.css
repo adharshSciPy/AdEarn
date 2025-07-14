@@ -308,3 +308,19 @@ margin: auto;
 .closeBtn:hover {
   background: #e04040;
 }
+.winnerList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.winnerItem {
+  background: #ffe17d;
+  color: #000;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  display: inline-block;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
