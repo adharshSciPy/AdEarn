@@ -59,7 +59,24 @@ margin: auto;
   padding: 20px 0;
   font-weight: 600;
 }
+.rewardSlide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(to right, #ffcc70, #ff7b54);
+  height: 300px;
+  color: #fff;
+  font-size: 1.1rem;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+  border-radius: 0 0 10px 10px;
+}
 
+.rewardText {
+  padding: 20px;
+  line-height: 1.5;
+  font-weight: 500;
+}
 .cardContent {
   padding: 16px;
 }
