@@ -21,6 +21,22 @@
   background-color: #d6e4fd;
   padding: 50px;
 }
+.AdNameHead{
+  display: flex;
+  flex-direction: column;
+}
+.AdNameHead h2{
+  padding-bottom: 10px ;
+}
+.videoContainer{
+  margin-top: 30px;
+  height: 400px;
+  width: 100%;
+}
+.videoContainer video{
+  height: 100%;
+  width: 100%;
+}
 .heading {
   margin-top: 20px;
   font-size: 1.2rem;
