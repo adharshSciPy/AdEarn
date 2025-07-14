@@ -2,7 +2,7 @@ import superAdmin from "../model/superAdminModel.js";
 import jwt from "jsonwebtoken";
 import path from "path";
 import { Admin } from "../model/adminModel.js";
-import User from "../model/userModel.js";
+import User from "../model/userModel.js"
 import SuperAdminWallet from "../model/superAdminWallet.js";
 import Coupon from "../model/couponModel.js";
 import WelcomeBonusSetting from "../model/WelcomeBonusSetting.js";
@@ -24,6 +24,7 @@ import getDateRange from "../utils/getDateRange.js";
 import getCouponAmount from "../utils/getCouponAmount.js";
 import couponRequestModel from "../model/couponRequestModel.js";
 import UserContestEntry from "../model/userContestEntryModel.js"
+import adminwalletModel from "../model/adminwalletModel.js";
 const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
@@ -774,7 +775,7 @@ const registerUserToContest = async (req, res) => {
 
     // ✅ Add to SuperAdmin wallet
     adminWallet.contestEntryWallet.collectedFromUsers.push({
-      userId,
+      userId: new mongoose.Types.ObjectId(userId), // ✅ force ObjectId
       contestId: contest._id,
       stars: contest.entryStars,
     });
@@ -793,12 +794,12 @@ const registerUserToContest = async (req, res) => {
       console.log("➡ Attempting to create ContestParticipant and UserContestEntry...");
 
       await ContestParticipant.create({
-        userId,
+        userId: new mongoose.Types.ObjectId(userId), // ✅ force ObjectId
         contestId: contest._id,
       });
 
       await UserContestEntry.create({
-        userId,
+        userId: new mongoose.Types.ObjectId(userId), // ✅ force ObjectId
         contestId: contest._id,
         entryStars: contest.entryStars,
       });
@@ -812,7 +813,7 @@ const registerUserToContest = async (req, res) => {
     if (contest.currentParticipants >= contest.maxParticipants) {
       if (contest.winnerSelectionType === "Automatic") {
         console.log("🎯 Max participants reached. Triggering automatic winner selection...");
-        await selectAutomaticWinnersInternal(contest._id);
+        await selectAutomaticWinnersInternal(contest._id); // ✅ triggers winner logic
       } else {
         contest.status = "Ended";
         await contest.save();
@@ -835,7 +836,6 @@ const registerUserToContest = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 
 // const autoSelectWinners = async (req, res) => {
@@ -1445,7 +1445,7 @@ const selectAutomaticWinnersInternal = async (contestId) => {
   const winners = selected.map((entry, index) => {
     const rewardTier = rewardStructure.find(r => r.position === index + 1);
     return {
-      userId: entry.userId,
+      userId: new mongoose.Types.ObjectId(entry.userId), // ✅ ensure ObjectId
       position: index + 1,
       stars: rewardTier ? rewardTier.stars : 0
     };
@@ -1458,6 +1458,7 @@ const selectAutomaticWinnersInternal = async (contestId) => {
     return;
   }
 
+  // ✅ Add stars to winners
   for (const winner of winners) {
     const user = await User.findById(winner.userId).populate("userWalletDetails");
     if (user?.userWalletDetails) {
@@ -1470,7 +1471,7 @@ const selectAutomaticWinnersInternal = async (contestId) => {
   adminWallet.totalStars -= totalReward;
   await adminWallet.save();
 
-  contest.winners = winners;
+  contest.winners = winners; // ✅ Proper ObjectIds stored here
   contest.status = "Ended";
   contest.result = "Completed";
   contest.contestEntryWallet -= totalReward;
@@ -1802,6 +1803,36 @@ const getContests = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+//to fetch admin wallet with full details
+const getAdminAccountDetails = async (req, res) => {
+  try {
+    const adminWallet = await adminwalletModel.findOne().populate({
+      path: "transactions.userId",
+      select: "email firstName lastName"
+    });
+
+    if (!adminWallet) {
+      return res.status(404).json({ message: "Admin wallet not found" });
+    }
+
+    return res.status(200).json({
+      message: "Admin wallet fetched successfully",
+      totalStars: adminWallet.totalStars,
+      transactions: adminWallet.transactions,
+    });
+  } catch (error) {
+    console.error("Error fetching admin wallet details:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+//to fetch coupon logs
+// const fetchCouponBatchModel=async(req,res)=>{
+//   try {
+//     const couponBatchModel
+//   } catch (error) {
+    
+//   }
+// }
 
 
 export {
@@ -1836,5 +1867,6 @@ export {
   fetchAdminCouponsRequests,
   approveAndDistributeCouponForAdminRequest,
   distributeStarsToUser,
-  getContests
+  getContests,
+  getAdminAccountDetails
 };
