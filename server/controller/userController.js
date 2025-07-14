@@ -1301,13 +1301,16 @@ const getUserContestEntries = async (req, res) => {
     const entries = await UserContestEntry.find({ userId })
       .populate({
         path: "contestId",
-        select: "contestName status winners totalEntries"
+        select: "contestName status winners totalEntries",
+        populate: {
+          path: "winners.userId",
+          select: "name"
+        }
       })
       .lean();
 
     const formatted = entries.map((entry) => {
       const contest = entry.contestId;
-      const winner = contest.winners.find(w => w.userId?.toString() === userId);
 
       return {
         contestName: contest.contestName,
@@ -1315,9 +1318,11 @@ const getUserContestEntries = async (req, res) => {
         entryDate: entry.entryDate,
         totalEntry: contest.totalEntries,
         status: contest.status,
-        isWinner: !!winner,
-        position: winner?.position || null,
-        starsWon: winner?.stars || null
+        winners: (contest.winners || []).map(w => ({
+          name: w.userId?.name || "Unknown",
+          position: w.position,
+          stars: w.stars
+        }))
       };
     });
 
