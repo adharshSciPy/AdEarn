@@ -842,52 +842,46 @@ const fetchAdsForVerification = async (req, res) => {
   try {
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
 
-    const allAds = await Ad.find()
-      .populate({
-        path: "imgAdRef",
-        match: {
-          isPaymentCompleted: true,
-          isAdVerified: false,
-          isAdRejected: false,
-          $or: [
-            { assignedAdminId: null },
-            { assignmentTime: { $lt: fiveMinutesAgo } }
-          ]
-        },
-      })
-      .populate({
-        path: "videoAdRef",
-        match: {
-          isPaymentCompleted: true,
-          isAdVerified: false,
-          isAdRejected: false,
-          $or: [
-            { assignedAdminId: null },
-            { assignmentTime: { $lt: fiveMinutesAgo } }
-          ]
-        },
-      })
-      .populate({
-        path: "surveyAdRef",
-        match: {
-          isPaymentCompleted: true,
-          isAdVerified: false,
-          isAdRejected: false,
-          $or: [
-            { assignedAdminId: null },
-            { assignmentTime: { $lt: fiveMinutesAgo } }
-          ]
-        },
-      });
+    // Step 1: Fetch all ads that have at least one ad reference
+    const allAds = await Ad.find({
+      $or: [
+        { imgAdRef: { $ne: null } },
+        { videoAdRef: { $ne: null } },
+        { surveyAdRef: { $ne: null } },
+      ],
+    })
+      .populate("imgAdRef")
+      .populate("videoAdRef")
+      .populate("surveyAdRef");
 
-    const validAds = allAds.filter(
-      (ad) => ad.imgAdRef || ad.videoAdRef || ad.surveyAdRef
-    );
+    // Step 2: Filter ads with at least one unverified & assignable ad
+    const validAds = allAds.filter((ad) => {
+      const img = ad.imgAdRef;
+      const vid = ad.videoAdRef;
+      const survey = ad.surveyAdRef;
 
-    if (!validAds.length) {
-      return res.status(404).json({ message: "No ads available for verification" });
-    }
+      return (
+        (img &&
+          img.isPaymentCompleted &&
+          !img.isAdVerified &&
+          !img.isAdRejected &&
+          (!img.assignedAdminId || new Date(img.assignmentTime) < fiveMinutesAgo)) ||
 
+        (vid &&
+          vid.isPaymentCompleted &&
+          !vid.isAdVerified &&
+          !vid.isAdRejected &&
+          (!vid.assignedAdminId || new Date(vid.assignmentTime) < fiveMinutesAgo)) ||
+
+        (survey &&
+          survey.isPaymentCompleted &&
+          !survey.isAdVerified &&
+          !survey.isAdRejected &&
+          (!survey.assignedAdminId || new Date(survey.assignmentTime) < fiveMinutesAgo))
+      );
+    });
+
+    // Step 3: Prepare the response
     const adsWithVerificationStatus = validAds.map((ad) => ({
       _id: ad._id,
       imageAd: ad.imgAdRef
@@ -910,13 +904,22 @@ const fetchAdsForVerification = async (req, res) => {
         : null,
     }));
 
-    return res.status(200).json({ count:adsWithVerificationStatus.length,ads: adsWithVerificationStatus });
+    if (!adsWithVerificationStatus.length) {
+      return res
+        .status(404)
+        .json({ message: "No ads available for verification" });
+    }
+
+    return res
+      .status(200)
+      .json({ count: adsWithVerificationStatus.length, ads: adsWithVerificationStatus });
 
   } catch (error) {
     console.error("Error fetching ads for verification:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 
 // fetching all the ads with isVerified:true to display to users (ads that have been verified by Admin)
