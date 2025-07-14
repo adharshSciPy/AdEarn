@@ -2,7 +2,7 @@ import superAdmin from "../model/superAdminModel.js";
 import jwt from "jsonwebtoken";
 import path from "path";
 import { Admin } from "../model/adminModel.js";
-import User from "../model/userModel.js";
+import User from "../model/userModel.js"
 import SuperAdminWallet from "../model/superAdminWallet.js";
 import Coupon from "../model/couponModel.js";
 import WelcomeBonusSetting from "../model/WelcomeBonusSetting.js";
@@ -774,7 +774,7 @@ const registerUserToContest = async (req, res) => {
 
     // ✅ Add to SuperAdmin wallet
     adminWallet.contestEntryWallet.collectedFromUsers.push({
-      userId,
+      userId: new mongoose.Types.ObjectId(userId), // ✅ force ObjectId
       contestId: contest._id,
       stars: contest.entryStars,
     });
@@ -793,12 +793,12 @@ const registerUserToContest = async (req, res) => {
       console.log("➡ Attempting to create ContestParticipant and UserContestEntry...");
 
       await ContestParticipant.create({
-        userId,
+        userId: new mongoose.Types.ObjectId(userId), // ✅ force ObjectId
         contestId: contest._id,
       });
 
       await UserContestEntry.create({
-        userId,
+        userId: new mongoose.Types.ObjectId(userId), // ✅ force ObjectId
         contestId: contest._id,
         entryStars: contest.entryStars,
       });
@@ -812,7 +812,7 @@ const registerUserToContest = async (req, res) => {
     if (contest.currentParticipants >= contest.maxParticipants) {
       if (contest.winnerSelectionType === "Automatic") {
         console.log("🎯 Max participants reached. Triggering automatic winner selection...");
-        await selectAutomaticWinnersInternal(contest._id);
+        await selectAutomaticWinnersInternal(contest._id); // ✅ triggers winner logic
       } else {
         contest.status = "Ended";
         await contest.save();
@@ -835,7 +835,6 @@ const registerUserToContest = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 
 // const autoSelectWinners = async (req, res) => {
@@ -1445,7 +1444,7 @@ const selectAutomaticWinnersInternal = async (contestId) => {
   const winners = selected.map((entry, index) => {
     const rewardTier = rewardStructure.find(r => r.position === index + 1);
     return {
-      userId: entry.userId,
+      userId: new mongoose.Types.ObjectId(entry.userId), // ✅ ensure ObjectId
       position: index + 1,
       stars: rewardTier ? rewardTier.stars : 0
     };
@@ -1458,6 +1457,7 @@ const selectAutomaticWinnersInternal = async (contestId) => {
     return;
   }
 
+  // ✅ Add stars to winners
   for (const winner of winners) {
     const user = await User.findById(winner.userId).populate("userWalletDetails");
     if (user?.userWalletDetails) {
@@ -1470,7 +1470,7 @@ const selectAutomaticWinnersInternal = async (contestId) => {
   adminWallet.totalStars -= totalReward;
   await adminWallet.save();
 
-  contest.winners = winners;
+  contest.winners = winners; // ✅ Proper ObjectIds stored here
   contest.status = "Ended";
   contest.result = "Completed";
   contest.contestEntryWallet -= totalReward;

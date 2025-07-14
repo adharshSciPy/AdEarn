@@ -1298,40 +1298,52 @@ const getUserContestEntries = async (req, res) => {
   const { userId } = req.params;
 
   try {
+    const user = await User.findById(userId).select("firstName");
+
     const entries = await UserContestEntry.find({ userId })
       .populate({
         path: "contestId",
         select: "contestName status winners totalEntries",
         populate: {
           path: "winners.userId",
-          select: "name"
-        }
+          model: "User",
+          select: "firstName", // ✅ match your schema
+        },
       })
       .lean();
+
+    // 🔍 DEBUG: Log one winner object from first contest
+    if (entries[0]?.contestId?.winners?.length > 0) {
+      console.log(
+        "🔍 Sample winner object:",
+        JSON.stringify(entries[0].contestId.winners[0], null, 2)
+      );
+    }
 
     const formatted = entries.map((entry) => {
       const contest = entry.contestId;
 
       return {
-        contestName: contest.contestName,
+        contestName: contest?.contestName || "Unknown",
         entryStars: entry.entryStars,
         entryDate: entry.entryDate,
-        totalEntry: contest.totalEntries,
-        status: contest.status,
-        winners: (contest.winners || []).map(w => ({
-          name: w.userId?.name || "Unknown",
+        totalEntry: contest?.totalEntries || 0,
+        status: contest?.status || "Unknown",
+        userName: user?.firstName || "You",
+        winners: (contest?.winners || []).map((w) => ({
+          name: w?.userId?.firstName || "Unknown", // ✅ updated to use firstName
           position: w.position,
-          stars: w.stars
-        }))
+          stars: w.stars,
+        })),
       };
     });
 
     return res.status(200).json(formatted);
   } catch (err) {
+    console.error("❌ Error fetching user contest entries:", err);
     return res.status(500).json({ message: "Something went wrong", error: err.message });
   }
 };
-
 
 
 
