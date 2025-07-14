@@ -21,6 +21,8 @@ import config from "../config.js";
 import subscriptionSettings from "../model/subscriptionSettingsModel.js";
 import CouponRequest from "../model/couponRequestModel.js";
 import getCouponAmount from "../utils/getCouponAmount.js";
+import UserContestEntry from "../model/userContestEntryModel.js"
+
 
 
 // function to create referal code
@@ -1292,6 +1294,38 @@ const sendCouponRequest = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+const getUserContestEntries = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const entries = await UserContestEntry.find({ userId })
+      .populate({
+        path: "contestId",
+        select: "contestName status winners totalEntries"
+      })
+      .lean();
+
+    const formatted = entries.map((entry) => {
+      const contest = entry.contestId;
+      const winner = contest.winners.find(w => w.userId?.toString() === userId);
+
+      return {
+        contestName: contest.contestName,
+        entryStars: entry.entryStars,
+        entryDate: entry.entryDate,
+        totalEntry: contest.totalEntries,
+        status: contest.status,
+        isWinner: !!winner,
+        position: winner?.position || null,
+        starsWon: winner?.stars || null
+      };
+    });
+
+    return res.status(200).json(formatted);
+  } catch (err) {
+    return res.status(500).json({ message: "Something went wrong", error: err.message });
+  }
+};
 
 
 
@@ -1316,5 +1350,6 @@ export {
   verifyPasswordResetOTP,
   resetPassword,
   activateSubscription,
-  sendCouponRequest
+  sendCouponRequest,
+  getUserContestEntries
 };
