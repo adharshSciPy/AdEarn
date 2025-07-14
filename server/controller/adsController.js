@@ -235,20 +235,20 @@ const createImageAd = async (req, res) => {
 
     user.ads.push(ad._id);
     await user.save();
-    if (extraDeductedStars > 0) {
-  const superWallet = await SuperAdminWallet.findOne();
-  if (superWallet) {
-    superWallet.totalStars += extraDeductedStars;
-    superWallet.adExtraDeductions.push({
-      adId: ad._id,
-      adType: "Image Ad",
-      userId: user._id,
-      stars: extraDeductedStars,
-      status: "verified",
-    });
-    await superWallet.save();
-  }
-}
+//     if (extraDeductedStars > 0) {
+//   const superWallet = await SuperAdminWallet.findOne();
+//   if (superWallet) {
+//     superWallet.totalStars += extraDeductedStars;
+//     superWallet.adExtraDeductions.push({
+//       adId: ad._id,
+//       adType: "Image Ad",
+//       userId: user._id,
+//       stars: extraDeductedStars,
+//       status: "verified",
+//     });
+//     await superWallet.save();
+//   }
+// }
 
 
     return res.status(200).json({
@@ -412,20 +412,20 @@ const createVideoAd = async (req, res) => {
     user.ads.push(ad._id);
     await user.save();
 
- if (extraDeductedStars > 0) {
-  const superWallet = await SuperAdminWallet.findOne();
-  if (superWallet) {
-    superWallet.totalStars += extraDeductedStars;
-    superWallet.adExtraDeductions.push({
-      adId: ad._id,
-      adType: "Video Ad",
-      userId: user._id,
-      stars: extraDeductedStars,
-      status: "verified",
-    });
-    await superWallet.save();
-  }
-}
+//  if (extraDeductedStars > 0) {
+//   const superWallet = await SuperAdminWallet.findOne();
+//   if (superWallet) {
+//     superWallet.totalStars += extraDeductedStars;
+//     superWallet.adExtraDeductions.push({
+//       adId: ad._id,
+//       adType: "Video Ad",
+//       userId: user._id,
+//       stars: extraDeductedStars,
+//       status: "verified",
+//     });
+//     await superWallet.save();
+//   }
+// }
 
     return res.status(200).json({
       message: "Video Ad created successfully and stars deducted",
@@ -632,21 +632,21 @@ const createSurveyAd = async (req, res) => {
     user.ads.push(ad._id);
     await user.save();
 
-    // Handle extra deduction record (✅ same as video ad)
-    if (extraDeductedStars > 0) {
-      const superWallet = await SuperAdminWallet.findOne();
-      if (superWallet) {
-        superWallet.totalStars += extraDeductedStars;
-        superWallet.adExtraDeductions.push({
-          adId: ad._id,
-          adType: "Survey Ad",
-          userId: user._id,
-          stars: extraDeductedStars,
-          status: "verified",
-        });
-        await superWallet.save();
-      }
-    }
+    // // Handle extra deduction record (✅ same as video ad)
+    // if (extraDeductedStars > 0) {
+    //   const superWallet = await SuperAdminWallet.findOne();
+    //   if (superWallet) {
+    //     superWallet.totalStars += extraDeductedStars;
+    //     superWallet.adExtraDeductions.push({
+    //       adId: ad._id,
+    //       adType: "Survey Ad",
+    //       userId: user._id,
+    //       stars: extraDeductedStars,
+    //       status: "verified",
+    //     });
+    //     await superWallet.save();
+    //   }
+    // }
 
     return res.status(200).json({
       message: "Survey Ad created successfully and stars deducted",
