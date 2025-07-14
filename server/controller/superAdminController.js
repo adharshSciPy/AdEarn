@@ -1787,15 +1787,22 @@ const getContests = async (req, res) => {
       .sort({ startDate: -1 })
       .lean();
 
+    // ✅ Add slotsLeft to each contest
+    const contestsWithSlots = contests.map((contest) => ({
+      ...contest,
+      slotsLeft: contest.maxParticipants - contest.currentParticipants
+    }));
+
     return res.status(200).json({
       message: contestNumber ? "Contest fetched" : "Active contests fetched",
-      contests
+      contests: contestsWithSlots
     });
   } catch (error) {
     console.error("Error fetching contests:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 
 export {
   registerSuperAdmin,
