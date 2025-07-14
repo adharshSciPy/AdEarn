@@ -24,6 +24,7 @@ import getDateRange from "../utils/getDateRange.js";
 import getCouponAmount from "../utils/getCouponAmount.js";
 import couponRequestModel from "../model/couponRequestModel.js";
 import UserContestEntry from "../model/userContestEntryModel.js"
+import adminwalletModel from "../model/adminwalletModel.js";
 const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
@@ -1802,6 +1803,36 @@ const getContests = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+//to fetch admin wallet with full details
+const getAdminAccountDetails = async (req, res) => {
+  try {
+    const adminWallet = await adminwalletModel.findOne().populate({
+      path: "transactions.userId",
+      select: "email firstName lastName"
+    });
+
+    if (!adminWallet) {
+      return res.status(404).json({ message: "Admin wallet not found" });
+    }
+
+    return res.status(200).json({
+      message: "Admin wallet fetched successfully",
+      totalStars: adminWallet.totalStars,
+      transactions: adminWallet.transactions,
+    });
+  } catch (error) {
+    console.error("Error fetching admin wallet details:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+//to fetch coupon logs
+// const fetchCouponBatchModel=async(req,res)=>{
+//   try {
+//     const couponBatchModel
+//   } catch (error) {
+    
+//   }
+// }
 
 
 export {
@@ -1836,5 +1867,6 @@ export {
   fetchAdminCouponsRequests,
   approveAndDistributeCouponForAdminRequest,
   distributeStarsToUser,
-  getContests
+  getContests,
+  getAdminAccountDetails
 };

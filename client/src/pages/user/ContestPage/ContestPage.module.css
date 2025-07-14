@@ -26,20 +26,32 @@ margin: auto;
 }
 
 .cardContainer {
-    width: 100%;
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
-  margin-bottom: 40px;
+  padding: 20px;
 }
-
 .card {
-  
-  border-radius: 10px;
-  flex: 1;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out;
 }
-
+.card:hover {
+  transform: scale(1.02);
+}
+.imageContainer {
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+  border-bottom: 1px solid #eee;
+}
+.prizeImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .cardHeader {
   background-color: #5325B5;
   color: white;
@@ -48,19 +60,38 @@ margin: auto;
   font-weight: 600;
 }
 
+.rewardSlide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(to right, #ffcc70, #ff7b54);
+  height: 300px;
+  color: #fff;
+  font-size: 1.1rem;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+  border-radius: 0 0 10px 10px;
+}
+
+.rewardText {
+  padding: 20px;
+  line-height: 1.5;
+  font-weight: 500;
+}
 .cardContent {
   padding: 16px;
-  background-color: #F3E8FF; 
-  border-radius: 10px;
-  position: relative;
-  margin-top: -10px;
-  
 }
 .headerContent{
     width: 100%;
 }
 .entryDetails{
     margin: 20px 0;
+}
+.title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #333;
 }
 
 .lockIcon {
@@ -132,15 +163,23 @@ margin: auto;
 }
 
 .enterButton {
-  background-color: white;
-  color: #4a3fd9;
-  border: 1px solid #4a3fd9;
-  border-radius: 5px;
-  padding: 6px 12px;
+  width: 100%;
+  padding: 10px 0;
+  background-color: #ff8c00;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
   cursor: pointer;
-  font-weight: 500;
-  font-size: 13px;
-  margin-top: 30PX;
+  transition: background 0.3s ease;
+}
+.card p{
+  font-size: 0.95rem;
+  color: #555;
+  margin: 6px 0;
+}
+.enterButton:hover {
+  background-color: #e67600;
 }
 .buttonContainer{
     width: 100%;
@@ -181,6 +220,9 @@ margin: auto;
   color: green;
   font-weight: 600;
 }
+.buttonWrapper {
+  margin-top: 12px;
+}
 
 .editIcons {
   display: flex;
@@ -189,8 +231,80 @@ margin: auto;
 }
 
 .iconBtn {
-  background: none;
+  background-color:#3563E9;
   border: none;
   cursor: pointer;
+  padding: 10px 20px;
+  border-radius: 10px;
   font-size: 16px;
+}.modalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 15, 15, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #ffffff;
+  width: 90%;
+  max-width: 400px;
+  padding: 30px 24px;
+  border-radius: 20px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  animation: slideIn 0.3s ease-in-out;
+  font-family: "Segoe UI", sans-serif;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modalTitle {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #222;
+}
+
+.modalRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 1rem;
+  color: #333;
+}
+
+.modalRow strong {
+  color: #000;
+}
+
+.closeBtn {
+  width: 100%;
+  margin-top: 25px;
+  padding: 10px;
+  background: #ff5252;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.25s ease-in-out;
+}
+
+.closeBtn:hover {
+  background: #e04040;
 }
