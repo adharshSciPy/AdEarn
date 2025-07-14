@@ -608,15 +608,14 @@ const createSurveyAd = async (req, res) => {
       respondentNames: q.options.map(() => []),
     }));
 
-    const surveyAd = await SurveyAd.create({
+      const surveyAd = await SurveyAd.create({
       title,
       description,
+      imageUrl,
       questions: parsedQuestions,
       questionStats,
       createdBy: user._id,
       userViewsNeeded: viewsNeeded,
-      totalViewCount: 0,
-      isViewsReached: false,
       totalStarsAllocated: baseDeductedStars,
       extraDeductedStars,
       starPayoutPlan,
@@ -625,7 +624,9 @@ const createSurveyAd = async (req, res) => {
       targetRegions,
       targetStates: parsedStates,
       targetDistricts: parsedDistricts,
-      imageUrl,
+      paymentMode: "star",
+      isPaymentCompleted: true,
+      userShare: totalStarsToBeDeducted,
     });
 
     const ad = await Ad.create({ surveyAdRef: surveyAd._id });

@@ -233,10 +233,9 @@ const toggleAdminStatus = async (req, res) => {
 };
 const getSuperAdminWallet = async (req, res) => {
   try {
-    const Swallet = await SuperAdminWallet.findOne().populate(
-      "transactions.userId",
-      "email"
-    );
+    const Swallet = await SuperAdminWallet.findOne()
+      .populate("transactions.userId", "email")
+      .populate("adExtraDeductions.userId", "email");
 
     if (!Swallet) {
       return res.status(404).json({ message: "Admin wallet not found" });
@@ -245,16 +244,31 @@ const getSuperAdminWallet = async (req, res) => {
     return res.status(200).json({
       message: "Super-Admin wallet fetched successfully",
       totalStars: Swallet.totalStars,
+      perUserWelcomeBonus: Swallet.perUserWelcomeBonus,
       transactions: Swallet.transactions,
+      adExtraDeductions: Swallet.adExtraDeductions,
+      expiredCouponRefunds: Swallet.expiredCouponRefunds,
+      deletedUserStars: Swallet.deletedUserStars,
+      welcomeBonusWallet: Swallet.welcomeBonusWallet,
+      companyRewardWallet: Swallet.companyRewardWallet,
+      contestEntryWallet: Swallet.contestEntryWallet,
+      userEntry: Swallet.userEntry,
+      blacklistedUserStars: Swallet.blacklistedUserStars,
+      subscriptionLogs: Swallet.subscriptionLogs,
+      starDistributions: Swallet.starDistributions,
+      couponGenerationLogs: Swallet.couponGenerationLogs,
+      createdAt: Swallet.createdAt,
+      updatedAt: Swallet.updatedAt,
     });
   } catch (error) {
     console.error("Error fetching super-admin wallet:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 const getSuperAdminWelcomeBonusEarnings = async (req, res) => {
   try {
-    const wallet = await SuperAdminWallet.findOne(); // Assuming only one SuperAdminWallet
+    const wallet = await SuperAdminWallet.findOne();
 
     if (!wallet || !wallet.welcomeBonusWallet) {
       return res.status(404).json({ message: "SuperAdmin wallet not found" });
@@ -1788,6 +1802,8 @@ const getContests = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+// 
+
 
 export {
   registerSuperAdmin,
