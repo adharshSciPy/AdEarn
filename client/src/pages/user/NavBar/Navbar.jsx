@@ -57,7 +57,7 @@ function Navbar() {
     },
     { icon: <NotificationIcon />, label: "notification" },
     { icon: coupon, label: "/coupon" },
-    { icon: contest, label: "/contestpage" },
+    { icon: contest, label: `/contestpage/${userId}` },
 
 
     { icon: profile, label: "/userprofile" },

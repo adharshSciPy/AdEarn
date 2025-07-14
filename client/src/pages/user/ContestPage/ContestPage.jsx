@@ -52,8 +52,20 @@ const ContestPage = () => {
       const res = await axios.get(`${baseUrl}/api/v1/super-admin/contests`);
       console.log(res);
       setContest(res.data.contests);
-    } catch (error) {}
+    } catch (error) {
+      console.log(error);
+      
+    }
   };
+  const getContestData=async()=>{
+    try {
+      const res=await axios.get(`${baseUrl}/api/v1/super-admin/contests`);
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+      
+    }
+  }
   useEffect(() => {
     getContest();
   }, []);
