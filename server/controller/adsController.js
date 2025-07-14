@@ -2231,6 +2231,206 @@ const createVideoAdDraft = async (req, res) => {
     return res.status(500).json({ message: "Internal server error", error: err.message });
   }
 };
+const createSurveyAdDraft = async (req, res) => {
+  const {
+    title,
+    description,
+    userViewsNeeded,
+    adPeriod,
+    questions,
+    states,
+    districts,
+    locations,
+  } = req.body;
+
+  const { id: userId } = req.params;
+
+  if (!userId || !title || !description || !questions || !userViewsNeeded) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  let parsedQuestions, parsedStates, parsedDistricts, parsedLocations;
+
+  try {
+    parsedQuestions = typeof questions === "string" ? JSON.parse(questions) : questions;
+    if (!Array.isArray(parsedQuestions) || parsedQuestions.length === 0) {
+      return res.status(400).json({ message: "At least one question is required" });
+    }
+
+    parsedStates = Array.isArray(states) ? states : JSON.parse(states || "[]");
+    parsedDistricts = Array.isArray(districts) ? districts : JSON.parse(districts || "[]");
+    parsedLocations = Array.isArray(locations) ? locations : JSON.parse(locations || "[]");
+
+    for (const [index, q] of parsedQuestions.entries()) {
+      const { questionText, questionType, options } = q;
+      if (!questionText || !questionType || !options) {
+        return res.status(400).json({ message: `Missing fields in question ${index + 1}` });
+      }
+
+      if (!["yesno", "multiple"].includes(questionType)) {
+        return res.status(400).json({ message: `Invalid questionType in question ${index + 1}` });
+      }
+
+      if (questionType === "yesno") {
+        if (!Array.isArray(options) || options.length !== 2 || !options.includes("Yes") || !options.includes("No")) {
+          return res.status(400).json({
+            message: `Yes/No question ${index + 1} must have exactly ['Yes', 'No'] as options`,
+          });
+        }
+      }
+
+      if (questionType === "multiple" && (!Array.isArray(options) || options.length < 2)) {
+        return res.status(400).json({
+          message: `Multiple choice question ${index + 1} must have at least 2 options`,
+        });
+      }
+    }
+  } catch (err) {
+    return res.status(400).json({ message: "Invalid JSON format", error: err.message });
+  }
+
+  // Process location
+  let targetRegions = [];
+  try {
+    for (const loc of parsedLocations) {
+      if (!loc.coords || !loc.radius) continue;
+      const [latStr, lngStr] = loc.coords.split(",");
+      const latitude = parseFloat(latStr);
+      const longitude = parseFloat(lngStr);
+      const radius = parseFloat(loc.radius);
+
+      if (!isNaN(latitude) && !isNaN(longitude) && !isNaN(radius)) {
+        targetRegions.push({
+          location: { type: "Point", coordinates: [latitude, longitude] },
+          radius,
+        });
+      }
+    }
+  } catch (err) {
+    return res.status(400).json({ message: "Invalid location format", error: err.message });
+  }
+
+  if (
+    targetRegions.length === 0 &&
+    (!parsedStates || parsedStates.length === 0) &&
+    (!parsedDistricts || parsedDistricts.length === 0)
+  ) {
+    return res.status(400).json({
+      message: "At least one target location (geo, state, or district) is required",
+    });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const viewsNeeded = parseInt(userViewsNeeded);
+    if (isNaN(viewsNeeded) || viewsNeeded <= 0) {
+      return res.status(400).json({ message: "Invalid userViewsNeeded value" });
+    }
+
+    // Cost calculation logic
+    const starsDeductionRate = 2.4;
+    const baseDeductedStars = viewsNeeded * starsDeductionRate;
+    const extraDeductedStars = 0;
+    const totalStarsToBeDeducted = baseDeductedStars;
+
+    const conversionRate = 4; // 4 stars = ₹1
+    const percentageToUser = 60;
+
+    const totalStarsGenerated = baseDeductedStars * (100 / percentageToUser);
+    const rupeesToPay = totalStarsGenerated / conversionRate;
+
+    const userShare = baseDeductedStars;
+    const superAdminShare = totalStarsGenerated * 0.2;
+    const adminShare = totalStarsGenerated * 0.1;
+    const referredUserShare = totalStarsGenerated * 0.1;
+
+    // Build star payout plan
+    let starsLeft = Math.floor(baseDeductedStars);
+    const totalViews = viewsNeeded;
+
+    const max3Stars = Math.floor((starsLeft * 0.4) / 3);
+    const max2Stars = Math.floor((starsLeft * 0.6) / 2);
+
+    let payout = [];
+    let count = 0;
+
+    for (let i = 0; i < max3Stars && count < totalViews; i++) {
+      payout.push(3);
+      starsLeft -= 3;
+      count++;
+    }
+
+    for (let i = 0; i < max2Stars && count < totalViews; i++) {
+      payout.push(2);
+      starsLeft -= 2;
+      count++;
+    }
+
+    while (starsLeft > 0 && count < totalViews) {
+      payout.push(1);
+      starsLeft -= 1;
+      count++;
+    }
+
+    while (count < totalViews) {
+      payout.push(0);
+      count++;
+    }
+
+    const parsedAdPeriod = parseFloat(adPeriod) || 0;
+    const adRepetition = parsedAdPeriod > 0;
+
+    const questionStats = parsedQuestions.map((q) => ({
+      questionText: q.questionText,
+      options: q.options,
+      counts: q.options.map(() => 0),
+      respondentNames: q.options.map(() => []),
+    }));
+
+    const imageUrl = req.file ? `/surveyAdUploads/${req.file.filename}` : "";
+
+    const surveyAd = await SurveyAd.create({
+      title,
+      description,
+      imageUrl,
+      questions: parsedQuestions,
+      questionStats,
+      createdBy: user._id,
+      userViewsNeeded: viewsNeeded,
+      totalStarsAllocated: baseDeductedStars,
+      extraDeductedStars,
+      starPayoutPlan: payout,
+      adPeriod: adRepetition ? parsedAdPeriod : 0,
+      adRepetition,
+      targetRegions,
+      targetStates: parsedStates,
+      targetDistricts: parsedDistricts,
+      paymentMode: "payment",
+      isPaymentCompleted: false,
+      amountToPay: rupeesToPay,
+      userShare,
+      superAdminShare,
+      adminShare,
+      referredUserShare,
+    });
+
+    const ad = await Ad.create({ surveyAdRef: surveyAd._id });
+    user.ads.push(ad._id);
+    await user.save();
+
+    return res.status(200).json({
+      message: "Survey ad draft created. Proceed to payment.",
+      adId: ad._id,
+      amountToPay: rupeesToPay.toFixed(2),
+      surveyAd,
+    });
+  } catch (err) {
+    console.error("Error creating survey ad draft:", err);
+    return res.status(500).json({ message: "Internal server error", error: err.message });
+  }
+};
 
 
 
@@ -2474,5 +2674,6 @@ export {
   editVideoAd,
   createImageAdDraft,
   createVideoAdDraft,
+  createSurveyAdDraft,
   confirmAdPayment
 };
