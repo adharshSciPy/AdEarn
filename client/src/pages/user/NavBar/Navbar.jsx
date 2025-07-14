@@ -107,117 +107,62 @@ function Navbar() {
     };
   }, [userId, dispatch]);
 
-  //driver.js
 
+  // ✅ Driver.js tour
   useEffect(() => {
-    const hasSeenTour = localStorage.getItem(`userHomeTourSeen_${userId}`);
+    const hasSeenNavTour = localStorage.getItem(`userTourNavbarDone_${userId}`);
 
-    if (!hasSeenTour) {
+    if (!hasSeenNavTour) {
       let attempts = 0;
+      const navSelectors = [
+        '#user-home',
+        '#wallet-page',
+        '#adsmanager-user',
+        '#kyc-verification',
+        '#notification',
+        '#coupon',
+        '#contest-page',
+        '#user-profile',
+      ];
 
       const interval = setInterval(() => {
-        const selectors = [
-          '#user-home',
-          '#wallet-page',
-          '#adsmanager-user',
-          '#kyc-verification',
-          '#notification',
-          '#coupon',
-          '#contest-page',
-          '#user-profile'
-        ];
-
-        const allExist = selectors.every(sel => document.querySelector(sel));
-        if (allExist || attempts > 10) {
+        const allExist = navSelectors.every(sel => document.querySelector(sel));
+        if (allExist || attempts > 15) {
           clearInterval(interval);
 
-          if (allExist) {
-            const driver = new Driver({
-              animate: true,
-              opacity: 0.5,
-              stageBackground: 'rgba(0, 0, 0, 0.5)',
-              allowClose: true,
-              doneBtnText: 'Finish',
-              closeBtnText: 'Skip',
-              nextBtnText: 'Next',
-              prevBtnText: 'Previous',
-              onReset: () => {
-                localStorage.setItem(`userHomeTourSeen_${userId}`, 'true');
-              }
-
-            });
-
-            driver.defineSteps([
-              {
-                element: '#user-home',
-                popover: {
-                  title: 'Home Page',
-                  description: 'Click here to view home page.',
-                  position: 'bottom',
-                },
-              },
-              {
-                element: '#wallet-page',
-                popover: {
-                  title: 'Wallet Page',
-                  description: 'Click here to view wallet page.',
-                  position: 'bottom',
-                },
-              },
-              {
-                element: '#adsmanager-user',
-                popover: {
-                  title: 'AdsManager Page',
-                  description: 'Click here to view adsmanager page.',
-                  position: 'bottom',
-                },
-              },
-              {
-                element: '#kyc-verification',
-                popover: {
-                  title: 'KYC Page',
-                  description: 'Click here to view kyc verification page.',
-                  position: 'bottom',
-                },
-              },
-              {
-                element: '#notification',
-                popover: {
-                  title: 'Notification',
-                  description: 'Click here to view notifications.',
-                  position: 'bottom',
-                },
-              },
-              {
-                element: '#coupon',
-                popover: {
-                  title: 'Coupons Page',
-                  description: 'Click here to view coupons page.',
-                  position: 'bottom',
-                },
-              },
-              {
-                element: '#contest-page',
-                popover: {
-                  title: 'Contest Page',
-                  description: 'Click here to view contest page.',
-                  position: 'bottom',
-                },
-              },
-              {
-                element: '#user-profile',
-                popover: {
-                  title: 'Profile Page',
-                  description: 'Click here to view profile page.',
-                  position: 'bottom',
-                },
-              },
-            ]);
-
-            driver.start();
-          } else {
-            console.warn('Some tour elements not found.');
+          if (!allExist) {
+            const missing = navSelectors.filter(sel => !document.querySelector(sel));
+            console.warn("❌ Navbar tour missing elements:", missing);
+            return;
           }
+
+          const driver = new Driver({
+            animate: true,
+            opacity: 0.5,
+            stageBackground: 'rgba(0, 0, 0, 0.5)',
+            allowClose: true,
+            doneBtnText: 'Next: Ads Tour',
+            closeBtnText: 'Skip',
+            nextBtnText: 'Next',
+            prevBtnText: 'Previous',
+            onReset: () => {
+              localStorage.setItem(`userTourNavbarDone_${userId}`, 'true');
+            },
+          });
+
+          driver.defineSteps(navSelectors.map((selector) => {
+            const label = selector.replace('#', '').replace(/-/g, ' ');
+            return {
+              element: selector,
+              popover: {
+                title: label.charAt(0).toUpperCase() + label.slice(1),
+                description: `Click here to visit ${label} page.`,
+                position: 'bottom',
+              },
+            };
+          }));
+
+          driver.start();
         }
 
         attempts++;
@@ -226,6 +171,7 @@ function Navbar() {
       return () => clearInterval(interval);
     }
   }, [userId]);
+
 
   return (
     <>
