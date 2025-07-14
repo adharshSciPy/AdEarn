@@ -407,8 +407,8 @@ const kycVerifiedUsers = async (req, res) => {
 
 // to verify ads
 const verifyAdById = async (req, res) => {
-  const { adId} = req.body;
-  const adminId=req.params.id;
+  const { adId } = req.body;
+  const adminId = req.params.id;
   const { io, connectedUsers } = req;
 
   if (!adId) {
@@ -459,11 +459,13 @@ const verifyAdById = async (req, res) => {
         },
         { new: true }
       );
-       extraDeductedStars = ad.imgAdRef.extraDeductedStars || 0;
+
       createdBy = ad.imgAdRef.createdBy;
       adType = "Image Ad";
       adTitle = ad.imgAdRef.title;
       adPostedTime = ad.imgAdRef.createdAt;
+      extraDeductedStars = ad.imgAdRef.extraDeductedStars || 0;
+
     } else if (ad.videoAdRef && !ad.videoAdRef.isAdVerified) {
       const views = ad.videoAdRef.userViewsNeeded;
       const expirationDate = calculateExpirationDate(views);
@@ -477,11 +479,13 @@ const verifyAdById = async (req, res) => {
         },
         { new: true }
       );
-       extraDeductedStars = ad.imgAdRef.extraDeductedStars || 0;
+
       createdBy = ad.videoAdRef.createdBy;
       adType = "Video Ad";
       adTitle = ad.videoAdRef.title;
       adPostedTime = ad.videoAdRef.createdAt;
+      extraDeductedStars = ad.videoAdRef.extraDeductedStars || 0;
+
     } else if (ad.surveyAdRef && !ad.surveyAdRef.isAdVerified) {
       const views = ad.surveyAdRef.userViewsNeeded;
       const expirationDate = calculateExpirationDate(views);
@@ -495,29 +499,34 @@ const verifyAdById = async (req, res) => {
         },
         { new: true }
       );
-       extraDeductedStars = ad.imgAdRef.extraDeductedStars || 0;
+
       createdBy = ad.surveyAdRef.createdBy;
       adType = "Survey Ad";
       adTitle = ad.surveyAdRef.title;
       adPostedTime = ad.surveyAdRef.createdAt;
+      extraDeductedStars = ad.surveyAdRef.extraDeductedStars || 0;
+
     } else {
       return res.status(200).json({ message: "Ad is already verified" });
     }
+
+    // Log verified ad to SuperAdminWallet if extraDeductedStars exist
     if (extraDeductedStars > 0) {
-      const saWallet = await superAdminWallet.findOne(); 
+      const saWallet = await superAdminWallet.findOne();
       if (saWallet) {
-        saWallet.totalStars += extraDeductedStars;
         saWallet.adExtraDeductions.push({
           adId: ad._id,
           adType,
           userId: createdBy,
           stars: extraDeductedStars,
           status: "verified",
-          timestamp: new Date(),
+          timestamp: verifiedTime,
         });
         await saWallet.save();
       }
     }
+
+    // Log in Admin's verifiedAds
     if (adminId) {
       await Admin.findByIdAndUpdate(adminId, {
         $push: {
@@ -530,7 +539,8 @@ const verifyAdById = async (req, res) => {
         },
       });
     }
-    // 🔔 Send notification to creator
+
+    // 🔔 Send notification to user
     if (createdBy) {
       const formattedTime = new Date(adPostedTime).toLocaleString("en-IN", {
         timeZone: "Asia/Kolkata",
@@ -558,6 +568,8 @@ const verifyAdById = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
 
 const getAdminWallet = async (req, res) => {
   try {
