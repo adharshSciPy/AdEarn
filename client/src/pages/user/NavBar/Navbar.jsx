@@ -14,6 +14,7 @@ import verificationIcon from "../../../assets/kyc.png";
 import notification from "../../../assets/notification.png";
 import ads from "../../../assets/add.png";
 import { addNotification } from "../../../components/features/notificationSlice";
+import contest from "../../../assets/trophy.png"
 
 function Navbar() {
   const [activeTab, setActiveTab] = useState("home");
@@ -56,6 +57,8 @@ function Navbar() {
     },
     { icon: <NotificationIcon />, label: "notification" },
     { icon: coupon, label: "/coupon" },
+    { icon: contest, label: `/contestpage/${userId}` },
+
 
     { icon: profile, label: "/userprofile" },
   ];

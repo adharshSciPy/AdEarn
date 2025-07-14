@@ -54,7 +54,7 @@ function VerifyAds() {
         adId: selectedAd,
       });
       if (response.status === 200) {
-        navigate(`/AdminAds${adminId}`);
+        navigate(`/AdminAds/${adminId}`);
       }
       console.log(response);
     } catch (error) {
@@ -68,7 +68,7 @@ function VerifyAds() {
         reason: reason,
       });
       if (response.status === 200) {
-        navigate(`/AdminAds${adminId}`);
+        navigate(`/AdminAds/${adminId}`);
       }
       console.log(response);
     } catch (error) {

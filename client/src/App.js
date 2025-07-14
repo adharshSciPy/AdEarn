@@ -164,7 +164,7 @@ function App() {
           <Route path='/userhome/:id' element={<UserHome />} />
           <Route path='/adsmanageruser/:id' element={<Adsmanager />} />
           <Route path='/adstemplate' element={<AdTemplateSelector />} />
-          <Route path='/contestpage' element={<ContestPage />} />
+          <Route path='/contestpage/:id' element={<ContestPage />} />
           <Route path='/walletpage/:id' element={<WalletPage />} />
           <Route path='/referalpageuser' element={<RefaralPage />} />
           <Route path='/userprofile' element={<UserProfileEditForm />} />
