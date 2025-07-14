@@ -29,7 +29,7 @@ userRouter.route('/forgot-password/verify-otp').post(verifyPasswordResetOTP);
 userRouter.route('/forgot-password/reset-password').post(resetPassword);
 userRouter.route('/activate-subscription').post(authMiddleware,activateSubscription);
 userRouter.route('/request-coupon/:id').post(sendCouponRequest);
-userRouter.route("/user/:userId/my-contest-entries").get(getUserContestEntries);
+userRouter.route("/user/my-contest-entries/:userId").get(getUserContestEntries);
 
 
 
