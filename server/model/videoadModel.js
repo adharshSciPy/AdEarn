@@ -153,6 +153,18 @@ assignmentTime: {
   type: Date,
   default: null,
 }
+,
+paymentMode: {
+  type: String,
+  enum: ["star", "payment"],
+  required: true,
+},
+isPaymentCompleted: { type: Boolean, default: false },
+amountToPay: { type: Number },
+userShare: { type: Number, default: 0 },
+superAdminShare: { type: Number, default: 0 },
+adminShare: { type: Number, default: 0 },
+referredUserShare: { type: Number, default: 0 },
 
   },
   { timestamps: true }

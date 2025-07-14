@@ -1048,13 +1048,16 @@ function VideoAdForm() {
                 accept="video/*"
                 onChange={handleFileChange}
               />
-              {preview && (
-                <img
+              <div className={styles.videoContainer}>
+                {preview && (
+                <video
                   src={preview}
-                  alt="Preview"
-                  className={styles.previewImg}
+                  // className={styles.previewImg}
+                  autoPlay
+                  controls
                 />
               )}
+              </div>
             </div>
           </div>
         </div>

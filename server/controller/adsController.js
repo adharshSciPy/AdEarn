@@ -235,6 +235,21 @@ const createImageAd = async (req, res) => {
 
     user.ads.push(ad._id);
     await user.save();
+//     if (extraDeductedStars > 0) {
+//   const superWallet = await SuperAdminWallet.findOne();
+//   if (superWallet) {
+//     superWallet.totalStars += extraDeductedStars;
+//     superWallet.adExtraDeductions.push({
+//       adId: ad._id,
+//       adType: "Image Ad",
+//       userId: user._id,
+//       stars: extraDeductedStars,
+//       status: "verified",
+//     });
+//     await superWallet.save();
+//   }
+// }
+
 
     return res.status(200).json({
       message: "Image Ad created successfully and stars deducted",
@@ -257,6 +272,7 @@ const createImageAd = async (req, res) => {
 
 // ------------------- VIDEO AD -------------------
 
+
 const createVideoAd = async (req, res) => {
   const {
     title,
@@ -267,8 +283,8 @@ const createVideoAd = async (req, res) => {
     states,
     districts,
   } = req.body;
-  const { id } = req.params;
 
+  const { id } = req.params;
   if (!id) return res.status(400).json({ message: "User ID is required" });
   if (!req.file) return res.status(400).json({ message: "Video file is required" });
   if (!title || !description || !userViewsNeeded)
@@ -282,9 +298,7 @@ const createVideoAd = async (req, res) => {
   let targetDistricts = [];
 
   try {
-    const parsedLocations =
-      typeof locations === "string" ? JSON.parse(locations) : locations;
-
+    const parsedLocations = typeof locations === "string" ? JSON.parse(locations) : locations;
     if (Array.isArray(parsedLocations)) {
       for (const loc of parsedLocations) {
         if (!loc.coords || !loc.radius) continue;
@@ -299,10 +313,7 @@ const createVideoAd = async (req, res) => {
         }
 
         targetRegions.push({
-          location: {
-            type: "Point",
-            coordinates: [latitude, longitude],
-          },
+          location: { type: "Point", coordinates: [latitude, longitude] },
           radius,
         });
       }
@@ -311,24 +322,16 @@ const createVideoAd = async (req, res) => {
     targetStates = typeof states === "string" ? JSON.parse(states) : states;
     if (!Array.isArray(targetStates)) targetStates = [];
 
-    targetDistricts =
-      typeof districts === "string" ? JSON.parse(districts) : districts;
+    targetDistricts = typeof districts === "string" ? JSON.parse(districts) : districts;
     if (!Array.isArray(targetDistricts)) targetDistricts = [];
 
-    if (
-      targetRegions.length === 0 &&
-      targetStates.length === 0 &&
-      targetDistricts.length === 0
-    ) {
+    if (targetRegions.length === 0 && targetStates.length === 0 && targetDistricts.length === 0) {
       return res.status(400).json({
-        message:
-          "At least one target location (geo, state, or district) is required",
+        message: "At least one target location (geo, state, or district) is required",
       });
     }
   } catch (err) {
-    return res
-      .status(400)
-      .json({ message: "Invalid location format", error: err.message });
+    return res.status(400).json({ message: "Invalid location format", error: err.message });
   }
 
   try {
@@ -336,21 +339,17 @@ const createVideoAd = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const userWallet = user.userWalletDetails;
-    if (!userWallet)
-      return res.status(400).json({ message: "User wallet not found" });
+    if (!userWallet) return res.status(400).json({ message: "User wallet not found" });
 
     const viewsNeeded = parseInt(userViewsNeeded);
     if (isNaN(viewsNeeded) || viewsNeeded <= 0) {
       return res.status(400).json({ message: "Invalid userViewsNeeded value" });
     }
 
-    //star deduction logic
     const starsDeductionRate = 2.4;
     const baseDeductedStars = viewsNeeded * starsDeductionRate;
-
     const viewsChunk = Math.floor(viewsNeeded / 100);
     const extraDeductedStars = viewsChunk * 5;
-
     const totalStarsToBeDeducted = baseDeductedStars + extraDeductedStars;
 
     if (userWallet.totalStars < totalStarsToBeDeducted) {
@@ -360,7 +359,7 @@ const createVideoAd = async (req, res) => {
       });
     }
 
-    //  Star payout plan: 40% 3-star, 60% 2-star
+    // Create payout plan for ONLY baseDeductedStars
     const total3Stars = Math.floor((baseDeductedStars * 0.4) / 3);
     const total2Stars = Math.floor((baseDeductedStars * 0.6) / 2);
     const usedStars = total3Stars * 3 + total2Stars * 2;
@@ -377,8 +376,12 @@ const createVideoAd = async (req, res) => {
     let nullStarsCount = viewsNeeded - totalGiven;
     if (nullStarsCount < 0) nullStarsCount = 0;
 
-    const nullStars = Array(nullStarsCount).fill(0);
-    const starPayoutPlan = [...highValueStars, ...nullStars];
+    const starPayoutPlan = [
+      ...highValueStars,
+      ...Array(nullStarsCount).fill(0),
+    ];
+
+    // Deduct stars from user
     userWallet.totalStars -= totalStarsToBeDeducted;
     await userWallet.save();
 
@@ -398,12 +401,31 @@ const createVideoAd = async (req, res) => {
       targetRegions,
       targetStates,
       targetDistricts,
+      paymentMode: "star",
+      isPaymentCompleted: true,
+      userShare: totalStarsToBeDeducted, // includes extra
     });
 
     const ad = await Ad.create({ videoAdRef: videoAd._id });
 
+    // Add ad to user
     user.ads.push(ad._id);
     await user.save();
+
+//  if (extraDeductedStars > 0) {
+//   const superWallet = await SuperAdminWallet.findOne();
+//   if (superWallet) {
+//     superWallet.totalStars += extraDeductedStars;
+//     superWallet.adExtraDeductions.push({
+//       adId: ad._id,
+//       adType: "Video Ad",
+//       userId: user._id,
+//       stars: extraDeductedStars,
+//       status: "verified",
+//     });
+//     await superWallet.save();
+//   }
+// }
 
     return res.status(200).json({
       message: "Video Ad created successfully and stars deducted",
@@ -422,6 +444,8 @@ const createVideoAd = async (req, res) => {
     });
   }
 };
+
+
 
 
 // ------------------- SURVEY AD -------------------
@@ -532,13 +556,11 @@ const createSurveyAd = async (req, res) => {
       return res.status(400).json({ message: "Invalid userViewsNeeded value" });
     }
 
-    // ⭐ Deduction logic (same as video ad)
+    // ⭐ Same logic as video ad
     const starsDeductionRate = 2.4;
     const baseDeductedStars = viewsNeeded * starsDeductionRate;
-
     const viewsChunk = Math.floor(viewsNeeded / 100);
     const extraDeductedStars = viewsChunk * 5;
-
     const totalStarsToBeDeducted = baseDeductedStars + extraDeductedStars;
 
     if (userWallet.totalStars < totalStarsToBeDeducted) {
@@ -548,7 +570,7 @@ const createSurveyAd = async (req, res) => {
       });
     }
 
-    // Star payout plan distribution
+    // Payout plan from baseDeductedStars only
     const total3Stars = Math.floor((baseDeductedStars * 0.4) / 3);
     const total2Stars = Math.floor((baseDeductedStars * 0.6) / 2);
     const usedStars = total3Stars * 3 + total2Stars * 2;
@@ -565,10 +587,12 @@ const createSurveyAd = async (req, res) => {
     let nullStarsCount = viewsNeeded - totalGiven;
     if (nullStarsCount < 0) nullStarsCount = 0;
 
-    const nullStars = Array(nullStarsCount).fill(0);
-    const starPayoutPlan = [...highValueStars, ...nullStars];
+    const starPayoutPlan = [
+      ...highValueStars,
+      ...Array(nullStarsCount).fill(0),
+    ];
 
-    // Deduct stars
+    // Deduct from user wallet
     userWallet.totalStars -= totalStarsToBeDeducted;
     await userWallet.save();
 
@@ -608,6 +632,22 @@ const createSurveyAd = async (req, res) => {
     user.ads.push(ad._id);
     await user.save();
 
+    // // Handle extra deduction record (✅ same as video ad)
+    // if (extraDeductedStars > 0) {
+    //   const superWallet = await SuperAdminWallet.findOne();
+    //   if (superWallet) {
+    //     superWallet.totalStars += extraDeductedStars;
+    //     superWallet.adExtraDeductions.push({
+    //       adId: ad._id,
+    //       adType: "Survey Ad",
+    //       userId: user._id,
+    //       stars: extraDeductedStars,
+    //       status: "verified",
+    //     });
+    //     await superWallet.save();
+    //   }
+    // }
+
     return res.status(200).json({
       message: "Survey Ad created successfully and stars deducted",
       surveyAd,
@@ -625,6 +665,7 @@ const createSurveyAd = async (req, res) => {
     });
   }
 };
+
 
 const submitSurveyResponse = async (req, res) => {
   const { surveyAdId, responses, userId } = req.body;
@@ -2045,8 +2086,357 @@ const createImageAdDraft = async (req, res) => {
     return res.status(500).json({ message: "Internal server error", error: err.message });
   }
 };
+//to create video ad with payment method
+const createVideoAdDraft = async (req, res) => {
+  const {
+    title,
+    description,
+    userViewsNeeded,
+    adPeriod,
+    locations,
+    states,
+    districts,
+  } = req.body;
 
-//to confirm the status of the payment and to deliver star shares to respective wallets
+  const { id: userId } = req.params;
+  const videoFile = req.file;
+
+  if (!userId || !title || !description || !userViewsNeeded || !videoFile) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const parsedAdPeriod = parseFloat(adPeriod) || 0;
+    const adRepetition = parsedAdPeriod > 0;
+
+    // Parse location input
+    let targetRegions = [];
+    let targetStates = Array.isArray(states) ? states : JSON.parse(states || "[]");
+    let targetDistricts = Array.isArray(districts) ? districts : JSON.parse(districts || "[]");
+    const parsedLocations = Array.isArray(locations) ? locations : JSON.parse(locations || "[]");
+
+    for (const loc of parsedLocations) {
+      if (!loc.coords || !loc.radius) continue;
+      const [latStr, lngStr] = loc.coords.split(",");
+      const latitude = parseFloat(latStr);
+      const longitude = parseFloat(lngStr);
+      const radius = parseFloat(loc.radius);
+      if (!isNaN(latitude) && !isNaN(longitude) && !isNaN(radius)) {
+        targetRegions.push({
+          location: {
+            type: "Point",
+            coordinates: [latitude, longitude],
+          },
+          radius,
+        });
+      }
+    }
+
+    // Video Ad Plan
+    const viewsNeeded = parseInt(userViewsNeeded);
+    const starsDeductionRate = 2.4;
+    const baseDeductedStars = viewsNeeded * starsDeductionRate;
+
+    const extraDeductedStars = 0; // No extra deduction
+    const totalStarsToBeDeducted = baseDeductedStars;
+
+    const conversionRate = 4; // 4 stars = ₹1
+    const percentageToUser = 60;
+
+    const totalStarsGenerated = baseDeductedStars * (100 / percentageToUser);
+    const rupeesToPay = totalStarsGenerated / conversionRate;
+
+    const userShare = baseDeductedStars;
+    const superAdminShare = totalStarsGenerated * 0.2;
+    const adminShare = totalStarsGenerated * 0.1;
+    const referredUserShare = totalStarsGenerated * 0.1;
+
+    // ✅ Star payout plan: strictly within viewsNeeded
+    let starsLeft = Math.floor(baseDeductedStars);
+    const totalViews = viewsNeeded;
+
+    const max3Stars = Math.floor((starsLeft * 0.4) / 3);
+    const max2Stars = Math.floor((starsLeft * 0.6) / 2);
+
+    let payout = [];
+    let count = 0;
+
+    // Add 3-star
+    for (let i = 0; i < max3Stars && count < totalViews; i++) {
+      payout.push(3);
+      starsLeft -= 3;
+      count++;
+    }
+
+    // Add 2-star
+    for (let i = 0; i < max2Stars && count < totalViews; i++) {
+      payout.push(2);
+      starsLeft -= 2;
+      count++;
+    }
+
+    // Add 1-star if still stars left
+    while (starsLeft > 0 && count < totalViews) {
+      payout.push(1);
+      starsLeft -= 1;
+      count++;
+    }
+
+    // Fill rest with 0s if needed
+    while (count < totalViews) {
+      payout.push(0);
+      count++;
+    }
+
+    const videoUrl = `/videoAdUploads/${videoFile.filename}`;
+
+    const videoAd = await VideoAd.create({
+      title,
+      description,
+      videoUrl,
+      adPeriod: adRepetition ? parsedAdPeriod : 0,
+      adRepetition,
+      createdBy: user._id,
+      userViewsNeeded: viewsNeeded,
+      totalStarsAllocated: baseDeductedStars,
+      extraDeductedStars,
+      starPayoutPlan: payout,
+      targetRegions,
+      targetStates,
+      targetDistricts,
+      paymentMode: "payment",
+      isPaymentCompleted: false,
+      amountToPay: rupeesToPay,
+      userShare,
+      superAdminShare,
+      adminShare,
+      referredUserShare,
+    });
+
+    const ad = await Ad.create({ videoAdRef: videoAd._id });
+    user.ads.push(ad._id);
+    await user.save();
+
+    return res.status(200).json({
+      message: "Video ad draft created. Proceed to payment.",
+      adId: ad._id,
+      amountToPay: rupeesToPay.toFixed(2),
+      videoAd,
+    });
+  } catch (err) {
+    console.error("Error creating video ad draft:", err);
+    return res.status(500).json({ message: "Internal server error", error: err.message });
+  }
+};
+const createSurveyAdDraft = async (req, res) => {
+  const {
+    title,
+    description,
+    userViewsNeeded,
+    adPeriod,
+    questions,
+    states,
+    districts,
+    locations,
+  } = req.body;
+
+  const { id: userId } = req.params;
+
+  if (!userId || !title || !description || !questions || !userViewsNeeded) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  let parsedQuestions, parsedStates, parsedDistricts, parsedLocations;
+
+  try {
+    parsedQuestions = typeof questions === "string" ? JSON.parse(questions) : questions;
+    if (!Array.isArray(parsedQuestions) || parsedQuestions.length === 0) {
+      return res.status(400).json({ message: "At least one question is required" });
+    }
+
+    parsedStates = Array.isArray(states) ? states : JSON.parse(states || "[]");
+    parsedDistricts = Array.isArray(districts) ? districts : JSON.parse(districts || "[]");
+    parsedLocations = Array.isArray(locations) ? locations : JSON.parse(locations || "[]");
+
+    for (const [index, q] of parsedQuestions.entries()) {
+      const { questionText, questionType, options } = q;
+      if (!questionText || !questionType || !options) {
+        return res.status(400).json({ message: `Missing fields in question ${index + 1}` });
+      }
+
+      if (!["yesno", "multiple"].includes(questionType)) {
+        return res.status(400).json({ message: `Invalid questionType in question ${index + 1}` });
+      }
+
+      if (questionType === "yesno") {
+        if (!Array.isArray(options) || options.length !== 2 || !options.includes("Yes") || !options.includes("No")) {
+          return res.status(400).json({
+            message: `Yes/No question ${index + 1} must have exactly ['Yes', 'No'] as options`,
+          });
+        }
+      }
+
+      if (questionType === "multiple" && (!Array.isArray(options) || options.length < 2)) {
+        return res.status(400).json({
+          message: `Multiple choice question ${index + 1} must have at least 2 options`,
+        });
+      }
+    }
+  } catch (err) {
+    return res.status(400).json({ message: "Invalid JSON format", error: err.message });
+  }
+
+  // Process location
+  let targetRegions = [];
+  try {
+    for (const loc of parsedLocations) {
+      if (!loc.coords || !loc.radius) continue;
+      const [latStr, lngStr] = loc.coords.split(",");
+      const latitude = parseFloat(latStr);
+      const longitude = parseFloat(lngStr);
+      const radius = parseFloat(loc.radius);
+
+      if (!isNaN(latitude) && !isNaN(longitude) && !isNaN(radius)) {
+        targetRegions.push({
+          location: { type: "Point", coordinates: [latitude, longitude] },
+          radius,
+        });
+      }
+    }
+  } catch (err) {
+    return res.status(400).json({ message: "Invalid location format", error: err.message });
+  }
+
+  if (
+    targetRegions.length === 0 &&
+    (!parsedStates || parsedStates.length === 0) &&
+    (!parsedDistricts || parsedDistricts.length === 0)
+  ) {
+    return res.status(400).json({
+      message: "At least one target location (geo, state, or district) is required",
+    });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const viewsNeeded = parseInt(userViewsNeeded);
+    if (isNaN(viewsNeeded) || viewsNeeded <= 0) {
+      return res.status(400).json({ message: "Invalid userViewsNeeded value" });
+    }
+
+    // Cost calculation logic
+    const starsDeductionRate = 2.4;
+    const baseDeductedStars = viewsNeeded * starsDeductionRate;
+    const extraDeductedStars = 0;
+    const totalStarsToBeDeducted = baseDeductedStars;
+
+    const conversionRate = 4; // 4 stars = ₹1
+    const percentageToUser = 60;
+
+    const totalStarsGenerated = baseDeductedStars * (100 / percentageToUser);
+    const rupeesToPay = totalStarsGenerated / conversionRate;
+
+    const userShare = baseDeductedStars;
+    const superAdminShare = totalStarsGenerated * 0.2;
+    const adminShare = totalStarsGenerated * 0.1;
+    const referredUserShare = totalStarsGenerated * 0.1;
+
+    // Build star payout plan
+    let starsLeft = Math.floor(baseDeductedStars);
+    const totalViews = viewsNeeded;
+
+    const max3Stars = Math.floor((starsLeft * 0.4) / 3);
+    const max2Stars = Math.floor((starsLeft * 0.6) / 2);
+
+    let payout = [];
+    let count = 0;
+
+    for (let i = 0; i < max3Stars && count < totalViews; i++) {
+      payout.push(3);
+      starsLeft -= 3;
+      count++;
+    }
+
+    for (let i = 0; i < max2Stars && count < totalViews; i++) {
+      payout.push(2);
+      starsLeft -= 2;
+      count++;
+    }
+
+    while (starsLeft > 0 && count < totalViews) {
+      payout.push(1);
+      starsLeft -= 1;
+      count++;
+    }
+
+    while (count < totalViews) {
+      payout.push(0);
+      count++;
+    }
+
+    const parsedAdPeriod = parseFloat(adPeriod) || 0;
+    const adRepetition = parsedAdPeriod > 0;
+
+    const questionStats = parsedQuestions.map((q) => ({
+      questionText: q.questionText,
+      options: q.options,
+      counts: q.options.map(() => 0),
+      respondentNames: q.options.map(() => []),
+    }));
+
+    const imageUrl = req.file ? `/surveyAdUploads/${req.file.filename}` : "";
+
+    const surveyAd = await SurveyAd.create({
+      title,
+      description,
+      imageUrl,
+      questions: parsedQuestions,
+      questionStats,
+      createdBy: user._id,
+      userViewsNeeded: viewsNeeded,
+      totalStarsAllocated: baseDeductedStars,
+      extraDeductedStars,
+      starPayoutPlan: payout,
+      adPeriod: adRepetition ? parsedAdPeriod : 0,
+      adRepetition,
+      targetRegions,
+      targetStates: parsedStates,
+      targetDistricts: parsedDistricts,
+      paymentMode: "payment",
+      isPaymentCompleted: false,
+      amountToPay: rupeesToPay,
+      userShare,
+      superAdminShare,
+      adminShare,
+      referredUserShare,
+    });
+
+    const ad = await Ad.create({ surveyAdRef: surveyAd._id });
+    user.ads.push(ad._id);
+    await user.save();
+
+    return res.status(200).json({
+      message: "Survey ad draft created. Proceed to payment.",
+      adId: ad._id,
+      amountToPay: rupeesToPay.toFixed(2),
+      surveyAd,
+    });
+  } catch (err) {
+    console.error("Error creating survey ad draft:", err);
+    return res.status(500).json({ message: "Internal server error", error: err.message });
+  }
+};
+
+
+
+
+
+// to confirm the status of the payment and to deliver star shares to respective wallets
 const confirmAdPayment = async (req, res) => {
   const { adId } = req.params;
   const { io, connectedUsers } = req;
@@ -2079,7 +2469,22 @@ const confirmAdPayment = async (req, res) => {
       referredUserShare,
     } = adRef;
 
-    // ✅ Update user wallet
+    console.log("Shares →", {
+      userShare,
+      superAdminShare,
+      adminShare,
+      referredUserShare,
+    });
+
+    // Validate shares are numbers
+    if ([userShare, superAdminShare, adminShare, referredUserShare].some(s => typeof s !== "number" || isNaN(s))) {
+      throw new Error("Invalid share values: One or more shares are NaN");
+    }
+
+    //Update user wallet
+    if (typeof wallet.totalStars !== "number" || isNaN(wallet.totalStars)) {
+      wallet.totalStars = 0;
+    }
     wallet.totalStars += Math.floor(userShare);
     wallet.starBought.push({
       starsNeeded: Math.floor(userShare),
@@ -2087,12 +2492,16 @@ const confirmAdPayment = async (req, res) => {
     });
     await wallet.save();
 
-    // ✅ Handle referred user
+    //Handle referred user
     let referredUserNotification = null;
     if (user.referedBy) {
       const referredUser = await User.findById(user.referedBy).populate("userWalletDetails");
       if (referredUser?.userWalletDetails) {
         const referredWallet = referredUser.userWalletDetails;
+
+        if (typeof referredWallet.totalStars !== "number" || isNaN(referredWallet.totalStars)) {
+          referredWallet.totalStars = 0;
+        }
 
         referredWallet.totalStars += Math.floor(referredUserShare);
         referredWallet.starBought.push({
@@ -2118,10 +2527,14 @@ const confirmAdPayment = async (req, res) => {
         );
       }
     } else {
-      // ✅ Fallback to first user
+      //Fallback to first user
       const firstUser = await User.findOne().sort({ createdAt: 1 }).populate("userWalletDetails");
       if (firstUser?.userWalletDetails) {
         const firstWallet = firstUser.userWalletDetails;
+
+        if (typeof firstWallet.totalStars !== "number" || isNaN(firstWallet.totalStars)) {
+          firstWallet.totalStars = 0;
+        }
 
         firstWallet.totalStars += Math.floor(referredUserShare);
         firstWallet.starBought.push({
@@ -2137,7 +2550,7 @@ const confirmAdPayment = async (req, res) => {
       }
     }
 
-    // ✅ Admin wallet
+    //Admin wallet
     let adminWallet = await AdminWallet.findOne();
     if (!adminWallet) {
       adminWallet = new AdminWallet({
@@ -2148,6 +2561,10 @@ const confirmAdPayment = async (req, res) => {
         }],
       });
     } else {
+      if (typeof adminWallet.totalStars !== "number" || isNaN(adminWallet.totalStars)) {
+        adminWallet.totalStars = 0;
+      }
+
       adminWallet.totalStars += Math.floor(adminShare);
       adminWallet.transactions.push({
         userId: user._id,
@@ -2156,7 +2573,7 @@ const confirmAdPayment = async (req, res) => {
     }
     await adminWallet.save();
 
-    // ✅ Super admin wallet
+    //Super admin wallet
     let superAdminWallet = await SuperAdminWallet.findOne(); 
     if (!superAdminWallet) {
       superAdminWallet = new SuperAdminWallet({
@@ -2167,6 +2584,10 @@ const confirmAdPayment = async (req, res) => {
         }],
       });
     } else {
+      if (typeof superAdminWallet.totalStars !== "number" || isNaN(superAdminWallet.totalStars)) {
+        superAdminWallet.totalStars = 0;
+      }
+
       superAdminWallet.totalStars += Math.floor(superAdminShare);
       superAdminWallet.transactions.push({
         userId: user._id,
@@ -2175,7 +2596,7 @@ const confirmAdPayment = async (req, res) => {
     }
     await superAdminWallet.save();
 
-    // ✅ Send notifications
+    // Send notifications
     const adminUsers = await Admin.find({ adminRole: ADMIN_ROLE });
     const superAdminUser = await superAdminModel.findOne({ role: SUPER_ADMIN_ROLE });
 
@@ -2233,6 +2654,7 @@ const confirmAdPayment = async (req, res) => {
 
 
 
+
 export {
   createImageAd,
   createVideoAd,
@@ -2251,5 +2673,7 @@ export {
   editImageAd,
   editVideoAd,
   createImageAdDraft,
+  createVideoAdDraft,
+  createSurveyAdDraft,
   confirmAdPayment
 };
