@@ -37,8 +37,9 @@ import {
   getSubscriptionAccountDetailsInAmount,
   getAllUserAdSummariesInAmount,
   getAllContestsForSuperAdmin, 
-  assignWinnerManually, 
-  getAllCouponBatchSummaries
+  assignWinnerManually ,
+  getActiveManualContests,
+  getManualContestById 
   // selectAutomaticWinners
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
@@ -90,8 +91,8 @@ superAdminRouter.route("/all-contests").get(getAllContestsForSuperAdmin);
 superAdminRouter.route("/assign-winner").post(assignWinnerManually);
 superAdminRouter.route("/coupon-batch-details").get(getAllCouponBatchSummaries);
 
-
-
+superAdminRouter.route("/manual-contests/active").get(getActiveManualContests );
+superAdminRouter.route("/manual/:id").get(getManualContestById );
 
 
 

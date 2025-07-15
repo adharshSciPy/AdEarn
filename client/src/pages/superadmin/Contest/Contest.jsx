@@ -28,12 +28,14 @@ function Contest() {
   };
 
   const getContestData = async () => {
-    // try {
-    //   const res = await axios.get(`${baseUrl}/api/v1/user/my-contest-entries/${id}`);
-    //   setUserContest(res.data);
-    // } catch (error) {
-    //   console.log(error);
-    // }
+    try {
+      const res = await axios.get(`${baseUrl}/api/v1/super-admin/all-contests`);
+      setUserContest(res.data.contests);
+      console.log(res);
+      
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const stopContest = async (contestId) => {
@@ -52,7 +54,7 @@ function Contest() {
 
   useEffect(() => {
     getContest();
-    // getContestData();
+    getContestData();
   }, []);
 
   return (
@@ -181,7 +183,7 @@ function Contest() {
                     <th>Entry date</th>
                     <th>Total Entry</th>
                     <th>Status</th>
-                    <th>Winner</th>
+                    {/* <th>Winner</th> */}
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -195,15 +197,15 @@ function Contest() {
                       </td>
                       <td>{contest.entryStars}</td>
                       <td>
-                        {new Date(contest.entryDate).toLocaleString("en-GB", {
+                        {new Date(contest.createdAt).toLocaleString("en-GB", {
                           day: "numeric",
                           month: "long",
                           year: "numeric",
                         })}
                       </td>
-                      <td>{contest.totalEntry}</td>
+                      <td>{contest.maxParticipants}</td>
                       <td className={styles.ongoing}>{contest.status}</td>
-                      <td>Running</td>
+                      {/* <td>Running</td> */}
                       <td className={styles.editIcons}>
                         <button
                           className={styles.iconBtn}
@@ -240,7 +242,7 @@ function Contest() {
                     📅 <strong>Entry Date:</strong>
                   </span>
                   <span>
-                    {new Date(selectedContest.entryDate).toLocaleDateString(
+                    {new Date(selectedContest.createdAt).toLocaleDateString(
                       "en-GB"
                     )}
                   </span>
@@ -249,7 +251,7 @@ function Contest() {
                   <span>
                     👥 <strong>Total Entries:</strong>
                   </span>
-                  <span>{selectedContest.totalEntry}</span>
+                  <span>{selectedContest.maxParticipants}</span>
                 </div>
                 <div className={styles.modalRow}>
                   <span>
@@ -276,7 +278,7 @@ function Contest() {
                           const medal = medals[i] || "🏅";
                           return (
                             <span key={i} className={styles.winnerItem}>
-                              {medal} <strong>{place}</strong> - {a.name}
+                              {medal} <strong>{place}</strong> - {a.user.name}
                             </span>
                           );
                         })}
