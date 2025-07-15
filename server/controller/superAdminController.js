@@ -2,7 +2,7 @@ import superAdmin from "../model/superAdminModel.js";
 import jwt from "jsonwebtoken";
 import path from "path";
 import { Admin } from "../model/adminModel.js";
-import User from "../model/userModel.js"
+import User from "../model/userModel.js";
 import SuperAdminWallet from "../model/superAdminWallet.js";
 import Coupon from "../model/couponModel.js";
 import WelcomeBonusSetting from "../model/WelcomeBonusSetting.js";
@@ -24,7 +24,6 @@ import getDateRange from "../utils/getDateRange.js";
 import getCouponAmount from "../utils/getCouponAmount.js";
 import couponRequestModel from "../model/couponRequestModel.js";
 import UserContestEntry from "../model/userContestEntryModel.js"
-import adminwalletModel from "../model/adminwalletModel.js";
 // import superAdminWallet from "../model/superAdminWallet.js";
 import { VideoAd } from "../model/videoadModel.js";
 import { ImageAd } from "../model/imageadModel.js";
@@ -782,7 +781,7 @@ const registerUserToContest = async (req, res) => {
 
     // ✅ Add to SuperAdmin wallet
     adminWallet.contestEntryWallet.collectedFromUsers.push({
-      userId: new mongoose.Types.ObjectId(userId), // ✅ force ObjectId
+      userId,
       contestId: contest._id,
       stars: contest.entryStars,
     });
@@ -801,12 +800,12 @@ const registerUserToContest = async (req, res) => {
       console.log("➡ Attempting to create ContestParticipant and UserContestEntry...");
 
       await ContestParticipant.create({
-        userId: new mongoose.Types.ObjectId(userId), // ✅ force ObjectId
+        userId,
         contestId: contest._id,
       });
 
       await UserContestEntry.create({
-        userId: new mongoose.Types.ObjectId(userId), // ✅ force ObjectId
+        userId,
         contestId: contest._id,
         entryStars: contest.entryStars,
       });
@@ -820,7 +819,7 @@ const registerUserToContest = async (req, res) => {
     if (contest.currentParticipants >= contest.maxParticipants) {
       if (contest.winnerSelectionType === "Automatic") {
         console.log("🎯 Max participants reached. Triggering automatic winner selection...");
-        await selectAutomaticWinnersInternal(contest._id); // ✅ triggers winner logic
+        await selectAutomaticWinnersInternal(contest._id);
       } else {
         contest.status = "Ended";
         await contest.save();
@@ -843,6 +842,7 @@ const registerUserToContest = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 
 
 // const autoSelectWinners = async (req, res) => {
