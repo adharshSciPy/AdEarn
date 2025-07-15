@@ -1835,6 +1835,7 @@ const getAdminAccountDetails = async (req, res) => {
 // }
 
 
+
 export {
   registerSuperAdmin,
   superAdminLogin,
