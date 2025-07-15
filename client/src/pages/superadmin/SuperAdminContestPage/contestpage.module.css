@@ -20,6 +20,11 @@
   border-radius: 6px;
   cursor: pointer;
 }
+input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .container {
   max-width: 100%;
   margin: 40px auto;

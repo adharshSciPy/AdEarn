@@ -1,108 +1,307 @@
-import { React } from 'react'
-import styles from "./Contest.module.css"
-import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar"
-import Header from "../../../components/Header/Header"
-import { FileTextOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
-import { Button } from 'antd'
+import { React, useEffect, useState } from "react";
+import styles from "./Contest.module.css";
+import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
+import Header from "../../../components/Header/Header";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/navigation";
+import { useNavigate } from "react-router-dom";
+import baseUrl from "../../../baseurl";
+import axios from "axios";
 
 function Contest() {
-    const navigate = useNavigate()
-    const contestData = [
-        { id: 1, title: "Contest 1", date: "02/03/2025", entries: "1200/1500", type: "Manual Selection" },
-        { id: 2, title: "Contest 2", date: "02/03/2025", entries: "1100/1500", type: "Machine Selection" },
-        { id: 3, title: "Contest 3", date: "02/03/2025", entries: "1050/1500", type: "Machine Selection" },
-        { id: 4, title: "Contest 4", date: "02/03/2025", entries: "1200/1500", type: "Machine Selection" },
-    ];
+  // const navigate = useNavigate();
+  const [contest, setContest] = useState([]);
+  const [userContest, setUserContest] = useState();
+  const [selectedContest, setSelectedContest] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [activeTab, setActiveTab] = useState("ongoing");
 
-    const contestdetails = [
-        { id: 1, contestName: "Contest 1", entryStars: "1", entryDate: "01/05/2025", totalEntry: "1000/1200", status: "Ongoing", winner: "UserName" },
-        { id: 2, contestName: "Contest 2", entryStars: "2", entryDate: "02/05/2025", totalEntry: "1050/1200", status: "Ongoing", winner: "UserName" },
-        { id: 3, contestName: "Contest 3", entryStars: "3", entryDate: "03/05/2025", totalEntry: "1100/1200", status: "Ended", winner: "UserName" },
-        { id: 4, contestName: "Contest 4", entryStars: "4", entryDate: "04/05/2025", totalEntry: "1200/1200", status: "Ongoing", winner: "UserName" },
-    ];
-    return (
-        <div className={styles.contestmain}>
-            <div className={styles.contestcontainer}>
-                <SuperSidebar />
-                <Header />
-                <div className={styles.contestsection}>
-                    <div style={{ width: '100%', maxWidth: '1550px', height: '600px', padding: '30px' }} className={styles.contestimage}>
-                        <div className={styles.contestheading}>
-                            <h1>Contest</h1>
-                            <Button>Log</Button>
-                        </div>
-                        <div className={styles.contestgrid}>
-                            <div className={styles.sectionscontest}>
-                                {contestData.map((contest) => (
-                                    <div className={styles.contestcard} key={contest.id}>
-                                        <div className={styles.cardheader}>
-                                            <h4>{contest.title}</h4>
-                                        </div>
+  const getContest = async () => {
+    try {
+      const res = await axios.get(`${baseUrl}/api/v1/super-admin/contests`);
+      setContest(res.data.contests);
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-                                        <div className={styles.contestlogo}>
-                                            <div className={styles.iconcircle}><FileTextOutlined /></div>
-                                            <p className={styles.contestdate}>{contest.date}</p>
-                                        </div>
+  const getContestData = async () => {
+    try {
+      const res = await axios.get(`${baseUrl}/api/v1/super-admin/all-contests`);
+      setUserContest(res.data.contests);
+      console.log(res);
+      
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-                                        <div className={styles.contestscore}>
-                                            <h1>{contest.entries}</h1>
-                                        </div>
+  const stopContest = async (contestId) => {
+    try {
+      const response = await axios.post(
+        `${baseUrl}/api/v1/super-admin/stop/${contestId}`
+      );
+      console.log(response);
+      if (response.status === 200) {
+        getContest();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-                                        <div className={styles.field}>
-                                            <p className={styles.entrydetails}>Entry details</p>
-                                            <Button className={styles.selectbtn}>Select</Button>
-                                        </div>
+  useEffect(() => {
+    getContest();
+    getContestData();
+  }, []);
 
-                                        <div className={styles.field}>
-                                            <p className={styles.selectiontype}>{contest.type}</p>
-                                            <Button className={styles.selectbtn}>Select</Button>
-                                        </div>
-                                        <Button className={styles.stopbtn}>Stop</Button>
-                                    </div>
-                                ))}
-
-                            </div>
-                            <div className={styles.createcontest}>
-                                <Button onClick={() => navigate("/superadmincontestpage")}>Create</Button>
-                            </div>
-                            <div className={styles.contesttable}>
-                                <table style={{ width: "100%", marginTop: "30px" }}>
-                                    <thead>
-                                        <tr>
-                                            <th>Contest Name</th>
-                                            <th>Entry Stars</th>
-                                            <th>Entry Date</th>
-                                            <th>Total Entry</th>
-                                            <th>Status</th>
-                                            <th>Winner</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {contestdetails.map((value, index) => (
-                                            <tr key={value.id}>
-                                                <td>{value.contestName}</td>
-                                                <td>{value.entryStars}</td>
-                                                <td>{value.entryDate}</td>
-                                                <td>{value.totalEntry}</td>
-                                                <td>{value.status}</td>
-                                                <td>{value.winner}</td>
-                                                <td className={styles.action}>
-                                                    <EditOutlined />
-                                                    <DeleteOutlined style={{ color: "red" }} />
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  return (
+    <div className={styles.contestmain}>
+      <div className={styles.contestcontainer}>
+        <SuperSidebar />
+        <Header />
+        <div className={styles.pageWrapper}>
+          <div className={styles.headerContent}>
+            <div className={styles.logContainer}>
+              <div className={styles.twoButtons}>
+                <h3
+                  onClick={() => setActiveTab("ongoing")}
+                  className={activeTab === "ongoing" ? styles.activeTab : ""}
+                >
+                  Ongoing Contest
+                </h3>
+                <h3
+                  onClick={() => setActiveTab("all")}
+                  className={activeTab === "all" ? styles.activeTab : ""}
+                >
+                  All Contest Details
+                </h3>
+              </div>
             </div>
+          </div>
+
+          {activeTab === "ongoing" && (
+            <div className={styles.cardContainer}>
+              {contest?.filter((item) => item.status === "Active").length ===
+              0 ? (
+                <div className={styles.noContestCard}>
+                  <h3>🚫 No Contest is currently running</h3>
+                  <p>Please check back later or create a new contest.</p>
+                </div>
+              ) : (
+                contest
+                  .filter((item) => item.status === "Active")
+                  .map((item, index) => {
+                    const prizeImages = item.prizeImages || [];
+                    const rewardSlides =
+                      item.rewardStructure?.map((reward) => ({
+                        position: reward.position,
+                        stars: reward.stars,
+                      })) || [];
+
+                    const totalPrizes =
+                      prizeImages.length + rewardSlides.length;
+
+                    return (
+                      <div className={styles.card} key={index}>
+                        <Swiper
+                          spaceBetween={10}
+                          slidesPerView={1}
+                          className={styles.carousel}
+                        >
+                          {prizeImages.map((img, i) => (
+                            <SwiperSlide key={`prize-${i}`}>
+                              <img
+                                src={`${baseUrl}${img}`}
+                                alt={`Prize ${i + 1}`}
+                                className={styles.prizeImage}
+                              />
+                            </SwiperSlide>
+                          ))}
+                          {rewardSlides.map((reward, i) => (
+                            <SwiperSlide key={`reward-${i}`}>
+                              <div className={styles.rewardSlide}>
+                                <div className={styles.rewardText}>
+                                  🏅 <strong>Position:</strong>{" "}
+                                  {reward.position}
+                                  <br />⭐ <strong>Stars:</strong>{" "}
+                                  {reward.stars}
+                                </div>
+                              </div>
+                            </SwiperSlide>
+                          ))}
+                        </Swiper>
+
+                        <div className={styles.cardContent}>
+                          <h2 className={styles.title}>{item.contestName}</h2>
+                          <p>
+                            <strong>Total Prizes:</strong> 🎁 {totalPrizes}
+                          </p>
+                          <p>
+                            <strong>Max Entries:</strong> {item.maxParticipants}
+                          </p>
+                          <p>
+                            <strong>Entry Stars:</strong> ⭐ {item.entryStars}
+                          </p>
+                          {item.startDate && (
+                            <p>
+                              <strong>Start Date:</strong>{" "}
+                              {new Date(item.startDate).toLocaleDateString()}
+                            </p>
+                          )}
+                          <p>
+                            <strong>Status:</strong> {item.status}
+                          </p>
+                          <p>
+                            <strong>Remaining Slot:</strong> {item.slotsLeft}
+                          </p>
+                          <div className={styles.buttonWrapper}>
+                            <button
+                              className={styles.enterButton}
+                              onClick={() => stopContest(item._id)}
+                            >
+                              Stop
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+              )}
+            </div>
+          )}
+
+          {activeTab === "all" && (
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: "left" }}>Contest name</th>
+                    <th>Entry stars</th>
+                    <th>Entry date</th>
+                    <th>Total Entry</th>
+                    <th>Status</th>
+                    {/* <th>Winner</th> */}
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {userContest?.map((contest) => (
+                    <tr key={contest.id}>
+                      <td>
+                        <div className={styles.nameCell}>
+                          <span>{contest.contestName}</span>
+                        </div>
+                      </td>
+                      <td>{contest.entryStars}</td>
+                      <td>
+                        {new Date(contest.createdAt).toLocaleString("en-GB", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </td>
+                      <td>{contest.maxParticipants}</td>
+                      <td className={styles.ongoing}>{contest.status}</td>
+                      {/* <td>Running</td> */}
+                      <td className={styles.editIcons}>
+                        <button
+                          className={styles.iconBtn}
+                          onClick={() => {
+                            setSelectedContest(contest);
+                            setShowModal(true);
+                          }}
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {showModal && selectedContest && (
+            <div className={styles.modalBackdrop}>
+              <div className={styles.modal}>
+                <h2 className={styles.modalTitle}>
+                  🎉 {selectedContest.contestName}
+                </h2>
+
+                <div className={styles.modalRow}>
+                  <span>
+                    ⭐ <strong>Entry Stars:</strong>
+                  </span>
+                  <span>{selectedContest.entryStars}</span>
+                </div>
+                <div className={styles.modalRow}>
+                  <span>
+                    📅 <strong>Entry Date:</strong>
+                  </span>
+                  <span>
+                    {new Date(selectedContest.createdAt).toLocaleDateString(
+                      "en-GB"
+                    )}
+                  </span>
+                </div>
+                <div className={styles.modalRow}>
+                  <span>
+                    👥 <strong>Total Entries:</strong>
+                  </span>
+                  <span>{selectedContest.maxParticipants}</span>
+                </div>
+                <div className={styles.modalRow}>
+                  <span>
+                    📌 <strong>Status:</strong>
+                  </span>
+                  <span>{selectedContest.status}</span>
+                </div>
+
+                <div className={styles.modalRow}>
+                  <span>
+                    🏆 <strong>Winners:</strong>
+                  </span>
+                  <span>
+                    {selectedContest.winners?.length > 0 ? (
+                      <div className={styles.winnerList}>
+                        {selectedContest.winners.map((a, i) => {
+                          const getOrdinal = (num) => {
+                            const s = ["th", "st", "nd", "rd"];
+                            const v = num % 100;
+                            return num + (s[(v - 20) % 10] || s[v] || s[0]);
+                          };
+                          const medals = ["🥇", "🥈", "🥉"];
+                          const place = getOrdinal(i + 1);
+                          const medal = medals[i] || "🏅";
+                          return (
+                            <span key={i} className={styles.winnerItem}>
+                              {medal} <strong>{place}</strong> - {a.user.name}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      "Not declared yet"
+                    )}
+                  </span>
+                </div>
+
+                <button
+                  className={styles.closeBtn}
+                  onClick={() => setShowModal(false)}
+                >
+                  ✖ Close
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-    )
+      </div>
+    </div>
+  );
 }
 
-export default Contest
+export default Contest;

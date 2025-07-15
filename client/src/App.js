@@ -1,6 +1,7 @@
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import NotificationsListener from './components/NotificationController/NotificationsListener';
+import { ToastContainer } from "react-toastify";
 
 import AdminLogin from './pages/admin/Login/AdminOTP'
 import AdminSignup from './pages/admin/Register/AdminSignup'
@@ -108,6 +109,7 @@ function App() {
   return (
     <div className="App">
       <NotificationsListener/>
+      <ToastContainer position="bottom-right" autoClose={3000} />
       <BrowserRouter>
         <Routes>
 

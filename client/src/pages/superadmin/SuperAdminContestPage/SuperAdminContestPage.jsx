@@ -4,6 +4,8 @@ import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
 import Header from "../../../components/Header/Header";
 import axios from "axios";
 import baseUrl from "../../../baseurl";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function SuperAdminContestPage() {
   const [formData, setFormData] = useState({
@@ -32,7 +34,7 @@ function SuperAdminContestPage() {
 
   const handleInputChange = (index, value) => {
     const updated = [...winners];
-    // Allow only digits
+    if (updated[index].file) return; // Prevent typing if image exists
     updated[index].value = value.replace(/\D/g, "");
     setWinners(updated);
   };
@@ -40,6 +42,7 @@ function SuperAdminContestPage() {
   const handleFileChange = (index, file) => {
     const updated = [...winners];
     updated[index].file = file;
+    updated[index].value = ""; // Clear stars if image is selected
     setWinners(updated);
   };
 
@@ -65,31 +68,44 @@ function SuperAdminContestPage() {
   const submitHandle = async (e) => {
     e.preventDefault();
 
-    // Validate stars
-    const rewardStructure = winners.map((winner, index) => ({
-      position: index + 1,
-      stars: Number(winner.value),
-    }));
+    const rewardStructure = [];
+    let invalid = false;
 
-    const hasInvalidStars = rewardStructure.some(
-      (item) => isNaN(item.stars) || item.stars <= 0
-    );
+    for (let i = 0; i < winners.length; i++) {
+      const winner = winners[i];
+      const stars = Number(winner.value);
+      const hasStars = !isNaN(stars) && stars > 0;
+      const hasFile = !!winner.file;
 
-    if (hasInvalidStars) {
-      alert("Please enter valid stars (number > 0) for all winners.");
+      if (!hasStars && !hasFile) {
+        invalid = true;
+        break;
+      }
+
+      if (hasStars && hasFile) {
+        toast.error(`Winner ${i + 1} cannot have both stars and an image.`);
+        return;
+      }
+
+      rewardStructure.push({
+        position: i + 1,
+        stars: hasStars ? stars : 0,
+      });
+    }
+
+    if (invalid) {
+      toast.error("Each winner must have either a prize image or valid stars.");
       return;
     }
 
     const data = new FormData();
 
-    // Append contest data
     Object.entries(formData).forEach(([key, value]) => {
       data.append(key, value);
     });
 
     data.append("rewardStructure", JSON.stringify(rewardStructure));
 
-    // Append prize images
     winners.forEach((winner) => {
       if (winner.file) {
         data.append("prizeImages", winner.file);
@@ -107,15 +123,15 @@ function SuperAdminContestPage() {
         }
       );
 
-      alert("Contest created successfully!");
+      toast.success("🎉 Contest created successfully!");
       console.log("Contest created:", response.data);
       handleCancel(); // Reset form
     } catch (error) {
       console.error("Error creating contest:", error);
       if (error.response?.data?.message) {
-        alert(`Failed: ${error.response.data.message}`);
+        toast.error(`❌ Failed: ${error.response.data.message}`);
       } else {
-        alert("An unexpected error occurred");
+        toast.error("❗ An unexpected error occurred");
       }
     }
   };
@@ -191,7 +207,6 @@ function SuperAdminContestPage() {
                 />
                 <label>Automatic</label>
               </div>
-
               <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                 <input
                   type="radio"
@@ -212,14 +227,14 @@ function SuperAdminContestPage() {
               {winners.map((winner, index) => (
                 <div className={styles.winnerrow} key={index}>
                   <span className={styles.label}>{winner.label}</span>
-                  <p>Enter stars or other prizes</p>
+                  <p>Enter stars or upload a prize image</p>
                   <input
                     type="text"
                     value={winner.value}
                     onChange={(e) => handleInputChange(index, e.target.value)}
-                    placeholder="Enter prize (e.g., 100 stars)"
+                    placeholder="Enter stars (e.g., 100)"
                     className={styles.prizeInput}
-                    required
+                    disabled={winner.file !== null}
                   />
                   <label className={styles.uploadbutton}>
                     Upload
@@ -230,8 +245,10 @@ function SuperAdminContestPage() {
                       onChange={(e) =>
                         handleFileChange(index, e.target.files[0])
                       }
+                      disabled={!!winner.value}
                     />
                   </label>
+                  {winner.file && <span>{winner.file.name}</span>}
                 </div>
               ))}
               <button type="button" className={styles.addbtn} onClick={addWinner}>
@@ -240,7 +257,11 @@ function SuperAdminContestPage() {
             </div>
 
             <div className={styles.buttons}>
-              <button type="button" className={styles.cancel} onClick={handleCancel}>
+              <button
+                type="button"
+                className={styles.cancel}
+                onClick={handleCancel}
+              >
                 Cancel
               </button>
               <button type="submit" className={styles.submit}>
