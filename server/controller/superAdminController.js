@@ -2040,17 +2040,22 @@ const assignWinnerManually = async (req, res) => {
       contest.winners = [];
     }
 
-    const alreadyAssigned = contest.winners.find(w => w?.userId?.toString() === userId);
+    // ✅ Only allow position from rewardStructure
+    const prizeFromStructure = contest.rewardStructure?.find(r => r.position === position);
+    if (!prizeFromStructure) {
+      return res.status(400).json({ message: `Position ${position} is not defined in rewardStructure` });
+    }
+
+    // Check if the user is already a winner
+    const alreadyAssigned = contest.winners.find(
+      w => w?.userId?.toString() === userId.toString()
+    );
     if (alreadyAssigned) {
       return res.status(400).json({ message: "User already assigned as a winner" });
     }
 
-    // Determine prize for this position
-    const prizeFromStructure = contest.rewardStructure?.find(r => r.position === position);
-    const imageFromPrizeImages = contest.prizeImages?.[position - 1] || "";
-
-    const stars = prizeFromStructure?.stars || 0;
-    const image = imageFromPrizeImages;
+    const stars = prizeFromStructure.stars || 0;
+    const image = contest.prizeImages?.[position - 1] || "";
 
     // Assign winner with prize
     contest.winners.push({
@@ -2062,7 +2067,7 @@ const assignWinnerManually = async (req, res) => {
       }
     });
 
-    // Reward stars to user wallet
+    // Add stars to user's wallet
     if (stars > 0) {
       const wallet = await UserWallet.findOne({ userId });
       if (wallet) {
@@ -2071,9 +2076,12 @@ const assignWinnerManually = async (req, res) => {
       }
     }
 
-    // ✅ End contest if all positions are filled
-    const totalRewards = (contest.rewardStructure?.length || 0) + (contest.prizeImages?.length || 0);
-    if (contest.winners.length >= totalRewards) {
+    // ✅ End contest only if all rewardStructure positions are assigned
+    const assignedRewardedPositions = contest.winners.filter(w => {
+      return contest.rewardStructure?.some(r => r.position === w.position);
+    }).length;
+
+    if (assignedRewardedPositions === contest.rewardStructure?.length) {
       contest.status = "Ended";
       contest.result = "Completed";
     }
@@ -2089,8 +2097,6 @@ const assignWinnerManually = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-
 
 
 //to fetch total amount in superadmin wallet(rupees)
