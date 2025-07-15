@@ -7,25 +7,16 @@ import axios from 'axios';
 import baseUrl from '../../../baseurl'
 
 
-const dummyContest = [
-    { id: 1, name: "Contest One", email: "contest1@example.com" },
-    { id: 2, name: "Contest Two", email: "contest2@example.com" },
-    { id: 3, name: "Contest Three", email: "contest3@example.com" },
-    { id: 4, name: "Contest Four", email: "contest4@example.com" },
-    { id: 5, name: "Contest Five", email: "contest5@example.com" },
-    { id: 6, name: "Contest Six", email: "contest6@example.com" },
-];
-
 
 function SelectWinner() {
-    const [contest,setContest]=useState()
+    const [contest,setContest]=useState([])
     const navigate = useNavigate()
     const navigation = (id) => {
         navigate(`/ContestGamification/${id}`)
     }
 const getContest=async()=>{
     try {
-        const res=await axios.get(`${baseUrl}/api/v1/super-admin/contests`)
+        const res=await axios.get(`${baseUrl}/api/v1/super-admin/manual-contests/active`)
         console.log(res);
         setContest(res.data.contests)
     } catch (error) {
