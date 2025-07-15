@@ -745,7 +745,6 @@ const registerUserToContest = async (req, res) => {
       return res.status(404).json({ message: "SuperAdmin wallet not found" });
     }
 
-    // Prevent duplicate entry in SuperAdmin wallet
     const alreadyRegistered = adminWallet.contestEntryWallet.collectedFromUsers.find(
       entry =>
         entry.userId.toString() === userId.toString() &&
@@ -756,7 +755,6 @@ const registerUserToContest = async (req, res) => {
       return res.status(400).json({ message: "User already registered for this contest" });
     }
 
-    // Prevent duplicate participant entry
     const participantExists = await ContestParticipant.findOne({
       userId,
       contestId: contest._id,
@@ -775,11 +773,11 @@ const registerUserToContest = async (req, res) => {
       return res.status(400).json({ message: "Not enough stars to enter the contest" });
     }
 
-    // ✅ Deduct stars from user wallet
+    // Deduct stars from user wallet
     user.userWalletDetails.totalStars -= contest.entryStars;
     await user.userWalletDetails.save();
 
-    // ✅ Add to SuperAdmin wallet
+    // Add to SuperAdmin wallet
     adminWallet.contestEntryWallet.collectedFromUsers.push({
       userId,
       contestId: contest._id,
@@ -790,43 +788,30 @@ const registerUserToContest = async (req, res) => {
     adminWallet.totalStars += contest.entryStars;
     await adminWallet.save();
 
-    // ✅ Update contest stats
+    // Update contest stats
     contest.currentParticipants += 1;
     contest.totalEntries += 1;
     await contest.save();
 
-    // ✅ Create ContestParticipant and UserContestEntry
-    try {
-      console.log("➡ Attempting to create ContestParticipant and UserContestEntry...");
+    // Log entries
+    await ContestParticipant.create({ userId, contestId: contest._id });
+    await UserContestEntry.create({
+      userId,
+      contestId: contest._id,
+      entryStars: contest.entryStars,
+    });
 
-      await ContestParticipant.create({
-        userId,
-        contestId: contest._id,
-      });
-
-      await UserContestEntry.create({
-        userId,
-        contestId: contest._id,
-        entryStars: contest.entryStars,
-      });
-
-      console.log("✅ User successfully registered in participant and user entry log");
-    } catch (err) {
-      console.error("❌ Failed to insert participant or user contest entry:", err.message);
-    }
-
-    // ✅ Auto-end if full
+    // ✅ End contest only if automatic and full
     if (contest.currentParticipants >= contest.maxParticipants) {
       if (contest.winnerSelectionType === "Automatic") {
         console.log("🎯 Max participants reached. Triggering automatic winner selection...");
         await selectAutomaticWinnersInternal(contest._id);
       } else {
-        contest.status = "Ended";
-        await contest.save();
+        console.log("📌 Manual contest full – waiting for SuperAdmin to assign winners.");
+        // ❌ Do not mark manual contest as ended here
       }
     }
 
-    // ✅ Fetch updated participants list
     const participants = await ContestParticipant.find({ contestId: contest._id })
       .populate("userId", "name email")
       .sort({ createdAt: 1 })
@@ -1988,7 +1973,7 @@ const assignWinnerManually = async (req, res) => {
     const contest = await ContestEntry.findById(contestId);
     if (!contest) return res.status(404).json({ message: "Contest not found" });
 
-    const index = position - 1; // Position starts from 1
+    const index = position - 1;
     const maxWinners = contest.rewardStructure.length || 3;
 
     if (index < 0 || index >= maxWinners) {
@@ -2015,9 +2000,7 @@ const assignWinnerManually = async (req, res) => {
       }
     };
 
-    await contest.save();
-
-    // ✅ Reward stars to user if any
+    // Reward stars to user wallet
     if (stars && stars > 0) {
       const wallet = await UserWallet.findOne({ userId });
       if (wallet) {
@@ -2025,6 +2008,15 @@ const assignWinnerManually = async (req, res) => {
         await wallet.save();
       }
     }
+
+    // ✅ End contest only if all winner slots are filled
+    const assignedWinners = contest.winners.filter(w => w !== null && w?.userId).length;
+    if (assignedWinners === maxWinners) {
+      contest.status = "Ended";
+      contest.result = "Completed";
+    }
+
+    await contest.save();
 
     res.status(200).json({
       message: "Winner assigned successfully",
@@ -2035,6 +2027,8 @@ const assignWinnerManually = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
 
 
 //to fetch total amount in superadmin wallet(rupees)
@@ -2315,7 +2309,40 @@ const getAllUserAdSummariesInAmount = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+const getActiveManualContests = async (req, res) => {
+  try {
+    const contests = await ContestEntry.find({
+      winnerSelectionType: "Manual",
+      status: "Active"
+    })
+      .sort({ createdAt: -1 })
+      .lean();
 
+    const result = contests.map(contest => ({
+      _id: contest._id,
+      contestName: contest.contestName,
+      contestNumber: contest.contestNumber,
+      startDate: contest.startDate,
+      entryStars: contest.entryStars,
+      maxParticipants: contest.maxParticipants,
+      currentParticipants: contest.currentParticipants,
+      status: contest.status,
+      prizeImages: contest.prizeImages,
+      rewardStructure: contest.rewardStructure,
+      numberOfWinners: contest.rewardStructure?.length || 0,
+      manuallyStopped: contest.manuallyStopped,
+      createdAt: contest.createdAt
+    }));
+
+    res.status(200).json({
+      message: "Active manual contests fetched successfully",
+      contests: result
+    });
+  } catch (err) {
+    console.error("Error fetching active manual contests:", err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 export {
   registerSuperAdmin,
@@ -2358,5 +2385,6 @@ export {
   getAdminWalletWithTransactionDetails,
   getSubscriptionAccountDetailsInAmount,
   getAllUserAdSummariesInAmount,
-  getAllContestsForSuperAdmin
+  getAllContestsForSuperAdmin,
+  getActiveManualContests 
 };
