@@ -36,7 +36,8 @@ import {
   getAdminWalletWithTransactionDetails,
   getSubscriptionAccountDetailsInAmount,
   getAllUserAdSummariesInAmount,
-  getAllContestsForSuperAdmin 
+  getAllContestsForSuperAdmin, 
+  assignWinnerManually 
   // selectAutomaticWinners
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
@@ -85,6 +86,7 @@ superAdminRouter.route("/amount/admin/total-amount").get(getAdminWalletWithTrans
 superAdminRouter.route("/amount/subscription-details").get(getSubscriptionAccountDetailsInAmount);
 superAdminRouter.route("/amount/all-user/ad-details").get(getAllUserAdSummariesInAmount);
 superAdminRouter.route("/all-contests").get(getAllContestsForSuperAdmin);
+superAdminRouter.route("/assign-winner").post(assignWinnerManually);
 
 
 
