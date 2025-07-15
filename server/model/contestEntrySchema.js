@@ -50,22 +50,31 @@ const contestEntrySchema = new Schema({
     enum: ["Automatic", "Manual"],
     default: "Manual"
   },
+
+  // ✅ Updated winners structure with combined prize
   winners: [
     {
       userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
       },
-      position: Number,
-      stars: Number // ✅ store star value each winner receives
+      position: {
+        type: Number,
+        required: true
+      },
+      prize: {
+        stars: { type: Number, default: 0 },
+        image: { type: String, default: "" }
+      }
     }
   ],
+
   manuallyStopped: {
     type: Boolean,
     default: false
   },
 
-  // ✅ New field for per-position reward tier
+  // ✅ Optional tiered reward structure (can be used in auto selection)
   rewardStructure: [
     {
       position: { type: Number, required: true },
