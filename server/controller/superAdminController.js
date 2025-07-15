@@ -2356,7 +2356,7 @@ const getManualContestById = async (req, res) => {
     }
 
     const participants = await ContestParticipant.find({ contestId: contest._id })
-      .populate("userId", "name email")
+      .populate("userId", "firstName email")
       .sort({ createdAt: 1 })
       .lean();
 

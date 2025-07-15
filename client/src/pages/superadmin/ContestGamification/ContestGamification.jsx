@@ -82,8 +82,8 @@ const {id}=useParams()
                     className={`${styles.userCard} ${isSelected ? styles.selected : ''}`}
                     onClick={() => toggleSelection(user)}
                   >
-                    <h2>{user.userId.email}</h2>
-                    <p>{user.userId._id}</p>
+                    <h2>{user.userId.firstName}</h2>
+                    <p>{user.userId.email}</p>
                     {isSelected && (
                       <span className={styles.winnerBadge}>
                         {getWinnerPosition(user.id)}
