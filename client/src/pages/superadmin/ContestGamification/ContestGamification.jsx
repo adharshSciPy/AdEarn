@@ -3,26 +3,15 @@ import styles from "./ContestGamification.module.css"
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar"
 import Header from '../../../components/Header/Header'
 import confetti from 'canvas-confetti';
+import axios from 'axios';
 
-const dummyUsers = [
-  { id: 1, name: "User One", email: "user1@example.com" },
-  { id: 2, name: "User Two", email: "user2@example.com" },
-  { id: 3, name: "User Three", email: "user3@example.com" },
-  { id: 4, name: "User Four", email: "user4@example.com" },
-  { id: 5, name: "User Five", email: "user5@example.com" },
-  { id: 6, name: "User Six", email: "user6@example.com" },
-  { id: 7, name: "User Seven", email: "user7@example.com" },
-  { id: 8, name: "User Eight", email: "user8@example.com" },
-  { id: 9, name: "User Nine", email: "user9@example.com" },
-  { id: 10, name: "User Ten", email: "user10@example.com" },
 
-];
 
 function ContestGamification() {
 
   const [popupUserId, setPopupUserId] = useState(null);
   const [selectedWinners, setSelectedWinners] = useState([]);
-
+  const [users,setUsers]=useState([])
   const fireConfetti = () => {
     // Left side cannon
     confetti({
@@ -62,7 +51,14 @@ function ContestGamification() {
     const index = selectedWinners.findIndex(u => u.id === userId);
     return index !== -1 ? `${index + 1}${['st', 'nd', 'rd'][index] || 'th'} Place` : null;
   };
-
+  const getData=async()=>{
+    try {
+      const res=await axios.get(``)
+    } catch (error) {
+    console.log(error);
+          
+    }
+  }
   return (
     <div className={styles.game}>
       <div className={styles.gamesmain}>
@@ -72,7 +68,7 @@ function ContestGamification() {
           <div style={{ width: '100%', maxWidth: '1550px', height: '600px', padding: '30px' }} className={styles.contestimage}>
             <h1>Select Contest Winners</h1>
             <div className={styles.cardGrid}>
-              {dummyUsers.map(user => {
+              {users.map(user => {
                 const isSelected = selectedWinners.find(u => u.id === user.id);
                 return (
                   <div

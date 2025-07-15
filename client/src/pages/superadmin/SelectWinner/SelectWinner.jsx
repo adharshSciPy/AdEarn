@@ -38,7 +38,7 @@ useEffect(()=>{getContest()},[])
                                     <div
                                         key={user.id}
                                         className={styles.userCard}
-                                        onClick={() => navigation(user.id)}
+                                        onClick={() => navigation(user._id)}
                                     >
                                         <h2>{user.contestName}</h2>
                                         <p>{user.contestNumber}</p>
