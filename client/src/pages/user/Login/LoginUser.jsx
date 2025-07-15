@@ -7,6 +7,8 @@ import axios from "axios";
 import { setUser } from "../../../components/features/slice";
 import { useDispatch } from "react-redux";
 import { Modal, Input, message } from "antd";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function LoginUser() {
   const navigate = useNavigate();
@@ -49,7 +51,15 @@ function LoginUser() {
       }
     } catch (error) {
       console.log(error);
-      message.error(error?.response?.data?.message || "Login failed");
+      const errMsg = error?.response?.data?.message || "Login failed";
+
+      if (errMsg.toLowerCase().includes("password")) {
+        toast.error("🔐 Incorrect password. Please try again.");
+      } else if (errMsg.toLowerCase().includes("email")) {
+        toast.error("📧 Email not found. Please check and try again.");
+      } else {
+        toast.error(`❗ ${errMsg}`);
+      }
     }
 
     setForm({
