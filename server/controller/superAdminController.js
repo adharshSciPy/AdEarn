@@ -1977,24 +1977,24 @@ const getAllUserAdSummaries = async (req, res) => {
   }
 };
 const assignWinnerManually = async (req, res) => {
-  const { contestId, userId, position, stars } = req.body;
+  const { contestId, userId, position, stars, image } = req.body;
 
   if (!contestId || !userId || !position) {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
   try {
-    const contest = await Contest.findById(contestId);
+    const contest = await ContestEntry.findById(contestId);
     if (!contest) return res.status(404).json({ message: "Contest not found" });
 
     const index = position - 1; // Position starts from 1
-    const maxWinners = contest.numberOfWinners || 3;
+    const maxWinners = contest.rewardStructure.length || 3;
 
     if (index < 0 || index >= maxWinners) {
       return res.status(400).json({ message: "Invalid winner position" });
     }
 
-    // Initialize winners array if not exists
+    // Initialize winners array if needed
     if (!contest.winners || contest.winners.length < maxWinners) {
       contest.winners = Array.from({ length: maxWinners }).fill(null);
     }
@@ -2004,29 +2004,37 @@ const assignWinnerManually = async (req, res) => {
       return res.status(400).json({ message: "User already assigned as a winner" });
     }
 
+    // Assign prize (stars and/or image)
     contest.winners[index] = {
       userId,
       position,
-      stars: stars || 0,
+      prize: {
+        stars: stars || 0,
+        image: image || ""
+      }
     };
 
     await contest.save();
 
-    // Reward stars to wallet
+    // ✅ Reward stars to user if any
     if (stars && stars > 0) {
       const wallet = await UserWallet.findOne({ userId });
       if (wallet) {
-        wallet.stars += stars;
+        wallet.totalStars += stars;
         await wallet.save();
       }
     }
 
-    res.status(200).json({ message: "Winner assigned successfully", winners: contest.winners });
+    res.status(200).json({
+      message: "Winner assigned successfully",
+      winners: contest.winners
+    });
   } catch (err) {
     console.error("Manual winner assignment error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 
 
