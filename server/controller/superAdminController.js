@@ -2025,7 +2025,7 @@ const getAllUserAdSummaries = async (req, res) => {
   }
 };
 const assignWinnerManually = async (req, res) => {
-  const { contestId, userId, position, stars, image } = req.body;
+  const { contestId, userId, position } = req.body;
 
   if (!contestId || !userId || !position) {
     return res.status(400).json({ message: "Missing required fields" });
@@ -2035,16 +2035,9 @@ const assignWinnerManually = async (req, res) => {
     const contest = await ContestEntry.findById(contestId);
     if (!contest) return res.status(404).json({ message: "Contest not found" });
 
-    const index = position - 1;
-    const maxWinners = contest.rewardStructure.length || 3;
-
-    if (index < 0 || index >= maxWinners) {
-      return res.status(400).json({ message: "Invalid winner position" });
-    }
-
-    // Initialize winners array if needed
-    if (!contest.winners || contest.winners.length < maxWinners) {
-      contest.winners = Array.from({ length: maxWinners }).fill(null);
+    // Ensure winners array exists
+    if (!Array.isArray(contest.winners)) {
+      contest.winners = [];
     }
 
     const alreadyAssigned = contest.winners.find(w => w?.userId?.toString() === userId);
@@ -2052,18 +2045,25 @@ const assignWinnerManually = async (req, res) => {
       return res.status(400).json({ message: "User already assigned as a winner" });
     }
 
-    // Assign prize (stars and/or image)
-    contest.winners[index] = {
+    // Determine prize for this position
+    const prizeFromStructure = contest.rewardStructure?.find(r => r.position === position);
+    const imageFromPrizeImages = contest.prizeImages?.[position - 1] || "";
+
+    const stars = prizeFromStructure?.stars || 0;
+    const image = imageFromPrizeImages;
+
+    // Assign winner with prize
+    contest.winners.push({
       userId,
       position,
       prize: {
-        stars: stars || 0,
-        image: image || ""
+        stars,
+        image
       }
-    };
+    });
 
     // Reward stars to user wallet
-    if (stars && stars > 0) {
+    if (stars > 0) {
       const wallet = await UserWallet.findOne({ userId });
       if (wallet) {
         wallet.totalStars += stars;
@@ -2071,9 +2071,9 @@ const assignWinnerManually = async (req, res) => {
       }
     }
 
-    // ✅ End contest only if all winner slots are filled
-    const assignedWinners = contest.winners.filter(w => w !== null && w?.userId).length;
-    if (assignedWinners === maxWinners) {
+    // ✅ End contest if all positions are filled
+    const totalRewards = (contest.rewardStructure?.length || 0) + (contest.prizeImages?.length || 0);
+    if (contest.winners.length >= totalRewards) {
       contest.status = "Ended";
       contest.result = "Completed";
     }
