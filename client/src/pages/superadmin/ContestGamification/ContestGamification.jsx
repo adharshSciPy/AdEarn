@@ -1,11 +1,11 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import styles from "./ContestGamification.module.css"
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar"
 import Header from '../../../components/Header/Header'
 import confetti from 'canvas-confetti';
 import axios from 'axios';
-
-
+import { useParams } from 'react-router-dom';
+import baseUrl from '../../../baseurl'
 
 function ContestGamification() {
 
@@ -30,7 +30,7 @@ function ContestGamification() {
     });
   };
 
-
+const {id}=useParams()
 
   const toggleSelection = (user) => {
     const alreadySelected = selectedWinners.find(u => u.id === user.id);
@@ -53,12 +53,18 @@ function ContestGamification() {
   };
   const getData=async()=>{
     try {
-      const res=await axios.get(``)
+      const res=await axios.get(`${baseUrl}/api/v1/super-admin/manual/${id}`)
+      console.log(res);
+      setUsers(res.data.contest.participants)
+      
     } catch (error) {
     console.log(error);
           
     }
   }
+  useEffect(()=>{
+    getData()
+  },[id])
   return (
     <div className={styles.game}>
       <div className={styles.gamesmain}>
@@ -76,8 +82,8 @@ function ContestGamification() {
                     className={`${styles.userCard} ${isSelected ? styles.selected : ''}`}
                     onClick={() => toggleSelection(user)}
                   >
-                    <h2>{user.name}</h2>
-                    <p>{user.email}</p>
+                    <h2>{user.userId.email}</h2>
+                    <p>{user.userId._id}</p>
                     {isSelected && (
                       <span className={styles.winnerBadge}>
                         {getWinnerPosition(user.id)}

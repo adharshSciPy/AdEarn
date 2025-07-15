@@ -38,7 +38,8 @@ import {
   getAllUserAdSummariesInAmount,
   getAllContestsForSuperAdmin, 
   assignWinnerManually ,
-  getActiveManualContests 
+  getActiveManualContests,
+  getManualContestById 
   // selectAutomaticWinners
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
@@ -89,7 +90,7 @@ superAdminRouter.route("/amount/all-user/ad-details").get(getAllUserAdSummariesI
 superAdminRouter.route("/all-contests").get(getAllContestsForSuperAdmin);
 superAdminRouter.route("/assign-winner").post(assignWinnerManually);
 superAdminRouter.route("/manual-contests/active").get(getActiveManualContests );
-
+superAdminRouter.route("/manual/:id").get(getManualContestById );
 
 
 

@@ -2341,6 +2341,39 @@ const getActiveManualContests =async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+const getManualContestById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const contest = await ContestEntry.findOne({
+      _id: id,
+      status: "Active",
+      winnerSelectionType: "Manual"
+    }).lean();
+
+    if (!contest) {
+      return res.status(404).json({ message: "Manual active contest not found" });
+    }
+
+    const participants = await ContestParticipant.find({ contestId: contest._id })
+      .populate("userId", "name email")
+      .sort({ createdAt: 1 })
+      .lean();
+
+    return res.status(200).json({
+      message: "Manual contest fetched successfully",
+      contest: {
+        ...contest,
+        participants
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching manual contest:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
 
 export {
   registerSuperAdmin,
@@ -2384,5 +2417,6 @@ export {
   getSubscriptionAccountDetailsInAmount,
   getAllUserAdSummariesInAmount,
   getAllContestsForSuperAdmin,
-  getActiveManualContests 
+  getActiveManualContests ,
+  getManualContestById
 };
