@@ -39,7 +39,8 @@ import {
   getAllContestsForSuperAdmin, 
   assignWinnerManually ,
   getActiveManualContests,
-  getManualContestById 
+  getManualContestById, 
+  getAllCouponBatchSummaries
   // selectAutomaticWinners
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
