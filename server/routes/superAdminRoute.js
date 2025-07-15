@@ -28,9 +28,6 @@ import {
   fetchAdminCouponsRequests,
   approveAndDistributeCouponForAdminRequest,
   distributeStarsToUser,
-<<<<<<< HEAD
-  getContests
-=======
   getContests,
   getAdminAccountDetails,
   getSubscriptionAccountDetails,
@@ -40,7 +37,6 @@ import {
   getSubscriptionAccountDetailsInAmount,
   getAllUserAdSummariesInAmount,
   getAllContestsForSuperAdmin 
->>>>>>> e28bdde6b06fe39436964aa478053d406491c329
   // selectAutomaticWinners
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
@@ -80,9 +76,6 @@ superAdminRouter.route("/stop/:id").post(stopContestManually);
 superAdminRouter.route("/coupon-requests").get(fetchAdminCouponsRequests);//to fetch coupon requests from admins
 superAdminRouter.route("/approve-assign-coupon").post(approveAndDistributeCouponForAdminRequest)
 superAdminRouter.route("/user/distribute-stars").post(distributeStarsToUser)
-<<<<<<< HEAD
-superAdminRouter.route("/contests").get(getContests)
-=======
 superAdminRouter.route("/contests").get(getContests);
 superAdminRouter.route("/admin-account/details").get(getAdminAccountDetails);
 superAdminRouter.route("/subscription-log/details").get(getSubscriptionAccountDetails);
@@ -98,7 +91,6 @@ superAdminRouter.route("/all-contests").get(getAllContestsForSuperAdmin);
 
 
 
->>>>>>> e28bdde6b06fe39436964aa478053d406491c329
 
 
 
