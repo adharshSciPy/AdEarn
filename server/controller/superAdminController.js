@@ -24,6 +24,13 @@ import getDateRange from "../utils/getDateRange.js";
 import getCouponAmount from "../utils/getCouponAmount.js";
 import couponRequestModel from "../model/couponRequestModel.js";
 import UserContestEntry from "../model/userContestEntryModel.js"
+// import superAdminWallet from "../model/superAdminWallet.js";
+import { VideoAd } from "../model/videoadModel.js";
+import { ImageAd } from "../model/imageadModel.js";
+import { SurveyAd } from "../model/surveyadModel.js";
+import { Ad } from "../model/AdsModel.js";
+// import superAdminWallet from "../model/superAdminWallet.js";
+import { convertStarsToRupees } from "../utils/convertStarsToRupees.js";
 const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
@@ -1338,13 +1345,13 @@ const createContest = async (req, res) => {
       return res.status(400).json({ message: "All required fields must be filled" });
     }
 
-    // Handle prizeImages
+    // ✅ Handle prize images
     let prizeImages = [];
     if (req.files && req.files.length > 0) {
       prizeImages = req.files.map(file => `/contestPrizeImages/${file.filename}`);
     }
 
-    // Parse reward structure if provided
+    // ✅ Parse reward structure
     let parsedRewardStructure = [];
     let totalRewardStars = 0;
 
@@ -1355,6 +1362,7 @@ const createContest = async (req, res) => {
           return res.status(400).json({ message: "Invalid reward structure format" });
         }
 
+        // Sum total stars
         totalRewardStars = parsedRewardStructure.reduce(
           (sum, item) => sum + Number(item.stars || 0), 0
         );
@@ -1363,18 +1371,20 @@ const createContest = async (req, res) => {
       }
     }
 
-    // ✅ At least one must be provided: either rewards or prize images
+    // ✅ Validate that at least reward or prize image exists
     if (parsedRewardStructure.length === 0 && prizeImages.length === 0) {
-      return res.status(400).json({ message: "Provide at least reward structure or prize images" });
+      return res.status(400).json({
+        message: "Provide at least reward structure or prize images"
+      });
     }
 
-    // Check if contestNumber is unique
+    // ✅ Check for contest number uniqueness
     const existing = await ContestEntry.findOne({ contestNumber });
     if (existing) {
       return res.status(400).json({ message: "Contest number already exists" });
     }
 
-    // Deduct stars from SuperAdmin wallet only if rewardStructure is used
+    // ✅ Deduct from SuperAdmin wallet if using stars
     if (parsedRewardStructure.length > 0) {
       const adminWallet = await SuperAdminWallet.findOne();
       if (!adminWallet || adminWallet.totalStars < totalRewardStars) {
@@ -1387,6 +1397,7 @@ const createContest = async (req, res) => {
       await adminWallet.save();
     }
 
+    // ✅ Create contest entry
     const contest = new ContestEntry({
       contestName,
       contestNumber,
@@ -1395,13 +1406,12 @@ const createContest = async (req, res) => {
       maxParticipants,
       currentParticipants: 0,
       totalEntries: 0,
-      result: "Pending",
-      prizeImages,
+      prizeImages,                     // ✅ used later for automatic prize assignment
       rewardStructure: parsedRewardStructure,
       contestEntryWallet: totalRewardStars,
       winnerSelectionType: winnerSelectionType || "Manual",
       status: "Active",
-      manuallyStopped: false
+      manuallyStopped: false,
     });
 
     await contest.save();
@@ -1416,6 +1426,7 @@ const createContest = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 
 
 const selectAutomaticWinnersInternal = async (contestId) => {
@@ -1445,13 +1456,16 @@ const selectAutomaticWinnersInternal = async (contestId) => {
   const winners = selected.map((entry, index) => {
     const rewardTier = rewardStructure.find(r => r.position === index + 1);
     return {
-      userId: entry.userId,
+      userId: new mongoose.Types.ObjectId(entry.userId),
       position: index + 1,
-      stars: rewardTier ? rewardTier.stars : 0
+      prize: {
+        stars: rewardTier ? rewardTier.stars : 0,
+        image: contest.prizeImages?.[index] || ""
+      }
     };
   });
 
-  const totalReward = winners.reduce((sum, w) => sum + (w.stars || 0), 0);
+  const totalReward = winners.reduce((sum, w) => sum + (w.prize?.stars || 0), 0);
 
   if (adminWallet.contestEntryWallet.reservedForContests < totalReward) {
     console.log("Not enough reserved stars for reward distribution");
@@ -1459,10 +1473,12 @@ const selectAutomaticWinnersInternal = async (contestId) => {
   }
 
   for (const winner of winners) {
-    const user = await User.findById(winner.userId).populate("userWalletDetails");
-    if (user?.userWalletDetails) {
-      user.userWalletDetails.totalStars += winner.stars;
-      await user.userWalletDetails.save();
+    if (winner.prize.stars > 0) {
+      const user = await User.findById(winner.userId).populate("userWalletDetails");
+      if (user?.userWalletDetails) {
+        user.userWalletDetails.totalStars += winner.prize.stars;
+        await user.userWalletDetails.save();
+      }
     }
   }
 
@@ -1476,6 +1492,7 @@ const selectAutomaticWinnersInternal = async (contestId) => {
   contest.contestEntryWallet -= totalReward;
   await contest.save();
 };
+
 
 const stopContestManually = async (req, res) => {
   const { id } = req.params;
@@ -1492,7 +1509,7 @@ const stopContestManually = async (req, res) => {
     contest.manuallyStopped = true;
     await contest.save();
 
-    // ✅ Skip refund if winners already selected
+
     if (contest.winners && contest.winners.length > 0) {
       return res.status(200).json({
         message: "Contest manually stopped, but winners already selected. No refunds issued.",
@@ -1802,6 +1819,502 @@ const getContests = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+//to fetch admin wallet with full details (stars)
+const getAdminAccountDetails = async (req, res) => {
+  try {
+    const adminWallet = await adminwalletModel.findOne().populate({
+      path: "transactions.userId",
+      select: "email firstName lastName"
+    });
+
+    if (!adminWallet) {
+      return res.status(404).json({ message: "Admin wallet not found" });
+    }
+
+    return res.status(200).json({
+      message: "Admin wallet fetched successfully",
+      totalStars: adminWallet.totalStars,
+      transactions: adminWallet.transactions,
+    });
+  } catch (error) {
+    console.error("Error fetching admin wallet details:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+//to fetch subscription account details (stars)
+const getSubscriptionAccountDetails = async (req, res) => {
+  try {
+    const superAdmin = await SuperAdminWallet.findOne();
+
+    if (!superAdmin) {
+      return res.status(404).json({
+        success: false,
+        message: "Super admin wallet not found",
+      });
+    }
+
+    const subscriptionLogs = superAdmin.subscriptionLogs || [];
+
+    return res.status(200).json({
+      success: true,
+      message: "Subscription account details fetched successfully",
+      subscriptionLogs,
+    });
+  } catch (error) {
+    console.error("Error fetching subscription account details:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+//to fetch adAccounts(stars)
+const getAllUserAdSummaries = async (req, res) => {
+  try {
+    
+    const users = await User.find({ ads: { $exists: true, $not: { $size: 0 } } }).populate("ads");
+
+ 
+    const videoAdIds = [];
+    const imageAdIds = [];
+    const surveyAdIds = [];
+
+    for (const user of users) {
+      for (const ad of user.ads) {
+        if (ad.videoAdRef) videoAdIds.push(ad.videoAdRef);
+        else if (ad.imgAdRef) imageAdIds.push(ad.imgAdRef);
+        else if (ad.surveyAdRef) surveyAdIds.push(ad.surveyAdRef);
+      }
+    }
+
+    const [videoAds, imageAds, surveyAds] = await Promise.all([
+      VideoAd.find({ _id: { $in: videoAdIds } }).lean(),
+      ImageAd.find({ _id: { $in: imageAdIds } }).lean(),
+      SurveyAd.find({ _id: { $in: surveyAdIds } }).lean(),
+    ]);
+
+   
+    const videoAdMap = new Map(videoAds.map(ad => [ad._id.toString(), ad]));
+    const imageAdMap = new Map(imageAds.map(ad => [ad._id.toString(), ad]));
+    const surveyAdMap = new Map(surveyAds.map(ad => [ad._id.toString(), ad]));
+
+   
+    const userSummaries = [];
+
+    for (const user of users) {
+      let totalStarsSpent = 0;
+      let verifiedAdCount = 0;
+      let rejectedAdCount = 0;
+      const adDetailsList = [];
+
+      for (const ad of user.ads) {
+        let adDoc = null;
+        let adType = null;
+
+        if (ad.videoAdRef) {
+          adDoc = videoAdMap.get(ad.videoAdRef.toString());
+          adType = "Video";
+        } else if (ad.imgAdRef) {
+          adDoc = imageAdMap.get(ad.imgAdRef.toString());
+          adType = "Image";
+        } else if (ad.surveyAdRef) {
+          adDoc = surveyAdMap.get(ad.surveyAdRef.toString());
+          adType = "Survey";
+        }
+
+        if (!adDoc) continue;
+
+        let starsSpent = 0;
+        let status = "Pending";
+
+        if (adDoc.isAdRejected) {
+          status = "Rejected";
+          starsSpent = adDoc.extraDeductedStars || 0;
+          rejectedAdCount++;
+        } else if (adDoc.isAdVerified) {
+          status = "Verified";
+          starsSpent = (adDoc.totalStarsAllocated || 0) + (adDoc.extraDeductedStars || 0);
+          verifiedAdCount++;
+        }
+
+        if (status !== "Pending") {
+          totalStarsSpent += starsSpent;
+        }
+
+        adDetailsList.push({
+          adId: adDoc._id,
+          title: adDoc.title,
+          adType,
+          starsSpent,
+          status,
+        });
+      }
+
+      userSummaries.push({
+        userId: user._id,
+        name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        email: user.email || "",
+        phoneNumber: user.phoneNumber || "",
+        totalAds: adDetailsList.length,
+        totalStarsSpent,
+        verifiedAdCount,
+        rejectedAdCount,
+        ads: adDetailsList,
+      });
+    }
+
+    return res.status(200).json({
+      message: "All user ad summaries fetched successfully",
+      userCount: userSummaries.length,
+      data: userSummaries,
+    });
+  } catch (err) {
+    console.error("Error in getAllUserAdSummaries:", err);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+};
+const assignWinnerManually = async (req, res) => {
+  const { contestId, userId, position, stars, image } = req.body;
+
+  if (!contestId || !userId || !position) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  try {
+    const contest = await ContestEntry.findById(contestId);
+    if (!contest) return res.status(404).json({ message: "Contest not found" });
+
+    const index = position - 1; // Position starts from 1
+    const maxWinners = contest.rewardStructure.length || 3;
+
+    if (index < 0 || index >= maxWinners) {
+      return res.status(400).json({ message: "Invalid winner position" });
+    }
+
+    // Initialize winners array if needed
+    if (!contest.winners || contest.winners.length < maxWinners) {
+      contest.winners = Array.from({ length: maxWinners }).fill(null);
+    }
+
+    const alreadyAssigned = contest.winners.find(w => w?.userId?.toString() === userId);
+    if (alreadyAssigned) {
+      return res.status(400).json({ message: "User already assigned as a winner" });
+    }
+
+    // Assign prize (stars and/or image)
+    contest.winners[index] = {
+      userId,
+      position,
+      prize: {
+        stars: stars || 0,
+        image: image || ""
+      }
+    };
+
+    await contest.save();
+
+    // ✅ Reward stars to user if any
+    if (stars && stars > 0) {
+      const wallet = await UserWallet.findOne({ userId });
+      if (wallet) {
+        wallet.totalStars += stars;
+        await wallet.save();
+      }
+    }
+
+    res.status(200).json({
+      message: "Winner assigned successfully",
+      winners: contest.winners
+    });
+  } catch (err) {
+    console.error("Manual winner assignment error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+//to fetch total amount in superadmin wallet(rupees)
+const getSuperAdminTotalAmount=async(req,res)=>{
+  try {
+  const superAdminWallet=await SuperAdminWallet.findOne();
+    if(!superAdminWallet){
+      return res.status(404).json({message:"SuperAdmin wallet not found "})
+    }
+    const superAdminTotalStars=superAdminWallet.totalStars;
+
+    console.log(convertStarsToRupees(superAdminTotalStars));
+    
+  } catch (error) {
+    
+  }
+}
+//to fetch admin share in amount (rupees)
+const getAdminWalletWithTransactionDetails = async (req, res) => {
+  try {
+    const adminWallet = await adminwalletModel.findOne();
+
+    if (!adminWallet) {
+      return res.status(404).json({ message: "Admin wallet not found" });
+    }
+
+    const totalStars = adminWallet.totalStars || 0;
+    const totalAmountInRupees = convertStarsToRupees(totalStars);
+
+    // Prepare enriched transactions
+    const transactionsWithUserDetails = await Promise.all(
+      adminWallet.transactions.map(async (txn) => {
+        const user = await User.findById(txn.userId).select("firstName lastName email");
+        return {
+          userId: txn.userId,
+          userName: `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
+          userEmail: user?.email || "",
+          starsReceived: txn.starsReceived,
+          amountInRupees: convertStarsToRupees(txn.starsReceived),
+          date: txn.date,
+        };
+      })
+    );
+
+    return res.status(200).json({
+      message: "Admin wallet and transaction details fetched successfully",
+      totalStars,
+      totalAmountInRupees,
+      transactionCount: transactionsWithUserDetails.length,
+      transactions: transactionsWithUserDetails,
+    });
+  } catch (error) {
+    console.error("Error in getAdminWalletWithTransactionDetails:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+//to fetch subscriptionAccount deatils in amount(rupees)
+ const getSubscriptionAccountDetailsInAmount = async (req, res) => {
+  try {
+    const superAdmin = await SuperAdminWallet.findOne();
+
+    if (!superAdmin) {
+      return res.status(404).json({
+        success: false,
+        message: "Super admin wallet not found",
+      });
+    }
+
+    const subscriptionLogs = superAdmin.subscriptionLogs || [];
+
+    let totalStarsUsed = 0;
+
+    const enrichedLogs = await Promise.all(
+      subscriptionLogs.map(async (log) => {
+        const user = await User.findById(log.userId).select("firstName lastName");
+        const userName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim();
+        const amountInRupees = convertStarsToRupees(log.starsUsed || 0);
+
+        totalStarsUsed += log.starsUsed || 0;
+
+        return {
+          userId: log.userId,
+          userName,
+          starsUsed: log.starsUsed,
+          amountInRupees,
+          subscriptionStatus: log.subscriptionStatus,
+          subscriptionStartDate: log.subscriptionStartDate,
+          subscriptionEndDate: log.subscriptionEndDate,
+          renewedAt: log.renewedAt,
+          loggedAt: log.loggedAt,
+        };
+      })
+    );
+
+    const totalAmountInRupees = convertStarsToRupees(totalStarsUsed);
+
+    return res.status(200).json({
+      success: true,
+      message: "Subscription account details fetched successfully",
+      totalStarsUsed,
+      totalAmountInRupees,
+      subscriptionLogs: enrichedLogs,
+    });
+  } catch (error) {
+    console.error("Error fetching subscription account details:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+//to fetch user ads in amount(rupees)
+const getAllUserAdSummariesInAmount = async (req, res) => {
+  try {
+    const users = await User.find({
+      ads: { $exists: true, $not: { $size: 0 } }
+    }).populate("ads");
+
+    const videoAdIds = [];
+    const imageAdIds = [];
+    const surveyAdIds = [];
+
+    for (const user of users) {
+      for (const ad of user.ads) {
+        if (ad.videoAdRef) videoAdIds.push(ad.videoAdRef);
+        else if (ad.imgAdRef) imageAdIds.push(ad.imgAdRef);
+        else if (ad.surveyAdRef) surveyAdIds.push(ad.surveyAdRef);
+      }
+    }
+
+    const [videoAds, imageAds, surveyAds] = await Promise.all([
+      VideoAd.find({ _id: { $in: videoAdIds } }).lean(),
+      ImageAd.find({ _id: { $in: imageAdIds } }).lean(),
+      SurveyAd.find({ _id: { $in: surveyAdIds } }).lean(),
+    ]);
+
+    const videoAdMap = new Map(videoAds.map(ad => [ad._id.toString(), ad]));
+    const imageAdMap = new Map(imageAds.map(ad => [ad._id.toString(), ad]));
+    const surveyAdMap = new Map(surveyAds.map(ad => [ad._id.toString(), ad]));
+
+    const userSummaries = [];
+    let grandTotalAmountInRupees = 0;
+
+    for (const user of users) {
+      let totalStarsSpent = 0;
+      let verifiedAdCount = 0;
+      let rejectedAdCount = 0;
+      const adDetailsList = [];
+
+      for (const ad of user.ads) {
+        let adDoc = null;
+        let adType = null;
+
+        if (ad.videoAdRef) {
+          adDoc = videoAdMap.get(ad.videoAdRef.toString());
+          adType = "Video";
+        } else if (ad.imgAdRef) {
+          adDoc = imageAdMap.get(ad.imgAdRef.toString());
+          adType = "Image";
+        } else if (ad.surveyAdRef) {
+          adDoc = surveyAdMap.get(ad.surveyAdRef.toString());
+          adType = "Survey";
+        }
+
+        if (!adDoc) continue;
+
+        let starsSpent = 0;
+        let status = "Pending";
+
+        if (adDoc.isAdRejected) {
+          status = "Rejected";
+          starsSpent = adDoc.extraDeductedStars || 0;
+          rejectedAdCount++;
+        } else if (adDoc.isAdVerified) {
+          status = "Verified";
+          starsSpent = (adDoc.totalStarsAllocated || 0) + (adDoc.extraDeductedStars || 0);
+          verifiedAdCount++;
+        }
+
+        if (status !== "Pending") {
+          totalStarsSpent += starsSpent;
+        }
+
+        adDetailsList.push({
+          adId: adDoc._id,
+          title: adDoc.title,
+          adType,
+          starsSpent,
+          amountInRupees: convertStarsToRupees(starsSpent),
+          status,
+        });
+      }
+
+      const totalAmountInRupees = convertStarsToRupees(totalStarsSpent);
+      grandTotalAmountInRupees += totalAmountInRupees;
+
+      userSummaries.push({
+        userId: user._id,
+        name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        email: user.email || "",
+        phoneNumber: user.phoneNumber || "",
+        totalAds: adDetailsList.length,
+        totalStarsSpent,
+        totalAmountInRupees,
+        verifiedAdCount,
+        rejectedAdCount,
+        ads: adDetailsList,
+      });
+    }
+
+    return res.status(200).json({
+      message: "All user ad summaries fetched successfully",
+      userCount: userSummaries.length,
+      grandTotalAmountInRupees,
+      data: userSummaries,
+    });
+  } catch (err) {
+    console.error("Error in getAllUserAdSummaries:", err);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+};
+ const getAllContestsForSuperAdmin = async (req, res) => {
+  try {
+    const contests = await ContestEntry.find({})
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "winners.userId",
+        select: "firstName email"
+      })
+      .lean();
+
+    const result = contests.map(contest => ({
+      _id: contest._id,
+      contestName: contest.contestName,
+      contestNumber: contest.contestNumber,
+      startDate: contest.startDate,
+      entryStars: contest.entryStars,
+      maxParticipants: contest.maxParticipants,
+      currentParticipants: contest.currentParticipants,
+      totalEntries: contest.totalEntries,
+      status: contest.status,
+      winnerSelectionType: contest.winnerSelectionType,
+      prizeImages: contest.prizeImages,
+      rewardStructure: contest.rewardStructure,
+      numberOfWinners: contest.rewardStructure.length,
+      totalRewardStars: contest.rewardStructure.reduce((sum, r) => sum + r.stars, 0),
+      manuallyStopped: contest.manuallyStopped,
+      createdAt: contest.createdAt,
+      updatedAt: contest.updatedAt,
+      result: contest.result || "Pending",
+
+      // ✅ Include winners with user name/email and prize info
+      winners: (contest.winners || []).map(w => ({
+        position: w?.position,
+        stars: w?.prize?.stars || 0,
+        image: w?.prize?.image || "",
+        user: {
+          _id: w?.userId?._id,
+          name: w?.userId?.firstName || "N/A",
+          email: w?.userId?.email || "N/A"
+        }
+      }))
+    }));
+
+    res.status(200).json({
+      message: "Contests fetched successfully",
+      contests: result
+    });
+  } catch (err) {
+    console.error("Error fetching contests:", err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 
 export {
@@ -1836,5 +2349,14 @@ export {
   fetchAdminCouponsRequests,
   approveAndDistributeCouponForAdminRequest,
   distributeStarsToUser,
-  getContests
+  getContests,
+  getAdminAccountDetails,
+  getSubscriptionAccountDetails,
+  getAllUserAdSummaries,
+  assignWinnerManually ,
+  getSuperAdminTotalAmount,
+  getAdminWalletWithTransactionDetails,
+  getSubscriptionAccountDetailsInAmount,
+  getAllUserAdSummariesInAmount,
+  getAllContestsForSuperAdmin
 };
