@@ -2309,38 +2309,36 @@ const getAllUserAdSummariesInAmount = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-const getActiveManualContests = async (req, res) => {
+const getActiveManualContests =async (req, res) => {
   try {
     const contests = await ContestEntry.find({
-      winnerSelectionType: "Manual",
-      status: "Active"
+      status: "Active",
+      winnerSelectionType: "Manual"
     })
-      .sort({ createdAt: -1 })
       .lean();
 
-    const result = contests.map(contest => ({
-      _id: contest._id,
-      contestName: contest.contestName,
-      contestNumber: contest.contestNumber,
-      startDate: contest.startDate,
-      entryStars: contest.entryStars,
-      maxParticipants: contest.maxParticipants,
-      currentParticipants: contest.currentParticipants,
-      status: contest.status,
-      prizeImages: contest.prizeImages,
-      rewardStructure: contest.rewardStructure,
-      numberOfWinners: contest.rewardStructure?.length || 0,
-      manuallyStopped: contest.manuallyStopped,
-      createdAt: contest.createdAt
-    }));
+    // Fetch participants for each contest
+    const enrichedContests = await Promise.all(
+      contests.map(async (contest) => {
+        const participants = await ContestParticipant.find({ contestId: contest._id })
+          .populate("userId", "firstName email")
+          .sort({ createdAt: 1 })
+          .lean();
 
-    res.status(200).json({
-      message: "Active manual contests fetched successfully",
-      contests: result
+        return {
+          ...contest,
+          participants
+        };
+      })
+    );
+
+    return res.status(200).json({
+      message: "Active manual contests with participants",
+      contests: enrichedContests
     });
-  } catch (err) {
-    console.error("Error fetching active manual contests:", err);
-    res.status(500).json({ message: "Internal Server Error" });
+  } catch (error) {
+    console.error("Error fetching active manual contests:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
