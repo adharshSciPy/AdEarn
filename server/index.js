@@ -23,6 +23,7 @@ import kyc from "./model/kycModel.js";
 import subscriptionRouter from "./routes/subscriptionRoute.js";
 import couponBatchModel from "./model/couponBatchModel.js";
 import geocodeRouter from "./routes/geocodeRoute.js";
+import broadcastRouter from "./routes/broadcastRoute.js";
 
 
 dotenv.config();
@@ -83,6 +84,10 @@ app.use('/api/v1/subscription', (req, res, next) => {
 // app.get("/api/test-protected", authMiddleware, (req, res) => {
 //   res.json({ message: "You are authenticated", user: req.user });
 // });
+
+app.use('/api/v1/broadcast', (req, res, next) => {
+  req.io = io; req.connectedUsers = connectedUsers; next();
+}, broadcastRouter);
 
 // Socket.IO Connection
 io.on("connection", (socket) => {
