@@ -25,11 +25,13 @@ import getCouponAmount from "../utils/getCouponAmount.js";
 import couponRequestModel from "../model/couponRequestModel.js";
 import UserContestEntry from "../model/userContestEntryModel.js"
 import adminwalletModel from "../model/adminwalletModel.js";
-import superAdminWallet from "../model/superAdminWallet.js";
+// import superAdminWallet from "../model/superAdminWallet.js";
 import { VideoAd } from "../model/videoadModel.js";
 import { ImageAd } from "../model/imageadModel.js";
 import { SurveyAd } from "../model/surveyadModel.js";
 import { Ad } from "../model/AdsModel.js";
+// import superAdminWallet from "../model/superAdminWallet.js";
+import { convertStarsToRupees } from "../utils/convertStarsToRupees.js";
 const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
@@ -1808,7 +1810,7 @@ const getContests = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
-//to fetch admin wallet with full details
+//to fetch admin wallet with full details (stars)
 const getAdminAccountDetails = async (req, res) => {
   try {
     const adminWallet = await adminwalletModel.findOne().populate({
@@ -1830,10 +1832,10 @@ const getAdminAccountDetails = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-//to fetch subscription account details 
+//to fetch subscription account details (stars)
 const getSubscriptionAccountDetails = async (req, res) => {
   try {
-    const superAdmin = await superAdminWallet.findOne();
+    const superAdmin = await SuperAdminWallet.findOne();
 
     if (!superAdmin) {
       return res.status(404).json({
@@ -1858,13 +1860,13 @@ const getSubscriptionAccountDetails = async (req, res) => {
     });
   }
 };
-//to fetch adAccounts
+//to fetch adAccounts(stars)
 const getAllUserAdSummaries = async (req, res) => {
   try {
-    // Step 1: Get all users who have ads
+    
     const users = await User.find({ ads: { $exists: true, $not: { $size: 0 } } }).populate("ads");
 
-    // Step 2: Collect all ad IDs by type
+ 
     const videoAdIds = [];
     const imageAdIds = [];
     const surveyAdIds = [];
@@ -1877,19 +1879,18 @@ const getAllUserAdSummaries = async (req, res) => {
       }
     }
 
-    // Step 3: Batch fetch ads by type
     const [videoAds, imageAds, surveyAds] = await Promise.all([
       VideoAd.find({ _id: { $in: videoAdIds } }).lean(),
       ImageAd.find({ _id: { $in: imageAdIds } }).lean(),
       SurveyAd.find({ _id: { $in: surveyAdIds } }).lean(),
     ]);
 
-    // Step 4: Create fast lookup maps
+   
     const videoAdMap = new Map(videoAds.map(ad => [ad._id.toString(), ad]));
     const imageAdMap = new Map(imageAds.map(ad => [ad._id.toString(), ad]));
     const surveyAdMap = new Map(surveyAds.map(ad => [ad._id.toString(), ad]));
 
-    // Step 5: Build the summary
+   
     const userSummaries = [];
 
     for (const user of users) {
@@ -1967,6 +1968,232 @@ const getAllUserAdSummaries = async (req, res) => {
     });
   }
 };
+//to fetch total amount in superadmin wallet(rupees)
+const getSuperAdminTotalAmount=async(req,res)=>{
+  try {
+  const superAdminWallet=await SuperAdminWallet.findOne();
+    if(!superAdminWallet){
+      return res.status(404).json({message:"SuperAdmin wallet not found "})
+    }
+    const superAdminTotalStars=superAdminWallet.totalStars;
+
+    console.log(convertStarsToRupees(superAdminTotalStars));
+    
+  } catch (error) {
+    
+  }
+}
+//to fetch admin share in amount (rupees)
+const getAdminWalletWithTransactionDetails = async (req, res) => {
+  try {
+    const adminWallet = await adminwalletModel.findOne();
+
+    if (!adminWallet) {
+      return res.status(404).json({ message: "Admin wallet not found" });
+    }
+
+    const totalStars = adminWallet.totalStars || 0;
+    const totalAmountInRupees = convertStarsToRupees(totalStars);
+
+    // Prepare enriched transactions
+    const transactionsWithUserDetails = await Promise.all(
+      adminWallet.transactions.map(async (txn) => {
+        const user = await User.findById(txn.userId).select("firstName lastName email");
+        return {
+          userId: txn.userId,
+          userName: `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
+          userEmail: user?.email || "",
+          starsReceived: txn.starsReceived,
+          amountInRupees: convertStarsToRupees(txn.starsReceived),
+          date: txn.date,
+        };
+      })
+    );
+
+    return res.status(200).json({
+      message: "Admin wallet and transaction details fetched successfully",
+      totalStars,
+      totalAmountInRupees,
+      transactionCount: transactionsWithUserDetails.length,
+      transactions: transactionsWithUserDetails,
+    });
+  } catch (error) {
+    console.error("Error in getAdminWalletWithTransactionDetails:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+//to fetch subscriptionAccount deatils in amount(rupees)
+ const getSubscriptionAccountDetailsInAmount = async (req, res) => {
+  try {
+    const superAdmin = await SuperAdminWallet.findOne();
+
+    if (!superAdmin) {
+      return res.status(404).json({
+        success: false,
+        message: "Super admin wallet not found",
+      });
+    }
+
+    const subscriptionLogs = superAdmin.subscriptionLogs || [];
+
+    let totalStarsUsed = 0;
+
+    const enrichedLogs = await Promise.all(
+      subscriptionLogs.map(async (log) => {
+        const user = await User.findById(log.userId).select("firstName lastName");
+        const userName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim();
+        const amountInRupees = convertStarsToRupees(log.starsUsed || 0);
+
+        totalStarsUsed += log.starsUsed || 0;
+
+        return {
+          userId: log.userId,
+          userName,
+          starsUsed: log.starsUsed,
+          amountInRupees,
+          subscriptionStatus: log.subscriptionStatus,
+          subscriptionStartDate: log.subscriptionStartDate,
+          subscriptionEndDate: log.subscriptionEndDate,
+          renewedAt: log.renewedAt,
+          loggedAt: log.loggedAt,
+        };
+      })
+    );
+
+    const totalAmountInRupees = convertStarsToRupees(totalStarsUsed);
+
+    return res.status(200).json({
+      success: true,
+      message: "Subscription account details fetched successfully",
+      totalStarsUsed,
+      totalAmountInRupees,
+      subscriptionLogs: enrichedLogs,
+    });
+  } catch (error) {
+    console.error("Error fetching subscription account details:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+//to fetch user ads in amount(rupees)
+const getAllUserAdSummariesInAmount = async (req, res) => {
+  try {
+    const users = await User.find({
+      ads: { $exists: true, $not: { $size: 0 } }
+    }).populate("ads");
+
+    const videoAdIds = [];
+    const imageAdIds = [];
+    const surveyAdIds = [];
+
+    for (const user of users) {
+      for (const ad of user.ads) {
+        if (ad.videoAdRef) videoAdIds.push(ad.videoAdRef);
+        else if (ad.imgAdRef) imageAdIds.push(ad.imgAdRef);
+        else if (ad.surveyAdRef) surveyAdIds.push(ad.surveyAdRef);
+      }
+    }
+
+    const [videoAds, imageAds, surveyAds] = await Promise.all([
+      VideoAd.find({ _id: { $in: videoAdIds } }).lean(),
+      ImageAd.find({ _id: { $in: imageAdIds } }).lean(),
+      SurveyAd.find({ _id: { $in: surveyAdIds } }).lean(),
+    ]);
+
+    const videoAdMap = new Map(videoAds.map(ad => [ad._id.toString(), ad]));
+    const imageAdMap = new Map(imageAds.map(ad => [ad._id.toString(), ad]));
+    const surveyAdMap = new Map(surveyAds.map(ad => [ad._id.toString(), ad]));
+
+    const userSummaries = [];
+    let grandTotalAmountInRupees = 0;
+
+    for (const user of users) {
+      let totalStarsSpent = 0;
+      let verifiedAdCount = 0;
+      let rejectedAdCount = 0;
+      const adDetailsList = [];
+
+      for (const ad of user.ads) {
+        let adDoc = null;
+        let adType = null;
+
+        if (ad.videoAdRef) {
+          adDoc = videoAdMap.get(ad.videoAdRef.toString());
+          adType = "Video";
+        } else if (ad.imgAdRef) {
+          adDoc = imageAdMap.get(ad.imgAdRef.toString());
+          adType = "Image";
+        } else if (ad.surveyAdRef) {
+          adDoc = surveyAdMap.get(ad.surveyAdRef.toString());
+          adType = "Survey";
+        }
+
+        if (!adDoc) continue;
+
+        let starsSpent = 0;
+        let status = "Pending";
+
+        if (adDoc.isAdRejected) {
+          status = "Rejected";
+          starsSpent = adDoc.extraDeductedStars || 0;
+          rejectedAdCount++;
+        } else if (adDoc.isAdVerified) {
+          status = "Verified";
+          starsSpent = (adDoc.totalStarsAllocated || 0) + (adDoc.extraDeductedStars || 0);
+          verifiedAdCount++;
+        }
+
+        if (status !== "Pending") {
+          totalStarsSpent += starsSpent;
+        }
+
+        adDetailsList.push({
+          adId: adDoc._id,
+          title: adDoc.title,
+          adType,
+          starsSpent,
+          amountInRupees: convertStarsToRupees(starsSpent),
+          status,
+        });
+      }
+
+      const totalAmountInRupees = convertStarsToRupees(totalStarsSpent);
+      grandTotalAmountInRupees += totalAmountInRupees;
+
+      userSummaries.push({
+        userId: user._id,
+        name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        email: user.email || "",
+        phoneNumber: user.phoneNumber || "",
+        totalAds: adDetailsList.length,
+        totalStarsSpent,
+        totalAmountInRupees,
+        verifiedAdCount,
+        rejectedAdCount,
+        ads: adDetailsList,
+      });
+    }
+
+    return res.status(200).json({
+      message: "All user ad summaries fetched successfully",
+      userCount: userSummaries.length,
+      grandTotalAmountInRupees,
+      data: userSummaries,
+    });
+  } catch (err) {
+    console.error("Error in getAllUserAdSummaries:", err);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+};
 
 export {
   registerSuperAdmin,
@@ -2003,5 +2230,9 @@ export {
   getContests,
   getAdminAccountDetails,
   getSubscriptionAccountDetails,
-  getAllUserAdSummaries
+  getAllUserAdSummaries,
+  getSuperAdminTotalAmount,
+  getAdminWalletWithTransactionDetails,
+  getSubscriptionAccountDetailsInAmount,
+  getAllUserAdSummariesInAmount
 };
