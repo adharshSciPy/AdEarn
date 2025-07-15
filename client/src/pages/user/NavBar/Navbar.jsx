@@ -15,6 +15,10 @@ import notification from "../../../assets/notification.png";
 import ads from "../../../assets/add.png";
 import { addNotification } from "../../../components/features/notificationSlice";
 import contest from "../../../assets/trophy.png"
+import Driver from 'driver.js';
+import 'driver.js/dist/driver.min.css';
+
+
 
 function Navbar() {
   const [activeTab, setActiveTab] = useState("home");
@@ -48,20 +52,16 @@ function Navbar() {
     />
   );
   const navItems = [
-    { icon: home, label: `/userhome/${userId}` },
-    { icon: wallet, label: `/walletpage/${userId}` },
-    { icon: <AdsIcon />, label: `/adsmanageruser/${userId}` },
-    {
-      icon: <KYCIcon />,
-      label: "/kycverification",
-    },
-    { icon: <NotificationIcon />, label: "notification" },
-    { icon: coupon, label: "/coupon" },
-    { icon: contest, label: `/contestpage/${userId}` },
-
-
-    { icon: profile, label: "/userprofile" },
+    { icon: home, label: `/userhome/${userId}`, navId: "user-home" },
+    { icon: wallet, label: `/walletpage/${userId}`, navId: "wallet-page" },
+    { icon: <AdsIcon />, label: `/adsmanageruser/${userId}`, navId: "adsmanager-user" },
+    { icon: <KYCIcon />, label: "/kycverification", navId: "kyc-verification" },
+    { icon: <NotificationIcon />, label: "notification", navId: "notification" },
+    { icon: coupon, label: "/coupon", navId: "coupon" },
+    { icon: contest, label: `/contestpage/${userId}`, navId: "contest-page" },
+    { icon: profile, label: "/userprofile", navId: "user-profile" },
   ];
+
 
   const handleBottomNavClick = (label) => {
     setActiveTab(label);
@@ -107,6 +107,72 @@ function Navbar() {
     };
   }, [userId, dispatch]);
 
+
+  // ✅ Driver.js tour
+  useEffect(() => {
+    const hasSeenNavTour = localStorage.getItem(`userTourNavbarDone_${userId}`);
+
+    if (!hasSeenNavTour) {
+      let attempts = 0;
+      const navSelectors = [
+        '#user-home',
+        '#wallet-page',
+        '#adsmanager-user',
+        '#kyc-verification',
+        '#notification',
+        '#coupon',
+        '#contest-page',
+        '#user-profile',
+      ];
+
+      const interval = setInterval(() => {
+        const allExist = navSelectors.every(sel => document.querySelector(sel));
+        if (allExist || attempts > 15) {
+          clearInterval(interval);
+
+          if (!allExist) {
+            const missing = navSelectors.filter(sel => !document.querySelector(sel));
+            console.warn("❌ Navbar tour missing elements:", missing);
+            return;
+          }
+
+          const driver = new Driver({
+            animate: true,
+            opacity: 0.5,
+            stageBackground: 'rgba(0, 0, 0, 0.5)',
+            allowClose: true,
+            doneBtnText: 'Next: Ads Tour',
+            closeBtnText: 'Skip',
+            nextBtnText: 'Next',
+            prevBtnText: 'Previous',
+            onReset: () => {
+              localStorage.setItem(`userTourNavbarDone_${userId}`, 'true');
+            },
+          });
+
+          driver.defineSteps(navSelectors.map((selector) => {
+            const label = selector.replace('#', '').replace(/-/g, ' ');
+            return {
+              element: selector,
+              popover: {
+                title: label.charAt(0).toUpperCase() + label.slice(1),
+                description: `Click here to visit ${label} page.`,
+                position: 'bottom',
+              },
+            };
+          }));
+
+          driver.start();
+        }
+
+        attempts++;
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [userId]);
+
+
   return (
     <>
       <div className={styles.mainContainer}>
@@ -121,6 +187,7 @@ function Navbar() {
             {navItems.map((item, index) => (
               <div
                 className={styles.iconContainer}
+                id={item.navId}
                 key={index}
                 onClick={() => handleBottomNavClick(item.label)}
               >
@@ -159,9 +226,8 @@ function Navbar() {
         {navItems.map((item, index) => (
           <div
             key={index}
-            className={`${styles.bottomNavItem} ${
-              activeTab === item.label ? styles.active : ""
-            }`}
+            className={`${styles.bottomNavItem} ${activeTab === item.label ? styles.active : ""
+              }`}
             onClick={() => handleBottomNavClick(item.label)}
           >
             {typeof item.icon === "string" ? (

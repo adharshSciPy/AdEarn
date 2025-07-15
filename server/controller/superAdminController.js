@@ -25,6 +25,11 @@ import getCouponAmount from "../utils/getCouponAmount.js";
 import couponRequestModel from "../model/couponRequestModel.js";
 import UserContestEntry from "../model/userContestEntryModel.js"
 import adminwalletModel from "../model/adminwalletModel.js";
+import superAdminWallet from "../model/superAdminWallet.js";
+import { VideoAd } from "../model/videoadModel.js";
+import { ImageAd } from "../model/imageadModel.js";
+import { SurveyAd } from "../model/surveyadModel.js";
+import { Ad } from "../model/AdsModel.js";
 const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
@@ -1825,15 +1830,143 @@ const getAdminAccountDetails = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-//to fetch coupon logs
-// const fetchCouponBatchModel=async(req,res)=>{
-//   try {
-//     const couponBatchModel
-//   } catch (error) {
-    
-//   }
-// }
+//to fetch subscription account details 
+const getSubscriptionAccountDetails = async (req, res) => {
+  try {
+    const superAdmin = await superAdminWallet.findOne();
 
+    if (!superAdmin) {
+      return res.status(404).json({
+        success: false,
+        message: "Super admin wallet not found",
+      });
+    }
+
+    const subscriptionLogs = superAdmin.subscriptionLogs || [];
+
+    return res.status(200).json({
+      success: true,
+      message: "Subscription account details fetched successfully",
+      subscriptionLogs,
+    });
+  } catch (error) {
+    console.error("Error fetching subscription account details:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+//to fetch adAccounts
+const getAllUserAdSummaries = async (req, res) => {
+  try {
+    // Step 1: Get all users who have ads
+    const users = await User.find({ ads: { $exists: true, $not: { $size: 0 } } }).populate("ads");
+
+    // Step 2: Collect all ad IDs by type
+    const videoAdIds = [];
+    const imageAdIds = [];
+    const surveyAdIds = [];
+
+    for (const user of users) {
+      for (const ad of user.ads) {
+        if (ad.videoAdRef) videoAdIds.push(ad.videoAdRef);
+        else if (ad.imgAdRef) imageAdIds.push(ad.imgAdRef);
+        else if (ad.surveyAdRef) surveyAdIds.push(ad.surveyAdRef);
+      }
+    }
+
+    // Step 3: Batch fetch ads by type
+    const [videoAds, imageAds, surveyAds] = await Promise.all([
+      VideoAd.find({ _id: { $in: videoAdIds } }).lean(),
+      ImageAd.find({ _id: { $in: imageAdIds } }).lean(),
+      SurveyAd.find({ _id: { $in: surveyAdIds } }).lean(),
+    ]);
+
+    // Step 4: Create fast lookup maps
+    const videoAdMap = new Map(videoAds.map(ad => [ad._id.toString(), ad]));
+    const imageAdMap = new Map(imageAds.map(ad => [ad._id.toString(), ad]));
+    const surveyAdMap = new Map(surveyAds.map(ad => [ad._id.toString(), ad]));
+
+    // Step 5: Build the summary
+    const userSummaries = [];
+
+    for (const user of users) {
+      let totalStarsSpent = 0;
+      let verifiedAdCount = 0;
+      let rejectedAdCount = 0;
+      const adDetailsList = [];
+
+      for (const ad of user.ads) {
+        let adDoc = null;
+        let adType = null;
+
+        if (ad.videoAdRef) {
+          adDoc = videoAdMap.get(ad.videoAdRef.toString());
+          adType = "Video";
+        } else if (ad.imgAdRef) {
+          adDoc = imageAdMap.get(ad.imgAdRef.toString());
+          adType = "Image";
+        } else if (ad.surveyAdRef) {
+          adDoc = surveyAdMap.get(ad.surveyAdRef.toString());
+          adType = "Survey";
+        }
+
+        if (!adDoc) continue;
+
+        let starsSpent = 0;
+        let status = "Pending";
+
+        if (adDoc.isAdRejected) {
+          status = "Rejected";
+          starsSpent = adDoc.extraDeductedStars || 0;
+          rejectedAdCount++;
+        } else if (adDoc.isAdVerified) {
+          status = "Verified";
+          starsSpent = (adDoc.totalStarsAllocated || 0) + (adDoc.extraDeductedStars || 0);
+          verifiedAdCount++;
+        }
+
+        if (status !== "Pending") {
+          totalStarsSpent += starsSpent;
+        }
+
+        adDetailsList.push({
+          adId: adDoc._id,
+          title: adDoc.title,
+          adType,
+          starsSpent,
+          status,
+        });
+      }
+
+      userSummaries.push({
+        userId: user._id,
+        name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        email: user.email || "",
+        phoneNumber: user.phoneNumber || "",
+        totalAds: adDetailsList.length,
+        totalStarsSpent,
+        verifiedAdCount,
+        rejectedAdCount,
+        ads: adDetailsList,
+      });
+    }
+
+    return res.status(200).json({
+      message: "All user ad summaries fetched successfully",
+      userCount: userSummaries.length,
+      data: userSummaries,
+    });
+  } catch (err) {
+    console.error("Error in getAllUserAdSummaries:", err);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+};
 
 
 export {
@@ -1869,5 +2002,7 @@ export {
   approveAndDistributeCouponForAdminRequest,
   distributeStarsToUser,
   getContests,
-  getAdminAccountDetails
+  getAdminAccountDetails,
+  getSubscriptionAccountDetails,
+  getAllUserAdSummaries
 };
