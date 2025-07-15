@@ -31,7 +31,7 @@ import {
   getContests,
   getAdminAccountDetails,
   getSubscriptionAccountDetails,
-  getAllAdsWithUserAndDetails
+  getAllUserAdSummaries
   // selectAutomaticWinners
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
@@ -74,7 +74,7 @@ superAdminRouter.route("/user/distribute-stars").post(distributeStarsToUser)
 superAdminRouter.route("/contests").get(getContests);
 superAdminRouter.route("/admin-account/details").get(getAdminAccountDetails);
 superAdminRouter.route("/subscription-log/details").get(getSubscriptionAccountDetails);
-superAdminRouter.route("/all-user/ad/details").get(getAllAdsWithUserAndDetails);
+superAdminRouter.route("/all-user/ad/details").get(getAllUserAdSummaries);
 
 
 
