@@ -16,7 +16,7 @@ function CouponAccount() {
   useEffect(() => {
     const couponaccount = async () => {
       try {
-        const response = await axios.get(`${baseUrl}/api/v1/super-admin/all-coupon-batch`, {
+        const response = await axios.get(`${baseUrl}/api/v1/super-admin/coupon-batch-details`, {
           params: {
             page: currentPage,
             limit: pageSize,
@@ -24,6 +24,7 @@ function CouponAccount() {
         });
         console.log(response)
         setData(response.data.batches)
+        setCoupon(response.data)
       } catch (error) {
         console.log(error)
       }
@@ -31,6 +32,14 @@ function CouponAccount() {
 
     couponaccount()
   }, [currentPage, pageSize])
+
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // months are 0-indexed
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
 
 
   return (
@@ -47,7 +56,7 @@ function CouponAccount() {
             <p>Total Amount</p>
           </div>
           <div>
-            <h1>₹5000</h1>
+            <h1>₹ {coupon.totalAmountInRupees}</h1>
           </div>
           <div className={styles.rightText}>
             <p>Coupons account</p>
@@ -62,19 +71,19 @@ function CouponAccount() {
           <table style={{ borderCollapse: "separate", width: "100%" }}>
             <thead>
               <tr>
-                <td className={styles.tableCell}>Name</td>
-                <td className={styles.tableCell}>Distributed To</td>
-                <td className={styles.tableCell}>Stars Distributed</td>
-                <td className={styles.tableCell}>Total Stars</td>
+                <td className={styles.tableCell}>Sl.No</td>
+                <td className={styles.tableCell}>Coupon Count</td>
+                <td className={styles.tableCell}>Expiry Date</td>
+                <td className={styles.tableCell}>Total Amount</td>
               </tr>
             </thead>
             <tbody>
               {data.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((value, index) => (
                 <tr key={index}>
-                  <td className={styles.tableCell}>{value.name}</td>
-                  <td className={styles.tableCell}>{value.couponsGenerated}</td>
-                  <td className={styles.tableCell}>{value.starsDistributed}</td>
-                  <td className={styles.tableCell}>{value.totalStars}</td>
+                  <td>{index + 1}</td>
+                  <td className={styles.tableCell}>{value.couponCount}</td>
+                  <td className={styles.tableCell}>{formatDate(value.expiryDate)}</td>
+                  <td className={styles.tableCell}>₹ {value.totalAmountInRupees}</td>
                 </tr>
               ))}
 
@@ -88,7 +97,7 @@ function CouponAccount() {
                     textAlign: "left",
                   }}
                 >
-                  Total Stars Distributed
+                  Total Amount
                 </td>
                 <td
                   className={styles.tableCell}
@@ -100,8 +109,7 @@ function CouponAccount() {
                     justifyContent: "center"
                   }}
                 >
-
-
+                  ₹ {coupon.totalAmountInRupees}
                 </td>
               </tr>
             </tbody>

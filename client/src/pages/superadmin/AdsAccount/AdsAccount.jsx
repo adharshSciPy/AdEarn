@@ -86,7 +86,7 @@ function SubscriptionAccount() {
                     textAlign: "left",
                   }}
                 >
-                  Total Stars
+                  Total Amount
                 </td>
                 <td
                   className={styles.tableCell}
