@@ -24,6 +24,7 @@ import subscriptionRouter from "./routes/subscriptionRoute.js";
 import couponBatchModel from "./model/couponBatchModel.js";
 import geocodeRouter from "./routes/geocodeRoute.js";
 import broadcastRouter from "./routes/broadcastRoute.js";
+import ContestEntry from "./model/contestEntrySchema.js";
 
 
 dotenv.config();
@@ -261,6 +262,27 @@ cron.schedule("* * * * *", async () => {
   }
 });
 
+cron.schedule("* * * * *", async () => {
+  const now = new Date();
+
+  try {
+    const updated = await ContestEntry.updateMany(
+      {
+        status: "Scheduled",
+        startDate: { $lte: now },
+      },
+      {
+        $set: { status: "Active" },
+      }
+    );
+
+    if (updated.modifiedCount > 0) {
+      console.log(`✅ Activated ${updated.modifiedCount} scheduled contest(s)`);
+    }
+  } catch (err) {
+    console.error("❌ Error auto-activating contests:", err.message);
+  }
+});
 
 const PORT = process.env.PORT || 8000;
 

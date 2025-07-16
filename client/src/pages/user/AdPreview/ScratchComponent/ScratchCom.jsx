@@ -63,7 +63,7 @@ function ScratchCom({ onComplete, reward }) {
           color: "#52c41a",
         }}
       >
-         +{reward?.starsRewarded || "?"} Stars! ⭐  
+         {reward?.starsRewarded || "0"} Stars! ⭐  
       </div>
 
       {/* 🧽 Scratch Canvas - OVER the reward */}

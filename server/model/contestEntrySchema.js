@@ -32,8 +32,8 @@ const contestEntrySchema = new Schema({
   },
   status: {
     type: String,
-    enum: ["Active", "Ended"],
-    default: "Active"
+    enum: ["Scheduled","Active", "Ended"],
+    default: "Scheduled"
   },
   prizeImages: {
     type: [String],
@@ -75,12 +75,15 @@ const contestEntrySchema = new Schema({
   },
 
   // ✅ Optional tiered reward structure (can be used in auto selection)
-  rewardStructure: [
-    {
-      position: { type: Number, required: true },
-      stars: { type: Number, required: true }
-    }
-  ],
+rewardStructure: [
+  {
+    position: { type: Number, required: true },
+    stars: { type: Number,default:0},
+    image: { type: String, default: "" }
+  }
+],
+
+
 
   contestEntryWallet: {
     type: Number,
