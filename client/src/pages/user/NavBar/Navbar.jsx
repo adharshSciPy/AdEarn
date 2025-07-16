@@ -14,11 +14,11 @@ import verificationIcon from "../../../assets/kyc.png";
 import notification from "../../../assets/notification.png";
 import ads from "../../../assets/add.png";
 import { addNotification } from "../../../components/features/notificationSlice";
-import contest from "../../../assets/trophy.png"
-import Driver from 'driver.js';
-import 'driver.js/dist/driver.min.css';
-
-
+import contest from "../../../assets/trophy.png";
+import Driver from "driver.js";
+import "driver.js/dist/driver.min.css";
+import axios from "axios";
+import baseUrl from "../../../baseurl";
 
 function Navbar() {
   const [activeTab, setActiveTab] = useState("home");
@@ -28,6 +28,7 @@ function Navbar() {
   const dropdownRef = useRef(null);
   const dispatch = useDispatch();
   const userId = useSelector((state) => state.user.id);
+  const userToken = useSelector((state) => state.user.token);
   const navigate = useNavigate();
 
   const KYCIcon = () => (
@@ -54,14 +55,21 @@ function Navbar() {
   const navItems = [
     { icon: home, label: `/userhome/${userId}`, navId: "user-home" },
     { icon: wallet, label: `/walletpage/${userId}`, navId: "wallet-page" },
-    { icon: <AdsIcon />, label: `/adsmanageruser/${userId}`, navId: "adsmanager-user" },
+    {
+      icon: <AdsIcon />,
+      label: `/adsmanageruser/${userId}`,
+      navId: "adsmanager-user",
+    },
     { icon: <KYCIcon />, label: "/kycverification", navId: "kyc-verification" },
-    { icon: <NotificationIcon />, label: "notification", navId: "notification" },
+    {
+      icon: <NotificationIcon />,
+      label: "notification",
+      navId: "notification",
+    },
     { icon: coupon, label: "/coupon", navId: "coupon" },
     { icon: contest, label: `/contestpage/${userId}`, navId: "contest-page" },
     { icon: profile, label: "/userprofile", navId: "user-profile" },
   ];
-
 
   const handleBottomNavClick = (label) => {
     setActiveTab(label);
@@ -107,31 +115,35 @@ function Navbar() {
     };
   }, [userId, dispatch]);
 
-
   // ✅ Driver.js tour
   useEffect(() => {
+    getNotifications();
     const hasSeenNavTour = localStorage.getItem(`userTourNavbarDone_${userId}`);
 
     if (!hasSeenNavTour) {
       let attempts = 0;
       const navSelectors = [
-        '#user-home',
-        '#wallet-page',
-        '#adsmanager-user',
-        '#kyc-verification',
-        '#notification',
-        '#coupon',
-        '#contest-page',
-        '#user-profile',
+        "#user-home",
+        "#wallet-page",
+        "#adsmanager-user",
+        "#kyc-verification",
+        "#notification",
+        "#coupon",
+        "#contest-page",
+        "#user-profile",
       ];
 
       const interval = setInterval(() => {
-        const allExist = navSelectors.every(sel => document.querySelector(sel));
+        const allExist = navSelectors.every((sel) =>
+          document.querySelector(sel)
+        );
         if (allExist || attempts > 15) {
           clearInterval(interval);
 
           if (!allExist) {
-            const missing = navSelectors.filter(sel => !document.querySelector(sel));
+            const missing = navSelectors.filter(
+              (sel) => !document.querySelector(sel)
+            );
             console.warn("❌ Navbar tour missing elements:", missing);
             return;
           }
@@ -139,28 +151,30 @@ function Navbar() {
           const driver = new Driver({
             animate: true,
             opacity: 0.5,
-            stageBackground: 'rgba(0, 0, 0, 0.5)',
+            stageBackground: "rgba(0, 0, 0, 0.5)",
             allowClose: true,
-            doneBtnText: 'Next: Ads Tour',
-            closeBtnText: 'Skip',
-            nextBtnText: 'Next',
-            prevBtnText: 'Previous',
+            doneBtnText: "Next: Ads Tour",
+            closeBtnText: "Skip",
+            nextBtnText: "Next",
+            prevBtnText: "Previous",
             onReset: () => {
-              localStorage.setItem(`userTourNavbarDone_${userId}`, 'true');
+              localStorage.setItem(`userTourNavbarDone_${userId}`, "true");
             },
           });
 
-          driver.defineSteps(navSelectors.map((selector) => {
-            const label = selector.replace('#', '').replace(/-/g, ' ');
-            return {
-              element: selector,
-              popover: {
-                title: label.charAt(0).toUpperCase() + label.slice(1),
-                description: `Click here to visit ${label} page.`,
-                position: 'bottom',
-              },
-            };
-          }));
+          driver.defineSteps(
+            navSelectors.map((selector) => {
+              const label = selector.replace("#", "").replace(/-/g, " ");
+              return {
+                element: selector,
+                popover: {
+                  title: label.charAt(0).toUpperCase() + label.slice(1),
+                  description: `Click here to visit ${label} page.`,
+                  position: "bottom",
+                },
+              };
+            })
+          );
 
           driver.start();
         }
@@ -171,6 +185,23 @@ function Navbar() {
       return () => clearInterval(interval);
     }
   }, [userId]);
+  const getNotifications = async () => {
+    console.log(userToken);
+    
+  try {
+    const res = await axios.get(`${baseUrl}/api/v1/notifications/get-notifications`, {
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+      },
+    });
+    setNotifications(res.data.notifications)
+    
+    console.log(res); 
+  } catch (error) {
+    console.log(error);
+  }
+};
+console.log("w",notifications);
 
 
   return (
@@ -226,8 +257,9 @@ function Navbar() {
         {navItems.map((item, index) => (
           <div
             key={index}
-            className={`${styles.bottomNavItem} ${activeTab === item.label ? styles.active : ""
-              }`}
+            className={`${styles.bottomNavItem} ${
+              activeTab === item.label ? styles.active : ""
+            }`}
             onClick={() => handleBottomNavClick(item.label)}
           >
             {typeof item.icon === "string" ? (
