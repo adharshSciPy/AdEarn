@@ -20,7 +20,8 @@ import {
     approveCouponRequest,
     assignAndApproveCouponRequest,
     getCouponRequestDetails,
-    adminRequestCoupon
+    adminRequestCoupon,
+    transferStarsToSuperAdmin
 } from "../controller/adminController.js";
 import { fetchAdminCouponsRequests } from "../controller/superAdminController.js";
 
@@ -65,6 +66,8 @@ adminRouter.route('/assigned-coupons/:adminId').get(getAssignedCoupons);//to fet
 adminRouter.route('/distribute-coupon/:id').post(assignAndApproveCouponRequest)// this is the route to approve and distribute coupons to user for logging purpose
 adminRouter.route('/coupon/approved/request-details/:id').get(getCouponRequestDetails)
 adminRouter.route('/coupon/request/:id').post(adminRequestCoupon);//to request coupons from super admin
+adminRouter.route('/star-transfer').post(transferStarsToSuperAdmin);//to transfer stars to super admin
+
 
 
 

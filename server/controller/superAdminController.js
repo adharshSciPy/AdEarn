@@ -2493,7 +2493,43 @@ const getManualContestById = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+const generateStars = async (req, res) => {
+  try {
+    const { stars, note } = req.body;
 
+    if (!stars || stars <= 0) {
+      return res.status(400).json({ message: "Stars must be greater than zero" });
+    }
+
+    const amount = convertStarsToRupees(stars);
+    const superWallet = await SuperAdminWallet.findOne();
+    if (!superWallet) return res.status(404).json({ message: "SuperAdmin wallet not found" });
+
+    
+    superWallet.totalStars += stars;
+
+    
+    superWallet.generatedStarsLog.push({
+      starsGenerated: stars,
+      amount,
+      note: note || "Manual star generation",
+      date: new Date(),
+    });
+
+    await superWallet.save();
+
+    res.status(200).json({
+      message: "Stars generated successfully",
+      starsGenerated: stars,
+      amount,
+      currentTotalStars: superWallet.totalStars,
+    });
+
+  } catch (err) {
+    console.error("Error generating stars:", err);
+    res.status(500).json({ message: "Internal server error", error: err.message });
+  }
+};
 
 
 export {
@@ -2540,5 +2576,6 @@ export {
   getAllContestsForSuperAdmin,
   getActiveManualContests ,
   getManualContestById,
-  getAllCouponBatchSummaries
+  getAllCouponBatchSummaries,
+  generateStars
 };

@@ -21,6 +21,7 @@ import Coupon from "../model/couponModel.js";
 import path from "path";
 import superAdminWallet from "../model/superAdminWallet.js";
 import mongoose from "mongoose";
+import { convertStarsToRupees } from "../utils/convertStarsToRupees.js";
 
 
 const USER_ROLE = process.env.USER_ROLE;
@@ -516,6 +517,7 @@ const verifyAdById = async (req, res) => {
     if (extraDeductedStars > 0) {
       const saWallet = await superAdminWallet.findOne();
       if (saWallet) {
+         saWallet.totalStars += extraDeductedStars;
         saWallet.adExtraDeductions.push({
           adId: ad._id,
           adType,
@@ -1813,6 +1815,70 @@ const adminRequestCoupon = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+// to transfer the stars in the admin wallet to superAdmin
+const transferStarsToSuperAdmin = async (req, res) => {
+  try {
+    const { stars, note } = req.body;
+
+    if (!stars || stars <= 0) {
+      return res.status(400).json({
+        message: "Stars must be greater than zero",
+      });
+    }
+
+    const adminWallet = await AdminWallet.findOne();
+    if (!adminWallet) {
+      return res.status(404).json({ message: "Admin wallet not found" });
+    }
+
+    if (adminWallet.totalStars < stars) {
+      return res.status(400).json({ message: "Insufficient stars in admin wallet" });
+    }
+
+    const superWallet = await superAdminWallet.findOne();
+    if (!superWallet) {
+      return res.status(500).json({ message: "SuperAdmin wallet not found" });
+    }
+    const amount = convertStarsToRupees(stars);
+
+  
+    adminWallet.totalStars -= stars;
+
+    adminWallet.adminTransfersLog.push({
+      starsTransferred: stars,
+      amount,
+      note: note || "Manual admin transfer",
+      date: new Date(),
+    });
+
+    await adminWallet.save();
+
+  
+    superWallet.totalStars += stars;
+
+    superWallet.adminTransfers = superWallet.adminTransfers || [];
+    superWallet.adminTransfers.push({
+      starsTransferred: stars,
+      amount,
+      note: note || "Manual admin transfer",
+      date: new Date(),
+    });
+
+    await superWallet.save();
+
+    res.status(200).json({
+      message: "Stars transferred to SuperAdmin",
+      transferred: stars,
+      amount,
+      remainingAdminStars: adminWallet.totalStars,
+      superAdminStars: superWallet.totalStars,
+    });
+
+  } catch (err) {
+    console.error("Transfer failed:", err);
+    res.status(500).json({ message: "Internal Server Error", error: err.message });
+  }
+};
 
 
 
@@ -1856,7 +1922,8 @@ export {
   getAssignedCoupons,
   assignAndApproveCouponRequest,
   getCouponRequestDetails,
-  adminRequestCoupon
+  adminRequestCoupon,
+  transferStarsToSuperAdmin
   
 
 };

@@ -1,4 +1,14 @@
 import mongoose,{Schema} from "mongoose";
+const adminTransferLogSchema = new Schema(
+  {
+    starsTransferred: { type: Number, required: true },
+    amount: { type: Number, required: true },
+    note: { type: String },
+    date: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+
 
 const transactionSchema = new Schema(
   {
@@ -26,6 +36,7 @@ const adminWalletSchema = new Schema(
       default: 0,
     },
     transactions: [transactionSchema],
+    adminTransfersLog: [adminTransferLogSchema],
   },
   { timestamps: true }
 );

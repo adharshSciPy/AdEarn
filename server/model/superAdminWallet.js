@@ -193,6 +193,27 @@ const couponGenerationLogSchema = new Schema(
   },
   { _id: false }
 );
+const adminTransferLogSchema = new Schema(
+  {
+    
+    note: { type: String },
+    starsTransferred: { type: Number, required: true },
+    amount: { type: Number, required: true }, 
+    date: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+
+const generatedStarsLogSchema = new Schema(
+  {
+    starsGenerated: { type: Number, required: true },
+    amount: { type: Number, required: true }, // computed via utility
+    note: { type: String },
+    date: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+
 
 
 // MAIN Schema
@@ -212,6 +233,9 @@ const superAdminWalletSchema = new Schema(
     starDistributions: [starDistributionLogSchema],
     adExtraDeductions: [adExtraDeductionSchema],
     couponGenerationLogs: [couponGenerationLogSchema],
+    adminTransfers: [adminTransferLogSchema],
+    generatedStarsLog: [generatedStarsLogSchema],
+
 
   },
   { timestamps: true }
