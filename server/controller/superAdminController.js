@@ -248,22 +248,83 @@ const getSuperAdminWallet = async (req, res) => {
       return res.status(404).json({ message: "Admin wallet not found" });
     }
 
+    const getTotal = (array = [], key) =>
+      array.reduce((sum, item) => sum + (item[key] || 0), 0);
+
+    // Compute star totals
+    const totals = {
+      transactionsTotalStars: getTotal(Swallet.transactions, "starsReceived"),
+      adExtraDeductionsTotalStars: getTotal(Swallet.adExtraDeductions, "stars"),
+      expiredCouponRefundsTotalStars: getTotal(Swallet.expiredCouponRefunds, "stars"),
+      deletedUserStarsTotalStars: getTotal(Swallet.deletedUserStars, "starsTransferred"),
+      welcomeBonusGivenTotalStars: getTotal(Swallet.welcomeBonusWallet?.given, "stars"),
+      welcomeBonusLogsTotalStars: getTotal(Swallet.welcomeBonusWallet?.logs, "stars"),
+      companyDepositsTotalStars: getTotal(Swallet.companyRewardWallet?.companyDeposits, "stars"),
+      companyGivenToWinnersTotalStars: getTotal(Swallet.companyRewardWallet?.givenToWinners, "stars"),
+      contestCollectedStars: (Swallet.contestEntryWallet?.collectedFromUsers || []).length,
+      userEntryTotalStars: getTotal(Swallet.userEntry, "starsUsed"),
+      blacklistedUserStarsTotal: getTotal(Swallet.blacklistedUserStars, "starsTransferred"),
+      subscriptionStarsUsed: getTotal(Swallet.subscriptionLogs, "starsUsed"),
+      starDistributionsTotalStars: getTotal(Swallet.starDistributions, "stars"),
+      couponGenerationTotalStars: getTotal(Swallet.couponGenerationLogs, "starsSpent"),
+    };
+
+    // Add rupee conversion for all totals
+    const totalsWithAmounts = {};
+    for (const [key, stars] of Object.entries(totals)) {
+      totalsWithAmounts[key] = stars;
+
+      // Allow conversion for all types (not just ending in 'Stars')
+      const amountKey =
+        key === "contestCollectedStars"
+          ? "contestCollectedAmountInRupees"
+          : key.replace("Stars", "AmountInRupees");
+
+      totalsWithAmounts[amountKey] = convertStarsToRupees(stars);
+    }
+
+    // Add rupee info inside nested wallets
+    const welcomeBonusWallet = {
+      ...Swallet.welcomeBonusWallet?._doc,
+      totalReceivedAmountInRupees: convertStarsToRupees(Swallet.welcomeBonusWallet?.totalReceived || 0),
+      remainingStarsAmountInRupees: convertStarsToRupees(Swallet.welcomeBonusWallet?.remainingStars || 0),
+    };
+
+    const companyRewardWallet = {
+      ...Swallet.companyRewardWallet?._doc,
+      totalReceivedAmountInRupees: convertStarsToRupees(Swallet.companyRewardWallet?.totalReceived || 0),
+      remainingStarsAmountInRupees: convertStarsToRupees(Swallet.companyRewardWallet?.remainingStars || 0),
+    };
+
+    const contestEntryWallet = {
+      ...Swallet.contestEntryWallet?._doc,
+      totalReceivedAmountInRupees: convertStarsToRupees(Swallet.contestEntryWallet?.totalReceived || 0),
+      reservedForContestsAmountInRupees: convertStarsToRupees(Swallet.contestEntryWallet?.reservedForContests || 0),
+    };
+
     return res.status(200).json({
       message: "Super-Admin wallet fetched successfully",
       totalStars: Swallet.totalStars,
+      totalAmountInRupees: convertStarsToRupees(Swallet.totalStars),
       perUserWelcomeBonus: Swallet.perUserWelcomeBonus,
+
+      // Totals with amounts
+      ...totalsWithAmounts,
+
+      // Raw + enriched wallets
       transactions: Swallet.transactions,
       adExtraDeductions: Swallet.adExtraDeductions,
       expiredCouponRefunds: Swallet.expiredCouponRefunds,
       deletedUserStars: Swallet.deletedUserStars,
-      welcomeBonusWallet: Swallet.welcomeBonusWallet,
-      companyRewardWallet: Swallet.companyRewardWallet,
-      contestEntryWallet: Swallet.contestEntryWallet,
+      welcomeBonusWallet,
+      companyRewardWallet,
+      contestEntryWallet,
       userEntry: Swallet.userEntry,
       blacklistedUserStars: Swallet.blacklistedUserStars,
       subscriptionLogs: Swallet.subscriptionLogs,
       starDistributions: Swallet.starDistributions,
       couponGenerationLogs: Swallet.couponGenerationLogs,
+
       createdAt: Swallet.createdAt,
       updatedAt: Swallet.updatedAt,
     });
@@ -272,6 +333,7 @@ const getSuperAdminWallet = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 const getSuperAdminWelcomeBonusEarnings = async (req, res) => {
   try {
@@ -1978,17 +2040,22 @@ const assignWinnerManually = async (req, res) => {
       contest.winners = [];
     }
 
-    const alreadyAssigned = contest.winners.find(w => w?.userId?.toString() === userId);
+    // ✅ Only allow position from rewardStructure
+    const prizeFromStructure = contest.rewardStructure?.find(r => r.position === position);
+    if (!prizeFromStructure) {
+      return res.status(400).json({ message: `Position ${position} is not defined in rewardStructure` });
+    }
+
+    // Check if the user is already a winner
+    const alreadyAssigned = contest.winners.find(
+      w => w?.userId?.toString() === userId.toString()
+    );
     if (alreadyAssigned) {
       return res.status(400).json({ message: "User already assigned as a winner" });
     }
 
-    // Determine prize for this position
-    const prizeFromStructure = contest.rewardStructure?.find(r => r.position === position);
-    const imageFromPrizeImages = contest.prizeImages?.[position - 1] || "";
-
-    const stars = prizeFromStructure?.stars || 0;
-    const image = imageFromPrizeImages;
+    const stars = prizeFromStructure.stars || 0;
+    const image = contest.prizeImages?.[position - 1] || "";
 
     // Assign winner with prize
     contest.winners.push({
@@ -2000,7 +2067,7 @@ const assignWinnerManually = async (req, res) => {
       }
     });
 
-    // Reward stars to user wallet
+    // Add stars to user's wallet
     if (stars > 0) {
       const wallet = await UserWallet.findOne({ userId });
       if (wallet) {
@@ -2009,9 +2076,12 @@ const assignWinnerManually = async (req, res) => {
       }
     }
 
-    // ✅ End contest if all positions are filled
-    const totalRewards = (contest.rewardStructure?.length || 0) + (contest.prizeImages?.length || 0);
-    if (contest.winners.length >= totalRewards) {
+    // ✅ End contest only if all rewardStructure positions are assigned
+    const assignedRewardedPositions = contest.winners.filter(w => {
+      return contest.rewardStructure?.some(r => r.position === w.position);
+    }).length;
+
+    if (assignedRewardedPositions === contest.rewardStructure?.length) {
       contest.status = "Ended";
       contest.result = "Completed";
     }
@@ -2027,8 +2097,6 @@ const assignWinnerManually = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-
 
 
 //to fetch total amount in superadmin wallet(rupees)
@@ -2309,6 +2377,55 @@ const getAllUserAdSummariesInAmount = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+//to fetch coupon batch details in both star and amount
+const getAllCouponBatchSummaries = async (req, res) => {
+  try {
+    const batches = await CouponBatch.find({});
+
+    if (!batches.length) {
+      return res.status(200).json({
+        message: "No coupon batches found",
+        totalStarsSpent: 0,
+        totalAmountInRupees: 0,
+        count: 0,
+        batches: [],
+      });
+    }
+
+    let totalStarsSpent = 0;
+
+    const summarizedBatches = batches.map((batch) => {
+      totalStarsSpent += batch.totalStarsSpent || 0;
+
+      return {
+        _id: batch._id,
+        couponCount: batch.couponCount,
+        totalStarsSpent: batch.totalStarsSpent,
+        totalAmountInRupees: convertStarsToRupees(batch.totalStarsSpent),
+        generationDate: batch.generationDate,
+        expiryDate: batch.expiryDate,
+        requestNote: batch.requestNote,
+        createdByRole: batch.createdByRole,
+        generatedBy: batch.generatedBy,
+        assignedTo: batch.assignedTo,
+        assignedAt: batch.assignedAt,
+      };
+    });
+
+    return res.status(200).json({
+      message: "Coupon batch summaries fetched successfully",
+      totalStarsSpent,
+      totalAmountInRupees: convertStarsToRupees(totalStarsSpent),
+      count: summarizedBatches.length,
+      batches: summarizedBatches,
+    });
+  } catch (error) {
+    console.error("Error fetching coupon batch summaries:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 const getActiveManualContests =async (req, res) => {
   try {
     const contests = await ContestEntry.find({
@@ -2418,5 +2535,6 @@ export {
   getAllUserAdSummariesInAmount,
   getAllContestsForSuperAdmin,
   getActiveManualContests ,
-  getManualContestById
+  getManualContestById,
+  getAllCouponBatchSummaries
 };

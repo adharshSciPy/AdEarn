@@ -180,7 +180,11 @@ function App() {
           <Route path='/adspreview/:id/:adId' element={<AdsPreview />} />
           <Route path='/ads/:type' element={<Adspage />} />
           <Route path='/adedit/:id' element={<AdEdit />} />
+          <Route path='/adduplicate' element={<AdEdit />} />
+
           <Route path='/videoadedit/:id' element={<VideoAdEdit />} />
+          <Route path='/videoduplicate' element={<VideoAdEdit />} />
+
           <Route path='/coupon' element={<CouponPage />} />
           <Route path='/surveyadspreview/:id/:adId' element={<SurveyAdPreview />} />
           <Route path='/surveyaddetails/:id/:adId' element={<SurveyResponses />} />

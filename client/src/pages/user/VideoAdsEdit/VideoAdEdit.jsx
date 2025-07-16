@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import Select from "react-select";
 import baseUrl from "../../../baseurl";
 import Lottie from "lottie-react";
@@ -466,9 +466,13 @@ const stateCityMap = {
 
 function VideoAdEdit() {
   const { id } = useParams();
+
   const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-
+  const location = useLocation();
+  const isEditMode = Boolean(id); // true if editing existing ad (id exists)
+  const isDuplicateMode = Boolean(location.state?.duplicatedAd);
+  const duplicatedAd = location.state?.duplicatedAd || null;
   const [singleTime, setSingleTime] = useState(false);
   const [multipleTime, setMultipleTime] = useState(false);
   const [timeOptions, setTimeOptions] = useState({
@@ -510,6 +514,7 @@ function VideoAdEdit() {
     if (file) {
       setPreview(URL.createObjectURL(file));
     }
+    console.log("Selected video file:", file);
   };
   // Handle form input changes
   const handleChange = (e) => {
@@ -544,57 +549,57 @@ function VideoAdEdit() {
   const userId = useSelector((state) => state.user.id);
 
   useEffect(() => {
-    if (id) {
-      // Fetch ad data
-      const fetchAdData = async () => {
-        try {
-          const response = await axios.get(
-            `${baseUrl}/api/v1/user/my-single-ad/${userId}/${id}`
-          );
-          // FIX: correct property navigation for your API response
-          const data = response.data.ad.videoAdRef;
-          console.log("Da", data);
+    const initFormFromData = (data) => {
+      const adRef =
+        data.imgAdRef || data.videoAdRef || data.surveyAdRef || data; // fallback for duplication
 
-          setForm({
-            adName: data.title || "",
-            adCategory: data.description || "",
-            state: Array.isArray(data.state) ? data.state : [],
-            city: Array.isArray(data.city) ? data.city : [],
-            viewPlan: data.viewPlan || "",
-          });
+      setForm({
+        adName: adRef.title || "",
+        adCategory: adRef.description || "",
+        state: Array.isArray(adRef.targetStates) ? adRef.targetStates : [],
+        city: Array.isArray(adRef.targetDistricts) ? adRef.targetDistricts : [],
+        viewPlan: adRef.userViewsNeeded?.toString() || "",
+        state: adRef.targetStates || "",
+      });
 
-          if (data.videoUrl) {
-            setPreview(`${baseUrl}${data.videoUrl}`);
-          }
+      if (adRef.videoUrl) setPreview(`${baseUrl}${adRef.videoUrl}`);
 
-          // Defensive: check for region.location.coordinates
-          setPositions(
-            (data.targetRegions || []).map((region) => {
-              const coords =
-                region &&
-                region.location &&
-                Array.isArray(region.location.coordinates)
-                  ? region.location.coordinates
-                  : [0, 0];
-              return {
-                lat: coords[0],
-                lng: coords[1],
-                radiusKm: region.radiusKm || 30,
-              };
-            })
-          );
-          setSingleTime(!!data.singleTime);
-          setMultipleTime(!!data.adPeriod);
-          setSelectedTimeSlots(data.adPeriod || []);
-          setTimeOptions(data.adPeriod || {});
-        } catch (error) {
-          console.error("Failed to fetch ad:", error);
-        }
-      };
+      setPositions(
+        (adRef.targetRegions || []).map((region) => {
+          const coords = region?.location?.coordinates || [0, 0];
+          return {
+            lat: coords[0],
+            lng: coords[1],
+            radiusKm: region.radiusKm || 30,
+          };
+        })
+      );
 
+      setSingleTime(!!adRef.singleTime);
+      setMultipleTime(!!adRef.adPeriod);
+      setSelectedTimeSlots(adRef.adPeriod || []);
+      setTimeOptions(adRef.adPeriod || {});
+    };
+
+    const fetchAdData = async () => {
+      try {
+        const response = await axios.get(
+          `${baseUrl}/api/v1/user/my-single-ad/${userId}/${id}`
+        );
+        const adData = response.data.ad;
+
+        initFormFromData(adData); // Pass full object with refs
+      } catch (error) {
+        console.error("Failed to fetch ad:", error);
+      }
+    };
+
+    if (isEditMode) {
       fetchAdData();
+    } else if (duplicatedAd) {
+      initFormFromData(duplicatedAd);
     }
-  }, [id, userId]);
+  }, [id, userId, duplicatedAd]);
 
   const searchPlace = async (query) => {
     setLoading(true);
@@ -639,79 +644,90 @@ function VideoAdEdit() {
   const fileInputRef = useRef(null);
   const fileInputAudioRef = useRef(null);
   const navigate = useNavigate();
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-  const locationPayload = positions.map((p) => ({
-    coords: `${p.lat},${p.lng}`,
-    radius: p.radiusKm,
-  }));
+    const locationPayload = positions.map((p) => ({
+      coords: `${p.lat},${p.lng}`,
+      radius: p.radiusKm,
+    }));
 
-  try {
-    const formData = new FormData();
-    formData.append("title", form.adName);
-    formData.append("description", form.adCategory);
-    formData.append("userViewsNeeded", form.viewPlan);
-    formData.append("locations", JSON.stringify(locationPayload));
-    formData.append("states", JSON.stringify(form.state));
-    formData.append("districts", JSON.stringify(form.city || []));
-    formData.append(
-      "adPeriod",
-      JSON.stringify(singleTime ? 0 : selectedTimeSlots)
-    );
-    if (video) {
-      formData.append("videoAd", video);
-    }
+    try {
+      const formData = new FormData();
+      formData.append("title", form.adName);
+      formData.append("description", form.adCategory);
+      formData.append("locations", JSON.stringify(locationPayload));
+      formData.append("states", JSON.stringify(form.state));
+      formData.append("districts", JSON.stringify(form.city || []));
+      formData.append(
+        "adPeriod",
+        JSON.stringify(singleTime ? 0 : selectedTimeSlots)
+      );
 
-    const response = await axios.patch(
-      `${baseUrl}/api/v1/ads/edit-video-ad/${id}`,
-      formData,
-      {
+      // Only append viewPlan during create or duplicate (not edit)
+      if (!isEditMode || isDuplicateMode) {
+        formData.append("userViewsNeeded", form.viewPlan);
+      }
+
+      if (video) {
+        formData.append("videoAd", video); // new file selected
+      } else if (preview && isDuplicateMode) {
+        // only if duplicating and using existing video
+        formData.append("existingVideoUrl", preview); // send the video URL as fallback
+      }
+
+      // Conditional method and endpoint
+      const isCreateMode = !isEditMode || isDuplicateMode;
+      const endpoint = isCreateMode
+        ? `${baseUrl}/api/v1/ads/video-ad/${userId}`
+        : `${baseUrl}/api/v1/ads/edit-video-ad/${id}`;
+      const method = isCreateMode ? "post" : "patch";
+
+      const response = await axios[method](endpoint, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
-    );
+      });
 
-    if (response.status === 200) {
-      setForm({
-        adName: "",
-        adCategory: "",
-        state: [],
-        city: [],
-        viewPlan: "",
-      });
-      if (fileInputRef.current) {
-        fileInputRef.current.value = null;
+      if (response.status === 200 || response.status === 201) {
+        // Clear form and show success
+        setForm({
+          adName: "",
+          adCategory: "",
+          state: [],
+          city: [],
+          viewPlan: "",
+        });
+        if (fileInputRef.current) fileInputRef.current.value = null;
+
+        setPreview(null);
+        setVideo(null);
+        setPositions([]);
+        setSingleTime(false);
+        setMultipleTime(false);
+        setSelectedTimeSlots([]);
+        setSearchInput("");
+        setTimeOptions({
+          "3hrs": false,
+          "6hrs": false,
+          "12hrs": false,
+          "24hrs": false,
+          "48hrs": false,
+        });
+
+        setShowSuccessPopup(true);
+        setTimeout(() => {
+          setShowSuccessPopup(false);
+          navigate(`/userhome/${userId}`); // userId not ad ID here
+        }, 2000);
       }
-      setPreview(null);
-      setVideo(null);
-      setPositions([]);
-      setSingleTime(false);
-      setMultipleTime(false);
-      setSelectedTimeSlots([]);
-      setSearchInput("");
-      setTimeOptions({
-        "3hrs": false,
-        "6hrs": false,
-        "12hrs": false,
-        "24hrs": false,
-        "48hrs": false,
-      });
-      setShowSuccessPopup(true);
-      setTimeout(() => {
-        setShowSuccessPopup(false);
-        navigate(`/userhome/${id}`);
-      }, 2000);
+    } catch (error) {
+      console.error("Error saving ad:", error);
     }
-  } catch (error) {
-    console.error(error);
-  }
 
-  setLoading(false);
-};
-
+    setLoading(false);
+  };
 
   return (
     <>
@@ -1078,7 +1094,32 @@ const handleSubmit = async (e) => {
           </div>
         </div>
         {/* View Required */}
-
+        {(!isEditMode || isDuplicateMode) && (
+          <div className={styles.adName}>
+            <div className={styles.labelContainer}>
+              <div className={styles.labelImg}>
+                <img src={tickAd} alt="tick" />
+              </div>
+              <div className={styles.AdNameHead}>
+                <h2>View Required</h2>
+                <select
+                  className={styles.selectOption}
+                  style={{ marginTop: "20px" }}
+                  required
+                  value={form.viewPlan}
+                  onChange={handleChange}
+                  name="viewPlan"
+                >
+                  <option value="">Select Your Plan</option>
+                  <option value="200">200 views 120 Star</option>
+                  <option value="400">400 views 240 Star</option>
+                  <option value="800">800 views 480 Star</option>
+                  <option value="1600">1600 views 960 Star</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
         <div className={styles.buttondiv}>
           <div className={styles.mobdiv}>
             <button className={styles.backButton}>Back</button>
