@@ -1022,7 +1022,7 @@ const deleteAdmins = async (req, res) => {
 // to assign kyc into respectiveadmins dash for verification with 5min timeout
 const assignKycToAdmin = async (req, res) => {
   const { kycId } = req.body;
-  const adminId = req.params.id; 
+  const adminId = req.params.id;
 
   try {
     const kycDoc = await kyc.findById(kycId);
@@ -1031,31 +1031,54 @@ const assignKycToAdmin = async (req, res) => {
       return res.status(400).json({ message: "Invalid or already processed KYC" });
     }
 
-    console.log("Before Assignment:", kycDoc.assignedAdminId);
-    console.log("Admin to assign:", adminId);
+    // 1. Check if this admin already has an active KYC assigned
+    const activeAssignment = await kyc.findOne({
+      assignedAdminId: adminId,
+      kycStatus: "pending",
+      assignmentTime: { $ne: null },
+    });
 
-    // If already assigned and within 5 mins, block re-assignment
+    if (activeAssignment) {
+      const timeElapsed = new Date() - new Date(activeAssignment.assignmentTime);
+      const timeoutLimit = 5 * 60 * 1000; // 5 minutes in ms
+
+      if (timeElapsed < timeoutLimit) {
+        return res.status(409).json({
+          message: "You already have an active KYC assigned. Please complete it before taking a new one.",
+          assignedKycId: activeAssignment._id,
+        });
+      } else {
+        // Reset the expired assignment
+        activeAssignment.assignedAdminId = null;
+        activeAssignment.assignmentTime = null;
+        await activeAssignment.save();
+      }
+    }
+
+    // 2. Check if the target KYC is already assigned and active
     if (
       kycDoc.assignedAdminId &&
       new Date() - new Date(kycDoc.assignmentTime) < 5 * 60 * 1000
     ) {
-      return res.status(409).json({ message: "KYC is already assigned" });
+      return res.status(409).json({ message: "This KYC is already being processed by another admin." });
     }
 
-    // Assign the KYC to the admin
+    // 3. Assign the KYC to this admin
     kycDoc.assignedAdminId = adminId;
     kycDoc.assignmentTime = new Date();
     await kycDoc.save();
 
-    console.log("Assigned Admin (after save):", kycDoc.assignedAdminId);
-
-    return res.status(200).json({ message: "KYC assigned to admin", kycDoc });
+    return res.status(200).json({
+      message: "KYC assigned successfully",
+      assignedKycId: kycDoc._id,
+    });
 
   } catch (error) {
     console.error("Error in assignKycToAdmin:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 // to assign ads into respectiveadmins dash for verification with 5min timeout
 const assignAdToAdmin = async (req, res) => {
   const { adId } = req.body; 
