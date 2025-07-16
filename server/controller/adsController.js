@@ -418,7 +418,7 @@ const createVideoAd = async (req, res) => {
     const videoAd = await VideoAd.create({
       title,
       description,
-      videoUrl, // ✅ use the correct video URL
+      videoUrl, 
       adPeriod: adRepetition ? parsedAdPeriod : 0,
       adRepetition,
       createdBy: user._id,
@@ -2660,7 +2660,7 @@ const confirmAdPayment = async (req, res) => {
 
     await Promise.all(notificationsToSend);
 
-    // ✅ Mark payment as completed
+    // Mark payment as completed
     adRef.isPaymentCompleted = true;
     await adRef.save();
 
