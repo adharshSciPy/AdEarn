@@ -1,42 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./Coupon.module.css";
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
+import axios from 'axios'
+import baseUrl from "../../../baseurl"
+import { Pagination } from "antd";
+
 
 function CouponAccount() {
-  const [showModal, setShowModal] = useState(false);
-  const [couponAmount, setCouponAmount] = useState("");
 
-  const handleConfirm = () => {
-    console.log("Coupon generated for amount:", couponAmount);
-    setShowModal(false);
-    setCouponAmount("");
-  };
-  const transactions = [
-    {
-      id: 1,
-      name: "Coupon Distribution",
-      couponsGenerated: 10,
-      starsDistributed: 200,
-      totalStars: 5000,
-      date: "2025-06-01",
-    },
-    {
-      id: 2,
-      name: "Coupon Distribution",
-      couponsGenerated: 10,
-      starsDistributed: 300,
-      totalStars: 4700,
-      date: "2025-06-02",
-    },
-    {
-      id: 3,
-      name: "Coupon Distribution",
-      couponsGenerated: 10,
-      starsDistributed: 150,
-      totalStars: 4400,
-      date: "2025-06-03",
-    },
-  ];
+  const [data, setData] = useState([])
+  const [coupon, setCoupon] = useState({})
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    const couponaccount = async () => {
+      try {
+        const response = await axios.get(`${baseUrl}/api/v1/super-admin/coupon-batch-details`, {
+          params: {
+            page: currentPage,
+            limit: pageSize,
+          }
+        });
+        console.log(response)
+        setData(response.data.batches)
+        setCoupon(response.data)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    couponaccount()
+  }, [currentPage, pageSize])
+
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // months are 0-indexed
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
 
   return (
     <div className={styles.UserAccount}>
@@ -52,36 +56,34 @@ function CouponAccount() {
             <p>Total Amount</p>
           </div>
           <div>
-            <h1>₹5000</h1>
+            <h1>₹ {coupon.totalAmountInRupees}</h1>
           </div>
           <div className={styles.rightText}>
-            <p>Company account</p>
-            <span>+8% from yesterday</span>
-            <button onClick={() => setShowModal(true)}>Generate Coupons</button>
+            <p>Coupons account</p>
           </div>
         </div>
 
         <div className={styles.requestsHeader}>
-          <h3>User Distribution Details</h3>
+          <h3>Coupons Distribution Details</h3>
           <button className={styles.exportBtn}>Export</button>
         </div>
         <div className={styles.tablesection}>
           <table style={{ borderCollapse: "separate", width: "100%" }}>
             <thead>
               <tr>
-                <td className={styles.tableCell}>Name</td>
-                <td className={styles.tableCell}>Distributed To</td>
-                <td className={styles.tableCell}>Stars Distributed</td>
-                <td className={styles.tableCell}>Total Stars</td>
+                <td className={styles.tableCell}>Sl.No</td>
+                <td className={styles.tableCell}>Coupon Count</td>
+                <td className={styles.tableCell}>Expiry Date</td>
+                <td className={styles.tableCell}>Total Amount</td>
               </tr>
             </thead>
             <tbody>
-              {transactions.map((txn) => (
-                <tr key={txn.id}>
-                  <td className={styles.tableCell}>{txn.name}</td>
-                  <td className={styles.tableCell}>{txn.couponsGenerated}</td>
-                  <td className={styles.tableCell}>{txn.starsDistributed}</td>
-                  <td className={styles.tableCell}>{txn.totalStars}</td>
+              {data.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((value, index) => (
+                <tr key={index}>
+                  <td>{index + 1}</td>
+                  <td className={styles.tableCell}>{value.couponCount}</td>
+                  <td className={styles.tableCell}>{formatDate(value.expiryDate)}</td>
+                  <td className={styles.tableCell}>₹ {value.totalAmountInRupees}</td>
                 </tr>
               ))}
 
@@ -95,68 +97,36 @@ function CouponAccount() {
                     textAlign: "left",
                   }}
                 >
-                  Total Stars Distributed
+                  Total Amount
                 </td>
                 <td
                   className={styles.tableCell}
                   style={{
                     fontWeight: "bold",
                     color: "white",
-                    display:"flex",
-                    alignItems:"center",
-                    justifyContent:"center"
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
                   }}
                 >
-                  {transactions.reduce(
-                    (total, txn) => total + txn.starsDistributed,
-                    0
-                  )}
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="gold"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                  </svg>
+                  ₹ {coupon.totalAmountInRupees}
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
+        <Pagination
+          current={currentPage}
+          pageSize={pageSize}
+          showSizeChanger
+          pageSizeOptions={['10', '20', '50', '100']}
+          onChange={(page, size) => {
+            setCurrentPage(page);
+            setPageSize(size);
+          }}
+          style={{ marginTop: "20px", textAlign: "right", display: "flex", justifyContent: "end", alignItems: "end" }}
+        />
 
-        {showModal && (
-          <div className={styles.modalOverlay}>
-            <div className={styles.modal}>
-              <h3>Enter Star To Add Manually</h3>
-              <input
-                type="number"
-                value={couponAmount}
-                onChange={(e) => setCouponAmount(e.target.value)}
-                className={styles.input}
-              />
-              <h3>Enter Star For Each Coupons</h3>
-              <input
-                type="number"
-                value={couponAmount}
-                onChange={(e) => setCouponAmount(e.target.value)}
-                className={styles.input}
-              />
-              <div className={styles.modalActions}>
-                <button
-                  className={styles.cancel}
-                  onClick={() => setShowModal(false)}
-                >
-                  Cancel
-                </button>
-                <button className={styles.confirm} onClick={handleConfirm}>
-                  Confirm
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

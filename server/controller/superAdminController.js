@@ -31,6 +31,7 @@ import { SurveyAd } from "../model/surveyadModel.js";
 import { Ad } from "../model/AdsModel.js";
 // import superAdminWallet from "../model/superAdminWallet.js";
 import { convertStarsToRupees } from "../utils/convertStarsToRupees.js";
+import adminwalletModel from "../model/adminwalletModel.js";
 const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
