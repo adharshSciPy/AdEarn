@@ -13,6 +13,8 @@ import { useSelector } from "react-redux";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { EyeOutlined } from "@ant-design/icons";
+import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
+
 
 function Adsmanager() {
   const navigate = useNavigate();
@@ -20,6 +22,7 @@ function Adsmanager() {
   const [userads, setUserads] = useState([]);
   const userId = useSelector((state) => state.user.id);
   const [selectedAdId, setSelectedAdId] = useState(null);
+  const [showPopup, setShowPopup] = useState(false);
 
   const handleToggle = async (adId) => {
     try {
@@ -124,35 +127,36 @@ function Adsmanager() {
 
     doc.save(`${ref.title || "ad"}_report.pdf`);
   };
-const handleDuplicate = () => {
-  const selectedAd = userads.find((ad) => ad._id === selectedAdId);
+  const handleDuplicate = () => {
+    const selectedAd = userads.find((ad) => ad._id === selectedAdId);
 
-  if (!selectedAd) {
-    alert("Please select an ad to duplicate.");
-    return;
-  }
+    if (!selectedAd) {
+      alert("Please select an ad to duplicate.");
+      return;
+    }
 
-  if (selectedAd.imgAdRef) {
-    navigate("/adedit", {
-      state: { duplicatedAd: selectedAd },
-    });
-  } else if (selectedAd.videoAdRef) {
-    navigate("/videoduplicate", {
-      state: { duplicatedAd: selectedAd },
-    });
-  } else if (selectedAd.surveyAdRef) {
-    navigate("/surveyedit", {
-      state: { duplicatedAd: selectedAd },
-    });
-  } else {
-    // fallback route, maybe show alert or navigate to default create ad page
-    alert("Selected ad type not supported for duplication.");
-  }
-};
+    if (selectedAd.imgAdRef) {
+      navigate("/adduplicate", {
+        state: { duplicatedAd: selectedAd },
+      });
+    } else if (selectedAd.videoAdRef) {
+      navigate("/videoduplicate", {
+        state: { duplicatedAd: selectedAd },
+      });
+    } else if (selectedAd.surveyAdRef) {
+      navigate("/surveyedit", {
+        state: { duplicatedAd: selectedAd },
+      });
+    } else {
+      // fallback route, maybe show alert or navigate to default create ad page
+      alert("Selected ad type not supported for duplication.");
+    }
+  };
 
   return (
     <div>
       <Navbar />
+      <CreateAdPopup isOpen={showPopup} onClose={() => setShowPopup(false)} />
       <div className={styles.mainContainer}>
         <div className={styles.homeMainContainer}>
           {/* <Sidebar/> */}
@@ -171,7 +175,9 @@ const handleDuplicate = () => {
                       </p>
                     </div>
                     <div className={styles.firstMainbutton}>
-                      <button>Place Ads</button>
+                      <button onClick={() => setShowPopup(true)} style={{overflow:"hidden"}}>
+                        Place Ads
+                      </button>
                     </div>
                   </div>
 

@@ -471,6 +471,8 @@ function AdEdit() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const location = useLocation();
   const isEditMode = Boolean(id);
+  const isDuplicateMode = Boolean(location.state?.duplicatedAd);
+
   const duplicatedAd = location.state?.duplicatedAd || null;
   const [singleTime, setSingleTime] = useState(false);
   const [multipleTime, setMultipleTime] = useState(false);
@@ -483,7 +485,6 @@ function AdEdit() {
   });
   const [image, setImage] = useState(null);
   const [audio, setAudio] = useState(null);
-
   const [form, setForm] = useState({
     state: [],
     city: [],
@@ -554,59 +555,59 @@ function AdEdit() {
   };
   const userId = useSelector((state) => state.user.id);
 
-useEffect(() => {
-  const initFormFromData = (data) => {
-    const adRef = data.imgAdRef || data.videoAdRef || data.surveyAdRef || data; // fallback for duplication
+  useEffect(() => {
+    const initFormFromData = (data) => {
+      const adRef =
+        data.imgAdRef || data.videoAdRef || data.surveyAdRef || data; // fallback for duplication
 
-    setForm({
-      adName: adRef.title || "",
-      adCategory: adRef.description || "",
-      state: Array.isArray(adRef.targetStates) ? adRef.targetStates : [],
-      city: Array.isArray(adRef.targetDistricts) ? adRef.targetDistricts : [],
-      viewPlan: adRef.viewPlan || "",
-      state:adRef.targetStates || ""
-    });
+      setForm({
+        adName: adRef.title || "",
+        adCategory: adRef.description || "",
+        state: Array.isArray(adRef.targetStates) ? adRef.targetStates : [],
+        city: Array.isArray(adRef.targetDistricts) ? adRef.targetDistricts : [],
+        viewPlan: adRef.viewPlan || "",
+        state: adRef.targetStates || "",
+      });
 
-    if (adRef.imageUrl) setPreview(`${baseUrl}${adRef.imageUrl}`);
-    if (adRef.audioUrl) setPreviewaudio(`${baseUrl}${adRef.audioUrl}`);
+      if (adRef.imageUrl) setPreview(`${baseUrl}${adRef.imageUrl}`);
+      if (adRef.audioUrl) setPreviewaudio(`${baseUrl}${adRef.audioUrl}`);
 
-    setPositions(
-      (adRef.targetRegions || []).map((region) => {
-        const coords = region?.location?.coordinates || [0, 0];
-        return {
-          lat: coords[0],
-          lng: coords[1],
-          radiusKm: region.radiusKm || 30,
-        };
-      })
-    );
-
-    setSingleTime(!!adRef.singleTime);
-    setMultipleTime(!!adRef.adPeriod);
-    setSelectedTimeSlots(adRef.adPeriod || []);
-    setTimeOptions(adRef.adPeriod || {});
-  };
-
-  const fetchAdData = async () => {
-    try {
-      const response = await axios.get(
-        `${baseUrl}/api/v1/user/my-single-ad/${userId}/${id}`
+      setPositions(
+        (adRef.targetRegions || []).map((region) => {
+          const coords = region?.location?.coordinates || [0, 0];
+          return {
+            lat: coords[0],
+            lng: coords[1],
+            radiusKm: region.radiusKm || 30,
+          };
+        })
       );
-      const adData = response.data.ad;
 
-      initFormFromData(adData); // Pass full object with refs
-    } catch (error) {
-      console.error("Failed to fetch ad:", error);
+      setSingleTime(!!adRef.singleTime);
+      setMultipleTime(!!adRef.adPeriod);
+      setSelectedTimeSlots(adRef.adPeriod || []);
+      setTimeOptions(adRef.adPeriod || {});
+    };
+
+    const fetchAdData = async () => {
+      try {
+        const response = await axios.get(
+          `${baseUrl}/api/v1/user/my-single-ad/${userId}/${id}`
+        );
+        const adData = response.data.ad;
+
+        initFormFromData(adData); // Pass full object with refs
+      } catch (error) {
+        console.error("Failed to fetch ad:", error);
+      }
+    };
+
+    if (isEditMode) {
+      fetchAdData();
+    } else if (duplicatedAd) {
+      initFormFromData(duplicatedAd);
     }
-  };
-
-  if (isEditMode) {
-    fetchAdData();
-  } else if (duplicatedAd) {
-    initFormFromData(duplicatedAd);
-  }
-}, [id, userId, duplicatedAd]);
-
+  }, [id, userId, duplicatedAd]);
 
   const searchPlace = async (query) => {
     setLoading(true);
@@ -655,6 +656,7 @@ useEffect(() => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     const locationPayload = positions.map((p) => ({
       coords: `${p.lat},${p.lng}`,
       radius: p.radiusKm,
@@ -664,28 +666,51 @@ useEffect(() => {
       const formData = new FormData();
       formData.append("title", form.adName);
       formData.append("description", form.adCategory);
-      formData.append("userViewsNeeded", form.viewPlan);
       formData.append("locations", JSON.stringify(locationPayload));
       formData.append("states", JSON.stringify(form.state));
       formData.append("districts", JSON.stringify(form.city || []));
-      if (image) formData.append("imageAd", image);
-      if (audio) formData.append("audioAd", audio);
       formData.append(
         "adPeriod",
         JSON.stringify(singleTime ? 0 : selectedTimeSlots)
       );
 
-      const response = await axios.patch(
-        `${baseUrl}/api/v1/ads/edit-image-ad/${id}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      // Only append viewPlan during create or duplicate (not edit)
+      if (!isEditMode || isDuplicateMode) {
+        formData.append("userViewsNeeded", form.viewPlan);
+      }
 
-      if (response.status === 200) {
+      if (image) {
+        formData.append("imageAd", image); // new file selected
+      } else if (preview && isDuplicateMode) {
+        const relativeImageUrl = preview.startsWith(baseUrl)
+          ? preview.substring(baseUrl.length)
+          : preview;
+        formData.append("existingImageUrl", relativeImageUrl);
+      }
+      if (audio) {
+        formData.append("audioAd", audio); // new file selected
+      } else if (preview && isDuplicateMode) {
+        const relativeAudioUrl = preview.startsWith(baseUrl)
+          ? preview.substring(baseUrl.length)
+          : preview;
+        formData.append("existingaudioUrl", relativeAudioUrl);
+      }
+
+      // Conditional method and endpoint
+      const isCreateMode = !isEditMode || isDuplicateMode;
+      const endpoint = isCreateMode
+        ? `${baseUrl}/api/v1/ads/image-ad/${userId}`
+        : `${baseUrl}/api/v1/ads/edit-image-ad/${id}`;
+      const method = isCreateMode ? "post" : "patch";
+
+      const response = await axios[method](endpoint, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        // Clear form and show success
         setForm({
           adName: "",
           adCategory: "",
@@ -693,13 +718,11 @@ useEffect(() => {
           city: [],
           viewPlan: "",
         });
-        if (fileInputAudioRef.current) {
-          fileInputAudioRef.current.value = null;
-        }
-        if (fileInputRef.current) {
-          fileInputRef.current.value = null;
-        }
+        if (fileInputRef.current) fileInputRef.current.value = null;
+
         setPreview(null);
+        setImage(null);
+        setAudio(null);
         setPositions([]);
         setSingleTime(false);
         setMultipleTime(false);
@@ -711,19 +734,21 @@ useEffect(() => {
           "12hrs": false,
           "24hrs": false,
           "48hrs": false,
-        }); // adjust keys as per your time options
+        });
+
         setShowSuccessPopup(true);
         setTimeout(() => {
           setShowSuccessPopup(false);
-          navigate(`/userhome/${id}`);
+          navigate(`/userhome/${userId}`); // userId not ad ID here
         }, 2000);
       }
     } catch (error) {
-      console.error(error);
+      console.error("Error saving ad:", error);
     }
+
     setLoading(false);
   };
-console.log(form);
+  console.log(form);
 
   return (
     <>
@@ -1104,7 +1129,32 @@ console.log(form);
           </div>
         </div>
         {/* View Required */}
-
+        {(!isEditMode || isDuplicateMode) && (
+          <div className={styles.adName}>
+            <div className={styles.labelContainer}>
+              <div className={styles.labelImg}>
+                <img src={tickAd} alt="tick" />
+              </div>
+              <div className={styles.AdNameHead}>
+                <h2>View Required</h2>
+                <select
+                  className={styles.selectOption}
+                  style={{ marginTop: "20px" }}
+                  required
+                  value={form.viewPlan}
+                  onChange={handleChange}
+                  name="viewPlan"
+                >
+                  <option value="">Select Your Plan</option>
+                  <option value="200">200 views 120 Star</option>
+                  <option value="400">400 views 240 Star</option>
+                  <option value="800">800 views 480 Star</option>
+                  <option value="1600">1600 views 960 Star</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
         <div className={styles.buttondiv}>
           <div className={styles.mobdiv}>
             <button className={styles.backButton}>Back</button>

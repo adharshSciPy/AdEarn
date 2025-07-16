@@ -673,8 +673,10 @@ function VideoAdEdit() {
       if (video) {
         formData.append("videoAd", video); // new file selected
       } else if (preview && isDuplicateMode) {
-        // only if duplicating and using existing video
-        formData.append("existingVideoUrl", preview); // send the video URL as fallback
+        const relativeVideoUrl = preview.startsWith(baseUrl)
+          ? preview.substring(baseUrl.length)
+          : preview;
+        formData.append("existingVideoUrl", relativeVideoUrl);
       }
 
       // Conditional method and endpoint
