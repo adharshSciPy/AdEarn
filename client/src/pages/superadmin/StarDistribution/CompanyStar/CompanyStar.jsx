@@ -1,79 +1,30 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import styles from "./CompanyStar.module.css"
 import SuperSidebar from "../../../../components/SuperAdminSideBar/SuperSidebar"
 import Header from '../../../../components/Header/Header'
 import { FileTextOutlined, TagOutlined, UserAddOutlined, ProjectOutlined } from "@ant-design/icons"
 import { Button } from 'antd'
-import {
-    Chart as ChartJS,
-    LineElement,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    Filler,
-    Tooltip,
-    Legend
-} from 'chart.js';
-import { Line } from 'react-chartjs-2';
+import axios from 'axios'
+import baseUrl from '../../../../baseurl'
 
-// Register Chart.js components
-ChartJS.register(
-    LineElement,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    Filler,
-    Tooltip,
-    Legend
-);
 
 function CompanyStar() {
-    const data = {
-        labels: ['0', '10k', '20k', '30k', '40k', '50k', '60k'],
-        datasets: [
-            {
-                label: 'Total Accounts',
-                data: [10, 10, 20, 35, 40, 50, 60],
-                fill: true,
-                backgroundColor: 'rgba(192, 132, 252, 0.2)',
-                borderColor: 'rgba(192, 132, 252, 1)',
-                tension: 0.4,
-                pointRadius: 3
-            }
-        ]
-    };
 
-    const options = {
-        responsive: true,
-        plugins: {
-            legend: {
-                display: false
-            },
-            tooltip: {
-                mode: 'index',
-                intersect: false
-            }
-        },
-        scales: {
-            x: {
-                grid: {
-                    display: false
-                }
-            },
-            y: {
-                beginAtZero: true,
-                grid: {
-                    borderDash: [4, 4]
-                }
+    const [data, setData] = useState([]);
+
+    useEffect(() => {
+        const companyStar = async () => {
+            try {
+                const response = await axios.get(`${baseUrl}/api/v1/super-admin/superadmin-wallet`);
+                console.log(response)
+                setData(response.data)
+                
+            } catch (error) {
+                console.log(error)
             }
         }
-    };
-
-    const transactions = [
-        { id: 1, stars: 1000, amount: 200 },
-        { id: 2, stars: 1500, amount: 300 },
-        { id: 3, stars: 2000, amount: 400 },
-    ];
+        companyStar()
+    }, [])
 
 
     return (
@@ -86,9 +37,7 @@ function CompanyStar() {
                         <div className={styles.logbutton}>
                             <Button>Log</Button>
                         </div>
-                        <div className={styles.companygraph}>
-                            <Line data={data} options={options} />
-                        </div>
+
                         <div className={styles.accountshead}>
                             <h1>Accounts</h1>
                         </div>
@@ -116,9 +65,9 @@ function CompanyStar() {
                                 <ol>
                                     <li>Star Added: 2000</li>
                                     <li>Star Received: 3000</li>
-                                    <li>Contest: 2000</li>
-                                    <li>Coupons: 3000</li>
-                                    <li>Welcome Bonus</li>
+                                    <li>Contest: {data.contestCollectedStars}</li>
+                                    <li>Coupons: {data.couponGenerationTotalStars}</li>
+                                    <li>Welcome Bonus: {data.welcomeBonusLogsTotalStars}</li>
                                 </ol>
                             </div>
                             <div className={styles.amountlist}>
@@ -148,15 +97,19 @@ function CompanyStar() {
 
                                 </div>
                                 <h3>Ads</h3>
-                                <h4><svg
-                                    width="20"
-                                    height="18"
-                                    viewBox="0 0 24 24"
-                                    fill="gold"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                </svg> 500</h4>
+                                <h4
+                                    style={{
+                                        display: "flex", justifyContent: "start", alignItems: "center", textAlign: "center"
+                                    }}><svg
+                                        width="20"
+                                        height="18"
+                                        viewBox="0 0 24 24"
+                                        fill="gold"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        style={{ verticalAlign: "middle", margin: "0px" }}
+                                    >
+                                        <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
+                                    </svg> {data.adExtraDeductionsTotalStars}</h4>
                                 <p>+5% from yesterday</p>
                             </div>
                             <div className={styles.cardthree}>
@@ -167,15 +120,19 @@ function CompanyStar() {
                                     </div>
                                 </div>
                                 <h3>Users</h3>
-                                <h4><svg
+                                <h4 style={{
+                                    display: "flex", justifyContent: "start", alignItems: "center", textAlign: "center"
+                                }}><svg
                                     width="20"
                                     height="18"
                                     viewBox="0 0 24 24"
                                     fill="gold"
                                     xmlns="http://www.w3.org/2000/svg"
+                                    style={{ verticalAlign: "middle", margin: "0px" }}
+
                                 >
-                                    <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                </svg> 500</h4>
+                                        <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
+                                    </svg> {data.userEntryTotalStars}</h4>
                                 <p>+0,5% from yesterday</p>
                             </div>
                             <div className={styles.cardfour}>
@@ -186,15 +143,19 @@ function CompanyStar() {
                                     </div>
                                 </div>
                                 <h3>Payouts</h3>
-                                <h4><svg
+                                <h4 style={{
+                                    display: "flex", justifyContent: "start", alignItems: "center", textAlign: "center"
+                                }}><svg
                                     width="20"
                                     height="18"
                                     viewBox="0 0 24 24"
                                     fill="gold"
                                     xmlns="http://www.w3.org/2000/svg"
+                                    style={{ verticalAlign: "middle", margin: "0px" }}
+
                                 >
-                                    <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                </svg> 500</h4>
+                                        <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
+                                    </svg> 500</h4>
                                 <p>+8% from yesterday</p>
                             </div>
                             <div className={styles.cardfour}>
@@ -204,16 +165,20 @@ function CompanyStar() {
                                         <ProjectOutlined style={{ fontSize: 20, color: 'white' }} />
                                     </div>
                                 </div>
-                                <h3>Company accounts</h3>
-                                <h4><svg
+                                <h3>Company</h3>
+                                <h4 style={{
+                                    display: "flex", justifyContent: "start", alignItems: "center", textAlign: "center"
+                                }}><svg
                                     width="20"
                                     height="18"
                                     viewBox="0 0 24 24"
                                     fill="gold"
                                     xmlns="http://www.w3.org/2000/svg"
+                                    style={{ verticalAlign: "middle", margin: "0px" }}
+
                                 >
-                                    <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                </svg> 500</h4>
+                                        <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
+                                    </svg> {data.totalStars}</h4>
                                 <p>+8% from yesterday</p>
                             </div>
                             <div className={styles.cardone}>
@@ -224,16 +189,20 @@ function CompanyStar() {
                                     </div>
 
                                 </div>
-                                <h3>Admin accounts</h3>
-                                <h4><svg
+                                <h3>Admin</h3>
+                                <h4 style={{
+                                    display: "flex", justifyContent: "start", alignItems: "center", textAlign: "center"
+                                }}><svg
                                     width="20"
                                     height="18"
                                     viewBox="0 0 24 24"
                                     fill="gold"
                                     xmlns="http://www.w3.org/2000/svg"
+                                    style={{ verticalAlign: "middle", margin: "0px" }}
+
                                 >
-                                    <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                </svg> 500</h4>
+                                        <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
+                                    </svg> 500</h4>
                                 <p>+5% from yesterday</p>
                             </div>
                             <div className={styles.cardfour}>
@@ -244,15 +213,19 @@ function CompanyStar() {
                                     </div>
                                 </div>
                                 <h3>Welcome Bonus</h3>
-                                <h4><svg
+                                <h4 style={{
+                                    display: "flex", justifyContent: "start", alignItems: "center", textAlign: "center"
+                                }}><svg
                                     width="20"
                                     height="18"
                                     viewBox="0 0 24 24"
                                     fill="gold"
                                     xmlns="http://www.w3.org/2000/svg"
+                                    style={{ verticalAlign: "middle", margin: "0px" }}
+
                                 >
-                                    <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                </svg> 500</h4>
+                                        <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
+                                    </svg> {data.welcomeBonusLogsTotalStars}</h4>
                                 <p>+8% from yesterday</p>
                             </div>
                             <div className={styles.cardthree}>
@@ -263,15 +236,19 @@ function CompanyStar() {
                                     </div>
                                 </div>
                                 <h3>Referral Bonus</h3>
-                                <h4><svg
+                                <h4 style={{
+                                    display: "flex", justifyContent: "start", alignItems: "center", textAlign: "center"
+                                }}><svg
                                     width="20"
                                     height="18"
                                     viewBox="0 0 24 24"
                                     fill="gold"
                                     xmlns="http://www.w3.org/2000/svg"
+                                    style={{ verticalAlign: "middle", margin: "0px" }}
+
                                 >
-                                    <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                </svg> 500</h4>
+                                        <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
+                                    </svg> 500</h4>
                                 <p>+0,5% from yesterday</p>
                             </div>
                             <div className={styles.cardtwo}>
@@ -283,15 +260,19 @@ function CompanyStar() {
 
                                 </div>
                                 <h3>Contest</h3>
-                                <h4><svg
+                                <h4 style={{
+                                    display: "flex", justifyContent: "start", alignItems: "center", textAlign: "center"
+                                }}><svg
                                     width="20"
                                     height="18"
                                     viewBox="0 0 24 24"
                                     fill="gold"
                                     xmlns="http://www.w3.org/2000/svg"
+                                    style={{ verticalAlign: "middle", margin: "0px" }}
+
                                 >
-                                    <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                </svg> 500</h4>
+                                        <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
+                                    </svg> {data.contestCollectedStars}</h4>
                                 <p>+1,2% from yesterday</p>
                             </div>
                             <div className={styles.cardthree}>
@@ -302,15 +283,19 @@ function CompanyStar() {
                                     </div>
                                 </div>
                                 <h3>Coupons</h3>
-                                <h4><svg
+                                <h4 style={{
+                                    display: "flex", justifyContent: "start", alignItems: "center", textAlign: "center"
+                                }}><svg
                                     width="20"
                                     height="18"
                                     viewBox="0 0 24 24"
                                     fill="gold"
                                     xmlns="http://www.w3.org/2000/svg"
+                                    style={{ verticalAlign: "middle", margin: "0px" }}
+
                                 >
-                                    <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                </svg> 500</h4>
+                                        <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
+                                    </svg> {data.couponGenerationTotalStars}</h4>
                                 <p>+0,5% from yesterday</p>
                             </div>
                             <div className={styles.cardfour}>
@@ -321,15 +306,19 @@ function CompanyStar() {
                                     </div>
                                 </div>
                                 <h3>Subscription</h3>
-                                <h4><svg
+                                <h4 style={{
+                                    display: "flex", justifyContent: "start", alignItems: "center", textAlign: "center"
+                                }}><svg
                                     width="20"
                                     height="18"
                                     viewBox="0 0 24 24"
                                     fill="gold"
                                     xmlns="http://www.w3.org/2000/svg"
+                                    style={{ verticalAlign: "middle", margin: "0px" }}
+
                                 >
-                                    <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                </svg> 500</h4>
+                                        <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
+                                    </svg> {data.subscriptionStarsUsed}</h4>
                                 <p>+8% from yesterday</p>
                             </div>
                         </div>
@@ -348,7 +337,7 @@ function CompanyStar() {
                                             <td>Delete</td>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    {/* <tbody>
                                         {transactions.map((txn) => (
                                             <tr key={txn.id}>
                                                 <td>{txn.stars}</td>
@@ -378,7 +367,7 @@ function CompanyStar() {
                                                 </td>
                                             </tr>
                                         ))}
-                                    </tbody>
+                                    </tbody> */}
                                 </table>
                             </div>
                         </div>
@@ -387,7 +376,7 @@ function CompanyStar() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     )
 }
 
