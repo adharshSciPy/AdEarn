@@ -33,6 +33,8 @@ const expiredCouponRefundSchema = new Schema(
 );
 
 const welcomeBonusRecordSchema = new Schema(
+
+  
   {
     userId: { 
       type: Schema.Types.ObjectId, 

@@ -32,8 +32,8 @@ const contestEntrySchema = new Schema({
   },
   status: {
     type: String,
-    enum: ["Active", "Ended"],
-    default: "Active"
+    enum: ["Scheduled","Active", "Ended"],
+    default: "Scheduled"
   },
   prizeImages: {
     type: [String],

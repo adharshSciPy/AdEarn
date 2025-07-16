@@ -52,6 +52,11 @@ const userWallet = new Schema({
       type: Number,
       default: 0,
   },
+  welcomeBonusStatus: {
+  type: String,
+  enum: ["granted", "skipped", null],
+  default: null
+},
   superadminGiven: [
   {
     starCount: Number,
