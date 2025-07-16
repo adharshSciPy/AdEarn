@@ -30,7 +30,7 @@ adminRouter.route('/admin-register').post(registerAdmin)
 adminRouter.route('/admin-edit/:id').patch(updateAdmin)
 adminRouter.route('/admin-login').post(adminLogin)
 adminRouter.route('/all-users').get(getAllUsers) 
-adminRouter.route('/single-user/:id').get(getSingleUser) // change id from body to params
+adminRouter.route('/single-user/:id').get(getSingleUser) 
 adminRouter.route('/kyc-requested-users').get(fetchKycUploadedUsers)
 adminRouter.route('/kyc-requested-single-user').get(fetchSingleKycUploadUser)
 adminRouter.route('/kyc-approval/:id').post(verifyKyc)
