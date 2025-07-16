@@ -25,6 +25,7 @@ import couponBatchModel from "./model/couponBatchModel.js";
 import geocodeRouter from "./routes/geocodeRoute.js";
 import broadcastRouter from "./routes/broadcastRoute.js";
 import ContestEntry from "./model/contestEntrySchema.js";
+import User from "./model/userModel.js";
 
 
 dotenv.config();
@@ -97,7 +98,7 @@ io.on("connection", (socket) => {
   socket.on("register", (userId) => {
     if (userId) {
       connectedUsers.set(userId, socket.id);
-      console.log(`🟢 User ${userId} registered with socket ${socket.id}`);
+      console.log(`User ${userId} registered with socket ${socket.id}`);
       console.log("Connected users map:", connectedUsers);
 
     }
@@ -107,7 +108,7 @@ io.on("connection", (socket) => {
     for (const [userId, sockId] of connectedUsers.entries()) {
       if (sockId === socket.id) {
         connectedUsers.delete(userId);
-        console.log(`🔴 User ${userId} disconnected`);
+        console.log(`User ${userId} disconnected`);
         break;
       }
     }
@@ -119,40 +120,93 @@ cron.schedule("0 0 * * *", async () => {
 
  try {
     const { refundedCoupons, starsRefunded } = await runRefundExpiredCoupons();
-    console.log(`✅ Refunded ${starsRefunded} stars for coupons:`, refundedCoupons);
+    console.log(`Refunded ${starsRefunded} stars for coupons:`, refundedCoupons);
   } catch (err) {
-    console.error("❌ Coupon refund error:", err.message);
+    console.error(" Coupon refund error:", err.message);
   }
 
-  try {
-    // 2. Clean expired ads
-    const threeDaysAfter = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+ try {
+    const now = new Date();
+    const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
     const ads = await Ad.find().populate(["imgAdRef", "videoAdRef", "surveyAdRef"]);
 
     for (const ad of ads) {
       const { _id, imgAdRef, videoAdRef, surveyAdRef } = ad;
       let shouldDelete = false;
 
+  
+     const refundUnusedStars = async (adDoc, adType) => {
+  if (
+    adDoc?.isAdVerified &&
+    adDoc?.isPaymentCompleted &&
+    !adDoc?.isViewsReached &&
+    adDoc?.adExpirationTime &&
+    new Date(adDoc.adExpirationTime).getTime() <= now.getTime()
+  ) {
+    const {
+      createdBy,
+      userViewsNeeded,
+      totalViewCount = 0,
+      starPayoutPlan = [],
+      viewersRewarded = [],
+    } = adDoc;
+
+    const totalStarsAllocated = starPayoutPlan.reduce((sum, val) => sum + val, 0);
+    const starsAlreadyGiven = viewersRewarded.reduce((sum, view) => sum + (view.starsGiven || 0), 0);
+
+    const unusedStars = totalStarsAllocated - starsAlreadyGiven;
+
+    if (unusedStars > 0 && createdBy) {
+      const user = await User.findById(createdBy).populate("userWalletDetails");
+
+      if (user && user.userWalletDetails) {
+        user.userWalletDetails.totalStars += unusedStars;
+        user.userWalletDetails.refundedStars = user.userWalletDetails.refundedStars || [];
+
+        user.userWalletDetails.refundedStars.push({
+          adId: adDoc._id,
+          adType,
+          refundedStars: unusedStars,
+          totalViews: userViewsNeeded,
+          viewsReached: totalViewCount,
+          refundedAt: now,
+        });
+
+        await user.userWalletDetails.save();
+        console.log(`Refunded ${unusedStars} unused stars for ${adType} ad: ${adDoc._id}`);
+      }
+    }
+  }
+};
+
+
+      // ✅ Image Ad
       if (
         imgAdRef?.adExpirationTime &&
-        new Date(imgAdRef.adExpirationTime).getTime() + 3 * 24 * 60 * 60 * 1000 <= threeDaysAfter.getTime()
+        new Date(imgAdRef.adExpirationTime).getTime() + 3 * 24 * 60 * 60 * 1000 <= threeDaysFromNow.getTime()
       ) {
+        await refundUnusedStars(imgAdRef, "Image");
         await ImageAd.findByIdAndDelete(imgAdRef._id);
         shouldDelete = true;
       }
 
+      // ✅ Video Ad
       if (
         videoAdRef?.adExpirationTime &&
-        new Date(videoAdRef.adExpirationTime).getTime() + 3 * 24 * 60 * 60 * 1000 <= threeDaysAfter.getTime()
+        new Date(videoAdRef.adExpirationTime).getTime() + 3 * 24 * 60 * 60 * 1000 <= threeDaysFromNow.getTime()
       ) {
+        await refundUnusedStars(videoAdRef, "Video");
         await VideoAd.findByIdAndDelete(videoAdRef._id);
         shouldDelete = true;
       }
 
+      // ✅ Survey Ad
       if (
         surveyAdRef?.adExpirationTime &&
-        new Date(surveyAdRef.adExpirationTime).getTime() + 3 * 24 * 60 * 60 * 1000 <= threeDaysAfter.getTime()
+        new Date(surveyAdRef.adExpirationTime).getTime() + 3 * 24 * 60 * 60 * 1000 <= threeDaysFromNow.getTime()
       ) {
+        await refundUnusedStars(surveyAdRef, "Survey");
         await SurveyAd.findByIdAndDelete(surveyAdRef._id);
         shouldDelete = true;
       }
@@ -162,9 +216,9 @@ cron.schedule("0 0 * * *", async () => {
       }
     }
 
-    console.log("✅ Expired ads cleaned up");
+    console.log("Expired ads cleaned up and unused stars refunded");
   } catch (err) {
-    console.error("❌ Error cleaning expired ads:", err.message);
+    console.error("Error cleaning expired ads:", err.message);
   }
 
   try {
@@ -174,12 +228,12 @@ cron.schedule("0 0 * * *", async () => {
       { isSubscribed: true, subscriptionEndDate: { $lt: now } },
       { $set: { isSubscribed: false } }
     );
-    console.log("✅ Expired subscriptions updated");
+    console.log("Expired subscriptions updated");
   } catch (err) {
-    console.error("❌ Subscription update error:", err.message);
+    console.error("Subscription update error:", err.message);
   }
 
-  console.log(`[${new Date().toISOString()}] ✅ Daily maintenance job complete`);
+  console.log(`[${new Date().toISOString()}] Daily maintenance job complete`);
 });
 cron.schedule("* * * * *", async () => {
   const timeoutThreshold = new Date(Date.now() - 5 * 60 * 1000); // 5 min ago

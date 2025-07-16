@@ -64,6 +64,16 @@ const userWallet = new Schema({
     givenAt: Date,
   }
 ],
+refundedStars: [
+  {
+    adId: { type: mongoose.Schema.Types.ObjectId, ref: "Ad" },
+    refundedStars: Number,
+    totalViews: Number,
+    viewsReached: Number,
+    refundedAt: { type: Date, default: Date.now },
+  },
+],
+
 });
 
 export const UserWallet = mongoose.model("UserWallet", userWallet, "userwallets");
