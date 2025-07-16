@@ -94,8 +94,24 @@ const createImageAd = async (req, res) => {
 
   const imageFile = req.files?.imageAd?.[0];
   const audioFile = req.files?.audioAd?.[0];
-  if (!imageFile)
-    return res.status(400).json({ message: "Image file is required" });
+  // if (!imageFile)
+  //   return res.status(400).json({ message: "Image file is required" });
+   let imageUrl = "";
+  if (imageFile) {
+    imageUrl = `/imgAdUploads/${imageFile.filename}`;
+  } else if (req.body.existingImageUrl) {
+    imageUrl =req.body.existingImageUrl;
+  } else {
+    return res.status(400).json({ message: "No image file or existing image URL provided." });
+  }
+
+  let audioUrl = null;
+  if (audioFile) {
+    audioUrl = `/imgAdUploads/${audioFile.filename}`;
+  } else if (req.body.existingAudioUrl) {
+    audioUrl = req.body.existingAudioUrl;
+  }
+
 
   const parsedAdPeriod = parseFloat(adPeriod);
   const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
@@ -207,8 +223,8 @@ const createImageAd = async (req, res) => {
     await userWallet.save();
 
   
-    const imageUrl = `/imgAdUploads/${imageFile.filename}`;
-    const audioUrl = audioFile ? `/imgAdUploads/${audioFile.filename}` : null;
+    // const imageUrl = `/imgAdUploads/${imageFile.filename}`;
+    // const audioUrl = audioFile ? `/imgAdUploads/${audioFile.filename}` : null;
 
     const imageAd = await ImageAd.create({
       title,
@@ -593,7 +609,18 @@ const createSurveyAd = async (req, res) => {
     userWallet.totalStars -= totalStarsToBeDeducted;
     await userWallet.save();
 
-    const imageUrl = req.file ? `/surveyAdUploads/${req.file.filename}` : "";
+    // const imageUrl = req.file ? `/surveyAdUploads/${req.file.filename}` : "";
+    let imageUrl = "";
+if (req.file) {
+  imageUrl = `/surveyAdUploads/${req.file.filename}`;
+} else if (req.body.existingImageUrl) {
+  imageUrl = req.body.existingImageUrl;
+} else {
+  return res.status(400).json({
+    message: "No image file or existing image URL provided.",
+  });
+}
+
 
     const parsedAdPeriod = parseFloat(adPeriod);
     const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
