@@ -1,190 +1,184 @@
-import React,{useState} from 'react'
+import React, { useState, useEffect } from 'react'
 import styles from "./coupon.module.css"
 import SuperSidebar from "../../../../components/SuperAdminSideBar/SuperSidebar";
+import axios from 'axios';
+import baseUrl from '../../../../baseurl';
+import { Pagination } from 'antd';
 
 function CouponStar() {
-     const [showModal, setShowModal] = useState(false);
-      const [couponAmount, setCouponAmount] = useState("");
-    
-      const handleConfirm = () => {
-        console.log("Coupon generated for amount:", couponAmount);
-        setShowModal(false);
-        setCouponAmount("");
-      };
-      const transactions = [
-        {
-          id: 1,
-          name: "Coupon Distribution",
-          couponsGenerated: 10,
-          starsDistributed: 200,
-          totalStars: 5000,
-          date: "2025-06-01",
-        },
-        {
-          id: 2,
-          name: "Coupon Distribution",
-          couponsGenerated: 10,
-          starsDistributed: 300,
-          totalStars: 4700,
-          date: "2025-06-02",
-        },
-        {
-          id: 3,
-          name: "Coupon Distribution",
-          couponsGenerated: 10,
-          starsDistributed: 150,
-          totalStars: 4400,
-          date: "2025-06-03",
-        },
-      ];
-    
+
+  const [data, setData] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    const couponstar = async () => {
+      try {
+        const response = await axios.get(`${baseUrl}/api/v1/super-admin/all-coupon-batch`, {
+          params: {
+            page: currentPage,
+            limit: pageSize,
+          }
+        });
+        setData(response.data.batches)
+        console.log(response)
+      } catch (error) {
+        console.log(error)
+      }
+
+    }
+    couponstar()
+  }, [currentPage, pageSize])
+
+  function formatDateTime(isoString) {
+    const date = new Date(isoString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`;
+  }
+
+  const totalstar = data.reduce((sum, item) => sum + (item.totalStarsSpent) || 0, 0)
+
+
   return (
     <div className={styles.UserAccount}>
-          <SuperSidebar />
-          <div className={styles.wrapper}>
-            <div className={styles.header}>
-              <h2>Coupons Account</h2>
-              <button className={styles.logBtn}>Log</button>
-            </div>
-    
-            <div className={styles.amountCard}>
-              <div>
-                <p>Total Amount</p>
-              </div>
-              <div>
-                <h1>5000
-                   <svg
-                        width="30"
-                        height="30"
-                        viewBox="0 0 24 24"
-                        fill="gold"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                      </svg>
-                      </h1>
-              </div>
-              <div className={styles.rightText}>
-                <p>Company account</p>
-                <span>+8% from yesterday</span>
-                <button onClick={() => setShowModal(true)}>Generate Coupons</button>
-              </div>
-            </div>
-    
-            <div className={styles.requestsHeader}>
-              <h3>User Distribution Details</h3>
-              <button className={styles.exportBtn}>Export</button>
-            </div>
-            <div className={styles.tablesection}>
-              <table style={{ borderCollapse: "separate", width: "100%" }}>
-                <thead>
-                  <tr>
-                    <td className={styles.tableCell}>Name</td>
-                    <td className={styles.tableCell}>Distributed To</td>
-                    <td className={styles.tableCell}>Stars Distributed</td>
-                    <td className={styles.tableCell}>Total Stars</td>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.map((txn) => (
-                    <tr key={txn.id}>
-                      <td className={styles.tableCell}>{txn.name}</td>
-                      <td className={styles.tableCell}>{txn.couponsGenerated}</td>
-                      <td className={styles.tableCell}>{txn.starsDistributed}<svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="gold"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                      </svg></td>
-                      <td className={styles.tableCell}>{txn.totalStars} <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="gold"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                      </svg></td>
-                    </tr>
-                  ))}
-    
-                  <tr style={{ background: "#693bb8" }}>
-                    <td
-                      colSpan="3"
-                      className={styles.tableCell}
-                      style={{
-                        fontWeight: "bold",
-                        color: "white",
-                        textAlign: "left",
-                      }}
-                    >
-                      Total Stars Distributed
-                    </td>
-                    <td
-                      className={styles.tableCell}
-                      style={{
-                        fontWeight: "bold",
-                        color: "white",
-                        display:"flex",
-                        alignItems:"center",
-                        justifyContent:"center"
-                      }}
-                    >
-                      {transactions.reduce(
-                        (total, txn) => total + txn.starsDistributed,
-                        0
-                      )}
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="gold"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                      </svg>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-    
-            {showModal && (
-              <div className={styles.modalOverlay}>
-                <div className={styles.modal}>
-                  <h3>Enter Star To Add Manually</h3>
-                  <input
-                    type="number"
-                    value={couponAmount}
-                    onChange={(e) => setCouponAmount(e.target.value)}
-                    className={styles.input}
-                  />
-                  <h3>Enter Star For Each Coupons</h3>
-                  <input
-                    type="number"
-                    value={couponAmount}
-                    onChange={(e) => setCouponAmount(e.target.value)}
-                    className={styles.input}
-                  />
-                  <div className={styles.modalActions}>
-                    <button
-                      className={styles.cancel}
-                      onClick={() => setShowModal(false)}
-                    >
-                      Cancel
-                    </button>
-                    <button className={styles.confirm} onClick={handleConfirm}>
-                      Confirm
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+      <SuperSidebar />
+      <div className={styles.wrapper}>
+        <div className={styles.header}>
+          <h2>Coupons Account</h2>
+          <button className={styles.logBtn}>Log</button>
+        </div>
+
+        <div className={styles.amountCard}>
+          <div>
+            <p>Total Amount</p>
+          </div>
+          <div style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "4px",
+            textAlign: "center"
+          }}
+          >
+
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="gold"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ verticalAlign: "middle" }}
+            >
+              <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
+            </svg>
+            <h2 style={{ margin: 0 }}>
+              {totalstar}
+            </h2>
+          </div>
+          <div className={styles.rightText}>
+            <p>Coupon account</p>
           </div>
         </div>
+
+        <div className={styles.requestsHeader}>
+          <h3>Coupons Details</h3>
+          <button className={styles.exportBtn}>Export</button>
+        </div>
+        <div className={styles.tablesection}>
+          <table style={{ borderCollapse: "separate", width: "100%" }}>
+            <thead>
+              <tr>
+                <td className={styles.tableCell}>Batches</td>
+                <td className={styles.tableCell}>Coupon Count</td>
+                <td className={styles.tableCell}>Coupon Generated</td>
+                <td className={styles.tableCell}>Expiry Date</td>
+                <td className={styles.tableCell}>Total Stars</td>
+              </tr>
+            </thead>
+            <tbody>
+              {data.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((value, index) => (
+                <tr key={index}>
+                  <td className={styles.tableCell}>Batch {index + 1}</td>
+                  <td className={styles.tableCell}>{value.coupons?.length}</td>
+                  <td className={styles.tableCell}>{formatDateTime(value.generationDate)}</td>
+                  <td className={styles.tableCell}>{formatDateTime(value.expiryDate)}</td>
+                  <td className={styles.tableCell}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center"
+                    }}>
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="gold"
+                      xmlns="http://www.w3.org/2000/svg"
+                      style={{
+                        verticalAlign: "middle"
+                      }}
+                    >
+                      <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
+                    </svg>{value.totalStarsSpent}</td>
+                </tr>
+              ))}
+
+              <tr style={{ background: "#693bb8" }}>
+                <td
+                  colSpan="4"
+                  className={styles.tableCell}
+                  style={{
+                    fontWeight: "bold",
+                    color: "white",
+                    textAlign: "left",
+                  }}
+                >
+                  Total Stars Distributed
+                </td>
+                <td
+                  className={styles.tableCell}
+                  style={{
+                    fontWeight: "bold",
+                    color: "white",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                >
+
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="gold"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
+                  </svg>
+                  {totalstar}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <Pagination
+          current={currentPage}
+          pageSize={pageSize}
+          showSizeChanger
+          pageSizeOptions={['10', '20', '50', '100']}
+          onChange={(page, size) => {
+            setCurrentPage(page);
+            setPageSize(size);
+          }}
+          style={{ marginTop: "20px", textAlign: "right", display: "flex", justifyContent: "end", alignItems: "end" }}
+        />
+
+
+      </div>
+    </div>
   )
 }
 

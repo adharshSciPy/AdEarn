@@ -61,6 +61,8 @@
   z-index: 1000;
   border-radius: 6px;
   padding: 10px;
+  overflow-y: scroll;
+  height: 300px;
 }
 
 .notificationItem {

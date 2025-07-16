@@ -192,11 +192,9 @@ function Adsmanager() {
             <div className={styles.tableContainer}>
               <div className={styles.tableMain}>
                 <div className={styles.buttonsContainer}>
-                  <div className={styles.tickContainer}>
-                    <input type="checkbox" className={styles.tick} />
-                  </div>
+                  
                   <div className={styles.createButtonContainer}>
-                    <button style={{ display: "flex", alignItems: "center" }}>
+                    <button style={{ display: "flex", alignItems: "center" }} onClick={() => setShowPopup(true)}>
                       <span style={{ fontSize: "20px", paddingRight: "10px" }}>
                         +
                       </span>
@@ -223,20 +221,20 @@ function Adsmanager() {
                       Delete
                     </button>
                   </div>
-                  <div className={styles.reportButtonContainer}>
-                    <button
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <span style={{ height: "20px", width: "35px" }}>
-                        <img src={report} alt="" className={styles.img} />
-                      </span>
-                      Reports
-                    </button>
-                  </div>
+                    {/* <div className={styles.reportButtonContainer}>
+                      <button
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <span style={{ height: "20px", width: "35px" }}>
+                          <img src={report} alt="" className={styles.img} />
+                        </span>
+                        Reports
+                      </button>
+                    </div> */}
                 </div>
                 <div style={{ overflowX: "auto" }}>
                   <table

@@ -1,33 +1,51 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "../../SubscriptionAccount/Subscription.module.css";
 import SuperSidebar from "../../../../components/SuperAdminSideBar/SuperSidebar";
+import axios from "axios";
+import baseUrl from "../../../../baseurl";
+import { Pagination } from "antd";
 
 function SubscriptionStar() {
-  const [showModal, setShowModal] = useState(false);
-  const [couponAmount, setCouponAmount] = useState("");
-  const transactions = [
-    {
-      id: 1,
-      name: "user 1",
-      subscritionStar: 10,
-      status: "ongoing",
-      date: "2025-06-01",
-    },
-    {
-      id: 2,
-      name: "user 2",
-      subscritionStar: 10,
-      status: "end",
-      date: "2025-06-02",
-    },
-    {
-      id: 3,
-      name: "User 3",
-      subscritionStar: 10,
-      status: "ongoing",
-      date: "2025-06-03",
-    },
-  ];
+
+  const [data, setData] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+
+  useEffect(() => {
+    const subscription = async () => {
+      try {
+        const response = await axios.get(`${baseUrl}/api/v1/super-admin/subscription-log/details`, {
+          params: {
+            page: currentPage,
+            limit: pageSize,
+          }
+        });
+        console.log(response)
+        setData(response.data.subscriptionLogs)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    subscription()
+  }, [currentPage, pageSize])
+
+  function capitalize(string) {
+    if (!string) return '';
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+  }
+
+  function formatDateTime(isoString) {
+    const date = new Date(isoString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`;
+  }
+
+  const starCount = data.reduce((sum, item) => sum + (item.starsUsed) || 0, 0)
+
   return (
     <div className={styles.UserAccount}>
       <SuperSidebar />
@@ -39,26 +57,29 @@ function SubscriptionStar() {
 
         <div className={styles.amountCard}>
           <div>
-            <p>Total Amount</p>
+            <p>Total Star</p>
           </div>
-          <div>
-            <h1>
-              5000{" "}
-              <svg
-                width="30"
-                height="30"
-                viewBox="0 0 24 24"
-                fill="gold"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-              </svg>
-            </h1>
+          <div style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "4px",
+            textAlign: "center"
+          }}>
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="gold"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ verticalAlign: "middle" }}
+            >
+              <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
+            </svg>
+            <h2 style={{ margin: 0 }}>{starCount}</h2>
           </div>
           <div className={styles.rightText}>
-            <p>Company account</p>
-            <span>+8% from yesterday</span>
-            <button onClick={() => setShowModal(true)}>Payout</button>
+            <p>Subscription account</p>
           </div>
         </div>
 
@@ -71,33 +92,41 @@ function SubscriptionStar() {
             <thead>
               <tr>
                 <td className={styles.tableCell}>Name</td>
-                <td className={styles.tableCell}>Subscription Star</td>
                 <td className={styles.tableCell}>Status</td>
+                <td className={styles.tableCell}>End Date</td>
+                <td className={styles.tableCell}>Subscription Star</td>
               </tr>
             </thead>
             <tbody>
-              {transactions.map((txn) => (
-                <tr key={txn.id}>
-                  <td className={styles.tableCell}>{txn.name}</td>
-                  <td className={styles.tableCell}>{txn.status}</td>
-                  <td className={styles.tableCell}>
-                    {txn.subscritionStar}{" "}
+              {data.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((value, index) => (
+                <tr key={index}>
+                  <td className={styles.tableCell}>{value.userName}</td>
+                  <td className={styles.tableCell}>{capitalize(value.subscriptionStatus)}</td>
+                  <td className={styles.tableCell}>{formatDateTime(value.subscriptionEndDate)}</td>
+                  <td className={styles.tableCell}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}>
                     <svg
                       width="20"
                       height="20"
                       viewBox="0 0 24 24"
                       fill="gold"
                       xmlns="http://www.w3.org/2000/svg"
+                      style={{ verticalAlign: "middle" }}
                     >
                       <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
                     </svg>
+                    {" "}{value.starsUsed}
                   </td>
                 </tr>
               ))}
 
               <tr style={{ background: "#693bb8" }}>
                 <td
-                  colSpan="2"
+                  colSpan="3"
                   className={styles.tableCell}
                   style={{
                     fontWeight: "bold",
@@ -117,10 +146,6 @@ function SubscriptionStar() {
                     justifyContent: "center",
                   }}
                 >
-                  {transactions.reduce(
-                    (total, txn) => total + txn.subscritionStar,
-                    0
-                  )}
                   <svg
                     width="20"
                     height="20"
@@ -130,34 +155,24 @@ function SubscriptionStar() {
                   >
                     <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
                   </svg>
+                  {" "}{starCount}
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        {showModal && (
-          <div className={styles.modalOverlay}>
-            <div className={styles.modal}>
-              <h3>Enter Stars</h3>
-              <input
-                type="number"
-                value={couponAmount}
-                onChange={(e) => setCouponAmount(e.target.value)}
-                className={styles.input}
-              />
+        <Pagination
+          current={currentPage}
+          pageSize={pageSize}
+          showSizeChanger
+          pageSizeOptions={['10', '20', '50', '100']}
+          onChange={(page, size) => {
+            setCurrentPage(page);
+            setPageSize(size);
+          }}
+          style={{ marginTop: "20px", textAlign: "right", display: "flex", justifyContent: "end", alignItems: "end" }}
+        />
 
-              <div className={styles.modalActions}>
-                <button
-                  className={styles.cancel}
-                  onClick={() => setShowModal(false)}
-                >
-                  Cancel
-                </button>
-                <button className={styles.confirm}>Confirm</button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
