@@ -52,6 +52,11 @@ const userWallet = new Schema({
       type: Number,
       default: 0,
   },
+  welcomeBonusStatus: {
+  type: String,
+  enum: ["granted", "skipped", null],
+  default: null
+},
   superadminGiven: [
   {
     starCount: Number,
@@ -59,6 +64,16 @@ const userWallet = new Schema({
     givenAt: Date,
   }
 ],
+refundedStars: [
+  {
+    adId: { type: mongoose.Schema.Types.ObjectId, ref: "Ad" },
+    refundedStars: Number,
+    totalViews: Number,
+    viewsReached: Number,
+    refundedAt: { type: Date, default: Date.now },
+  },
+],
+
 });
 
 export const UserWallet = mongoose.model("UserWallet", userWallet, "userwallets");
