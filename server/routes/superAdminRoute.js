@@ -58,7 +58,18 @@ superAdminRouter.route("/superadmin-wallet").get(getSuperAdminWallet);
 superAdminRouter.route("/welcome-bonus-earnings").get(getSuperAdminWelcomeBonusEarnings);
 // superAdminRouter.route("/set-welcome-bonus").post(setWelcomeBonusAmount);
 superAdminRouter.route("/topup-welcome-stars").post(topUpWelcomeBonusStars);
-superAdminRouter.route("/create-contest").post(wrapMulter(contestPrizeUpload.array("prizeImages", 5)), createContest);
+superAdminRouter.route("/create-contest").post(
+  wrapMulter(
+    contestPrizeUpload.fields([
+      { name: "prizeImage_1", maxCount: 1 },
+      { name: "prizeImage_2", maxCount: 1 },
+      { name: "prizeImage_3", maxCount: 1 },
+      { name: "prizeImage_4", maxCount: 1 },
+      { name: "prizeImage_5", maxCount: 1 }
+    ])
+  ),
+  createContest
+);
 superAdminRouter.route("/topup-company-stars").post(topUpCompanyRewardStars);
 superAdminRouter.route("/patch-wallet").patch(patchSuperAdminWallet);
 superAdminRouter.route("/delete-user").delete(deleteUser);

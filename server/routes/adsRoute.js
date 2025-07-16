@@ -49,7 +49,6 @@ adsRouter.patch("/edit-video-ad/:adId", wrapMulter(adVideoUpload), editVideoAd);
 adsRouter.post("/image-ad/draft/:id", wrapMulter(adMediaUpload), createImageAdDraft);
 adsRouter.post("/video-ad/draft/:id", wrapMulter(adVideoUpload), createVideoAdDraft);
 adsRouter.post("/survey-ad/draft/:id", wrapMulter(surveyAdUpload), createSurveyAdDraft);
-
 adsRouter.post("/payment-verification/:adId", confirmAdPayment);
 
 
