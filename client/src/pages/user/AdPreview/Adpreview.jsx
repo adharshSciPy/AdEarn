@@ -76,7 +76,6 @@ function AdPreview() {
 
   // Close modal handler
   const handleModalClose = () => {
-    navigate(`/userhome/${id}`);
     setShowScratchModal(false);
     setScratchCompleted(false);
     setVideoLogicApplied(false);
@@ -277,7 +276,8 @@ function AdPreview() {
                     </div>
                     <div>
                       {unverifiedAd?.imageAd?.audioUrl ? (
-                        <audio controls>
+                        <audio controls autoPlay>
+                          
                           <source
                             src={`${baseUrl}${unverifiedAd.imageAd.audioUrl}`}
                           />

@@ -94,8 +94,24 @@ const createImageAd = async (req, res) => {
 
   const imageFile = req.files?.imageAd?.[0];
   const audioFile = req.files?.audioAd?.[0];
-  if (!imageFile)
-    return res.status(400).json({ message: "Image file is required" });
+  // if (!imageFile)
+  //   return res.status(400).json({ message: "Image file is required" });
+   let imageUrl = "";
+  if (imageFile) {
+    imageUrl = `/imgAdUploads/${imageFile.filename}`;
+  } else if (req.body.existingImageUrl) {
+    imageUrl =req.body.existingImageUrl;
+  } else {
+    return res.status(400).json({ message: "No image file or existing image URL provided." });
+  }
+
+  let audioUrl = null;
+  if (audioFile) {
+    audioUrl = `/imgAdUploads/${audioFile.filename}`;
+  } else if (req.body.existingAudioUrl) {
+    audioUrl = req.body.existingAudioUrl;
+  }
+
 
   const parsedAdPeriod = parseFloat(adPeriod);
   const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
@@ -207,8 +223,8 @@ const createImageAd = async (req, res) => {
     await userWallet.save();
 
   
-    const imageUrl = `/imgAdUploads/${imageFile.filename}`;
-    const audioUrl = audioFile ? `/imgAdUploads/${audioFile.filename}` : null;
+    // const imageUrl = `/imgAdUploads/${imageFile.filename}`;
+    // const audioUrl = audioFile ? `/imgAdUploads/${audioFile.filename}` : null;
 
     const imageAd = await ImageAd.create({
       title,
@@ -282,13 +298,23 @@ const createVideoAd = async (req, res) => {
     locations,
     states,
     districts,
+
   } = req.body;
 
   const { id } = req.params;
   if (!id) return res.status(400).json({ message: "User ID is required" });
-  if (!req.file) return res.status(400).json({ message: "Video file is required" });
   if (!title || !description || !userViewsNeeded)
     return res.status(400).json({ message: "Missing required fields" });
+
+  
+  let videoUrl = "";
+  if (req.file) {
+    videoUrl = `/videoAdUploads/${req.file.filename}`;
+  } else if (req.body.existingVideoUrl) {
+    videoUrl = req.body.existingVideoUrl;
+  } else {
+    return res.status(400).json({ message: "No video file or existing video URL provided." });
+  }
 
   const parsedAdPeriod = parseFloat(adPeriod);
   const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
@@ -325,7 +351,11 @@ const createVideoAd = async (req, res) => {
     targetDistricts = typeof districts === "string" ? JSON.parse(districts) : districts;
     if (!Array.isArray(targetDistricts)) targetDistricts = [];
 
-    if (targetRegions.length === 0 && targetStates.length === 0 && targetDistricts.length === 0) {
+    if (
+      targetRegions.length === 0 &&
+      targetStates.length === 0 &&
+      targetDistricts.length === 0
+    ) {
       return res.status(400).json({
         message: "At least one target location (geo, state, or district) is required",
       });
@@ -381,16 +411,14 @@ const createVideoAd = async (req, res) => {
       ...Array(nullStarsCount).fill(0),
     ];
 
-    // Deduct stars from user
+    // Deduct stars
     userWallet.totalStars -= totalStarsToBeDeducted;
     await userWallet.save();
-
-    const videoUrl = `/videoAdUploads/${req.file.filename}`;
 
     const videoAd = await VideoAd.create({
       title,
       description,
-      videoUrl,
+      videoUrl, // ✅ use the correct video URL
       adPeriod: adRepetition ? parsedAdPeriod : 0,
       adRepetition,
       createdBy: user._id,
@@ -403,29 +431,13 @@ const createVideoAd = async (req, res) => {
       targetDistricts,
       paymentMode: "star",
       isPaymentCompleted: true,
-      userShare: totalStarsToBeDeducted, // includes extra
+      userShare: totalStarsToBeDeducted,
     });
 
     const ad = await Ad.create({ videoAdRef: videoAd._id });
 
-    // Add ad to user
     user.ads.push(ad._id);
     await user.save();
-
-//  if (extraDeductedStars > 0) {
-//   const superWallet = await SuperAdminWallet.findOne();
-//   if (superWallet) {
-//     superWallet.totalStars += extraDeductedStars;
-//     superWallet.adExtraDeductions.push({
-//       adId: ad._id,
-//       adType: "Video Ad",
-//       userId: user._id,
-//       stars: extraDeductedStars,
-//       status: "verified",
-//     });
-//     await superWallet.save();
-//   }
-// }
 
     return res.status(200).json({
       message: "Video Ad created successfully and stars deducted",
@@ -444,6 +456,7 @@ const createVideoAd = async (req, res) => {
     });
   }
 };
+
 
 
 
@@ -596,7 +609,18 @@ const createSurveyAd = async (req, res) => {
     userWallet.totalStars -= totalStarsToBeDeducted;
     await userWallet.save();
 
-    const imageUrl = req.file ? `/surveyAdUploads/${req.file.filename}` : "";
+    // const imageUrl = req.file ? `/surveyAdUploads/${req.file.filename}` : "";
+    let imageUrl = "";
+if (req.file) {
+  imageUrl = `/surveyAdUploads/${req.file.filename}`;
+} else if (req.body.existingImageUrl) {
+  imageUrl = req.body.existingImageUrl;
+} else {
+  return res.status(400).json({
+    message: "No image file or existing image URL provided.",
+  });
+}
+
 
     const parsedAdPeriod = parseFloat(adPeriod);
     const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;

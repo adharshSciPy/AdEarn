@@ -1,5 +1,5 @@
 import { React, useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import styles from "./adsmanager.module.css";
 import edit from "../../../assets/edit.png";
 import Duplicate from "../../../assets/copy.png";
@@ -13,11 +13,17 @@ import { useSelector } from "react-redux";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { EyeOutlined } from "@ant-design/icons";
+import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
+
 
 function Adsmanager() {
+  const navigate = useNavigate();
   const [toggleStates, setToggleStates] = useState({});
   const [userads, setUserads] = useState([]);
   const userId = useSelector((state) => state.user.id);
+  const [selectedAdId, setSelectedAdId] = useState(null);
+  const [showPopup, setShowPopup] = useState(false);
+
   const handleToggle = async (adId) => {
     try {
       console.log("Toggling ad ID:", adId);
@@ -121,10 +127,36 @@ function Adsmanager() {
 
     doc.save(`${ref.title || "ad"}_report.pdf`);
   };
+  const handleDuplicate = () => {
+    const selectedAd = userads.find((ad) => ad._id === selectedAdId);
+
+    if (!selectedAd) {
+      alert("Please select an ad to duplicate.");
+      return;
+    }
+
+    if (selectedAd.imgAdRef) {
+      navigate("/adduplicate", {
+        state: { duplicatedAd: selectedAd },
+      });
+    } else if (selectedAd.videoAdRef) {
+      navigate("/videoduplicate", {
+        state: { duplicatedAd: selectedAd },
+      });
+    } else if (selectedAd.surveyAdRef) {
+      navigate("/surveyedit", {
+        state: { duplicatedAd: selectedAd },
+      });
+    } else {
+      // fallback route, maybe show alert or navigate to default create ad page
+      alert("Selected ad type not supported for duplication.");
+    }
+  };
 
   return (
     <div>
       <Navbar />
+      <CreateAdPopup isOpen={showPopup} onClose={() => setShowPopup(false)} />
       <div className={styles.mainContainer}>
         <div className={styles.homeMainContainer}>
           {/* <Sidebar/> */}
@@ -143,7 +175,9 @@ function Adsmanager() {
                       </p>
                     </div>
                     <div className={styles.firstMainbutton}>
-                      <button>Place Ads</button>
+                      <button onClick={() => setShowPopup(true)} style={{overflow:"hidden"}}>
+                        Place Ads
+                      </button>
                     </div>
                   </div>
 
@@ -170,7 +204,10 @@ function Adsmanager() {
                     </button>
                   </div>
                   <div className={styles.duplicateButtonContainer}>
-                    <button style={{ display: "flex", alignItems: "center" }}>
+                    <button
+                      onClick={handleDuplicate}
+                      style={{ display: "flex", alignItems: "center" }}
+                    >
                       <span style={{ height: "20px", width: "35px" }}>
                         <img src={Duplicate} alt="" className={styles.img} />
                       </span>
@@ -253,7 +290,16 @@ function Adsmanager() {
                         return (
                           <tr key={row._id}>
                             <td>
-                              <input type="checkbox" className={styles.tick} />
+                              <input
+                                type="checkbox"
+                                className={styles.tick}
+                                checked={selectedAdId === row._id}
+                                onChange={() =>
+                                  setSelectedAdId(
+                                    selectedAdId === row._id ? null : row._id
+                                  )
+                                }
+                              />
                             </td>
                             <td className={styles.tdBorder}>
                               <div
