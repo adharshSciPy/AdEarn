@@ -142,7 +142,7 @@ function AdminStar() {
                 </div>
 
                 <div className={styles.requestsHeader}>
-                    <h3>User Distribution Details</h3>
+                    <h3>Admin Star Details</h3>
                     <button className={styles.exportBtn}>Export</button>
                 </div>
 

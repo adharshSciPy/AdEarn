@@ -10,6 +10,8 @@ import socket from "../../../components/Socket/socket.js";
 import WelcomeBonusModal from "../WelcomeBonusModal/WelcomeBonusModal.jsx";
 import Driver from "driver.js";
 import "driver.js/dist/driver.min.css";
+import Lottie from "lottie-react";
+import noAdsAnimation from "../../../assets/loading.json"
 
 function UserHome() {
   const navigate = useNavigate();
@@ -222,7 +224,7 @@ function UserHome() {
   }, [id]);
 
   return (
-    <div>
+   <div>
       <Navbar />
       <CreateAdPopup isOpen={showPopup} onClose={() => setShowPopup(false)} />
       <div className={styles.mainContainer}>
@@ -258,46 +260,51 @@ function UserHome() {
                 </div>
               </div>
             </div>
+
             {/* IMAGE ADS */}
-            <div className={styles.adContainerMain} id="image-ads-section">
-              <div className={styles.imageAdHead}>
-                <h2>Image Ads</h2>
-              </div>
-              <div className={styles.adcontainerSub}>
-                {imageAdData.slice(0, 4).map((item, index) => (
-                  <div
-                    className={styles.adCard}
-                    key={index}
-                    onClick={() => viewAd(item._id)}
-                  >
-                    <div className={styles.adHeading}>
-                      <p>{item?.imageAd?.title || "nil"}</p>
-                    </div>
-                    <div className={styles.adContentDes}>
-                      <div className={styles.adCardbottom}>
-                        <div className={styles.adEarnLogoCont}>
-                          <img src={logo} alt="" />
+            {imageAdData.length > 0 && (
+              <div className={styles.adContainerMain} id="image-ads-section">
+                <div className={styles.imageAdHead}>
+                  <h2>Image Ads</h2>
+                </div>
+                <div className={styles.adcontainerSub}>
+                  {imageAdData.slice(0, 4).map((item, index) => (
+                    <div
+                      className={styles.adCard}
+                      key={index}
+                      onClick={() => viewAd(item._id)}
+                    >
+                      <div className={styles.adHeading}>
+                        <p>{item?.imageAd?.title || "nil"}</p>
+                      </div>
+                      <div className={styles.adContentDes}>
+                        <div className={styles.adCardbottom}>
+                          <div className={styles.adEarnLogoCont}>
+                            <img src={logo} alt="logo" />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className={styles.adCardButton}>
-                      <div className={styles.watchAd}>
-                        <Link className={styles.watchAdLink}>Watch Ad</Link>
+                      <div className={styles.adCardButton}>
+                        <div className={styles.watchAd}>
+                          <Link className={styles.watchAdLink}>Watch Ad</Link>
+                        </div>
+                        <div className={styles.adStar}>
+                          5<span style={{ color: "red" }}>⭐</span>
+                        </div>
                       </div>
-                      <div className={styles.adStar}>
-                        5<span style={{ color: "red" }}>⭐</span>
-                      </div>
+                      <div className={styles.adCardBackground}></div>
                     </div>
-                    <div className={styles.adCardBackground}></div>
+                  ))}
+                  <div className={styles.seeAllContainer}>
+                    <button onClick={() => navigate("/ads/image")}>
+                      See All
+                    </button>
                   </div>
-                ))}
-                <div className={styles.seeAllContainer}>
-                  <button onClick={() => navigate("/ads/image")}>
-                    See All
-                  </button>
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* VIDEO ADS */}
             {videAdData.length > 0 && (
               <div className={styles.adContainerMain} id="video-ads-section">
                 <div className={styles.imageAdHead}>
@@ -316,7 +323,7 @@ function UserHome() {
                       <div className={styles.adContentDes}>
                         <div className={styles.adCardbottom}>
                           <div className={styles.adEarnLogoCont}>
-                            <img src={logo} alt="" />
+                            <img src={logo} alt="logo" />
                           </div>
                         </div>
                       </div>
@@ -339,6 +346,8 @@ function UserHome() {
                 </div>
               </div>
             )}
+
+            {/* SURVEY ADS */}
             {surveyData.length > 0 && (
               <div className={styles.adContainerMain} id="survey-ads-section">
                 <div className={styles.imageAdHead}>
@@ -357,7 +366,7 @@ function UserHome() {
                       <div className={styles.adContentDes}>
                         <div className={styles.adCardbottom}>
                           <div className={styles.adEarnLogoCont}>
-                            <img src={logo} alt="" />
+                            <img src={logo} alt="logo" />
                           </div>
                         </div>
                       </div>
@@ -381,10 +390,25 @@ function UserHome() {
               </div>
             )}
 
-            {/* END */}
+            {/* NO ADS */}
+            {imageAdData.length === 0 &&
+              videAdData.length === 0 &&
+              surveyData.length === 0 && (
+                <div className={styles.noAdsContainer}>
+                  <Lottie
+                    animationData={noAdsAnimation}
+                    loop
+                    autoplay
+                    style={{ width: 250, height: 250 }}
+                  />
+                  <h3>No Ads For You Right Now</h3>
+                  <p>Check back later to earn by watching ads!</p>
+                </div>
+              )}
           </div>
         </div>
       </div>
+
       {showWelcomeModal && (
         <WelcomeBonusModal
           sponsorData={bonusData}
