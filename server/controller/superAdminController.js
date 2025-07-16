@@ -1369,9 +1369,6 @@ const getAdminJobStats = async (req, res) => {
 
 const createContest = async (req, res) => {
   try {
-    console.log("BODY:", req.body);
-    console.log("FILES:", req.files);
-
     const {
       contestName,
       contestNumber,
@@ -1382,20 +1379,8 @@ const createContest = async (req, res) => {
       rewardStructure
     } = req.body;
 
-    if (
-      !contestName ||
-      !contestNumber ||
-      !startDate ||
-      !entryStars ||
-      !maxParticipants
-    ) {
+    if (!contestName || !contestNumber || !startDate || !entryStars || !maxParticipants) {
       return res.status(400).json({ message: "All required fields must be filled" });
-    }
-
-    // ✅ Handle prize images
-    let prizeImages = [];
-    if (req.files && req.files.length > 0) {
-      prizeImages = req.files.map(file => `/contestPrizeImages/${file.filename}`);
     }
 
     // ✅ Parse reward structure
@@ -1405,46 +1390,60 @@ const createContest = async (req, res) => {
     if (rewardStructure) {
       try {
         parsedRewardStructure = JSON.parse(rewardStructure);
+
         if (!Array.isArray(parsedRewardStructure) || parsedRewardStructure.length === 0) {
           return res.status(400).json({ message: "Invalid reward structure format" });
         }
 
-        // Sum total stars
-        totalRewardStars = parsedRewardStructure.reduce(
-          (sum, item) => sum + Number(item.stars || 0), 0
-        );
+        for (const reward of parsedRewardStructure) {
+          if (!reward.position || typeof reward.stars !== "number") {
+            return res.status(400).json({ message: "Each reward must include position and stars" });
+          }
+          totalRewardStars += reward.stars;
+        }
       } catch (err) {
         return res.status(400).json({ message: "Failed to parse reward structure" });
       }
     }
 
-    // ✅ Validate that at least reward or prize image exists
-    if (parsedRewardStructure.length === 0 && prizeImages.length === 0) {
-      return res.status(400).json({
-        message: "Provide at least reward structure or prize images"
-      });
+    // ✅ Map uploaded images by field name (e.g., prizeImage_1)
+    const imageMap = {};
+    if (req.files) {
+      for (const key in req.files) {
+        if (req.files[key][0]) {
+          const match = key.match(/prizeImage_(\d+)/);
+          if (match) {
+            const pos = parseInt(match[1]);
+            imageMap[pos] = `/contestPrizeImages/${req.files[key][0].filename}`;
+          }
+        }
+      }
     }
 
-    // ✅ Check for contest number uniqueness
+    // ✅ Merge images into reward structure
+    parsedRewardStructure = parsedRewardStructure.map((reward) => ({
+      ...reward,
+      image: imageMap[reward.position] || ""
+    }));
+
+    // ✅ Check uniqueness of contest number
     const existing = await ContestEntry.findOne({ contestNumber });
     if (existing) {
       return res.status(400).json({ message: "Contest number already exists" });
     }
 
-    // ✅ Deduct from SuperAdmin wallet if using stars
-    if (parsedRewardStructure.length > 0) {
-      const adminWallet = await SuperAdminWallet.findOne();
-      if (!adminWallet || adminWallet.totalStars < totalRewardStars) {
-        return res.status(400).json({ message: "Not enough stars in SuperAdmin wallet" });
-      }
-
-      adminWallet.totalStars -= totalRewardStars;
-      adminWallet.contestEntryWallet.reservedForContests =
-        (adminWallet.contestEntryWallet.reservedForContests || 0) + totalRewardStars;
-      await adminWallet.save();
+    // ✅ Deduct stars from SuperAdmin wallet
+    const adminWallet = await SuperAdminWallet.findOne();
+    if (!adminWallet || adminWallet.totalStars < totalRewardStars) {
+      return res.status(400).json({ message: "Not enough stars in SuperAdmin wallet" });
     }
 
-    // ✅ Create contest entry
+    adminWallet.totalStars -= totalRewardStars;
+    adminWallet.contestEntryWallet.reservedForContests =
+      (adminWallet.contestEntryWallet.reservedForContests || 0) + totalRewardStars;
+    await adminWallet.save();
+
+    // ✅ Save the contest
     const contest = new ContestEntry({
       contestName,
       contestNumber,
@@ -1453,12 +1452,11 @@ const createContest = async (req, res) => {
       maxParticipants,
       currentParticipants: 0,
       totalEntries: 0,
-      prizeImages,                     // ✅ used later for automatic prize assignment
       rewardStructure: parsedRewardStructure,
       contestEntryWallet: totalRewardStars,
       winnerSelectionType: winnerSelectionType || "Manual",
       status: "Active",
-      manuallyStopped: false,
+      manuallyStopped: false
     });
 
     await contest.save();
@@ -1474,8 +1472,6 @@ const createContest = async (req, res) => {
   }
 };
 
-
-
 const selectAutomaticWinnersInternal = async (contestId) => {
   const contest = await ContestEntry.findById(contestId);
   if (!contest || contest.status === "Ended") return;
@@ -1490,7 +1486,6 @@ const selectAutomaticWinnersInternal = async (contestId) => {
   const rewardStructure = contest.rewardStructure || [];
 
   if (contestEntries.length < rewardStructure.length) {
-    console.log("Not enough participants to choose winners");
     contest.status = "Ended";
     contest.result = "Not Enough Participants";
     await contest.save();
@@ -1506,8 +1501,8 @@ const selectAutomaticWinnersInternal = async (contestId) => {
       userId: new mongoose.Types.ObjectId(entry.userId),
       position: index + 1,
       prize: {
-        stars: rewardTier ? rewardTier.stars : 0,
-        image: contest.prizeImages?.[index] || ""
+        stars: rewardTier?.stars || 0,
+        image: rewardTier?.image || ""
       }
     };
   });
@@ -1539,7 +1534,6 @@ const selectAutomaticWinnersInternal = async (contestId) => {
   contest.contestEntryWallet -= totalReward;
   await contest.save();
 };
-
 
 const stopContestManually = async (req, res) => {
   const { id } = req.params;
