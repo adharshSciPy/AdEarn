@@ -711,6 +711,8 @@ function AdEdit() {
 
       if (response.status === 200 || response.status === 201) {
         // Clear form and show success
+        console.log("sdaccsac",response);
+        
         setForm({
           adName: "",
           adCategory: "",
