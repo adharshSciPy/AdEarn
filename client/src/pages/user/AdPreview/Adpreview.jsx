@@ -4,10 +4,11 @@ import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { Modal, Button } from "antd";
 import axios from "axios";
-import {  useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import baseUrl from "../../../baseurl";
 import ScratchCom from "./ScratchComponent/ScratchCom";
 import Navbar from "../NavBar/Navbar";
+import { HeartOutlined, HeartFilled } from "@ant-design/icons";
 
 function AdPreview() {
   const { id, adId } = useParams();
@@ -15,6 +16,8 @@ function AdPreview() {
   const [reward, setReward] = useState({});
   const [showScratchModal, setShowScratchModal] = useState(false);
   const [scratchCompleted, setScratchCompleted] = useState(false);
+  let initiallyLiked = false;
+  const [liked, setLiked] = useState(initiallyLiked);
   const navigate = useNavigate();
   // For video timer management
   const videoTimerRef = useRef(null);
@@ -122,17 +125,43 @@ function AdPreview() {
       }
     };
   }, []);
+  const handleLikeClick = async () => {
+    try {
+      setLiked((prev) => !prev);
+      
+    } catch (error) {
+      console.error("Failed to like the ad", error);
+      setLiked((prev) => !prev); // revert UI on error
+    }
+  };
 
   return (
     <div className={styles.verifyadsmain}>
-      <Navbar/>
+      <Navbar />
       <div className={styles.verifyadscontainer}>
         <div className={styles.adscontainer}>
           <div
             style={{ width: "100%", height: "maxContent" }}
             className={styles.adsimage}
           >
-            <h1 style={{ padding: "20px" }}>Ads Preview</h1>
+            <div
+              className=""
+              style={{
+                display: "flex",
+                justifyContent: "space-between ",
+                alignItems: "center",
+                paddingRight: "40px",
+              }}
+            >
+              <h1 style={{ padding: "20px" }}>Ads Preview</h1>
+              <div className={styles.likeWrapper} onClick={handleLikeClick}>
+                {liked ? (
+                  <HeartFilled className={styles.likedIcon} />
+                ) : (
+                  <HeartOutlined className={styles.unlikedIcon} />
+                )}
+              </div>
+            </div>
             <div className={styles.adspreview}>
               <div className={styles.previewone}>
                 {unverifiedAd?.videoAd?.videoUrl ? (
@@ -277,7 +306,6 @@ function AdPreview() {
                     <div>
                       {unverifiedAd?.imageAd?.audioUrl ? (
                         <audio controls autoPlay>
-                          
                           <source
                             src={`${baseUrl}${unverifiedAd.imageAd.audioUrl}`}
                           />

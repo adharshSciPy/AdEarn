@@ -6,8 +6,19 @@ import { type } from "os";
 dotenv.config();
 
 const userRole = process.env.USER_ROLE;
+const savedAdSchema = new mongoose.Schema({
+  adId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Ad",
+    required: true,
+  },
+  savedAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
 
-
+//Main schema
 const userSchema = new Schema(
   {
     role: {
@@ -138,6 +149,8 @@ const userSchema = new Schema(
       type:Boolean,
       default:false
     },
+    savedAds: [savedAdSchema],
+
 
 
   },
