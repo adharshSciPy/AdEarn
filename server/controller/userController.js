@@ -1344,6 +1344,105 @@ const getUserContestEntries = async (req, res) => {
     return res.status(500).json({ message: "Something went wrong", error: err.message });
   }
 };
+//to save viewed ads
+const saveAdForLater = async (req, res) => {
+  const userId = req.user.id;//from auth
+  const{adId}=req.body;
+
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const ad = await Ad.findById(adId);
+    if (!ad) return res.status(404).json({ message: "Ad not found" });
+
+    const alreadySaved = user.savedAds.some(
+      (entry) => entry.adId.toString() === adId
+    );
+
+    if (alreadySaved) {
+      return res.status(409).json({ message: "Ad already saved" });
+    }
+
+    user.savedAds.push({ adId });
+    await user.save();
+
+    return res.status(200).json({ message: "Ad saved for later successfully",data:ad});
+  } catch (error) {
+    console.error("Error saving ad:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+//to fetch the saved ads
+const getSavedAds = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const user = await User.findById(userId).populate({
+      path: "savedAds.adId",
+      model: "Ad", 
+      populate: [
+        { path: "imgAdRef", model: "ImageAd" },
+        { path: "videoAdRef", model: "VideoAd" },
+        { path: "surveyAdRef", model: "SurveyAd" },
+      ],
+    }).lean();
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const validSavedAds = user.savedAds.filter((entry) => entry.adId !== null);
+
+    return res.status(200).json({
+     count: validSavedAds.length,
+
+      savedAds: validSavedAds.map(({ adId, savedAt }) => ({
+        ad: adId,
+       
+        savedAt,
+      })),
+    });
+  } catch (error) {
+    console.error("Error fetching saved ads:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+//to unsave ads
+const unsaveAd = async (req, res) => {
+  const userId = req.user.id;
+  const { adId } = req.body; 
+
+  if (!adId) {
+    return res.status(400).json({ message: "adId is required" });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const initialLength = user.savedAds.length;
+
+    user.savedAds = user.savedAds.filter(
+      (entry) => entry.adId.toString() !== adId
+    );
+
+    if (user.savedAds.length === initialLength) {
+      return res.status(404).json({ message: "Ad not found in saved list" });
+    }
+
+    await user.save();
+
+    return res.status(200).json({ message: "Ad removed from saved list" });
+  } catch (error) {
+    console.error("Error unsaving ad:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
+
 
 
 
@@ -1368,5 +1467,8 @@ export {
   resetPassword,
   activateSubscription,
   sendCouponRequest,
-  getUserContestEntries
+  getUserContestEntries,
+  saveAdForLater,
+  getSavedAds,
+  unsaveAd
 };
