@@ -99,6 +99,7 @@ import CouponListing from './pages/superadmin/CouponListing/CouponListing';
 import ContestGamification from './pages/superadmin/ContestGamification/ContestGamification'
 import SelectWinner from './pages/superadmin/SelectWinner/SelectWinner';
 import CoupounRequest from './pages/superadmin/CouponRequestListing/CoupounRequest';
+import StarTransfer from './pages/superadmin/StarTransfer/StarTransfer';
 
 
 import SubscriptionModal from './components/SubscriptionModal/SubscriptionModal';
@@ -108,7 +109,7 @@ import SubscriptionModal from './components/SubscriptionModal/SubscriptionModal'
 function App() {
   return (
     <div className="App">
-      <NotificationsListener/>
+      <NotificationsListener />
       <ToastContainer position="bottom-right" autoClose={3000} />
       <BrowserRouter>
         <Routes>
@@ -239,7 +240,7 @@ function App() {
           <Route path='/ContestGamification/:id' element={<ContestGamification />} />
           <Route path='/selectwinner' element={<SelectWinner />} />
           <Route path='/couponreqSuperAdmin' element={< CoupounRequest />} />
-
+          <Route path='/Superadminstartransfer' element={<StarTransfer />} />
 
 
 
