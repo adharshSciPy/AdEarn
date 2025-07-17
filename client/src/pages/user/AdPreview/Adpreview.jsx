@@ -9,6 +9,7 @@ import baseUrl from "../../../baseurl";
 import ScratchCom from "./ScratchComponent/ScratchCom";
 import Navbar from "../NavBar/Navbar";
 import { HeartOutlined, HeartFilled } from "@ant-design/icons";
+import { useSelector } from "react-redux";
 
 function AdPreview() {
   const { id, adId } = useParams();
@@ -23,6 +24,7 @@ function AdPreview() {
   const videoTimerRef = useRef(null);
   const [videoAdReady, setVideoAdReady] = useState(false);
   const [videoLogicApplied, setVideoLogicApplied] = useState(false);
+  const userToken = useSelector((state) => state.user.token);
 
   // Fetch ad details
   const getAddDetails = async () => {
@@ -128,7 +130,16 @@ function AdPreview() {
   const handleLikeClick = async () => {
     try {
       setLiked((prev) => !prev);
-      
+      const response = await axios.post(
+        `${baseUrl}/api/v1/user/save-ad`,
+        { adId }, // <-- Send adId in request body
+        {
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+          },
+        }
+      );
+      console.log(response);
     } catch (error) {
       console.error("Failed to like the ad", error);
       setLiked((prev) => !prev); // revert UI on error

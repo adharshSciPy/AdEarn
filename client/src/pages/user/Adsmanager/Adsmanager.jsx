@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import styles from "./adsmanager.module.css";
 import edit from "../../../assets/edit.png";
 import Duplicate from "../../../assets/copy.png";
-import report from "../../../assets/report.png";
+import report from "../../../assets/love.jpg";
 import Delete from "../../../assets/delete.png";
 import generatePdf from "../Pdfgenerator/PdfGenerator";
 import Navbar from "../NavBar/Navbar";
@@ -152,7 +152,9 @@ function Adsmanager() {
       alert("Selected ad type not supported for duplication.");
     }
   };
-
+const handleLikeClick=()=>{
+  navigate(`/savedAds/${userId}`)
+}
   return (
     <div>
       <Navbar />
@@ -221,20 +223,21 @@ function Adsmanager() {
                       Delete
                     </button>
                   </div>
-                    {/* <div className={styles.reportButtonContainer}>
+                    <div className={styles.reportButtonContainer}>
                       <button
                         style={{
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                         }}
+                        onClick={handleLikeClick}
                       >
                         <span style={{ height: "20px", width: "35px" }}>
                           <img src={report} alt="" className={styles.img} />
                         </span>
-                        Reports
+                        Liked Ads
                       </button>
-                    </div> */}
+                    </div>
                 </div>
                 <div style={{ overflowX: "auto" }}>
                   <table
