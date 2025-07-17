@@ -24,6 +24,9 @@ function BlacklistUser() {
                 });
                 console.log(userdata)
                 setData(userdata.data.users)
+                const filtered = userdata.data.users.filter(user => !user.isBlacklisted);
+                setData(filtered);
+
             } catch (error) {
                 console.log(error)
             }
@@ -35,7 +38,7 @@ function BlacklistUser() {
         try {
             console.log("idid", userId)
             const response = await axios.patch(`${baseUrl}/api/v1/super-admin/blacklist-user`, { userId });
-            setData(prev => prev.filter(user => user._id !== userId));
+            setData(prev => prev.filter(user => user.isBlacklisted === false));
             console.log(response)
         } catch (error) {
             console.log(error)

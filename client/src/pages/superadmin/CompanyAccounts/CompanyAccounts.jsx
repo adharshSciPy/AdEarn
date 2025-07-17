@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import styles from "./CompanyAccounts.module.css"
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar"
 import Header from '../../../components/Header/Header'
@@ -15,6 +15,8 @@ import {
     Legend
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import axios from 'axios'
+import baseUrl from '../../../baseurl'
 
 // Register Chart.js components
 ChartJS.register(
@@ -75,6 +77,37 @@ function CompanyAccounts() {
         { id: 3, stars: 2000, amount: 400 },
     ];
 
+    const [received, setReceived] = useState(0);
+    const [spent, setSpent] = useState(0);
+
+
+
+    useEffect(() => {
+        const amountspent = async () => {
+            try {
+                const spent = await axios.get(`${baseUrl}/api/v1/super-admin/total-stars/given`);
+                console.log("hi", spent)
+                setSpent(spent.data.totalAmountInRupees)
+            } catch (error) {
+                console.log(error)
+            }
+        }
+
+        const amountreceived = async () => {
+            try {
+                const received = await axios.get(`${baseUrl}/api/v1/super-admin/total-stars/received`);
+                setReceived(received.data.totalAmountInRupees)
+                console.log("helo", received)
+            } catch (error) {
+                console.log(error)
+            }
+        }
+
+        amountreceived();
+        amountspent();
+    })
+
+
 
     return (
         <div className={styles.accountsmain}>
@@ -92,32 +125,18 @@ function CompanyAccounts() {
                         <div className={styles.accountshead}>
                             <h1>Accounts</h1>
                         </div>
-                        <div className={styles.totalamountsection}>
-                            <div className={styles.accountsheadsection}>
-                                <h1>Total Amount</h1>
-                                <h1>₹ 5000</h1>
-                                <div className={styles.accountamountdetails}>
-                                    <p>Company account</p>
-                                    <p>+8% from yesterday</p>
-                                </div>
-                            </div>
-                        </div>
+
                         <div className={styles.estimatesection}>
                             <div className={styles.estimatelist}>
-                                <ol>
-                                    <li>Star Added: 2000</li>
-                                    <li>Star Received: 3000</li>
-                                    <li>Contest: 2000</li>
-                                    <li>Coupons: 3000</li>
-                                    <li>Welcome Bonus</li>
-                                </ol>
+                                <h1>Total Amount</h1>
                             </div>
                             <div className={styles.amountlist}>
-                                <h1>Total Received: 8000</h1>
-                                <h1>Total Added: 2000</h1>
+
+                                <h1>Total Received: ₹ {received}</h1>
+                                <h1>Total Given: ₹ {spent}</h1>
                             </div>
                             <div className={styles.estimatetotal}>
-                                <h1>₹ 5000</h1>
+                                <h1>₹ {received - spent}</h1>
                             </div>
                         </div>
 
