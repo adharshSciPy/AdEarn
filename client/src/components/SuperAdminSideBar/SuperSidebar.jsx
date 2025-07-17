@@ -61,7 +61,7 @@ function Sidebar() {
       icon: <UserOutlined />,
       children: [
         { key: "user-section", label: "User Account", path: "/superadminadsuser" },
-        { key: "deleted-user", label: "Delete User", path: "/demo" },
+        { key: "blacklist-user", label: "BlackListed User", path: "/Superadminblacklist" },
       ],
     },
     {
