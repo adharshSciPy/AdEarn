@@ -102,7 +102,7 @@ const userEntrySchema = new Schema(
     contestId: { type: Schema.Types.ObjectId, ref: "Contest" },
     date: { type: Date, default: Date.now },
   },
-  { _id: false }
+  { _id: false }  
 );
 
 const deletedUserStarsSchema = new Schema(

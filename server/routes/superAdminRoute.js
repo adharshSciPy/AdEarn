@@ -41,7 +41,9 @@ import {
   getActiveManualContests,
   getManualContestById, 
   getAllCouponBatchSummaries,
-  generateStars
+  generateStars,
+  fetchTotalReceivedStars,
+  fetchTotalGivenStars
   // selectAutomaticWinners
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
@@ -107,6 +109,9 @@ superAdminRouter.route("/coupon-batch-details").get(getAllCouponBatchSummaries);
 superAdminRouter.route("/manual-contests/active").get(getActiveManualContests );
 superAdminRouter.route("/manual/:id").get(getManualContestById );
 superAdminRouter.route("/generate-stars").post(generateStars );
+superAdminRouter.route("/total-stars/received").get(fetchTotalReceivedStars);
+superAdminRouter.route("/total-stars/given").get(fetchTotalGivenStars);
+
 
 
 
