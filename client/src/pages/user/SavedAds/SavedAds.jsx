@@ -1,6 +1,6 @@
 import { React, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import styles from "./userhome.module.css";
+import styles from "./SavedAds.module.css";
 import logo from "../../../assets/Logo.png";
 import Navbar from "../NavBar/Navbar";
 import axios from "axios";
@@ -8,81 +8,24 @@ import baseUrl from "../../../baseurl";
 import Driver from "driver.js";
 import "driver.js/dist/driver.min.css";
 import Lottie from "lottie-react";
-import noAdsAnimation from "../../../assets/loading.json"
+import noAdsAnimation from "../../../assets/loading.json";
 import socket from "../../../components/Socket/socket.js";
+import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
+import { useSelector } from "react-redux";
 
 function SavedAds() {
   const navigate = useNavigate();
   const [imageAdData, setImageAd] = useState([]);
   const [videAdData, setVideoAd] = useState([]);
   const [surveyData, setSurveyData] = useState([]);
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const userToken = useSelector((state) => state.user.token);
 
   const { id } = useParams();
   const [showPopup, setShowPopup] = useState(false);
 
-  const getImageAdData = async () => {
-    try {
-      let lat = null;
-      let lng = null;
-
-      // Try to get location if permitted
-      try {
-        const getPosition = () =>
-          new Promise((resolve, reject) =>
-            navigator.geolocation.getCurrentPosition(resolve, reject)
-          );
-        const position = await getPosition();
-        lat = position.coords.latitude;
-        lng = position.coords.longitude;
-      } catch (locationError) {
-        console.log("Location access denied or failed:", locationError.message);
-        // Proceed without lat/lng
-      }
-
-      // Build URL conditionally
-      let url = `${baseUrl}/api/v1/ads/image-ads/${id}`;
-      if (lat && lng) {
-        url += `?lat=${lat}&lng=${lng}`;
-      }
-
-      const response = await axios.get(url);
-      console.log("url", url);
-
-      setImageAd(response.data.ads);
-    } catch (error) {
-      if (error.response) {
-        console.log("API error:", error.response.data.message);
-      } else {
-        console.log("Error fetching ad data:", error.message);
-      }
-    }
-  };
-
-  const getVideoAdData = async () => {
-    try {
-      const response = await axios.get(`${baseUrl}/api/v1/ads/video-ads/${id}`);
-      setVideoAd(response.data.ads);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  const getSurveyData = async () => {
-    try {
-      const response = await axios.get(
-        `${baseUrl}/api/v1/ads/survey-ads/${id}`
-      );
-      setSurveyData(response.data.ads);
-      console.log(response);
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
   useEffect(() => {
-    getImageAdData();
-    getVideoAdData();
-    getSurveyData();
+    savedAds()
   }, []);
   useEffect(() => {
     if (!socket.connected) socket.connect();
@@ -99,38 +42,11 @@ function SavedAds() {
   }, []);
 
   const viewAd = async (adId) => {
-    navigate(`/adspreview/${id}/${adId}`);
+    navigate(`/savedAdsPreview/${id}/${adId}`);
   };
   const viewSurveyAd = async (adId) => {
     navigate(`/surveyadspreview/${id}/${adId}`);
   };
-  useEffect(() => {
-    const showBonus = (bonus) => {
-      console.log(bonus);
-
-      setBonusData(bonus);
-      setShowWelcomeModal(true);
-    };
-
-    if (bonus?.success && bonus?.starsGiven > 0) {
-      showBonus(bonus);
-      setBonusFetched(true);
-    } else if (!bonusFetched) {
-      const fetchBonus = async () => {
-        try {
-          const res = await axios.get(
-            `${baseUrl}/api/v1/user/welcome-bonus/${id}`
-          );
-          if (res.data?.success && res.data?.starsGiven > 0) {
-            showBonus(res.data);
-          }
-        } catch (err) {
-          console.log("Bonus fetch error:", err.message);
-        }
-      };
-      fetchBonus();
-    }
-  }, [bonus, id, bonusFetched]);
 
   //driver.js
 
@@ -214,7 +130,47 @@ function SavedAds() {
       return () => clearInterval(interval);
     }
   }, [id]);
+const savedAds = async () => {
+  try {
+    const res = await axios.get(`${baseUrl}/api/v1/user/view/saved-ads`, {
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+      },
+    });
 
+    if (res.status === 200) {
+      const allAds = res.data.savedAds;
+
+      // Initialize arrays
+      const imageAds = [];
+      const videoAds = [];
+      const surveyAds = [];
+
+      allAds.forEach((item) => {
+        const ad = item.ad;
+
+        if (ad?.imgAdRef) {
+          imageAds.push(item);
+        } else if (ad?.videoAdRef) {
+          videoAds.push(item);
+        } else if (ad?.surveyAdRef) {
+          surveyAds.push(item);
+        }
+      });
+
+      setImageAd(imageAds);
+      setVideoAd(videoAds);
+      setSurveyData(surveyAds);
+    }
+  } catch (error) {
+    console.error("Error fetching saved ads:", error);
+  }
+};
+
+  console.log(imageAdData);
+  console.log(videAdData);
+  
+  
   return (
     <div>
       <Navbar />
@@ -260,14 +216,14 @@ function SavedAds() {
                   <h2>Image Ads</h2>
                 </div>
                 <div className={styles.adcontainerSub}>
-                  {imageAdData.slice(0, 4).map((item, index) => (
+                  {imageAdData.map((item, index) => (
                     <div
                       className={styles.adCard}
                       key={index}
-                      onClick={() => viewAd(item._id)}
+                      onClick={() => viewAd(item.ad?._id)}
                     >
                       <div className={styles.adHeading}>
-                        <p>{item?.imageAd?.title || "nil"}</p>
+                        <p>{item?.ad?.imgAdRef?.title || "nil"}</p>
                       </div>
                       <div className={styles.adContentDes}>
                         <div className={styles.adCardbottom}>
@@ -303,14 +259,14 @@ function SavedAds() {
                   <h2>Video Ads</h2>
                 </div>
                 <div className={styles.adcontainerSub}>
-                  {videAdData.slice(0, 4).map((item, index) => (
+                  {videAdData.map((item, index) => (
                     <div
                       className={styles.adCard}
                       key={index}
-                      onClick={() => viewAd(item._id)}
+                      onClick={() => viewAd(item.ad?._id)}
                     >
                       <div className={styles.adHeading}>
-                        <p>{item?.videoAd?.title || "nil"}</p>
+                        <p>{item?.ad?.videoAdRef?.title || "nil"}</p>
                       </div>
                       <div className={styles.adContentDes}>
                         <div className={styles.adCardbottom}>
@@ -346,7 +302,7 @@ function SavedAds() {
                   <h2>Surveys</h2>
                 </div>
                 <div className={styles.adcontainerSub}>
-                  {surveyData.slice(0, 4).map((ad, idx) => (
+                  {surveyData.map((ad, idx) => (
                     <div
                       className={styles.adCard}
                       key={idx}
@@ -400,13 +356,6 @@ function SavedAds() {
           </div>
         </div>
       </div>
-
-      {showWelcomeModal && (
-        <WelcomeBonusModal
-          sponsorData={bonusData}
-          onClose={() => setShowWelcomeModal(false)}
-        />
-      )}
     </div>
   );
 }
