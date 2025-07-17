@@ -1,0 +1,41 @@
+.blacklistuser {
+  height: max-content;
+  padding-bottom: 200px;
+}
+
+.blacklistusermain {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.blacklistusercontainer {
+  width: calc(100% - 250px);
+  margin-left: 250px;
+  position: absolute;
+  top: 330px;
+  z-index: 999;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.userstable table {
+  width: 100%;
+  height: 100%;
+  margin-top: 20px;
+}
+
+.tableHead th {
+  background-color: #693bb8;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #693bb8;
+  color: white;
+}
+
+.tableBody td {
+  border: 1px solid #693bb8;
+  border-radius: 10px;
+}

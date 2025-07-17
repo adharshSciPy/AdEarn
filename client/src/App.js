@@ -100,6 +100,7 @@ import ContestGamification from './pages/superadmin/ContestGamification/ContestG
 import SelectWinner from './pages/superadmin/SelectWinner/SelectWinner';
 import CoupounRequest from './pages/superadmin/CouponRequestListing/CoupounRequest';
 import StarTransfer from './pages/superadmin/StarTransfer/StarTransfer';
+import BlacklistUser from './pages/superadmin/BlacklistUser/BlacklistUser';
 
 
 import SubscriptionModal from './components/SubscriptionModal/SubscriptionModal';
@@ -241,6 +242,7 @@ function App() {
           <Route path='/selectwinner' element={<SelectWinner />} />
           <Route path='/couponreqSuperAdmin' element={< CoupounRequest />} />
           <Route path='/Superadminstartransfer' element={<StarTransfer />} />
+          <Route path='/Superadminblacklist' element={<BlacklistUser />} />
 
 
 

@@ -54,6 +54,7 @@ function StarTransfer() {
                 <SuperSidebar />
                 <div className={styles.startransfer}>
                     <div style={{ width: '100%', maxWidth: '1550px', height: '600px', padding: '30px' }} className={styles.starimage}>
+                        <h1>Star Transfer</h1>
                         <div className={styles.startransferform}>
                             <div className={styles.transferform}>
                                 <label>Star Count</label>
