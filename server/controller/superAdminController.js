@@ -1394,6 +1394,16 @@ const createContest = async (req, res) => {
       return res.status(400).json({ message: "All required fields must be filled" });
     }
 
+    // ✅ Parse startDate and validate it's today or future
+    const start = new Date(startDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);   // Remove time from today's date
+    start.setHours(0, 0, 0, 0);   // Remove time from start date
+
+    if (start < today) {
+      return res.status(400).json({ message: "Contest start date cannot be in the past" });
+    }
+
     // ✅ Parse reward structure
     let parsedRewardStructure = [];
     let totalRewardStars = 0;
@@ -1459,7 +1469,6 @@ const createContest = async (req, res) => {
 
     // ✅ Set contest status based on startDate
     const now = new Date();
-    const start = new Date(startDate);
     const status = start <= now ? "Active" : "Scheduled";
 
     // ✅ Save contest
@@ -1490,6 +1499,7 @@ const createContest = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 const selectAutomaticWinnersInternal = async (contestId) => {
   const contest = await ContestEntry.findById(contestId);
   if (!contest || contest.status === "Ended") return;
