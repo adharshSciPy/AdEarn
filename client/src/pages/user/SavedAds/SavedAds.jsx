@@ -240,11 +240,11 @@ const savedAds = async () => {
                       <div className={styles.adCardBackground}></div>
                     </div>
                   ))}
-                  <div className={styles.seeAllContainer}>
+                  {/* <div className={styles.seeAllContainer}>
                     <button onClick={() => navigate("/ads/image")}>
                       See All
                     </button>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             )}
@@ -283,11 +283,11 @@ const savedAds = async () => {
                       <div className={styles.adCardBackground}></div>
                     </div>
                   ))}
-                  <div className={styles.seeAllContainer}>
+                  {/* <div className={styles.seeAllContainer}>
                     <button onClick={() => navigate("/ads/video")}>
                       See All
                     </button>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             )}
@@ -326,11 +326,11 @@ const savedAds = async () => {
                       <div className={styles.adCardBackground}></div>
                     </div>
                   ))}
-                  <div className={styles.seeAllContainer}>
+                  {/* <div className={styles.seeAllContainer}>
                     <button onClick={() => navigate("/ads/survey")}>
                       See All
                     </button>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             )}
