@@ -24,7 +24,7 @@
   border-radius: 6px;
   transition: 0.3s ease;
 }
-.headerContainer{
+.headerContainer {
   background-color: red;
   padding: 20px;
   position: relative;
@@ -167,4 +167,18 @@
 
 .activeTab {
   background-color: #f0f0f0;
+}
+
+.downloadBtn {
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.downloadBtn:hover {
+  background-color: #1677c4;
 }
