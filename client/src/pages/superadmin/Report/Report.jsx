@@ -100,14 +100,15 @@ function Report() {
           </div>
           <div className={styles.filters}>
             <button className={styles.logout}>Log</button>
+            <div style={{ display: "flex", justifyContent: "end", marginBottom: "10px" }}>
+              <button onClick={handleDownload} className={styles.downloadBtn}>
+                Download 
+              </button>
+            </div>
+
           </div>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "end", marginBottom: "10px" }}>
-          <button onClick={handleDownload} className={styles.downloadBtn}>
-            Download {activeTab}
-          </button>
-        </div>
 
 
         <h1 className={styles.title}>All Users</h1>
