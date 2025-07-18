@@ -493,7 +493,8 @@ function SurveyAds() {
   const [allMCQuestions, setAllMCQuestions] = useState([]);
   const [imagePreview, setImagePreview] = useState(null);
   const [imageFile, setImageFile] = useState(null);
-
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPaymentType, setSelectedPaymentType] = useState(null);
   const handleOptionChange = (index, value) => {
     const updatedOptions = [...mcOptions];
     updatedOptions[index] = value;
@@ -619,44 +620,43 @@ function SurveyAds() {
   const handleClick = () => {
     navigate(`/userhome/${id}`);
   };
-const searchPlace = async (query) => {
-  setLoading(true);
-  try {
-    const res = await fetch(
-      `http://localhost:8000/api/v1/geocode?q=${encodeURIComponent(query)}`
-    );
-    const data = await res.json();
-
-    if (data.length > 0) {
-      const newPins = data.map((place) => ({
-        lat: parseFloat(place.lat),
-        lng: parseFloat(place.lon),
-        name: place.display_name,
-        radiusKm: 30,
-      }));
-
-      const filteredPins = newPins.filter(
-        (newPin) =>
-          !positions.some((p) => p.lat === newPin.lat && p.lng === newPin.lng)
+  const searchPlace = async (query) => {
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `http://localhost:8000/api/v1/geocode?q=${encodeURIComponent(query)}`
       );
+      const data = await res.json();
 
-      if (filteredPins.length > 0) {
-        setPositions((prev) => [...prev, ...filteredPins]);
+      if (data.length > 0) {
+        const newPins = data.map((place) => ({
+          lat: parseFloat(place.lat),
+          lng: parseFloat(place.lon),
+          name: place.display_name,
+          radiusKm: 30,
+        }));
+
+        const filteredPins = newPins.filter(
+          (newPin) =>
+            !positions.some((p) => p.lat === newPin.lat && p.lng === newPin.lng)
+        );
+
+        if (filteredPins.length > 0) {
+          setPositions((prev) => [...prev, ...filteredPins]);
+        }
+      } else {
+        alert("No results found.");
       }
-    } else {
-      alert("No results found.");
+    } catch (error) {
+      console.error("Geocode error:", error);
+      alert("Failed to search location.");
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Geocode error:", error);
-    alert("Failed to search location.");
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   // Submit form data
-  const handleSubmit = async () => {
+  const handleSubmit = async (paymenttype) => {
     if (!validateForm()) return;
 
     setLoading(true);
@@ -709,52 +709,103 @@ const searchPlace = async (query) => {
     for (let [key, value] of formData.entries()) {
       console.log(key, value);
     }
-
-    try {
-      const response = await axios.post(
-        `${baseUrl}/api/v1/ads/survey-ad/${id}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+    if (paymenttype === "stars") {
+      try {
+        const response = await axios.post(
+          `${baseUrl}/api/v1/ads/survey-ad/${id}`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        if (response.status === 200) {
+          setForm({
+            adName: "",
+            adCategory: "",
+            state: [],
+            city: [],
+            viewPlan: "",
+          });
+          if (fileInputRef.current) {
+            fileInputRef.current.value = null;
+          }
+          setPreview(null);
+          setPositions([]);
+          setSingleTime(false);
+          setMultipleTime(false);
+          setSelectedTimeSlots([]);
+          setSearchInput("");
+          setTimeOptions({
+            "3hrs": false,
+            "6hrs": false,
+            "12hrs": false,
+            "24hrs": false,
+            "48hrs": false,
+          }); // adjust keys as per your time options
+          setShowSuccessPopup(true);
+          setTimeout(() => {
+            setShowSuccessPopup(false);
+            navigate(`/userhome/${id}`);
+          }, 2000);
         }
-      );
-      if (response.status === 200) {
-        setForm({
-          adName: "",
-          adCategory: "",
-          state: [],
-          city: [],
-          viewPlan: "",
-        });
-        if (fileInputRef.current) {
-          fileInputRef.current.value = null;
-        }
-        setPreview(null);
-        setPositions([]);
-        setSingleTime(false);
-        setMultipleTime(false);
-        setSelectedTimeSlots([]);
-        setSearchInput("");
-        setTimeOptions({
-          "3hrs": false,
-          "6hrs": false,
-          "12hrs": false,
-          "24hrs": false,
-          "48hrs": false,
-        }); // adjust keys as per your time options
-        setShowSuccessPopup(true);
-        setTimeout(() => {
-          setShowSuccessPopup(false);
-          navigate(`/userhome/${id}`);
-        }, 2000);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setSubmitSuccess("Ad saved successfully!");
+        setLoading(false);
       }
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setSubmitSuccess("Ad saved successfully!");
-      setLoading(false);
+    } else if (paymenttype === "payment") {
+      try {
+        const response = await axios.post(
+          `${baseUrl}/api/v1/ads/survey-ad/draft/${id}`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        if (response.status === 200) {
+          setForm({
+            adName: "",
+            adCategory: "",
+            state: [],
+            city: [],
+            viewPlan: "",
+          });
+          if (fileInputRef.current) {
+            fileInputRef.current.value = null;
+          }
+          setPreview(null);
+          setPositions([]);
+          setSingleTime(false);
+          setMultipleTime(false);
+          setSelectedTimeSlots([]);
+          setSearchInput("");
+          setTimeOptions({
+            "3hrs": false,
+            "6hrs": false,
+            "12hrs": false,
+            "24hrs": false,
+            "48hrs": false,
+          }); // adjust keys as per your time options
+          setShowSuccessPopup(true);
+          setTimeout(() => {
+            setShowSuccessPopup(false);
+            navigate(`/userhome/${id}`);
+          }, 2000);
+        }
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setSubmitSuccess("Ad saved successfully!");
+        setLoading(false);
+      }
+    }else{
+      console.log("error");
+      
     }
   };
   const [preview, setPreview] = useState(null);
@@ -1295,7 +1346,7 @@ const searchPlace = async (query) => {
                 border: "none",
                 color: "white",
               }}
-              onClick={handleSubmit}
+              onClick={() => setShowPaymentModal(true)}
               disabled={loading}
             >
               {loading ? "Saving..." : "Save & Continue"}
@@ -1310,6 +1361,42 @@ const searchPlace = async (query) => {
               autoplay
               style={{ width: 150, height: 150 }}
             />
+          </div>
+        )}
+        {showPaymentModal && (
+          <div className={styles.modalOverlay}>
+            <div className={styles.modalContent}>
+              <h2>Choose Payment Method</h2>
+              <p>How would you like to proceed?</p>
+              <div className={styles.modalButtons}>
+                <button
+                  className={styles.paymentBtn}
+                  onClick={() => {
+                    setSelectedPaymentType("payment");
+                    setShowPaymentModal(false);
+                    handleSubmit("payment");
+                  }}
+                >
+                  💳 Pay with Payment
+                </button>
+                <button
+                  className={styles.starBtn}
+                  onClick={() => {
+                    setSelectedPaymentType("stars");
+                    setShowPaymentModal(false);
+                    handleSubmit("stars");
+                  }}
+                >
+                  ⭐ Pay with Stars
+                </button>
+              </div>
+              <button
+                className={styles.modalClose}
+                onClick={() => setShowPaymentModal(false)}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
       </div>

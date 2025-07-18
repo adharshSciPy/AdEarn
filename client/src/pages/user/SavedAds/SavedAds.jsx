@@ -167,9 +167,6 @@ const savedAds = async () => {
   }
 };
 
-  console.log(imageAdData);
-  console.log(videAdData);
-  
   
   return (
     <div>
