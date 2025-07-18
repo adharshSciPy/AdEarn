@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import styles from "./CompanyAccounts.module.css"
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar"
 import Header from '../../../components/Header/Header'
@@ -15,6 +15,8 @@ import {
     Legend
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import axios from 'axios'
+import baseUrl from '../../../baseurl'
 
 // Register Chart.js components
 ChartJS.register(
@@ -75,6 +77,49 @@ function CompanyAccounts() {
         { id: 3, stars: 2000, amount: 400 },
     ];
 
+    const [datawallet, setDatawallet] = useState([]);
+    const [received, setReceived] = useState(0);
+    const [spent, setSpent] = useState(0);
+
+    useEffect(() => {
+        const companyStar = async () => {
+            try {
+                const response = await axios.get(`${baseUrl}/api/v1/super-admin/superadmin-wallet`);
+                console.log(response)
+                setDatawallet(response.data)
+
+            } catch (error) {
+                console.log(error)
+            }
+        }
+        companyStar()
+    }, [])
+
+    useEffect(() => {
+        const fetchAmounts = async () => {
+            try {
+                const [spentRes, receivedRes] = await Promise.all([
+                    axios.get(`${baseUrl}/api/v1/super-admin/total-stars/given`),
+                    axios.get(`${baseUrl}/api/v1/super-admin/total-stars/received`)
+                ]);
+
+                const spentAmount = spentRes?.data?.totalAmountInRupees || 0;
+                const receivedAmount = receivedRes?.data?.totalAmountInRupees || 0;
+
+                setSpent(spentAmount);
+                setReceived(receivedAmount);
+
+                console.log("Spent Amount:", spentRes);
+                console.log("Received Amount:", receivedRes);
+            } catch (error) {
+                console.error("Error fetching amounts:", error);
+            }
+        };
+
+        fetchAmounts();
+    }, []);
+
+
 
     return (
         <div className={styles.accountsmain}>
@@ -92,32 +137,18 @@ function CompanyAccounts() {
                         <div className={styles.accountshead}>
                             <h1>Accounts</h1>
                         </div>
-                        <div className={styles.totalamountsection}>
-                            <div className={styles.accountsheadsection}>
-                                <h1>Total Amount</h1>
-                                <h1>₹ 5000</h1>
-                                <div className={styles.accountamountdetails}>
-                                    <p>Company account</p>
-                                    <p>+8% from yesterday</p>
-                                </div>
-                            </div>
-                        </div>
+
                         <div className={styles.estimatesection}>
                             <div className={styles.estimatelist}>
-                                <ol>
-                                    <li>Star Added: 2000</li>
-                                    <li>Star Received: 3000</li>
-                                    <li>Contest: 2000</li>
-                                    <li>Coupons: 3000</li>
-                                    <li>Welcome Bonus</li>
-                                </ol>
+                                <h1>Total Amount</h1>
                             </div>
                             <div className={styles.amountlist}>
-                                <h1>Total Received: 8000</h1>
-                                <h1>Total Added: 2000</h1>
+
+                                <h1>Total Received: ₹ {received}</h1>
+                                <h1>Total Given: ₹ {spent}</h1>
                             </div>
                             <div className={styles.estimatetotal}>
-                                <h1>₹ 5000</h1>
+                                <h1>₹ {received - spent}</h1>
                             </div>
                         </div>
 
@@ -131,7 +162,7 @@ function CompanyAccounts() {
 
                                 </div>
                                 <h3>Ads</h3>
-                                <h4>&#8377; 500</h4>
+                                <h4>&#8377; {datawallet.adExtraDeductionsTotalAmountInRupees}</h4>
                                 <p>+5% from yesterday</p>
                             </div>
                             <div className={styles.cardthree}>
@@ -142,7 +173,7 @@ function CompanyAccounts() {
                                     </div>
                                 </div>
                                 <h3>Users</h3>
-                                <h4>&#8377; 500</h4>
+                                <h4>&#8377; {datawallet.userEntryTotalAmountInRupees}</h4>
                                 <p>+0,5% from yesterday</p>
                             </div>
                             <div className={styles.cardfour}>
@@ -153,7 +184,7 @@ function CompanyAccounts() {
                                     </div>
                                 </div>
                                 <h3>Payouts</h3>
-                                <h4>&#8377; 500</h4>
+                                <h4>&#8377; demo</h4>
                                 <p>+8% from yesterday</p>
                             </div>
                             <div className={styles.cardfour}>
@@ -164,7 +195,7 @@ function CompanyAccounts() {
                                     </div>
                                 </div>
                                 <h3>Company accounts</h3>
-                                <h4>&#8377; 500</h4>
+                                <h4>&#8377; {datawallet.totalAmountInRupees}</h4>
                                 <p>+8% from yesterday</p>
                             </div>
                             <div className={styles.cardone}>
@@ -176,7 +207,7 @@ function CompanyAccounts() {
 
                                 </div>
                                 <h3>Admin accounts</h3>
-                                <h4>&#8377; 500</h4>
+                                <h4>&#8377; demo</h4>
                                 <p>+5% from yesterday</p>
                             </div>
                             <div className={styles.cardfour}>
@@ -187,7 +218,7 @@ function CompanyAccounts() {
                                     </div>
                                 </div>
                                 <h3>Welcome Bonus</h3>
-                                <h4>&#8377; 500</h4>
+                                <h4>&#8377; {datawallet.welcomeBonusLogsTotalAmountInRupees}</h4>
                                 <p>+8% from yesterday</p>
                             </div>
                             <div className={styles.cardthree}>
@@ -198,7 +229,7 @@ function CompanyAccounts() {
                                     </div>
                                 </div>
                                 <h3>Referral Bonus</h3>
-                                <h4>&#8377; 500</h4>
+                                <h4>&#8377; demo</h4>
                                 <p>+0,5% from yesterday</p>
                             </div>
                             <div className={styles.cardtwo}>
@@ -210,7 +241,7 @@ function CompanyAccounts() {
 
                                 </div>
                                 <h3>Contest</h3>
-                                <h4>&#8377; 500</h4>
+                                <h4>&#8377; {datawallet.contestCollectedAmountInRupees}</h4>
                                 <p>+1,2% from yesterday</p>
                             </div>
                             <div className={styles.cardthree}>
@@ -221,7 +252,7 @@ function CompanyAccounts() {
                                     </div>
                                 </div>
                                 <h3>Coupons</h3>
-                                <h4>&#8377; 500</h4>
+                                <h4>&#8377; {datawallet.couponGenerationTotalAmountInRupees}</h4>
                                 <p>+0,5% from yesterday</p>
                             </div>
                             <div className={styles.cardfour}>
@@ -232,7 +263,7 @@ function CompanyAccounts() {
                                     </div>
                                 </div>
                                 <h3>Subscription</h3>
-                                <h4>&#8377; 500</h4>
+                                <h4>&#8377; {datawallet.subscriptionAmountInRupeesUsed}</h4>
                                 <p>+8% from yesterday</p>
                             </div>
                         </div>
