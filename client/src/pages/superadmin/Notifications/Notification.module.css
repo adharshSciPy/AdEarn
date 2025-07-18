@@ -20,6 +20,11 @@
   justify-content: center;
   align-items: center;
 }
+.radio{
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+}
 
 .notificationhead {
   display: flex;
