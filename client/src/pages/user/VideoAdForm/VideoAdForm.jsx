@@ -463,7 +463,8 @@ function VideoAdForm() {
   const { id } = useParams();
   const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPaymentType, setSelectedPaymentType] = useState(null);
   const [singleTime, setSingleTime] = useState(false);
   const [multipleTime, setMultipleTime] = useState(false);
   const [timeOptions, setTimeOptions] = useState({
@@ -605,7 +606,7 @@ function VideoAdForm() {
   };
 
   // Submit form data
-  const handleSubmit = async () => {
+  const handleSubmit = async (paymenttype) => {
     if (!validateForm()) return;
 
     setLoading(true);
@@ -633,51 +634,101 @@ function VideoAdForm() {
       "adPeriod",
       JSON.stringify(singleTime ? 0 : selectedTimeSlots)
     );
+    if (paymenttype === "stars") {
+      try {
+        const response = await axios.post(
+          `${baseUrl}/api/v1/ads/video-ad/${id}`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        if (response.status === 200) {
+          console.log(response);
 
-    try {
-      const response = await axios.post(
-        `${baseUrl}/api/v1/ads/video-ad/${id}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          setForm({
+            adName: "",
+            adCategory: "",
+            state: [],
+            city: [],
+            viewPlan: "",
+          });
+          if (fileInputRef.current) {
+            fileInputRef.current.value = null;
+          }
+          setPreview(null);
+          setPositions([]);
+          setSingleTime(false);
+          setMultipleTime(false);
+          setSelectedTimeSlots([]);
+          setSearchInput("");
+          setTimeOptions({
+            "3hrs": false,
+            "6hrs": false,
+            "12hrs": false,
+            "24hrs": false,
+            "48hrs": false,
+          }); // adjust keys as per your time options
+          setShowSuccessPopup(true);
+          setTimeout(() => {
+            setShowSuccessPopup(false);
+            navigate(`/userhome/${id}`);
+          }, 2000);
         }
-      );
-      if (response.status === 200) {
-        console.log(response);
-
-        setForm({
-          adName: "",
-          adCategory: "",
-          state: [],
-          city: [],
-          viewPlan: "",
-        });
-        if (fileInputRef.current) {
-          fileInputRef.current.value = null;
-        }
-        setPreview(null);
-        setPositions([]);
-        setSingleTime(false);
-        setMultipleTime(false);
-        setSelectedTimeSlots([]);
-        setSearchInput("");
-        setTimeOptions({
-          "3hrs": false,
-          "6hrs": false,
-          "12hrs": false,
-          "24hrs": false,
-          "48hrs": false,
-        }); // adjust keys as per your time options
-        setShowSuccessPopup(true);
-        setTimeout(() => {
-          setShowSuccessPopup(false);
-          navigate(`/userhome/${id}`);
-        }, 2000);
+      } catch (error) {
+        console.log(error);
       }
-    } catch (error) {
-      console.log(error);
+    }else if(paymenttype==="payment"){
+      try {
+        const response = await axios.post(
+          `${baseUrl}/api/v1/ads/video-ad/draft/${id}`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        if (response.status === 200) {
+          console.log(response);
+
+          setForm({
+            adName: "",
+            adCategory: "",
+            state: [],
+            city: [],
+            viewPlan: "",
+          });
+          if (fileInputRef.current) {
+            fileInputRef.current.value = null;
+          }
+          setPreview(null);
+          setPositions([]);
+          setSingleTime(false);
+          setMultipleTime(false);
+          setSelectedTimeSlots([]);
+          setSearchInput("");
+          setTimeOptions({
+            "3hrs": false,
+            "6hrs": false,
+            "12hrs": false,
+            "24hrs": false,
+            "48hrs": false,
+          }); // adjust keys as per your time options
+          setShowSuccessPopup(true);
+          setTimeout(() => {
+            setShowSuccessPopup(false);
+            navigate(`/userhome/${id}`);
+          }, 2000);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    }else{
+      console.log("error");
+      
     }
     setTimeout(() => {
       setSubmitSuccess("Ad saved successfully!");
@@ -1050,13 +1101,13 @@ function VideoAdForm() {
               />
               <div className={styles.videoContainer}>
                 {preview && (
-                <video
-                  src={preview}
-                  // className={styles.previewImg}
-                  autoPlay
-                  controls
-                />
-              )}
+                  <video
+                    src={preview}
+                    // className={styles.previewImg}
+                    autoPlay
+                    controls
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -1107,7 +1158,7 @@ function VideoAdForm() {
                 border: "none",
                 color: "white",
               }}
-              onClick={handleSubmit}
+              onClick={() => setShowPaymentModal(true)}
               disabled={loading}
             >
               {loading ? "Saving..." : "Save & Continue"}
@@ -1122,6 +1173,43 @@ function VideoAdForm() {
               autoplay
               style={{ width: 150, height: 150 }}
             />
+          </div>
+        )}
+
+        {showPaymentModal && (
+          <div className={styles.modalOverlay}>
+            <div className={styles.modalContent}>
+              <h2>Choose Payment Method</h2>
+              <p>How would you like to proceed?</p>
+              <div className={styles.modalButtons}>
+                <button
+                  className={styles.paymentBtn}
+                  onClick={() => {
+                    setSelectedPaymentType("payment");
+                    setShowPaymentModal(false);
+                    handleSubmit("payment");
+                  }}
+                >
+                  💳 Pay with Payment
+                </button>
+                <button
+                  className={styles.starBtn}
+                  onClick={() => {
+                    setSelectedPaymentType("stars");
+                    setShowPaymentModal(false);
+                    handleSubmit("stars");
+                  }}
+                >
+                  ⭐ Pay with Stars
+                </button>
+              </div>
+              <button
+                className={styles.modalClose}
+                onClick={() => setShowPaymentModal(false)}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
       </div>
