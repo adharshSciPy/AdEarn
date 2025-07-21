@@ -42,14 +42,11 @@ import {
   getManualContestById, 
   getAllCouponBatchSummaries,
   generateStars,
-<<<<<<< HEAD
   resetContestEntryWallet,
   getContestEntryWallet,
-  getWelcomeBonusLogs
-=======
+  getWelcomeBonusLogs,
   fetchTotalReceivedStars,
   fetchTotalGivenStars
->>>>>>> 585f59b487195a659f5ad134d84618a41c6adafb
   // selectAutomaticWinners
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
@@ -115,15 +112,12 @@ superAdminRouter.route("/reset-contest-wallet").post(resetContestEntryWallet);
 superAdminRouter.route("/manual-contests/active").get(getActiveManualContests );
 superAdminRouter.route("/manual/:id").get(getManualContestById );
 superAdminRouter.route("/generate-stars").post(generateStars );
-<<<<<<< HEAD
 superAdminRouter.route("/contest-entry-wallet").get(getContestEntryWallet ); //fetch total stars superadmin got from the contest
 superAdminRouter.route("/welcome-bonus/logs").get(getWelcomeBonusLogs ); // includes the stars got from the company , given stars ,logs of users who got the stars and the date he got the star
-=======
 superAdminRouter.route("/total-stars/received").get(fetchTotalReceivedStars);
 superAdminRouter.route("/total-stars/given").get(fetchTotalGivenStars);
 
 
->>>>>>> 585f59b487195a659f5ad134d84618a41c6adafb
 
 
 
