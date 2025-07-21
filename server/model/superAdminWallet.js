@@ -222,6 +222,12 @@ const deletedAdStarsSchema=new Schema({
   }}
 
 },{_id:false})
+const payoutDetails=new Schema({
+starCount:{type:Number},
+date:{type:Date,default:Date.now()},
+amountToCheckout:{type:Number},
+note:{type:String}
+},{_id:false})
 
 // MAIN Schema
 const superAdminWalletSchema = new Schema(
@@ -242,10 +248,8 @@ const superAdminWalletSchema = new Schema(
     couponGenerationLogs: [couponGenerationLogSchema],
     adminTransfers: [adminTransferLogSchema],
     generatedStarsLog: [generatedStarsLogSchema],
-    deletedAdStars:[deletedAdStarsSchema]
-
-
-
+    deletedAdStars:[deletedAdStarsSchema],
+    payoutDetails:[payoutDetails]
   },
   { timestamps: true }
 );

@@ -2766,7 +2766,46 @@ const getWelcomeBonusLogs = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+//to take payout ...in super admin wallet
+const superAdminPayout=async(req,res)=>{
+const {starCount,note}=req.body;
+ if (!starCount || starCount <= 0) {
+    return res.status(400).json({ message: "Valid starCount is required" });
+  }
 
+try {
+  const superAdminWallet=await SuperAdminWallet.findOne();
+   if (!superAdminWallet) {
+      return res.status(404).json({ message: "Super Admin Wallet not found" });
+    }
+
+    if (superAdminWallet.totalStars < starCount) {
+      return res.status(400).json({ message: "Insufficient stars in Super Admin Wallet" });
+    }
+     const amountToCheckout = convertStarsToRupees(starCount);
+      superAdminWallet.totalStars -= starCount;
+      superAdminWallet.payoutDetails.push({
+      starCount,
+      amountToCheckout,
+      note: note || "",
+      date: new Date(),
+      })
+      await superAdminWallet.save();
+        return res.status(200).json({
+      message: "Payout recorded successfully",
+      updatedStars: superAdminWallet.totalStars,
+      recentPayout: {
+        starCount,
+        amountToCheckout,
+        note,
+        date: new Date(),
+      },
+    });
+} catch (error) {
+      console.error("Error in superAdminPayout:", error);
+    return res.status(500).json({ message: "Internal server error", error: error.message });
+}
+}
 export {
   registerSuperAdmin,
   superAdminLogin,
@@ -2818,5 +2857,6 @@ export {
   getContestEntryWallet,
   getWelcomeBonusLogs,
   fetchTotalReceivedStars,
-  fetchTotalGivenStars
+  fetchTotalGivenStars,
+  superAdminPayout
 };
