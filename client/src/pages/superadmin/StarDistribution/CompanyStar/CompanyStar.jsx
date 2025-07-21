@@ -11,20 +11,47 @@ import baseUrl from '../../../../baseurl'
 function CompanyStar() {
 
     const [data, setData] = useState([]);
+    const [received, setReceived] = useState(0);
+    const [spent, setSpent] = useState(0);
+
 
     useEffect(() => {
         const companyStar = async () => {
             try {
                 const response = await axios.get(`${baseUrl}/api/v1/super-admin/superadmin-wallet`);
-                console.log(response)
+                console.log("response", response)
                 setData(response.data)
-                
+
             } catch (error) {
                 console.log(error)
             }
         }
         companyStar()
     }, [])
+
+    useEffect(() => {
+        const fetchAmounts = async () => {
+            try {
+                const [spentRes, receivedRes] = await Promise.all([
+                    axios.get(`${baseUrl}/api/v1/super-admin/total-stars/given`),
+                    axios.get(`${baseUrl}/api/v1/super-admin/total-stars/received`)
+                ]);
+
+                const spentAmount = spentRes?.data?.totalStarsGiven || 0;
+                const receivedAmount = receivedRes?.data?.totalStarsReceived || 0;
+
+                setSpent(spentAmount);
+                setReceived(receivedAmount);
+
+                console.log("Spent Amount:", spentRes);
+                console.log("Received Amount:", receivedRes);
+            } catch (error) {
+                console.error("Error fetching amounts:", error);
+            }
+        };
+
+        fetchAmounts();
+    }, []);
 
 
     return (
@@ -63,16 +90,16 @@ function CompanyStar() {
                         <div className={styles.estimatesection}>
                             <div className={styles.estimatelist}>
                                 <ol>
-                                    <li>Star Added: 2000</li>
-                                    <li>Star Received: 3000</li>
+                                    <li>Star Given: {spent}</li>
+                                    <li>Star Received: {received}</li>
                                     <li>Contest: {data.contestCollectedStars}</li>
                                     <li>Coupons: {data.couponGenerationTotalStars}</li>
                                     <li>Welcome Bonus: {data.welcomeBonusLogsTotalStars}</li>
                                 </ol>
                             </div>
                             <div className={styles.amountlist}>
-                                <h1>Total Received: 8000</h1>
-                                <h1>Total Added: 2000</h1>
+                                <h1>Total Received: {received}</h1>
+                                <h1>Total Given: {spent}</h1>
                             </div>
                             <div className={styles.estimatetotal}>
                                 <h1><svg
@@ -83,7 +110,7 @@ function CompanyStar() {
                                     xmlns="http://www.w3.org/2000/svg"
                                 >
                                     <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                </svg> 5000</h1>
+                                </svg> {received - spent}</h1>
                             </div>
                         </div>
 
@@ -155,7 +182,7 @@ function CompanyStar() {
 
                                 >
                                         <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                    </svg> 500</h4>
+                                    </svg> demo</h4>
                                 <p>+8% from yesterday</p>
                             </div>
                             <div className={styles.cardfour}>
@@ -202,7 +229,7 @@ function CompanyStar() {
 
                                 >
                                         <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                    </svg> 500</h4>
+                                    </svg> demo</h4>
                                 <p>+5% from yesterday</p>
                             </div>
                             <div className={styles.cardfour}>
@@ -248,7 +275,7 @@ function CompanyStar() {
 
                                 >
                                         <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                    </svg> 500</h4>
+                                    </svg> demo</h4>
                                 <p>+0,5% from yesterday</p>
                             </div>
                             <div className={styles.cardtwo}>

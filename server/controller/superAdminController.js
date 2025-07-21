@@ -2546,6 +2546,132 @@ const generateStars = async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: err.message });
   }
 };
+//fetch total stars earned/received in superadminwallet(company wallet)+
+const fetchTotalReceivedStars = async (req, res) => {
+  try {
+    const superAdminWallet = await SuperAdminWallet.findOne();
+    if (!superAdminWallet) {
+      return res.status(404).json({ message: "SuperAdmin wallet not found" });
+    }
+
+    const getTotal = (array = [], key) =>
+      Array.isArray(array) ? array.reduce((sum, item) => sum + (item[key] || 0), 0) : 0;
+
+    // Extracted fields
+    const {
+      transactions,
+      expiredCouponRefunds,
+      deletedUserStars,
+      subscriptionLogs,
+      blacklistedUserStars,
+      adExtraDeductions,
+      starDistributions,
+      generatedStarsLog,
+      adminTransfers,
+      contestEntryWallet,
+      companyRewardWallet,
+    } = superAdminWallet;
+
+    const totalFromTransactions = getTotal(transactions, "starsReceived");
+    const totalFromExpiredCoupons = getTotal(expiredCouponRefunds, "stars");
+    const totalFromDeletedUsers = getTotal(deletedUserStars, "starsTransferred");
+    const totalFromSubscriptionLogs = getTotal(subscriptionLogs, "starsUsed");
+    const totalFromBlacklistUsers = getTotal(blacklistedUserStars, "starsTransferred");
+    const totalFromAdExtraDeductions = getTotal(adExtraDeductions, "stars");
+    const totalFromGeneratedStarLogs = getTotal(generatedStarsLog, "starsGenerated");
+    const totalFromStarDistributions = getTotal(starDistributions, "stars");
+    const totalFromAdminTransfers = getTotal(adminTransfers, "stars");
+
+    const totalFromContestEntry = contestEntryWallet?.totalReceived || 0;
+    const totalFromCompanyTransfers = companyRewardWallet?.totalReceived || 0;
+
+    const totalStarsReceived =
+      totalFromTransactions +
+      totalFromExpiredCoupons +
+      totalFromDeletedUsers +
+      totalFromSubscriptionLogs +
+      totalFromBlacklistUsers +
+      totalFromAdExtraDeductions +
+      totalFromGeneratedStarLogs +
+      totalFromStarDistributions +
+      totalFromAdminTransfers +
+      totalFromContestEntry +
+      totalFromCompanyTransfers;
+
+    return res.status(200).json({
+      message: "Total stars received calculated successfully",
+      totalStarsReceived,
+      totalAmountInRupees: convertStarsToRupees(totalStarsReceived),
+      breakdown: {
+        totalFromTransactions,
+        totalFromExpiredCoupons,
+        totalFromDeletedUsers,
+        totalFromSubscriptionLogs,
+        totalFromBlacklistUsers,
+        totalFromAdExtraDeductions,
+        totalFromGeneratedStarLogs,
+        totalFromStarDistributions,
+        totalFromAdminTransfers,
+        totalFromContestEntry,
+        totalFromCompanyTransfers,
+      },
+    });
+  } catch (error) {
+    console.error("Error calculating total received stars:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+//fetch the total stars given /taken from superadmin wallet(company wallet)-
+const fetchTotalGivenStars = async (req, res) => {
+  try {
+    const superAdminWallet = await SuperAdminWallet.findOne();
+    if (!superAdminWallet) {
+      return res.status(404).json({ message: "SuperAdmin wallet not found" });
+    }
+
+    const getTotal = (array = [], key) =>
+      Array.isArray(array) ? array.reduce((sum, item) => sum + (item[key] || 0), 0) : 0;
+
+    const {
+      welcomeBonusWallet,
+      // companyRewardWallet,
+      starDistributions,
+      couponGenerationLogs,
+      contestEntryWallet,
+    } = superAdminWallet;
+
+    const totalWelcomeBonusGiven = getTotal(welcomeBonusWallet?.given, "stars");
+    // const totalCompanyStarsToWinners = getTotal(companyRewardWallet?.givenToWinners, "stars");
+    const totalStarDistributions = getTotal(starDistributions, "stars");
+    const totalCouponGeneration = getTotal(couponGenerationLogs, "starsSpent");
+    const totalReservedForContests = contestEntryWallet?.reservedForContests || 0;
+
+    const totalStarsGiven =
+      totalWelcomeBonusGiven +
+      // totalCompanyStarsToWinners +
+      totalStarDistributions +
+      totalCouponGeneration +
+      totalReservedForContests;
+
+    return res.status(200).json({
+      message: "Total stars given from SuperAdmin wallet calculated successfully",
+      totalStarsGiven,
+      totalAmountInRupees: convertStarsToRupees(totalStarsGiven),
+      breakdown: {
+        totalWelcomeBonusGiven,
+        // totalCompanyStarsToWinners,
+        totalStarDistributions,
+        totalCouponGeneration,
+        totalReservedForContests,
+      },
+    });
+  } catch (error) {
+    console.error("Error calculating total given stars:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 const getSuperAdminWallet = async (req, res) => {
   try {
     const wallet = await SuperAdminWallet.findOne();
@@ -2684,5 +2810,7 @@ export {
   getSuperAdminWallet,
   resetContestEntryWallet,
   getContestEntryWallet,
-  getWelcomeBonusLogs
+  getWelcomeBonusLogs,
+  fetchTotalReceivedStars,
+  fetchTotalGivenStars
 };

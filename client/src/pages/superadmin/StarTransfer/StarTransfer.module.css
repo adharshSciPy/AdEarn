@@ -1,15 +1,15 @@
-.notificationmain {
+.startransfermain {
   height: max-content;
   padding-bottom: 200px;
 }
 
-.notificationcontainer {
+.startransfercontainer {
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
-.notificationform {
+.startransfer {
   width: calc(100% - 250px);
   margin-left: 250px;
   position: absolute;
@@ -20,34 +20,33 @@
   justify-content: center;
   align-items: center;
 }
-.radio{
-  display: flex;
-  align-items: center;
-  margin: 20px 0;
-}
 
-.notificationhead {
+.startransferform {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 30px;
-}
-
-.inputnotification {
-  display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  margin-top: 50px;
+  border: 2px solid #693bb8;
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 20px;
 }
 
-.subbutton {
+.transferform {
   display: flex;
-  justify-content: end;
+  flex-wrap: wrap;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  margin-top: 50px;
+  line-height: 40px;
+  width: 100%;
+  height: 100px;
 }
 
 .subbutton Button {
   background-color: #693bb8;
-  color: white;
+}
+
+.subbutton {
+  padding: 10px;
 }

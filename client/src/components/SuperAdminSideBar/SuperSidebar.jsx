@@ -61,7 +61,7 @@ function Sidebar() {
       icon: <UserOutlined />,
       children: [
         { key: "user-section", label: "User Account", path: "/superadminadsuser" },
-        { key: "deleted-user", label: "Delete User", path: "/demo" },
+        { key: "blacklist-user", label: "BlackListed User", path: "/Superadminblacklist" },
       ],
     },
     {
@@ -162,7 +162,7 @@ function Sidebar() {
         { key: "admin-add", label: "Add Admin ", path: "/superadminaddadmin" },
         { key: "admin-delete", label: " Delete Admin", path: "/manageadmin" },
         { key: "admin-list", label: " List Admin", path: "/Superadminadminlist" },
-
+        { key: "admin-star", label: "Star Transfer", path: "/Superadminstartransfer" }
       ],
     },
     {
