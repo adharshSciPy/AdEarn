@@ -34,7 +34,7 @@ function SuperAdminContestPage() {
 
   const handleInputChange = (index, value) => {
     const updated = [...winners];
-    if (updated[index].file) return; // Prevent typing if image exists
+    if (updated[index].file) return;
     updated[index].value = value.replace(/\D/g, "");
     setWinners(updated);
   };
@@ -42,7 +42,7 @@ function SuperAdminContestPage() {
   const handleFileChange = (index, file) => {
     const updated = [...winners];
     updated[index].file = file;
-    updated[index].value = ""; // Clear stars if image is selected
+    updated[index].value = "";
     setWinners(updated);
   };
 
@@ -51,6 +51,21 @@ function SuperAdminContestPage() {
     const newLabel = `${numberToOrdinal(nextIndex)} winner`;
     setWinners([...winners, { label: newLabel, value: "", file: null }]);
   };
+
+  const removeWinner = (index) => {
+  if (winners.length === 1) return;
+
+  const updated = winners.filter((_, i) => i !== index);
+
+  // Recalculate labels
+  const relabeled = updated.map((winner, i) => ({
+    ...winner,
+    label: `${numberToOrdinal(i + 1)} winner`,
+  }));
+
+  setWinners(relabeled);
+};
+  
 
   const handleCancel = () => {
     setFormData({
@@ -125,7 +140,7 @@ function SuperAdminContestPage() {
 
       toast.success("🎉 Contest created successfully!");
       console.log("Contest created:", response.data);
-      handleCancel(); // Reset form
+      handleCancel();
     } catch (error) {
       console.error("Error creating contest:", error);
       if (error.response?.data?.message) {
@@ -140,6 +155,7 @@ function SuperAdminContestPage() {
     <div className={styles.UserAccount}>
       <SuperSidebar />
       <Header />
+      <ToastContainer />
       <div className={styles.wrapper}>
         <div className={styles.header}>
           <h2>Create Contest</h2>
@@ -249,6 +265,13 @@ function SuperAdminContestPage() {
                     />
                   </label>
                   {winner.file && <span>{winner.file.name}</span>}
+                  <button
+                    type="button"
+                    className={styles.removebtn}
+                    onClick={() => removeWinner(index)}
+                  >
+                    Remove
+                  </button>
                 </div>
               ))}
               <button type="button" className={styles.addbtn} onClick={addWinner}>
