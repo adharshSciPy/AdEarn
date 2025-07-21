@@ -491,6 +491,8 @@ function AdForm() {
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPaymentType, setSelectedPaymentType] = useState(null);
   // Toggle time options when multipleTime is selected
   const handleTimeChange = (label) => {
     const newOptions = {
@@ -506,7 +508,7 @@ function AdForm() {
   };
   const handleFileChangeaudio = (e) => {
     const file = e.target.files[0];
-    setAudio(file)
+    setAudio(file);
     if (file) {
       const previewUrl = URL.createObjectURL(file);
       setPreviewaudio(previewUrl);
@@ -623,93 +625,134 @@ function AdForm() {
   };
 
   // Submit form data
-  const handleSubmit = async () => {
+  const handleSubmit = async (paymentType) => {
     if (!validateForm()) return;
 
     setLoading(true);
     setSubmitError("");
     setSubmitSuccess("");
+
     const locationPayload = positions.map((p) => ({
       coords: `${p.lat},${p.lng}`,
       radius: p.radiusKm,
     }));
-    const formData = new FormData();
 
+    const formData = new FormData();
     formData.append("title", form.adName);
     formData.append("description", form.adCategory);
     formData.append("userViewsNeeded", form.viewPlan);
-
-    // Array of positions (e.g., { coords: "8.5,76.9", radius: "5" })
     formData.append("locations", JSON.stringify(locationPayload));
-    // Arrays of states and districts
     formData.append("states", JSON.stringify(form.state));
-    // if array
     formData.append("districts", JSON.stringify(form.city || []));
-    // if array
     formData.append("imageAd", image);
     formData.append("audioAd", audio);
-
     formData.append(
       "adPeriod",
       JSON.stringify(singleTime ? 0 : selectedTimeSlots)
     );
 
     try {
-      const response = await axios.post(
-        `${baseUrl}/api/v1/ads/image-ad/${id}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      if (response.status === 200) {
-        console.log(response);
+      // OPTIONAL: use paymentType for conditional logic
+      console.log("Selected Payment Type:", paymentType);
+      if (paymentType === "stars") {
+        const response = await axios.post(
+          `${baseUrl}/api/v1/ads/image-ad/${id}`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
 
-        setForm({
-          adName: "",
-          adCategory: "",
-          state: [],
-          city: [],
-          viewPlan: "",
-        });
-        if (fileInputAudioRef.current) {
-          fileInputAudioRef.current.value = null;
+        if (response.status === 200) {
+          console.log("Ad saved successfully:", response);
+
+          setForm({
+            adName: "",
+            adCategory: "",
+            state: [],
+            city: [],
+            viewPlan: "",
+          });
+          if (fileInputAudioRef.current) fileInputAudioRef.current.value = null;
+          if (fileInputRef.current) fileInputRef.current.value = null;
+
+          setPreview(null);
+          setPositions([]);
+          setSingleTime(false);
+          setMultipleTime(false);
+          setSelectedTimeSlots([]);
+          setSearchInput("");
+          setTimeOptions({
+            "3hrs": false,
+            "6hrs": false,
+            "12hrs": false,
+            "24hrs": false,
+            "48hrs": false,
+          });
+
+          setShowSuccessPopup(true);
+          setTimeout(() => {
+            setShowSuccessPopup(false);
+            navigate(`/userhome/${id}`);
+          }, 2000);
         }
-        if (fileInputRef.current) {
-          fileInputRef.current.value = null;
+      } else {
+        const response = await axios.post(
+          `${baseUrl}/api/v1/ads/image-ad/draft/${id}`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        if (response.status === 200) {
+          console.log("Ad saved successfully:", response);
+
+          setForm({
+            adName: "",
+            adCategory: "",
+            state: [],
+            city: [],
+            viewPlan: "",
+          });
+          if (fileInputAudioRef.current) fileInputAudioRef.current.value = null;
+          if (fileInputRef.current) fileInputRef.current.value = null;
+
+          setPreview(null);
+          setPositions([]);
+          setSingleTime(false);
+          setMultipleTime(false);
+          setSelectedTimeSlots([]);
+          setSearchInput("");
+          setTimeOptions({
+            "3hrs": false,
+            "6hrs": false,
+            "12hrs": false,
+            "24hrs": false,
+            "48hrs": false,
+          });
+
+          setShowSuccessPopup(true);
+          setTimeout(() => {
+            setShowSuccessPopup(false);
+            navigate(`/userhome/${id}`);
+          }, 2000);
         }
-        setPreview(null);
-        setPositions([]);
-        setSingleTime(false);
-        setMultipleTime(false);
-        setSelectedTimeSlots([]);
-        setSearchInput("");
-        setTimeOptions({
-          "3hrs": false,
-          "6hrs": false,
-          "12hrs": false,
-          "24hrs": false,
-          "48hrs": false,
-        }); // adjust keys as per your time options
-        setShowSuccessPopup(true);
-        setTimeout(() => {
-          setShowSuccessPopup(false);
-          navigate(`/userhome/${id}`);
-        }, 2000);
       }
     } catch (error) {
       console.log(error);
-    }
-    setTimeout(() => {
-      setSubmitSuccess("Ad saved successfully!");
+      setSubmitError("Something went wrong.");
+    } finally {
       setLoading(false);
-    }, 1000);
+      setSubmitSuccess("Ad saved successfully!");
+    }
   };
   const [preview, setPreview] = useState(null);
   const [previewaudio, setPreviewaudio] = useState(null);
-
 
   const handleStateChange = (selected) => {
     const selectedStates = selected ? selected.map((opt) => opt.value) : [];
@@ -1144,7 +1187,7 @@ function AdForm() {
                 border: "none",
                 color: "white",
               }}
-              onClick={handleSubmit}
+              onClick={() => setShowPaymentModal(true)}
               disabled={loading}
             >
               {loading ? "Saving..." : "Save & Continue"}
@@ -1159,6 +1202,42 @@ function AdForm() {
               autoplay
               style={{ width: 150, height: 150 }}
             />
+          </div>
+        )}
+        {showPaymentModal && (
+          <div className={styles.modalOverlay}>
+            <div className={styles.modalContent}>
+              <h2>Choose Payment Method</h2>
+              <p>How would you like to proceed?</p>
+              <div className={styles.modalButtons}>
+                <button
+                  className={styles.paymentBtn}
+                  onClick={() => {
+                    setSelectedPaymentType("payment");
+                    setShowPaymentModal(false);
+                    handleSubmit("payment");
+                  }}
+                >
+                  💳 Pay with Payment
+                </button>
+                <button
+                  className={styles.starBtn}
+                  onClick={() => {
+                    setSelectedPaymentType("stars");
+                    setShowPaymentModal(false);
+                    handleSubmit("stars");
+                  }}
+                >
+                  ⭐ Pay with Stars
+                </button>
+              </div>
+              <button
+                className={styles.modalClose}
+                onClick={() => setShowPaymentModal(false)}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
       </div>

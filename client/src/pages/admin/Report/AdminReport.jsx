@@ -147,7 +147,7 @@ function AdminReport() {
 
     if (activeTab === "Verified Ads") {
       const verifiedAdsSheet = paginatedVerifiedAds.map((ad) => {
-        const adRef = ad.adId.surveyAdRef || ad.adId.videoAdRef || ad.adId.imageAdRef || {};
+        const adRef = ad.adId?.surveyAdRef || ad.adId?.videoAdRef || ad.adId?.imageAdRef || {};
         return {
           Name: adRef.title || 'N/A',
           Views: adRef.totalViewCount ?? 0,
@@ -242,7 +242,7 @@ function AdminReport() {
                       </thead>
                       <tbody>
                         {paginatedVerifiedAds.map((ad, index) => {
-                          const adRef = ad.adId.surveyAdRef || ad.adId.videoAdRef || ad.adId.imageAdRef || {};
+                          const adRef = ad.adId?.surveyAdRef || ad.adId?.videoAdRef || ad.adId?.imageAdRef || {};
                           return (
                             <tr key={index}>
                               <td>{adRef.title || 'N/A'}</td>

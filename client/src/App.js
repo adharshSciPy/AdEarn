@@ -55,8 +55,8 @@ import PasswordResetForm from './pages/user/PasswordResetForm/PasswordResetForm'
 import CouponPage from './pages/user/Couponpage/CouponPage';
 import SurveyAdPreview from './pages/user/SurveyAdPreview/SurveyAdPreview';
 import SurveyResponses from './pages/user/SurveyResponses/SurveyResponses';
-
-
+import SavedAds from './pages/user/SavedAds/SavedAds';
+import SavedAdsPreview from './pages/user/SavedAdsPreview/SavedAdsPreview';
 
 import SuperAdminLogin from './pages/superadmin/SuperAdminLogin/SuperAdminLogin';
 import SuperadminDash from './pages/superadmin/Dashboard/SuperadminDash';
@@ -100,6 +100,7 @@ import ContestGamification from './pages/superadmin/ContestGamification/ContestG
 import SelectWinner from './pages/superadmin/SelectWinner/SelectWinner';
 import CoupounRequest from './pages/superadmin/CouponRequestListing/CoupounRequest';
 import StarTransfer from './pages/superadmin/StarTransfer/StarTransfer';
+import BlacklistUser from './pages/superadmin/BlacklistUser/BlacklistUser';
 
 
 import SubscriptionModal from './components/SubscriptionModal/SubscriptionModal';
@@ -165,6 +166,8 @@ function App() {
           <Route path='/form1/:id' element={<Form1 />} />
           <Route path='/form2/:id' element={<Form2 />} />
           <Route path='/userhome/:id' element={<UserHome />} />
+          <Route path='/savedAds/:id' element={<SavedAds />} />
+
           <Route path='/adsmanageruser/:id' element={<Adsmanager />} />
           <Route path='/adstemplate' element={<AdTemplateSelector />} />
           <Route path='/contestpage/:id' element={<ContestPage />} />
@@ -179,6 +182,8 @@ function App() {
           <Route path='/adreportuser' element={<UserReport />} />
           <Route path='/surveyaduser/:id' element={<SurveyAds />} />
           <Route path='/adspreview/:id/:adId' element={<AdsPreview />} />
+          <Route path='/savedAdsPreview/:id/:adId' element={<SavedAdsPreview />} />
+
           <Route path='/ads/:type' element={<Adspage />} />
           <Route path='/adedit/:id' element={<AdEdit />} />
           <Route path='/adduplicate' element={<AdEdit />} />
@@ -189,6 +194,8 @@ function App() {
           <Route path='/coupon' element={<CouponPage />} />
           <Route path='/surveyadspreview/:id/:adId' element={<SurveyAdPreview />} />
           <Route path='/surveyaddetails/:id/:adId' element={<SurveyResponses />} />
+          
+
 
 
 
@@ -241,6 +248,7 @@ function App() {
           <Route path='/selectwinner' element={<SelectWinner />} />
           <Route path='/couponreqSuperAdmin' element={< CoupounRequest />} />
           <Route path='/Superadminstartransfer' element={<StarTransfer />} />
+          <Route path='/Superadminblacklist' element={<BlacklistUser />} />
 
 
 
