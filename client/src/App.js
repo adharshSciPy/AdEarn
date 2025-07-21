@@ -239,7 +239,7 @@ function App() {
           <Route path='/superadminuserstar' element={<Userstar />} />
           <Route path='/superadminwelcomestar' element={<WelcomeStar />} />
           <Route path='/superadmincontest' element={<Contest />} />
-          <Route path='/superadmincontestwinner' element={<ContestWinner />} />
+          {/* <Route path='/superadmincontestwinner' element={<ContestWinner />} /> */}
           <Route path='/SuperadminLogin' element={<SuperAdminLogin />} />
           <Route path='/Superadminadminlist' element={<AdminListing />} />
           <Route path='/resetPassSuper/:email' element={<ResetPassSuper />} />
