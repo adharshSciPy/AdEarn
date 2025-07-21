@@ -21,7 +21,11 @@ import config from "../config.js";
 import subscriptionSettings from "../model/subscriptionSettingsModel.js";
 import CouponRequest from "../model/couponRequestModel.js";
 import getCouponAmount from "../utils/getCouponAmount.js";
-import UserContestEntry from "../model/userContestEntryModel.js"
+import UserContestEntry from "../model/userContestEntryModel.js";
+import { ImageAd } from "../model/imageadModel.js";
+import { VideoAd } from "../model/videoadModel.js";
+import { SurveyAd } from "../model/surveyadModel.js";
+import { log } from "console";
 
 
 
@@ -1439,6 +1443,155 @@ const unsaveAd = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+//to delete ads that are ongoing
+const deleteAd = async (req, res) => {
+  const { userId } = req.params;
+  const { adId } = req.body;
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    if (!userId || !adId) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: "userId and adId are required" });
+    }
+
+    const user = await User.findById(userId)
+      .populate("userWalletDetails")
+      .session(session);
+
+    if (!user) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const adIndex = user.ads.findIndex((id) => id.toString() === adId);
+    if (adIndex === -1) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(403).json({ message: "Unauthorized: Ad not found in user's posted list" });
+    }
+
+    const ad = await Ad.findById(adId)
+      .populate("videoAdRef")
+      .populate("imgAdRef")
+      .populate("surveyAdRef")
+      .session(session);
+
+    if (!ad) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ message: "Ad not found" });
+    }
+
+    const adData = ad.videoAdRef || ad.imgAdRef || ad.surveyAdRef;
+    if (!adData) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ message: "Ad data reference (image/video/survey) not found" });
+    }
+
+    const isVerified = adData.isAdVerified;
+    const starPlan = Array.isArray(adData.starPayoutPlan) ? adData.starPayoutPlan : [];
+
+    const totalStarsAllocated = adData.totalStarsAllocated || starPlan.reduce((sum, val) => sum + val, 0);
+    const extraDeductedStars = adData.extraDeductedStars || 0;
+    // console.log(`${extraDeductedStars}+ ${totalStarsAllocated}`);
+    
+    const starsToRefund = totalStarsAllocated + extraDeductedStars;
+
+    const refundLog = {
+      adId: ad._id,
+      starsReturned: starsToRefund,
+      totalStarsAllocated,
+      extraDeductedStars,
+      totalViewsNeeded: adData.userViewsNeeded || 0,
+      viewsReached: adData.totalViewCount || 0,
+      refundedAt: new Date(),
+    };
+
+    // Refund logic
+    if (starsToRefund > 0) {
+      if (isVerified) {
+        const superAdminWallet = await SuperAdminWallet.findOne().session(session);
+        if (!superAdminWallet) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(500).json({ message: "Super Admin Wallet not found" });
+        }
+
+        superAdminWallet.totalStars += starsToRefund;
+        superAdminWallet.deletedAdStars.push({
+          starsReturned: starsToRefund,
+          totalStarsAllocated,
+          extraDeductedStars,
+          date: new Date(),
+          reason: { type: "Stars from deleted ads" },
+        });
+
+        await superAdminWallet.save({ session });
+      } else {
+        if (!user.userWalletDetails) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(404).json({ message: "User wallet not found" });
+        }
+
+        user.userWalletDetails.totalStars += starsToRefund;
+        user.userWalletDetails.refundedStars = user.userWalletDetails.refundedStars || [];
+        user.userWalletDetails.refundedStars.push(refundLog);
+
+        await user.userWalletDetails.save({ session });
+      }
+    }
+
+    // Remove ad from user's list
+    user.ads.splice(adIndex, 1);
+    user.savedAds = user.savedAds.filter((saved) => saved.adId.toString() !== adId);
+    await user.save({ session });
+
+    // Remove from savedAds of all users
+    await User.updateMany(
+      { "savedAds.adId": adId },
+      { $pull: { savedAds: { adId } } },
+      { session }
+    );
+
+    // Delete main ad
+    await Ad.findByIdAndDelete(adId).session(session);
+
+    // Delete associated ad content
+    if (ad.videoAdRef) {
+      await VideoAd.findByIdAndDelete(ad.videoAdRef._id).session(session);
+    } else if (ad.imgAdRef) {
+      await ImageAd.findByIdAndDelete(ad.imgAdRef._id).session(session);
+    } else if (ad.surveyAdRef) {
+      await SurveyAd.findByIdAndDelete(ad.surveyAdRef._id).session(session);
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(200).json({
+      message: isVerified
+        ? "Verified ad deleted. Stars refunded to Super Admin."
+        : "Unverified ad deleted. Stars refunded to user.",
+      starsRefunded: starsToRefund,
+    });
+
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error("❌ Error deleting ad:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
 
 
 
@@ -1470,5 +1623,6 @@ export {
   getUserContestEntries,
   saveAdForLater,
   getSavedAds,
-  unsaveAd
+  unsaveAd,
+  deleteAd
 };

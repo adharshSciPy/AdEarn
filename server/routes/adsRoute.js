@@ -14,6 +14,7 @@ import {
   toggleAds,
   editImageAd,
   editVideoAd,
+  editSurveyAd,
   submitSurveyResponse,
   getSurveyAdStats,
   createImageAdDraft,
@@ -46,6 +47,7 @@ adsRouter.post("/view-ads/:id/:adId", viewAd);
 adsRouter.post("/toggle-ad", toggleAds);
 adsRouter.patch("/edit-image-ad/:adId", wrapMulter(adMediaUpload), editImageAd);
 adsRouter.patch("/edit-video-ad/:adId", wrapMulter(adVideoUpload), editVideoAd);
+adsRouter.patch("/edit-survey-ad/:adId", wrapMulter(surveyAdUpload), editSurveyAd);
 adsRouter.post("/image-ad/draft/:id", wrapMulter(adMediaUpload), createImageAdDraft);
 adsRouter.post("/video-ad/draft/:id", wrapMulter(adVideoUpload), createVideoAdDraft);
 adsRouter.post("/survey-ad/draft/:id", wrapMulter(surveyAdUpload), createSurveyAdDraft);
