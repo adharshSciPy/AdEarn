@@ -6,11 +6,14 @@ import confetti from "canvas-confetti";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import baseUrl from "../../../baseurl";
+import { toast } from "react-toastify";
 
 function ContestGamification() {
   const [popupUserId, setPopupUserId] = useState(null);
   const [selectedWinners, setSelectedWinners] = useState([]);
   const [users, setUsers] = useState([]);
+  const [rewardStructure, setRewardStructure] = useState([]);
+
   const fireConfetti = () => {
     // Left side cannon
     confetti({
@@ -37,31 +40,36 @@ function ContestGamification() {
     );
 
     if (alreadySelected) {
-      setSelectedWinners((prev) =>
-        prev.filter((u) => u.userId._id !== user.userId._id)
-      );
-    } else {
-      const newWinners = [...selectedWinners, user];
-      setSelectedWinners(newWinners);
-      setPopupUserId(user.userId._id);
-      fireConfetti();
-      setTimeout(() => setPopupUserId(null), 1500);
+      // ❌ Prevent unselecting
+      toast.error("This winner is already selected and cannot be removed.");
+      return;
+    }
 
-      const position = newWinners.length;
+    if (selectedWinners.length >= rewardStructure.length) {
+      toast.error(`❌ Only ${rewardStructure.length} winners allowed.`);
+      return;
+    }
 
-      // Send to backend
-      try {
-        const res=await axios.post(`${baseUrl}/api/v1/super-admin/assign-winner`, {
+    const newWinners = [...selectedWinners, user];
+    setSelectedWinners(newWinners);
+    setPopupUserId(user.userId._id);
+    fireConfetti();
+    setTimeout(() => setPopupUserId(null), 1500);
+
+    const position = newWinners.length;
+
+    try {
+      const res = await axios.post(
+        `${baseUrl}/api/v1/super-admin/assign-winner`,
+        {
           contestId: id,
           userId: user.userId._id,
           position,
-        });
-        console.log(res);
-        
-        
-      } catch (err) {
-        console.error("Error saving winner:", err);
-      }
+        }
+      );
+      console.log(res);
+    } catch (err) {
+      console.error("Error saving winner:", err);
     }
   };
 
@@ -75,8 +83,8 @@ function ContestGamification() {
   const getData = async () => {
     try {
       const res = await axios.get(`${baseUrl}/api/v1/super-admin/manual/${id}`);
-      console.log(res);
       setUsers(res.data.contest.participants);
+      setRewardStructure(res.data.contest.rewardStructure || []);
     } catch (error) {
       console.log(error);
     }
@@ -111,6 +119,11 @@ function ContestGamification() {
                     key={user.userId._id}
                     className={`${styles.userCard} ${
                       isSelected ? styles.selected : ""
+                    } ${
+                      selectedWinners.length >= rewardStructure.length &&
+                      !isSelected
+                        ? styles.disabled
+                        : ""
                     }`}
                     onClick={() => toggleSelection(user)}
                   >
