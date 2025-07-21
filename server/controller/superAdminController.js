@@ -2776,7 +2776,7 @@ const getWelcomeBonusLogs = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-//to take payout ...in super admin wallet
+//to take payout from super admin wallet
 const superAdminPayout=async(req,res)=>{
 const {starCount,note}=req.body;
  if (!starCount || starCount <= 0) {
