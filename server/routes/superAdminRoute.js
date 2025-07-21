@@ -116,14 +116,4 @@ superAdminRouter.route("/contest-entry-wallet").get(getContestEntryWallet ); //f
 superAdminRouter.route("/welcome-bonus/logs").get(getWelcomeBonusLogs ); // includes the stars got from the company , given stars ,logs of users who got the stars and the date he got the star
 superAdminRouter.route("/total-stars/received").get(fetchTotalReceivedStars);
 superAdminRouter.route("/total-stars/given").get(fetchTotalGivenStars);
-
-
-
-
-
-
-
-
-
-
 export default superAdminRouter;
