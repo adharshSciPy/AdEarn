@@ -1,19 +1,17 @@
 import React from "react";
 import styles from "./ContestPage.module.css";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Navbar from "../NavBar/Navbar";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import baseUrl from "../../../baseurl";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
-import "swiper/css/navigation";
-import { toast } from 'react-toastify';
-
+import { toast } from "react-toastify";
 
 const ContestPage = () => {
-  const [contest, setContest] = useState();
-  const [userContest, setUserContest] = useState();
+  const [contest, setContest] = useState([]);
+  const [userContest, setUserContest] = useState([]);
   const [selectedContest, setSelectedContest] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState("ongoing");
@@ -23,10 +21,9 @@ const ContestPage = () => {
   const getContest = async () => {
     try {
       const res = await axios.get(`${baseUrl}/api/v1/super-admin/contests`);
-      setContest(res.data.contests);
-      console.log(res);
+      setContest(res.data.contests || []);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -35,9 +32,9 @@ const ContestPage = () => {
       const res = await axios.get(
         `${baseUrl}/api/v1/user/my-contest-entries/${id}`
       );
-      setUserContest(res.data);
+      setUserContest(res.data || []);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -47,7 +44,7 @@ const ContestPage = () => {
         `${baseUrl}/api/v1/user/contest/register`,
         {
           userId: id,
-          contestNumber: contestNumber,
+          contestNumber,
         }
       );
 
@@ -57,9 +54,8 @@ const ContestPage = () => {
         getContestData();
       }
     } catch (error) {
-      console.log(error);
       const errMsg =
-        error?.response?.data?.message || "Failed to enter contest. Try again.";
+        error?.response?.data?.message || "Failed to enter contest.";
       toast.error(errMsg);
     }
   };
@@ -68,6 +64,8 @@ const ContestPage = () => {
     getContest();
     getContestData();
   }, []);
+
+  const activeContests = contest.filter((item) => item.status === "Active");
 
   return (
     <>
@@ -94,17 +92,15 @@ const ContestPage = () => {
 
         {activeTab === "ongoing" && (
           <>
-            <div className={styles.cardContainer}>
-              {contest
-                ?.filter((item) => item.status === "Active")
-                .map((item, index) => {
+            {activeContests.length > 0 ? (
+              <div className={styles.cardContainer}>
+                {activeContests.map((item, index) => {
                   const prizeImages = item.prizeImages || [];
                   const rewardSlides =
                     item.rewardStructure?.map((reward) => ({
                       position: reward.position,
                       stars: reward.stars,
                     })) || [];
-
                   const totalPrizes = prizeImages.length + rewardSlides.length;
 
                   return (
@@ -146,12 +142,10 @@ const ContestPage = () => {
                         <p>
                           <strong>Entry Stars:</strong> ⭐ {item.entryStars}
                         </p>
-                        {item.startDate && (
-                          <p>
-                            <strong>Start Date:</strong>{" "}
-                            {new Date(item.startDate).toLocaleDateString()}
-                          </p>
-                        )}
+                        <p>
+                          <strong>Start Date:</strong>{" "}
+                          {new Date(item.startDate).toLocaleDateString()}
+                        </p>
                         <p>
                           <strong>Status:</strong> {item.status}
                         </p>
@@ -170,59 +164,100 @@ const ContestPage = () => {
                     </div>
                   );
                 })}
-            </div>
+              </div>
+            ) : (
+              <div className={styles.emptyState}>
+                <div className={styles.trophyAnimation}>
+                  <div className={styles.trophyBase}></div>
+                  <div className={styles.trophyCup}></div>
+                  <div className={styles.trophyTop}></div>
+                  <div className={styles.sparkle}></div>
+                  <div className={styles.sparkle}></div>
+                  <div className={styles.sparkle}></div>
+                </div>
+                <h2>No Active Contests</h2>
+                <p className={styles.subtitle}>
+                  The arena awaits its next champion
+                </p>
+                <p className={styles.description}>
+                  New challenges are coming soon!
+                  <br />
+                  Prepare your skills and check back later.
+                </p>
+              </div>
+            )}
           </>
         )}
 
         {activeTab === "all" && (
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th style={{ textAlign: "left" }}>Contest name</th>
-                  <th>Entry stars</th>
-                  <th>Entry date</th>
-                  <th>Total Entry</th>
-                  <th>Status</th>
-                  <th>Winner</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {userContest?.map((contest) => (
-                  <tr key={contest.id}>
-                    <td>
-                      <div className={styles.nameCell}>
-                        <span>{contest.contestName}</span>
-                      </div>
-                    </td>
-                    <td>{contest.entryStars}</td>
-                    <td>
-                      {new Date(contest.entryDate).toLocaleString("en-GB", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </td>
-                    <td>{contest.totalEntry}</td>
-                    <td className={styles.ongoing}>{contest.status}</td>
-                    <td>Running</td>
-                    <td className={styles.editIcons}>
-                      <button
-                        className={styles.iconBtn}
-                        onClick={() => {
-                          setSelectedContest(contest);
-                          setShowModal(true);
-                        }}
-                      >
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {userContest.length > 0 ? (
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left" }}>Contest name</th>
+                      <th>Entry stars</th>
+                      <th>Entry date</th>
+                      <th>Total Entry</th>
+                      <th>Status</th>
+                      <th>Winner</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {userContest.map((contest) => (
+                      <tr key={contest.id}>
+                        <td>
+                          <span>{contest.contestName}</span>
+                        </td>
+                        <td>{contest.entryStars}</td>
+                        <td>
+                          {new Date(contest.entryDate).toLocaleDateString(
+                            "en-GB"
+                          )}
+                        </td>
+                        <td>{contest.totalEntry}</td>
+                        <td className={styles.ongoing}>{contest.status}</td>
+                        <td>Running</td>
+                        <td>
+                          <button
+                            className={styles.iconBtn}
+                            onClick={() => {
+                              setSelectedContest(contest);
+                              setShowModal(true);
+                            }}
+                          >
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className={styles.emptyState}>
+                <div className={styles.trophyAnimation}>
+                  <div className={styles.trophyBase}></div>
+                  <div className={styles.trophyCup}></div>
+                  <div className={styles.trophyTop}></div>
+                  <div className={styles.sparkle}></div>
+                  <div className={styles.sparkle}></div>
+                  <div className={styles.sparkle}></div>
+                </div>
+                <h2>No Contest Participation</h2>
+                <p className={styles.subtitle}>
+                  Your trophy case is empty
+                </p>
+                <p className={styles.description}>
+                  You haven't joined any contests yet.
+                  <br />
+                  Jump in when the next one starts!
+                </p>
+              </div>
+            )}
+          </>
         )}
 
         {showModal && selectedContest && (
