@@ -1877,7 +1877,7 @@ const editImageAd = async (req, res) => {
       return res.status(400).json({ message: "Invalid location format", error: err.message });
     }
 
-    // 🔄 Re-verification trigger
+    //  Re-verification trigger
     if (imageAd.isAdVerified === true) {
       imageAd.isAdVerified = false;
     }

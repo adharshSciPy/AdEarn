@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
+import { type } from "os";
 
-// ✅ Existing Sub-Schemas Stay as-is
+
 
 const transactionSchemaSA = new Schema(
   {
@@ -207,14 +208,20 @@ const adminTransferLogSchema = new Schema(
 const generatedStarsLogSchema = new Schema(
   {
     starsGenerated: { type: Number, required: true },
-    amount: { type: Number, required: true }, // computed via utility
+    amount: { type: Number, required: true },
     note: { type: String },
     date: { type: Date, default: Date.now },
   },
   { _id: false }
 );
+const deletedAdStarsSchema=new Schema({
+  starsReturned:{type:Number},
+  date: { type: Date, default: Date.now },
+  reason:{type:{
+    type:String,default:"Stars from deleted ads"
+  }}
 
-
+},{_id:false})
 
 // MAIN Schema
 const superAdminWalletSchema = new Schema(
@@ -235,6 +242,8 @@ const superAdminWalletSchema = new Schema(
     couponGenerationLogs: [couponGenerationLogSchema],
     adminTransfers: [adminTransferLogSchema],
     generatedStarsLog: [generatedStarsLogSchema],
+    deletedAdStars:[deletedAdStarsSchema]
+
 
 
   },
