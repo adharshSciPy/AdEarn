@@ -1567,7 +1567,7 @@ const fetchVerifiedSurveyAd = async (req, res) => {
 
 
 
-
+  
 
 // to watch ads,star split,view count
 const viewAd = async (req, res) => {
@@ -1990,6 +1990,148 @@ return res.status(404).json({message:"Ad not found"});
   }
 
 };
+
+const editSurveyAd = async (req, res) => {
+  const { adId } = req.params;
+
+  if (!adId) {
+    return res.status(400).json({ message: "Ad ID is required" });
+  }
+
+  try {
+    const ad = await Ad.findById(adId).populate("surveyAdRef");
+    if (!ad || !ad.surveyAdRef) {
+      return res.status(404).json({ message: "Ad not found" });
+    }
+
+    const surveyAd = ad.surveyAdRef;
+
+    const {
+      title,
+      description,
+      adPeriod,
+      questions,
+      states,
+      districts,
+      locations,
+      existingImageUrl,
+    } = req.body;
+
+    let parsedQuestions, parsedStates, parsedDistricts, parsedLocations;
+
+    // Parse and validate
+    try {
+      parsedQuestions = typeof questions === "string" ? JSON.parse(questions) : questions;
+      parsedStates = typeof states === "string" ? JSON.parse(states) : states || [];
+      parsedDistricts = typeof districts === "string" ? JSON.parse(districts) : districts || [];
+      parsedLocations = typeof locations === "string" ? JSON.parse(locations) : locations || [];
+
+      if (!Array.isArray(parsedQuestions) || parsedQuestions.length === 0) {
+        return res.status(400).json({ message: "At least one question is required" });
+      }
+
+      for (const [index, q] of parsedQuestions.entries()) {
+        const { questionText, questionType, options } = q;
+        if (!questionText || !questionType || !options) {
+          return res.status(400).json({ message: `Missing fields in question ${index + 1}` });
+        }
+
+        if (!["yesno", "multiple"].includes(questionType)) {
+          return res.status(400).json({ message: `Invalid questionType in question ${index + 1}` });
+        }
+
+        if (questionType === "yesno" && (!Array.isArray(options) || options.length !== 2 || !options.includes("Yes") || !options.includes("No"))) {
+          return res.status(400).json({ message: `Yes/No question ${index + 1} must have exactly ['Yes', 'No'] as options` });
+        }
+
+        if (questionType === "multiple" && (!Array.isArray(options) || options.length < 2)) {
+          return res.status(400).json({ message: `Multiple choice question ${index + 1} must have at least 2 options` });
+        }
+      }
+    } catch (err) {
+      return res.status(400).json({ message: "Invalid JSON format", error: err.message });
+    }
+
+    // Parse target regions
+    let targetRegions = [];
+    try {
+      for (const loc of parsedLocations) {
+        if (!loc.coords || !loc.radius) continue;
+        const [latStr, lngStr] = loc.coords.split(",");
+        const latitude = parseFloat(latStr);
+        const longitude = parseFloat(lngStr);
+        const radius = parseFloat(loc.radius);
+
+        if (isNaN(latitude) || isNaN(longitude) || isNaN(radius)) {
+          return res.status(400).json({ message: "Invalid location format" });
+        }
+
+        targetRegions.push({
+          location: {
+            type: "Point",
+            coordinates: [latitude, longitude],
+          },
+          radius,
+        });
+      }
+    } catch (err) {
+      return res.status(400).json({ message: "Error parsing locations", error: err.message });
+    }
+
+    // Validate location targets
+    if (
+      targetRegions.length === 0 &&
+      (!parsedStates || parsedStates.length === 0) &&
+      (!parsedDistricts || parsedDistricts.length === 0)
+    ) {
+      return res.status(400).json({ message: "At least one target location (geo, state, or district) is required" });
+    }
+
+    // Handle image
+    let imageUrl = "";
+    if (req.file) {
+      imageUrl = `/surveyAdUploads/${req.file.filename}`;
+    } else if (existingImageUrl) {
+      imageUrl = existingImageUrl;
+    } else {
+      imageUrl = surveyAd.imageUrl; // fallback to existing
+    }
+
+    const parsedAdPeriod = parseFloat(adPeriod);
+    const adRepetition = !isNaN(parsedAdPeriod) && parsedAdPeriod > 0;
+
+    // Update values
+    surveyAd.title = title || surveyAd.title;
+    surveyAd.description = description || surveyAd.description;
+    surveyAd.questions = parsedQuestions;
+    surveyAd.imageUrl = imageUrl;
+    surveyAd.adPeriod = adRepetition ? parsedAdPeriod : 0;
+    surveyAd.adRepetition = adRepetition;
+    surveyAd.targetRegions = targetRegions;
+    surveyAd.targetStates = parsedStates;
+    surveyAd.targetDistricts = parsedDistricts;
+
+    // Reset questionStats
+    surveyAd.questionStats = parsedQuestions.map((q) => ({
+      questionText: q.questionText,
+      options: q.options,
+      counts: q.options.map(() => 0),
+      respondentNames: q.options.map(() => []),
+    }));
+
+    await surveyAd.save();
+
+    return res.status(200).json({
+      message: "Survey Ad updated successfully",
+      updatedSurveyAd: surveyAd,
+    });
+  } catch (error) {
+    console.error("Error editing survey ad:", error);
+    return res.status(500).json({ message: "Failed to edit survey ad", error: error.message });
+  }
+};
+ 
+
 // to post image ad with payment method
 const createImageAdDraft = async (req, res) => {
   const {
@@ -2703,5 +2845,6 @@ export {
   createImageAdDraft,
   createVideoAdDraft,
   createSurveyAdDraft,
-  confirmAdPayment
+  confirmAdPayment,
+  editSurveyAd
 };
