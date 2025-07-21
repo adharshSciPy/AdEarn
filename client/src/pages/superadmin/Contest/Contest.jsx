@@ -8,6 +8,7 @@ import "swiper/css/navigation";
 import { useNavigate } from "react-router-dom";
 import baseUrl from "../../../baseurl";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 function Contest() {
   // const navigate = useNavigate();
@@ -38,19 +39,23 @@ function Contest() {
     }
   };
 
-  const stopContest = async (contestId) => {
-    try {
-      const response = await axios.post(
-        `${baseUrl}/api/v1/super-admin/stop/${contestId}`
-      );
-      console.log(response);
-      if (response.status === 200) {
-        getContest();
-      }
-    } catch (error) {
-      console.log(error);
+const stopContest = async (contestId) => {
+  try {
+    const response = await axios.post(
+      `${baseUrl}/api/v1/super-admin/stop/${contestId}`
+    );
+    console.log(response);
+
+    if (response.status === 200) {
+      toast.success("✅ Contest stopped successfully");
+      getContest();
     }
-  };
+  } catch (error) {
+    console.log(error);
+    toast.error("❌ Failed to stop the contest");
+  }
+};
+
 
   useEffect(() => {
     getContest();
