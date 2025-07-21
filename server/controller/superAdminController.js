@@ -252,7 +252,7 @@ const getSuperAdminWallet = async (req, res) => {
     const getTotal = (array = [], key) =>
       array.reduce((sum, item) => sum + (item[key] || 0), 0);
 
-    // Compute star totals
+    // Compute all relevant star totals
     const totals = {
       transactionsTotalStars: getTotal(Swallet.transactions, "starsReceived"),
       adExtraDeductionsTotalStars: getTotal(Swallet.adExtraDeductions, "stars"),
@@ -262,20 +262,21 @@ const getSuperAdminWallet = async (req, res) => {
       welcomeBonusLogsTotalStars: getTotal(Swallet.welcomeBonusWallet?.logs, "stars"),
       companyDepositsTotalStars: getTotal(Swallet.companyRewardWallet?.companyDeposits, "stars"),
       companyGivenToWinnersTotalStars: getTotal(Swallet.companyRewardWallet?.givenToWinners, "stars"),
-      contestCollectedStars: (Swallet.contestEntryWallet?.collectedFromUsers || []).length,
+      contestCollectedStars: getTotal(Swallet.contestEntryWallet?.collectedFromUsers, "stars"),
       userEntryTotalStars: getTotal(Swallet.userEntry, "starsUsed"),
       blacklistedUserStarsTotal: getTotal(Swallet.blacklistedUserStars, "starsTransferred"),
       subscriptionStarsUsed: getTotal(Swallet.subscriptionLogs, "starsUsed"),
       starDistributionsTotalStars: getTotal(Swallet.starDistributions, "stars"),
       couponGenerationTotalStars: getTotal(Swallet.couponGenerationLogs, "starsSpent"),
+      deletedAdStarsTotalStars: getTotal(Swallet.deletedAdStars, "starsReturned"),
+      adminTransfersTotalStars: getTotal(Swallet.adminTransfers, "starsTransferred"),
+      generatedStarsLogTotalStars: getTotal(Swallet.generatedStarsLog, "starsGenerated"),
     };
 
-    // Add rupee conversion for all totals
+    // Convert all totals to Rupees
     const totalsWithAmounts = {};
     for (const [key, stars] of Object.entries(totals)) {
       totalsWithAmounts[key] = stars;
-
-      // Allow conversion for all types (not just ending in 'Stars')
       const amountKey =
         key === "contestCollectedStars"
           ? "contestCollectedAmountInRupees"
@@ -284,7 +285,7 @@ const getSuperAdminWallet = async (req, res) => {
       totalsWithAmounts[amountKey] = convertStarsToRupees(stars);
     }
 
-    // Add rupee info inside nested wallets
+    // Prepare wallet breakdowns
     const welcomeBonusWallet = {
       ...Swallet.welcomeBonusWallet?._doc,
       totalReceivedAmountInRupees: convertStarsToRupees(Swallet.welcomeBonusWallet?.totalReceived || 0),
@@ -309,14 +310,17 @@ const getSuperAdminWallet = async (req, res) => {
       totalAmountInRupees: convertStarsToRupees(Swallet.totalStars),
       perUserWelcomeBonus: Swallet.perUserWelcomeBonus,
 
-      // Totals with amounts
+      // Totals + rupee equivalents
       ...totalsWithAmounts,
 
-      // Raw + enriched wallets
+      // Raw data
       transactions: Swallet.transactions,
       adExtraDeductions: Swallet.adExtraDeductions,
       expiredCouponRefunds: Swallet.expiredCouponRefunds,
       deletedUserStars: Swallet.deletedUserStars,
+      deletedAdStars: Swallet.deletedAdStars,
+      adminTransfers: Swallet.adminTransfers,
+      generatedStarsLog: Swallet.generatedStarsLog,
       welcomeBonusWallet,
       companyRewardWallet,
       contestEntryWallet,
@@ -331,9 +335,11 @@ const getSuperAdminWallet = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching super-admin wallet:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };
+
+
 
 
 const getSuperAdminWelcomeBonusEarnings = async (req, res) => {
