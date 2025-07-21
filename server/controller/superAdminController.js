@@ -271,6 +271,7 @@ const getSuperAdminWallet = async (req, res) => {
       deletedAdStarsTotalStars: getTotal(Swallet.deletedAdStars, "starsReturned"),
       adminTransfersTotalStars: getTotal(Swallet.adminTransfers, "starsTransferred"),
       generatedStarsLogTotalStars: getTotal(Swallet.generatedStarsLog, "starsGenerated"),
+        payoutDetailsTotalStars: getTotal(Swallet.payoutDetails, "starCount"),
     };
 
     // Convert all totals to Rupees
@@ -329,6 +330,7 @@ const getSuperAdminWallet = async (req, res) => {
       subscriptionLogs: Swallet.subscriptionLogs,
       starDistributions: Swallet.starDistributions,
       couponGenerationLogs: Swallet.couponGenerationLogs,
+       payoutDetails: Swallet.payoutDetails,
 
       createdAt: Swallet.createdAt,
       updatedAt: Swallet.updatedAt,
@@ -1380,10 +1382,6 @@ const getAdminJobStats = async (req, res) => {
   }
 };
 
-
-
-
-
 const createContest = async (req, res) => {
   try {
     const {
@@ -1507,8 +1505,6 @@ const createContest = async (req, res) => {
   }
 };
 
-
-
 const selectAutomaticWinnersInternal = async (contestId) => {
   const contest = await ContestEntry.findById(contestId);
   if (!contest || contest.status === "Ended") return;
@@ -1571,6 +1567,7 @@ const selectAutomaticWinnersInternal = async (contestId) => {
   contest.contestEntryWallet -= totalReward;
   await contest.save();
 };
+
 const stopContestManually = async (req, res) => {
   const { id } = req.params;
 
@@ -1582,11 +1579,12 @@ const stopContestManually = async (req, res) => {
       return res.status(400).json({ message: "Contest already ended" });
     }
 
+    // ✅ Update contest status and mark manually stopped
     contest.status = "Ended";
     contest.manuallyStopped = true;
     await contest.save();
 
-
+    // ✅ Early return if winners are already selected
     if (contest.winners && contest.winners.length > 0) {
       return res.status(200).json({
         message: "Contest manually stopped, but winners already selected. No refunds issued.",
@@ -1594,42 +1592,98 @@ const stopContestManually = async (req, res) => {
       });
     }
 
+    // ✅ Get SuperAdmin wallet
     const adminWallet = await SuperAdminWallet.findOne();
     if (!adminWallet) {
       return res.status(404).json({ message: "SuperAdmin Wallet not found" });
     }
 
+    // ✅ Calculate reward stars to return to SuperAdmin wallet
+    const totalRewardStars = contest.rewardStructure?.reduce((total, reward) => total + reward.stars, 0) || 0;
+
+    // ✅ Find contest entries and refund entry fees to users
     const contestEntries = adminWallet.contestEntryWallet?.collectedFromUsers?.filter(
       (entry) => entry.contestId.toString() === contest._id.toString()
     ) || [];
 
     const starsToRefund = contest.entryStars;
-    const refundedUsers = [];
+    const totalRefundAmount = contestEntries.length * starsToRefund;
 
+    const refundedUsers = [];
+    const refundLogs = []; // ✅ Array to store detailed refund logs
+
+    // ✅ Refund entry fees to users
     for (const entry of contestEntries) {
       const user = await User.findById(entry.userId).populate("userWalletDetails");
       if (!user || !user.userWalletDetails) continue;
+
+      // ✅ Store user's balance before refund for logging
+      const balanceBeforeRefund = user.userWalletDetails.totalStars;
 
       user.userWalletDetails.totalStars += starsToRefund;
       await user.userWalletDetails.save();
 
       refundedUsers.push(user._id.toString());
+
+      // ✅ Create detailed refund log entry
+      refundLogs.push({
+        userId: user._id,
+        userName: user.name || user.email || 'Unknown User',
+        starsRefunded: starsToRefund,
+        balanceBeforeRefund: balanceBeforeRefund,
+        balanceAfterRefund: user.userWalletDetails.totalStars,
+        contestId: contest._id,
+        contestName: contest.contestName,
+        refundedAt: new Date(),
+        reason: 'Contest manually stopped - entry fee refund'
+      });
     }
 
-    // Remove refunded entries from admin wallet
+    // ✅ Remove refunded entries from admin wallet
     adminWallet.contestEntryWallet.collectedFromUsers = adminWallet.contestEntryWallet.collectedFromUsers.filter(
       (entry) => entry.contestId.toString() !== contest._id.toString()
     );
 
-    adminWallet.contestEntryWallet.totalReceived -= refundedUsers.length * starsToRefund;
+    // ✅ Update contest entry wallet values (for entry fees)
+    adminWallet.contestEntryWallet.totalReceived -= totalRefundAmount;
     adminWallet.contestEntryWallet.totalEntries -= refundedUsers.length;
-    adminWallet.totalStars -= refundedUsers.length * starsToRefund;
+    
+    // ✅ Return reserved reward stars to main SuperAdmin wallet
+    adminWallet.contestEntryWallet.reservedForContests -= totalRewardStars;
+    adminWallet.totalStars += totalRewardStars;
+
+    // ✅ Also add the refunded entry fees back to main wallet
+    adminWallet.totalStars += totalRefundAmount;
+
+    // ✅ Add contest refund log to SuperAdmin wallet for audit trail
+    const contestRefundLog = {
+      contestId: contest._id,
+      contestName: contest.contestName,
+      contestNumber: contest.contestNumber,
+      totalUsersRefunded: refundedUsers.length,
+      totalStarsRefunded: totalRefundAmount,
+      rewardStarsReturned: totalRewardStars,
+      refundedUsers: refundLogs,
+      refundedAt: new Date(),
+      reason: 'Contest manually stopped'
+    };
+
+    // ✅ Add to contest refund logs (you may need to add this field to your schema)
+    if (!adminWallet.contestRefundLogs) {
+      adminWallet.contestRefundLogs = [];
+    }
+    adminWallet.contestRefundLogs.push(contestRefundLog);
 
     await adminWallet.save();
 
     return res.status(200).json({
-      message: "Contest manually stopped and stars refunded to users",
-      refundedUsers,
+      message: "Contest manually stopped. Entry fees refunded to users and reward stars returned to SuperAdmin wallet.",
+      details: {
+        refundedUsers: refundedUsers.length,
+        totalEntryFeesRefunded: totalRefundAmount,
+        totalRewardStarsReturned: totalRewardStars
+      },
+      refundLogs: refundLogs, // ✅ Include detailed refund logs in response
       contest
     });
 
@@ -2563,7 +2617,6 @@ const fetchTotalReceivedStars = async (req, res) => {
     const getTotal = (array = [], key) =>
       Array.isArray(array) ? array.reduce((sum, item) => sum + (item[key] || 0), 0) : 0;
 
-    // Extracted fields
     const {
       transactions,
       expiredCouponRefunds,
@@ -2576,6 +2629,7 @@ const fetchTotalReceivedStars = async (req, res) => {
       adminTransfers,
       contestEntryWallet,
       companyRewardWallet,
+      deletedAdStars,
     } = superAdminWallet;
 
     const totalFromTransactions = getTotal(transactions, "starsReceived");
@@ -2586,7 +2640,8 @@ const fetchTotalReceivedStars = async (req, res) => {
     const totalFromAdExtraDeductions = getTotal(adExtraDeductions, "stars");
     const totalFromGeneratedStarLogs = getTotal(generatedStarsLog, "starsGenerated");
     const totalFromStarDistributions = getTotal(starDistributions, "stars");
-    const totalFromAdminTransfers = getTotal(adminTransfers, "stars");
+    const totalFromAdminTransfers = getTotal(adminTransfers, "starsTransferred");
+    const totalFromDeletedAds = getTotal(deletedAdStars, "starsReturned");
 
     const totalFromContestEntry = contestEntryWallet?.totalReceived || 0;
     const totalFromCompanyTransfers = companyRewardWallet?.totalReceived || 0;
@@ -2601,6 +2656,7 @@ const fetchTotalReceivedStars = async (req, res) => {
       totalFromGeneratedStarLogs +
       totalFromStarDistributions +
       totalFromAdminTransfers +
+      totalFromDeletedAds +
       totalFromContestEntry +
       totalFromCompanyTransfers;
 
@@ -2618,6 +2674,7 @@ const fetchTotalReceivedStars = async (req, res) => {
         totalFromGeneratedStarLogs,
         totalFromStarDistributions,
         totalFromAdminTransfers,
+        totalFromDeletedAds,
         totalFromContestEntry,
         totalFromCompanyTransfers,
       },
@@ -2627,6 +2684,7 @@ const fetchTotalReceivedStars = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 //fetch the total stars given /taken from superadmin wallet(company wallet)-
 const fetchTotalGivenStars = async (req, res) => {
   try {
@@ -2644,6 +2702,7 @@ const fetchTotalGivenStars = async (req, res) => {
       starDistributions,
       couponGenerationLogs,
       contestEntryWallet,
+      payoutDetails
     } = superAdminWallet;
 
     const totalWelcomeBonusGiven = getTotal(welcomeBonusWallet?.given, "stars");
@@ -2651,6 +2710,8 @@ const fetchTotalGivenStars = async (req, res) => {
     const totalStarDistributions = getTotal(starDistributions, "stars");
     const totalCouponGeneration = getTotal(couponGenerationLogs, "starsSpent");
     const totalReservedForContests = contestEntryWallet?.reservedForContests || 0;
+    const totalPayoutStars = getTotal(payoutDetails, "starCount");
+
 
     const totalStarsGiven =
       totalWelcomeBonusGiven +
@@ -2669,6 +2730,7 @@ const fetchTotalGivenStars = async (req, res) => {
         totalStarDistributions,
         totalCouponGeneration,
         totalReservedForContests,
+        totalPayoutStars
       },
     });
   } catch (error) {
@@ -2739,34 +2801,78 @@ const getContestEntryWallet = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 const getWelcomeBonusLogs = async (req, res) => {
   try {
-    const wallet = await SuperAdminWallet.findOne();
+    const wallet = await SuperAdminWallet.findOne().populate(
+      "welcomeBonusWallet.given.userId",
+      "firstName lastName" // Populate only necessary fields
+    );
 
     if (!wallet || !wallet.welcomeBonusWallet) {
       return res.status(404).json({ message: "Welcome bonus wallet not found" });
     }
 
-    const {
-      totalReceived,
-      remainingStars,
-      given,
-      logs,
-    } = wallet.welcomeBonusWallet;
+    const { totalReceived, remainingStars, given, logs } = wallet.welcomeBonusWallet;
+
+    // Add username for each entry in 'given'
+    const givenWithUsernames = given.map(entry => ({
+      ...entry._doc,
+      username: `${entry.userId?.firstName || ""} ${entry.userId?.lastName || ""}`.trim()
+    }));
 
     return res.status(200).json({
       totalReceived,
       remainingStars,
       totalGiven: given.reduce((sum, entry) => sum + entry.starsGiven, 0),
-      given,
-      logs,
+      given: givenWithUsernames,
+      logs
     });
   } catch (error) {
     console.error("Error fetching welcome bonus logs:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+//to take payout from super admin wallet
+const superAdminPayout=async(req,res)=>{
+const {starCount,note}=req.body;
+ if (!starCount || starCount <= 0) {
+    return res.status(400).json({ message: "Valid starCount is required" });
+  }
 
+try {
+  const superAdminWallet=await SuperAdminWallet.findOne();
+   if (!superAdminWallet) {
+      return res.status(404).json({ message: "Super Admin Wallet not found" });
+    }
+
+    if (superAdminWallet.totalStars < starCount) {
+      return res.status(400).json({ message: "Insufficient stars in Super Admin Wallet" });
+    }
+     const amountToCheckout = convertStarsToRupees(starCount);
+      superAdminWallet.totalStars -= starCount;
+      superAdminWallet.payoutDetails.push({
+      starCount,
+      amountToCheckout,
+      note: note || "",
+      date: new Date(),
+      })
+      await superAdminWallet.save();
+        return res.status(200).json({
+      message: "Payout recorded successfully",
+      updatedStars: superAdminWallet.totalStars,
+      recentPayout: {
+        starCount,
+        amountToCheckout,
+        note,
+        date: new Date(),
+      },
+    });
+} catch (error) {
+      console.error("Error in superAdminPayout:", error);
+    return res.status(500).json({ message: "Internal server error", error: error.message });
+}
+}
 export {
   registerSuperAdmin,
   superAdminLogin,
@@ -2818,5 +2924,6 @@ export {
   getContestEntryWallet,
   getWelcomeBonusLogs,
   fetchTotalReceivedStars,
-  fetchTotalGivenStars
+  fetchTotalGivenStars,
+  superAdminPayout
 };
