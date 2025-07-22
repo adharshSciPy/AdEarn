@@ -228,6 +228,24 @@ date:{type:Date,default:Date.now()},
 amountToCheckout:{type:Number},
 note:{type:String}
 },{_id:false})
+const userPayoutTransactionLogSchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    starsTransferred: { type: Number, required: true },
+    amount: { type: Number, required: true },
+    transactionDate: { type: Date, default: Date.now },
+    reason: { type: String, default: "User Payout deduction" },
+    note: { type: String },
+    
+    status: {
+      type: String,
+      enum: ["pending", "verified", "completed"],
+      default: "pending",
+    },
+  },
+  { _id: false }
+);
+
 
 // MAIN Schema
 const superAdminWalletSchema = new Schema(
@@ -249,7 +267,9 @@ const superAdminWalletSchema = new Schema(
     adminTransfers: [adminTransferLogSchema],
     generatedStarsLog: [generatedStarsLogSchema],
     deletedAdStars:[deletedAdStarsSchema],
-    payoutDetails:[payoutDetails]
+    payoutDetails:[payoutDetails],
+    userPayoutTransactions: [userPayoutTransactionLogSchema],
+
   },
   { timestamps: true }
 );

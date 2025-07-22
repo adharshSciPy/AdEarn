@@ -26,6 +26,7 @@ import geocodeRouter from "./routes/geocodeRoute.js";
 import broadcastRouter from "./routes/broadcastRoute.js";
 import ContestEntry from "./model/contestEntrySchema.js";
 import User from "./model/userModel.js";
+import payoutRoute from "./routes/payoutRoute.js";
 
 
 dotenv.config();
@@ -91,6 +92,10 @@ app.use('/api/v1/broadcast', (req, res, next) => {
   req.io = io; req.connectedUsers = connectedUsers; next();
 }, broadcastRouter);
 
+
+app.use('/api/v1/payout', (req, res, next) => {
+  req.io = io; req.connectedUsers = connectedUsers; next();
+}, payoutRoute);
 // Socket.IO Connection
 io.on("connection", (socket) => {
   console.log(" New client connected:", socket.id);
