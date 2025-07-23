@@ -47,13 +47,13 @@ function CouponStar() {
       <SuperSidebar />
       <div className={styles.wrapper}>
         <div className={styles.header}>
-          <h2>Coupons Account</h2>
+          <h2>Coupons Star</h2>
           <button className={styles.logBtn}>Log</button>
         </div>
 
         <div className={styles.amountCard}>
           <div>
-            <p>Total Amount</p>
+            <p>Total Star</p>
           </div>
           <div style={{
             display: "flex",
@@ -167,6 +167,7 @@ function CouponStar() {
         <Pagination
           current={currentPage}
           pageSize={pageSize}
+          total={data.length}
           showSizeChanger
           pageSizeOptions={['10', '20', '50', '100']}
           onChange={(page, size) => {

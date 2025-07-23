@@ -46,7 +46,7 @@
 .accountshead {
   display: flex;
   justify-content: start;
-  margin-top: 30px;
+  margin-top: 0px;
 }
 
 .accountsheadsection {
@@ -294,7 +294,7 @@
 }
 
 .table {
-  margin-top: 40px;
+  margin-top: 10px;
   z-index: 1;
   position: relative;
   padding-bottom: 30px;

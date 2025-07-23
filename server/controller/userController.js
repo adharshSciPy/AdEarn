@@ -193,8 +193,7 @@ const sendOTP = async (req, res) => {
 
     return res.status(200).json({
       message: "OTP sent successfully",
-      ...(config.USE_OTP_TEST_MODE === 'true' ? { otp } : {}),
-    });
+      ...(config.USE_OTP_TEST_MODE === 'true' ? { otp, phoneNumber } : {}),    });
   } catch (err) {
     console.error("❌ Error sending OTP:", err.response?.data || err);
     return res.status(500).json({ message: "Internal Server Error" });
@@ -793,7 +792,7 @@ await firstWallet.save();
     }
     await superAdminWallet.save();
 
-    // Get admins and super admin
+   
     const adminUsers = await Admin.find({ adminRole: ADMIN_ROLE });
     const superAdminUser = await superAdminModel.findOne({ role: SUPER_ADMIN_ROLE });
 

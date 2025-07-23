@@ -14,7 +14,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { EyeOutlined } from "@ant-design/icons";
 import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
-
+import { toast } from "react-toastify";
 
 function Adsmanager() {
   const navigate = useNavigate();
@@ -86,7 +86,32 @@ function Adsmanager() {
       fetchAds();
     }
   }, [userId]);
+const fetchAds = async () => {
+      try {
+        console.log("User ID from store:", userId);
+        const response = await axios.get(
+          `${baseUrl}/api/v1/user/my-all-ads/${userId}`
+        );
+        const ads = response.data.data.ads;
+        console.log("abc", ads);
 
+        setUserads(ads);
+
+        const initialToggleStates = {};
+        ads.forEach((ad) => {
+          const ref = ad.imgAdRef || ad.videoAdRef || ad.surveyAdRef;
+          initialToggleStates[ad._id] = ref?.isAdOn || false;
+        });
+
+        setToggleStates(initialToggleStates);
+        console.log(
+          "Fetched ads and initialized toggle states:",
+          initialToggleStates
+        );
+      } catch (error) {
+        console.error("Error fetching ads:", error);
+      }
+    };
   const generatePdf = (row) => {
     const ref = row.imgAdRef || row.videoAdRef || row.surveyAdRef;
 
@@ -152,9 +177,30 @@ function Adsmanager() {
       alert("Selected ad type not supported for duplication.");
     }
   };
-const handleLikeClick=()=>{
-  navigate(`/savedAds/${userId}`)
-}
+  const handleLikeClick = () => {
+    navigate(`/savedAds/${userId}`);
+  };
+
+  const handleDelete = async () => {
+    console.log(selectedAdId);
+
+    try {
+      const res = await axios.delete(
+        `${baseUrl}/api/v1/user/delete-ad/${userId}`,
+        {
+          data: { adId: selectedAdId },
+        }
+      );
+      console.log(res);
+      if (res.status===200){
+        fetchAds()
+      }
+      toast.success("Ad successfully deleted");
+    } catch (error) {
+      toast.error("Cannot Delete the Ad");
+      console.log(error);
+    }
+  };
   return (
     <div>
       <Navbar />
@@ -177,7 +223,10 @@ const handleLikeClick=()=>{
                       </p>
                     </div>
                     <div className={styles.firstMainbutton}>
-                      <button onClick={() => setShowPopup(true)} style={{overflow:"hidden"}}>
+                      <button
+                        onClick={() => setShowPopup(true)}
+                        style={{ overflow: "hidden" }}
+                      >
                         Place Ads
                       </button>
                     </div>
@@ -194,13 +243,15 @@ const handleLikeClick=()=>{
             <div className={styles.tableContainer}>
               <div className={styles.tableMain}>
                 <div className={styles.buttonsContainer}>
-                  
                   <div className={styles.createButtonContainer}>
-                    <button style={{ display: "flex", alignItems: "center" }} onClick={() => setShowPopup(true)}>
+                    <button
+                      style={{ display: "flex", alignItems: "center" }}
+                      onClick={() => setShowPopup(true)}
+                    >
                       <span style={{ fontSize: "20px", paddingRight: "10px" }}>
                         +
                       </span>
-                      create
+                      Create
                     </button>
                   </div>
                   <div className={styles.duplicateButtonContainer}>
@@ -216,28 +267,31 @@ const handleLikeClick=()=>{
                   </div>
 
                   <div className={styles.deleteButtonContainer}>
-                    <button style={{ display: "flex", alignItems: "center" }}>
+                    <button
+                      style={{ display: "flex", alignItems: "center" }}
+                      onClick={handleDelete}
+                    >
                       <span style={{ height: "20px", width: "35px" }}>
                         <img src={Delete} alt="" className={styles.img} />
                       </span>
                       Delete
                     </button>
                   </div>
-                    <div className={styles.reportButtonContainer}>
-                      <button
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                        onClick={handleLikeClick}
-                      >
-                        <span style={{ height: "20px", width: "35px" }}>
-                          <img src={report} alt="" className={styles.img} />
-                        </span>
-                        Liked Ads
-                      </button>
-                    </div>
+                  <div className={styles.reportButtonContainer}>
+                    <button
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                      onClick={handleLikeClick}
+                    >
+                      <span style={{ height: "20px", width: "35px" }}>
+                        <img src={report} alt="" className={styles.img} />
+                      </span>
+                      Liked Ads
+                    </button>
+                  </div>
                 </div>
                 <div style={{ overflowX: "auto" }}>
                   <table

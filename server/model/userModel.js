@@ -152,6 +152,12 @@ const userSchema = new Schema(
       default:false
     },
     savedAds: [savedAdSchema],
+payoutRequests: [
+  {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "PayoutRequest",
+  }
+],
    
 
 
