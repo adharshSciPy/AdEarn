@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import styles from "./CompanyAccounts.module.css";
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
 import Header from "../../../components/Header/Header";
-import { Modal, Input, Form, message } from "antd";
+import { Modal, Input, Form } from "antd";
 import {
   FileTextOutlined,
   TagOutlined,
@@ -20,7 +20,6 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { Line } from "react-chartjs-2";
 import axios from "axios";
 import baseUrl from "../../../baseurl";
 
@@ -36,46 +35,7 @@ ChartJS.register(
 );
 
 function CompanyAccounts() {
-  const data = {
-    labels: ["0", "10k", "20k", "30k", "40k", "50k", "60k"],
-    datasets: [
-      {
-        label: "Total Accounts",
-        data: [10, 10, 20, 35, 40, 50, 60],
-        fill: true,
-        backgroundColor: "rgba(192, 132, 252, 0.2)",
-        borderColor: "rgba(192, 132, 252, 1)",
-        tension: 0.4,
-        pointRadius: 3,
-      },
-    ],
-  };
 
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        mode: "index",
-        intersect: false,
-      },
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false,
-        },
-      },
-      y: {
-        beginAtZero: true,
-        grid: {
-          borderDash: [4, 4],
-        },
-      },
-    },
-  };
 
   const transactions = [
     { id: 1, stars: 1000, amount: 200 },
@@ -130,35 +90,22 @@ function CompanyAccounts() {
 
     fetchAmounts();
   }, []);
-const handlePayout = async () => {
-//   try {
-//     if (!payoutAmount || isNaN(payoutAmount)) {
-//       return message.error("Please enter a valid amount.");
-//     }
-
-//     // Example payload (adjust according to your backend)
-//     const payload = {
-//       amount: Number(payoutAmount),
-//       note: payoutNote,
-//     };
-
-//     const res = await axios.post(`${baseUrl}/api/v1/super-admin/payout`, payload);
-//     if (res.status === 200) {
-//       message.success("Payout successful!");
-//       setIsModalOpen(false);
-//       setPayoutAmount("");
-//       setPayoutNote("");
-//     }
-//   } catch (err) {
-//     console.error(err);
-//     message.error("Something went wrong during payout.");
-//   }
-};
-const handleCancel = () => {
-  setIsModalOpen(false);
-  setPayoutAmount("");
-  setPayoutNote("");
-};
+  const handlePayout = async () => {
+    try {
+      const res = await axios.post(`${baseUrl}/api/v1/super-admin/payout`, {
+        starCount: payoutAmount,
+        note: payoutNote,
+      });
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const handleCancel = () => {
+    setIsModalOpen(false);
+    setPayoutAmount("");
+    setPayoutNote("");
+  };
   return (
     <div className={styles.accountsmain}>
       <div className={styles.accountscontainer}>
@@ -343,7 +290,7 @@ const handleCancel = () => {
                         <td>{txn.stars}</td>
                         <td>₹ {txn.amount}</td>
                         <td>
-                          <a href="#">Download</a>
+                          <a >Download</a>
                         </td>
                         <td>
                           <button
@@ -371,31 +318,30 @@ const handleCancel = () => {
         </div>
       </div>
       <Modal
-  title="Make a Payout"
-  open={isModalOpen}
-  onOk={handlePayout}
-  onCancel={handleCancel}
-  okText="Submit"
->
-  <Form layout="vertical">
-    <Form.Item label="Amount (₹)" required>
-      <Input
-        type="number"
-        placeholder="Enter amount"
-        value={payoutAmount}
-        onChange={(e) => setPayoutAmount(e.target.value)}
-      />
-    </Form.Item>
-    <Form.Item label="Note">
-      <Input.TextArea
-        placeholder="Optional note"
-        value={payoutNote}
-        onChange={(e) => setPayoutNote(e.target.value)}
-      />
-    </Form.Item>
-  </Form>
-</Modal>
-
+        title="Make a Payout"
+        open={isModalOpen}
+        onOk={handlePayout}
+        onCancel={handleCancel}
+        okText="Submit"
+      >
+        <Form layout="vertical">
+          <Form.Item label="Amount (₹)" required>
+            <Input
+              type="number"
+              placeholder="Enter amount"
+              value={payoutAmount}
+              onChange={(e) => setPayoutAmount(e.target.value)}
+            />
+          </Form.Item>
+          <Form.Item label="Note">
+            <Input.TextArea
+              placeholder="Optional note"
+              value={payoutNote}
+              onChange={(e) => setPayoutNote(e.target.value)}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import authMiddleware from "../auth/authMiddleware.js";
-import { createPayoutRequest, getAllCompletedPayouts, getAllUnVerifiedPayoutRequest, getAllVerifiedPayoutRequests, getSingleVerifiedPayoutRequest, markPayoutAsCompleted, rejectPayoutRequest, singleUnverifiedPayoutRequest, verifyPayoutRequest } from "../controller/payoutController.js";
+import { createPayoutRequest, getAllCompletedPayouts, getAllUnVerifiedPayoutRequest, getAllVerifiedPayoutRequests, getSingleVerifiedPayoutRequest, markPayoutAsCompleted, myPayoutRequests, myRejectedPayouts, myVerifiedPayouts, rejectPayoutRequest, singleUnverifiedPayoutRequest, verifyPayoutRequest } from "../controller/payoutController.js";
 
 const payoutRoute=Router();
 payoutRoute.route('/request').post (authMiddleware,createPayoutRequest)// to send payout request from user
@@ -12,6 +12,11 @@ payoutRoute.route('/all-verified/requests').get(getAllVerifiedPayoutRequests)// 
 payoutRoute.route('/single-verified/request/:id').get(getSingleVerifiedPayoutRequest)// to  fetch single verified payout requests on superAdmin side
 payoutRoute.route('/complete-payout/:id').patch(markPayoutAsCompleted)// to  verify complete payout by superAdmin.
 payoutRoute.route('/completed-payouts').get(getAllCompletedPayouts)// to  fetch all completed payouts on superAdmin side.
+payoutRoute.route('/my-payouts/:userId').get(myPayoutRequests)
+payoutRoute.route('/my-payouts/verified/:userId').get(myVerifiedPayouts)
+payoutRoute.route('/my-payouts/rejected/:userId').get(myRejectedPayouts)
+
+
 
 
 
