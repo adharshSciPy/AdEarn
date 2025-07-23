@@ -27,7 +27,7 @@ import { VideoAd } from "../model/videoadModel.js";
 import { SurveyAd } from "../model/surveyadModel.js";
 import { log } from "console";
 import { convertStarsToRupees } from "../utils/convertStarsToRupees.js";
-import { Payout } from "../model/paymentModel.js";
+
 
 
 
@@ -1619,5 +1619,4 @@ export {
   getSavedAds,
   unsaveAd,
   deleteAd,
-  sendPayoutRequest
 };
