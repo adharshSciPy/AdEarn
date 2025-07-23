@@ -190,9 +190,9 @@ function Sidebar() {
     },
     {
       key: "payouts",
-      label: "Payout",
+      label: "Verified Payout",
       icon: <ContainerOutlined />,
-      path: "/Superadminpayouts"
+      path: "/Superadminverifiedpayouts"
     },
   ]);
 
