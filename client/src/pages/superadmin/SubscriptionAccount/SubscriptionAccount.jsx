@@ -111,6 +111,7 @@ function SubscriptionAccount() {
         <Pagination
           current={currentPage}
           pageSize={pageSize}
+          total={data.length}
           showSizeChanger
           pageSizeOptions={['10', '20', '50', '100']}
           onChange={(page, size) => {
