@@ -16,7 +16,9 @@ const savedAdSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-});
+},{_id:false});
+
+
 
 //Main schema
 const userSchema = new Schema(
@@ -150,6 +152,14 @@ const userSchema = new Schema(
       default:false
     },
     savedAds: [savedAdSchema],
+payoutRequests: [
+  {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "PayoutRequest",
+  }
+],
+   
+
 
 
 
