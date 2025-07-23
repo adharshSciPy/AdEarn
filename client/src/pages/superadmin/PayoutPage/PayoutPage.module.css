@@ -1,6 +1,6 @@
 .payoutmain {
   height: max-content;
-  padding-bottom: 200px;
+  padding-bottom: 450px;
 }
 
 .payoutsection {
@@ -31,6 +31,7 @@
   gap: 20px;
   border: 1px solid #693bb8;
   border-radius: 10px;
+  margin-top: 20px;
 }
 
 .payouts {

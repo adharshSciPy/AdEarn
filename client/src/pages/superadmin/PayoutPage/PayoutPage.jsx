@@ -4,16 +4,35 @@ import Header from '../../../components/Header/Header'
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar"
 import axios from "axios"
 import baseUrl from "../../../baseurl"
-import { useParams } from 'react-router-dom'
-import { Button } from 'antd'
+import { useParams, useNavigate } from 'react-router-dom'
+import { Button, Input, Modal } from 'antd'
+const { TextArea } = Input;
 
 function PayoutPage() {
+
+    const [form, setForm] = useState({
+        reason: ""
+    });
+
 
     const [data, setData] = useState({});
     const [user, setUser] = useState({});
     const [kyc, setKyc] = useState({})
 
     const paramsid = useParams()
+    const navigate = useNavigate()
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const showModal = () => {
+        setIsModalOpen(true);
+    };
+    const handleOk = () => {
+        setIsModalOpen(false);
+        handleReject()
+    };
+    const handleCancel = () => {
+        setIsModalOpen(false);
+    };
 
     useEffect(() => {
         const singlepayout = async () => {
@@ -31,6 +50,30 @@ function PayoutPage() {
         }
         singlepayout()
     }, [])
+
+    const handleApprove = async () => {
+        try {
+            const id = paramsid.id;
+            const approve = await axios.patch(`${baseUrl}/api/v1/payout/verify/request/${id}`);
+            navigate("/superadminuseraccount")
+            console.log(approve)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const handleReject = async () => {
+        try {
+            const id = paramsid.id;
+            const reject = await axios.patch(`${baseUrl}/api/v1/payout/reject/request/${id}`, {
+                reason: form.reason,
+            });
+            navigate("/superadminuseraccount")
+            console.log(reject)
+        } catch (error) {
+            console.log(error)
+        }
+    }
 
     return (
         <div className={styles.payoutmain}>
@@ -89,30 +132,17 @@ function PayoutPage() {
 
                                 {kyc.documentFile ? (
                                     <div style={{ display: "flex", justifyContent: "center" }}>
-                                        {kyc.documentFile.toLowerCase().endsWith('.pdf') ? (
-                                            <iframe
-                                                src={`${baseUrl}${kyc.documentFile}`}
-                                                title="Document Preview"
-                                                style={{
-                                                    width: '400px',
-                                                    height: '500px',
-                                                    border: '1px solid #ccc',
-                                                    borderRadius: '8px',
-                                                }}
-                                            />
-                                        ) : (
-                                            <img
-                                                src={`${baseUrl}${kyc.documentFile}`}
-                                                alt="KYC Document"
-                                                style={{
-                                                    width: '300px',
-                                                    maxHeight: '500px',
-                                                    objectFit: 'contain',
-                                                    border: '1px solid #ccc',
-                                                    borderRadius: '8px',
-                                                }}
-                                            />
-                                        )}
+                                        <img
+                                            src={`${baseUrl}${kyc.documentFile}`}
+                                            alt="KYC Document"
+                                            style={{
+                                                width: '300px',
+                                                maxHeight: '500px',
+                                                objectFit: 'contain',
+                                                border: '1px solid #ccc',
+                                                borderRadius: '8px',
+                                            }}
+                                        />
                                     </div>
                                 ) : (
                                     <p style={{ textAlign: "center", color: "gray" }}>No document uploaded.</p>
@@ -121,10 +151,20 @@ function PayoutPage() {
 
 
                             <div className={styles.btngroup}>
-                                <Button className={styles.approvebtn}>Approve</Button>
-                                <Button>Reject</Button>
+                                <Button className={styles.approvebtn} onClick={() => handleApprove()}>Approve</Button>
+                                <Button onClick={showModal}>Reject</Button>
                             </div>
                         </div>
+                        <Modal
+                            title="Payout Rejection"
+                            closable={{ 'aria-label': 'Custom Close Button' }}
+                            open={isModalOpen}
+                            onOk={handleOk}
+                            onCancel={handleCancel}
+                        >
+                            <TextArea rows={4} placeholder="Reasons" value={form.reason}
+                                onChange={(e) => setForm({ ...form, reason: e.target.value })} />
+                        </Modal>
                     </div>
                 </div>
             </div>
