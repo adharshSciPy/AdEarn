@@ -224,7 +224,7 @@ const deletedAdStarsSchema=new Schema({
 },{_id:false})
 const payoutDetails=new Schema({
 starCount:{type:Number},
-date:{type:Date,default:Date.now()},
+date:{type:Date,default:Date.now},
 amountToCheckout:{type:Number},
 note:{type:String}
 },{_id:false})

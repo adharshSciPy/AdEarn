@@ -26,6 +26,8 @@ import { ImageAd } from "../model/imageadModel.js";
 import { VideoAd } from "../model/videoadModel.js";
 import { SurveyAd } from "../model/surveyadModel.js";
 import { log } from "console";
+import { convertStarsToRupees } from "../utils/convertStarsToRupees.js";
+import { Payout } from "../model/paymentModel.js";
 
 
 
@@ -1592,13 +1594,6 @@ const deleteAd = async (req, res) => {
     });
   }
 };
-
-
-
-
-
-
-
 export {
   registerUser,
   editUser,
@@ -1624,5 +1619,6 @@ export {
   saveAdForLater,
   getSavedAds,
   unsaveAd,
-  deleteAd
+  deleteAd,
+  sendPayoutRequest
 };
