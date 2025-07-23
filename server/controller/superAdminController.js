@@ -59,6 +59,10 @@ function generateRandomCode(length) {
 // }
 
 
+// Utility function to convert amount to rupees
+const convertRupeesToStars = (rupees) => Math.floor(rupees*4); // Example: ₹1 = 4 stars
+
+
 // register super admin
 const registerSuperAdmin = async (req, res) => {
   const { email, password } = req.body;
@@ -2851,45 +2855,58 @@ const getWelcomeBonusLogs = async (req, res) => {
   }
 };
 //to take payout from super admin wallet
-const superAdminPayout=async(req,res)=>{
-const {starCount,note}=req.body;
- if (!starCount || starCount <= 0) {
-    return res.status(400).json({ message: "Valid starCount is required" });
+const superAdminPayout = async (req, res) => {
+  const { amount, note } = req.body;
+
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ message: "Valid amount (in rupees) is required" });
   }
 
-try {
-  const superAdminWallet=await SuperAdminWallet.findOne();
-   if (!superAdminWallet) {
+  try {
+    const superAdminWallet = await SuperAdminWallet.findOne();
+
+    if (!superAdminWallet) {
       return res.status(404).json({ message: "Super Admin Wallet not found" });
     }
 
+    const starCount = convertRupeesToStars(amount); 
+
     if (superAdminWallet.totalStars < starCount) {
-      return res.status(400).json({ message: "Insufficient stars in Super Admin Wallet" });
+      return res.status(400).json({
+        message: `Insufficient stars in Super Admin Wallet. Required: ${starCount}, Available: ${superAdminWallet.totalStars}`,
+      });
     }
-     const amountToCheckout = convertStarsToRupees(starCount);
-      superAdminWallet.totalStars -= starCount;
-      superAdminWallet.payoutDetails.push({
+
+ 
+    superAdminWallet.totalStars -= starCount;
+
+   
+    const payoutEntry = {
       starCount,
-      amountToCheckout,
+      amountToCheckout: amount,
       note: note || "",
       date: new Date(),
-      })
-      await superAdminWallet.save();
-        return res.status(200).json({
+    };
+
+    superAdminWallet.payoutDetails.push(payoutEntry);
+
+    await superAdminWallet.save();
+
+    return res.status(200).json({
       message: "Payout recorded successfully",
-      updatedStars: superAdminWallet.totalStars,
-      recentPayout: {
-        starCount,
-        amountToCheckout,
-        note,
-        date: new Date(),
-      },
+      starsDeducted: starCount,
+      remainingStars: superAdminWallet.totalStars,
+      recentPayout: payoutEntry,
     });
-} catch (error) {
-      console.error("Error in superAdminPayout:", error);
-    return res.status(500).json({ message: "Internal server error", error: error.message });
-}
-}
+  } catch (error) {
+    console.error("Error in superAdminPayout:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
 
 export {
   registerSuperAdmin,
