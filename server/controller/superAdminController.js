@@ -243,7 +243,8 @@ const getSuperAdminWallet = async (req, res) => {
   try {
     const Swallet = await SuperAdminWallet.findOne()
       .populate("transactions.userId", "email")
-      .populate("adExtraDeductions.userId", "email");
+      .populate("adExtraDeductions.userId", "email")
+      .populate("userPayoutTransactions.userId", "email");
 
     if (!Swallet) {
       return res.status(404).json({ message: "Admin wallet not found" });
@@ -252,29 +253,30 @@ const getSuperAdminWallet = async (req, res) => {
     const getTotal = (array = [], key) =>
       array.reduce((sum, item) => sum + (item[key] || 0), 0);
 
-    // Compute all relevant star totals
+    // Totals
     const totals = {
       transactionsTotalStars: getTotal(Swallet.transactions, "starsReceived"),
       adExtraDeductionsTotalStars: getTotal(Swallet.adExtraDeductions, "stars"),
       expiredCouponRefundsTotalStars: getTotal(Swallet.expiredCouponRefunds, "stars"),
       deletedUserStarsTotalStars: getTotal(Swallet.deletedUserStars, "starsTransferred"),
-      welcomeBonusGivenTotalStars: getTotal(Swallet.welcomeBonusWallet?.given, "stars"),
-      welcomeBonusLogsTotalStars: getTotal(Swallet.welcomeBonusWallet?.logs, "stars"),
-      companyDepositsTotalStars: getTotal(Swallet.companyRewardWallet?.companyDeposits, "stars"),
-      companyGivenToWinnersTotalStars: getTotal(Swallet.companyRewardWallet?.givenToWinners, "stars"),
-      contestCollectedStars: getTotal(Swallet.contestEntryWallet?.collectedFromUsers, "stars"),
+      welcomeBonusGivenTotalStars: getTotal(Swallet.welcomeBonusWallet?.given, "starsGiven"),
+      welcomeBonusLogsTotalStars: getTotal(Swallet.welcomeBonusWallet?.logs, "starsAdded"),
+      companyDepositsTotalStars: getTotal(Swallet.companyRewardWallet?.companyDeposits, "starsReceived"),
+      companyGivenToWinnersTotalStars: getTotal(Swallet.companyRewardWallet?.givenToWinners, "starsGiven"),
+      contestCollectedStars: getTotal(Swallet.contestEntryWallet?.collectedFromUsers, "starsUsed"),
       userEntryTotalStars: getTotal(Swallet.userEntry, "starsUsed"),
       blacklistedUserStarsTotal: getTotal(Swallet.blacklistedUserStars, "starsTransferred"),
       subscriptionStarsUsed: getTotal(Swallet.subscriptionLogs, "starsUsed"),
-      starDistributionsTotalStars: getTotal(Swallet.starDistributions, "stars"),
+      starDistributionsTotalStars: getTotal(Swallet.starDistributions, "starsGiven"),
       couponGenerationTotalStars: getTotal(Swallet.couponGenerationLogs, "starsSpent"),
       deletedAdStarsTotalStars: getTotal(Swallet.deletedAdStars, "starsReturned"),
       adminTransfersTotalStars: getTotal(Swallet.adminTransfers, "starsTransferred"),
       generatedStarsLogTotalStars: getTotal(Swallet.generatedStarsLog, "starsGenerated"),
-        payoutDetailsTotalStars: getTotal(Swallet.payoutDetails, "starCount"),
+      payoutDetailsTotalStars: getTotal(Swallet.payoutDetails, "starCount"),
+      userPayoutTransactionsTotalStars: getTotal(Swallet.userPayoutTransactions, "starsTransferred"),
     };
 
-    // Convert all totals to Rupees
+    // Convert to rupees
     const totalsWithAmounts = {};
     for (const [key, stars] of Object.entries(totals)) {
       totalsWithAmounts[key] = stars;
@@ -286,7 +288,14 @@ const getSuperAdminWallet = async (req, res) => {
       totalsWithAmounts[amountKey] = convertStarsToRupees(stars);
     }
 
-    // Prepare wallet breakdowns
+    // Group payout transactions by status
+    const payoutGrouped = {
+      pending: Swallet.userPayoutTransactions.filter((tx) => tx.status === "pending"),
+      verified: Swallet.userPayoutTransactions.filter((tx) => tx.status === "verified"),
+      completed: Swallet.userPayoutTransactions.filter((tx) => tx.status === "completed"),
+    };
+
+    // Wallet views
     const welcomeBonusWallet = {
       ...Swallet.welcomeBonusWallet?._doc,
       totalReceivedAmountInRupees: convertStarsToRupees(Swallet.welcomeBonusWallet?.totalReceived || 0),
@@ -311,10 +320,8 @@ const getSuperAdminWallet = async (req, res) => {
       totalAmountInRupees: convertStarsToRupees(Swallet.totalStars),
       perUserWelcomeBonus: Swallet.perUserWelcomeBonus,
 
-      // Totals + rupee equivalents
       ...totalsWithAmounts,
 
-      // Raw data
       transactions: Swallet.transactions,
       adExtraDeductions: Swallet.adExtraDeductions,
       expiredCouponRefunds: Swallet.expiredCouponRefunds,
@@ -330,19 +337,23 @@ const getSuperAdminWallet = async (req, res) => {
       subscriptionLogs: Swallet.subscriptionLogs,
       starDistributions: Swallet.starDistributions,
       couponGenerationLogs: Swallet.couponGenerationLogs,
-       payoutDetails: Swallet.payoutDetails,
+      payoutDetails: Swallet.payoutDetails,
+
+      // ✅ Full and grouped payout transactions
+      userPayoutTransactions: Swallet.userPayoutTransactions,
+      payoutGrouped,
 
       createdAt: Swallet.createdAt,
       updatedAt: Swallet.updatedAt,
     });
   } catch (error) {
     console.error("Error fetching super-admin wallet:", error);
-    return res.status(500).json({ message: "Internal server error", error: error.message });
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 };
-
-
-
 
 const getSuperAdminWelcomeBonusEarnings = async (req, res) => {
   try {
@@ -2610,6 +2621,7 @@ const generateStars = async (req, res) => {
 const fetchTotalReceivedStars = async (req, res) => {
   try {
     const superAdminWallet = await SuperAdminWallet.findOne();
+
     if (!superAdminWallet) {
       return res.status(404).json({ message: "SuperAdmin wallet not found" });
     }
@@ -2630,6 +2642,7 @@ const fetchTotalReceivedStars = async (req, res) => {
       contestEntryWallet,
       companyRewardWallet,
       deletedAdStars,
+      userPayoutTransactions,
     } = superAdminWallet;
 
     const totalFromTransactions = getTotal(transactions, "starsReceived");
@@ -2639,9 +2652,10 @@ const fetchTotalReceivedStars = async (req, res) => {
     const totalFromBlacklistUsers = getTotal(blacklistedUserStars, "starsTransferred");
     const totalFromAdExtraDeductions = getTotal(adExtraDeductions, "stars");
     const totalFromGeneratedStarLogs = getTotal(generatedStarsLog, "starsGenerated");
-    const totalFromStarDistributions = getTotal(starDistributions, "stars");
+    const totalFromStarDistributions = getTotal(starDistributions, "starsGiven");
     const totalFromAdminTransfers = getTotal(adminTransfers, "starsTransferred");
     const totalFromDeletedAds = getTotal(deletedAdStars, "starsReturned");
+    const totalFromUserPayoutTransactions = getTotal(userPayoutTransactions, "starsTransferred");
 
     const totalFromContestEntry = contestEntryWallet?.totalReceived || 0;
     const totalFromCompanyTransfers = companyRewardWallet?.totalReceived || 0;
@@ -2657,6 +2671,7 @@ const fetchTotalReceivedStars = async (req, res) => {
       totalFromStarDistributions +
       totalFromAdminTransfers +
       totalFromDeletedAds +
+      totalFromUserPayoutTransactions +
       totalFromContestEntry +
       totalFromCompanyTransfers;
 
@@ -2675,6 +2690,7 @@ const fetchTotalReceivedStars = async (req, res) => {
         totalFromStarDistributions,
         totalFromAdminTransfers,
         totalFromDeletedAds,
+        totalFromUserPayoutTransactions,
         totalFromContestEntry,
         totalFromCompanyTransfers,
       },
@@ -2684,6 +2700,7 @@ const fetchTotalReceivedStars = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 //fetch the total stars given /taken from superadmin wallet(company wallet)-
 const fetchTotalGivenStars = async (req, res) => {
