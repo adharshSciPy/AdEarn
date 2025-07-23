@@ -150,7 +150,7 @@ function ContestStar() {
             <div className={styles.table}>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <div className={styles.tabletitle}>
-                  <h2>Welcome Bonus</h2>
+                  <h2>Contest Details</h2>
                 </div>
 
               </div>

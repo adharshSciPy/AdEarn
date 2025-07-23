@@ -162,7 +162,7 @@ function Sidebar() {
         { key: "admin-add", label: "Add Admin ", path: "/superadminaddadmin" },
         { key: "admin-delete", label: " Delete Admin", path: "/manageadmin" },
         { key: "admin-list", label: " List Admin", path: "/Superadminadminlist" },
-        { key: "admin-star", label: "Star Transfer", path: "/Superadminstartransfer" }
+        { key: "admin-startransfer", label: "Star Transfer", path: "/Superadminstartransfer" }
       ],
     },
     {
@@ -183,14 +183,16 @@ function Sidebar() {
       ],
     },
     {
-      key: "tip&notifications",
-      label: "Tips & Notifications",
+      key: "notifications",
+      label: "Notifications",
       icon: <ContainerOutlined />,
-      children: [
-        { key: "tips", label: "Tips ", path: "/AdminReport" },
-        { key: "notification", label: "Notifications ", path: "/superadminNotification" },
-
-      ],
+      path: "/superadminNotification"
+    },
+    {
+      key: "payouts",
+      label: "Payout",
+      icon: <ContainerOutlined />,
+      path: "/Superadminpayouts"
     },
   ]);
 
