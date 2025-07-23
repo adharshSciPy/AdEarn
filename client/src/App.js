@@ -101,6 +101,8 @@ import SelectWinner from './pages/superadmin/SelectWinner/SelectWinner';
 import CoupounRequest from './pages/superadmin/CouponRequestListing/CoupounRequest';
 import StarTransfer from './pages/superadmin/StarTransfer/StarTransfer';
 import BlacklistUser from './pages/superadmin/BlacklistUser/BlacklistUser';
+import PayoutPage from './pages/superadmin/PayoutPage/PayoutPage';
+import Verifiedpayouts from './pages/superadmin/VerifiedPayouts/Verifiedpayouts';
 
 
 import SubscriptionModal from './components/SubscriptionModal/SubscriptionModal';
@@ -194,7 +196,7 @@ function App() {
           <Route path='/coupon' element={<CouponPage />} />
           <Route path='/surveyadspreview/:id/:adId' element={<SurveyAdPreview />} />
           <Route path='/surveyaddetails/:id/:adId' element={<SurveyResponses />} />
-          
+
 
 
 
@@ -249,6 +251,8 @@ function App() {
           <Route path='/couponreqSuperAdmin' element={< CoupounRequest />} />
           <Route path='/Superadminstartransfer' element={<StarTransfer />} />
           <Route path='/Superadminblacklist' element={<BlacklistUser />} />
+          <Route path='/Superadminpayoutpage/:id' element={<PayoutPage />} />
+          <Route path='/Superadminverifiedpayouts' element={<Verifiedpayouts />} />
 
 
 

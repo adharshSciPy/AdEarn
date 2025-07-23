@@ -1,49 +1,59 @@
 import React, { useState, useEffect, useRef } from "react";
 import styles from "./useraccount.module.css";
 import Sidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
+import axios from "axios";
+import baseUrl from "../../../baseurl";
+import { Pagination } from "antd";
+import { useNavigate } from "react-router-dom";
 
-const allPayoutRequests = Array.from({ length: 100 }, (_, i) => ({
-  id: i + 1,
-  name: `User name ${i + 1}`,
-  avatar: `https://api.dicebear.com/7.x/thumbs/svg?seed=User${i + 1}`,
-  amount: 1000,
-  date: "02/06/2025",
-  status: "Disabled",
-}));
+
 
 function UserAccount() {
   const [showModal, setShowModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [payoutAmount, setPayoutAmount] = useState("");
-  const [visibleCount, setVisibleCount] = useState(10);
-  const observerRef = useRef();
+  const [data, setData] = useState([])
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  const handleApprove = (user) => {
+
+  const navigate = useNavigate()
+  const handleVerify = async (user) => {
     setSelectedUser(user);
-    setShowModal(true);
+    const id = user.id;
+    navigate(`/Superadminpayoutpage/${id}`)
     setPayoutAmount(user.amount);
   };
 
-  const handleConfirm = () => {
-    console.log(`Payout approved for ${selectedUser.name}: ₹${payoutAmount}`);
-    setShowModal(false);
-    setPayoutAmount("");
-  };
-
-  const lastRowRef = useRef();
-
   useEffect(() => {
-    if (observerRef.current) observerRef.current.disconnect();
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && visibleCount < allPayoutRequests.length) {
-          setVisibleCount((prev) => prev + 20);
-        }
-      },
-      { threshold: 1 }
-    );
-    if (lastRowRef.current) observerRef.current.observe(lastRowRef.current);
-  }, [visibleCount]);
+    const fetchpayoutrequest = async () => {
+      try {
+        const fetchresponse = await axios.get(`${baseUrl}/api/v1/payout/all-unverified/requests`, {
+          params: {
+            page: currentPage,
+            limit: pageSize,
+          }
+        });
+        setData(fetchresponse.data.requests)
+        console.log(fetchresponse)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    fetchpayoutrequest()
+  }, [currentPage, pageSize]);
+
+  const totalamount = data.reduce((sum, item) => sum + (item.amount) || 0, 0)
+
+  function formatDateTime(isoString) {
+    const date = new Date(isoString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`;
+  }
 
   return (
     <div className={styles.UserAccount}>
@@ -57,7 +67,7 @@ function UserAccount() {
         <div className={styles.amountCard}>
           <div>
             <p>Total Amount</p>
-            <h1>₹5000</h1>
+            <h1>₹ {totalamount}</h1>
           </div>
           <div className={styles.rightText}>
             <p>Company account</p>
@@ -73,49 +83,42 @@ function UserAccount() {
         <div className={styles.table}>
           <div className={styles.tableHeader}>
             <div>User name</div>
-            <div>Request Number</div>
+            <div>Star Count</div>
             <div>Amount</div>
             <div>Date</div>
             <div>Actions</div>
           </div>
 
-          {allPayoutRequests.slice(0, visibleCount).map((user, index, arr) => (
+          {data.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((user, index) => (
             <div
               className={styles.tableRow}
-              key={user.id}
-              ref={index === arr.length - 1 ? lastRowRef : null}
+              key={index}
             >
               <div className={styles.userCell}>
-                <img src={user.avatar} alt="avatar" className={styles.avatar} />
-                <span>{user.name}</span>
+                <span>{user.userName}</span>
               </div>
-              <div>1</div>
+              <div>{user.starCount}</div>
               <div>{user.amount}</div>
-              <div>{user.date}</div>
+              <div>{formatDateTime(user.requestedAt)}</div>
               <div>
-                <button className={styles.approve} onClick={() => handleApprove(user)}>Approve</button>
+                <button className={styles.approve} onClick={() => handleVerify(user)}>Verify</button>
               </div>
             </div>
           ))}
         </div>
 
-        {showModal && (
-          <div className={styles.modalOverlay}>
-            <div className={styles.modal}>
-              <h3>Enter payout amount</h3>
-              <input
-                type="number"
-                value={payoutAmount}
-                onChange={(e) => setPayoutAmount(e.target.value)}
-                className={styles.input}
-              />
-              <div className={styles.modalActions}>
-                <button className={styles.cancel} onClick={() => setShowModal(false)}>Cancel</button>
-                <button className={styles.confirm} onClick={handleConfirm}>Confirm</button>
-              </div>
-            </div>
-          </div>
-        )}
+        <Pagination
+          current={currentPage}
+          pageSize={pageSize}
+          total={data.length} // total transaction count
+          showSizeChanger
+          pageSizeOptions={['10', '20', '50', '100']}
+          onChange={(page, size) => {
+            setCurrentPage(page);
+            setPageSize(size);
+          }}
+          style={{ marginTop: "20px", textAlign: "right", display: "flex", justifyContent: "end", alignItems: "end" }}
+        />
       </div>
     </div>
   );
