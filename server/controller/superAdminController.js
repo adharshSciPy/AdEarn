@@ -2864,45 +2864,49 @@ const superAdminPayout = async (req, res) => {
 
   try {
     const superAdminWallet = await SuperAdminWallet.findOne();
-
     if (!superAdminWallet) {
       return res.status(404).json({ message: "Super Admin Wallet not found" });
     }
 
-    const starCount = convertRupeesToStars(amount); 
+    const starCount = convertRupeesToStars(amount);
+    const currentStars = Number(superAdminWallet.totalStars) || 0;
 
-    if (superAdminWallet.totalStars < starCount) {
+    if (currentStars < starCount) {
       return res.status(400).json({
-        message: `Insufficient stars in Super Admin Wallet. Required: ${starCount}, Available: ${superAdminWallet.totalStars}`,
+        message: `Insufficient stars in Super Admin Wallet. Required: ${starCount}, Available: ${currentStars}`,
       });
     }
 
- 
-    superAdminWallet.totalStars -= starCount;
+    // ✅ Deduct stars
+    superAdminWallet.totalStars = currentStars - starCount;
 
-   
-    const payoutEntry = {
+    // ✅ Add to payoutDetails array
+    superAdminWallet.payoutDetails.push({
       starCount,
       amountToCheckout: amount,
       note: note || "",
-      date: new Date(),
-    };
+      date: new Date()
+    });
 
-    superAdminWallet.payoutDetails.push(payoutEntry);
-
+    // ✅ Save wallet
     await superAdminWallet.save();
 
     return res.status(200).json({
       message: "Payout recorded successfully",
       starsDeducted: starCount,
       remainingStars: superAdminWallet.totalStars,
-      recentPayout: payoutEntry,
+      recentPayout: {
+        starCount,
+        amountToCheckout: amount,
+        note,
+        date: new Date()
+      }
     });
   } catch (error) {
     console.error("Error in superAdminPayout:", error);
     return res.status(500).json({
       message: "Internal server error",
-      error: error.message,
+      error: error.message
     });
   }
 };
