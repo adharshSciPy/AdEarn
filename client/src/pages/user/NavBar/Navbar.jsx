@@ -156,7 +156,7 @@ function Navbar({ onTourComplete }) {
             opacity: 0.5,
             stageBackground: "rgba(0, 0, 0, 0.5)",
             allowClose: true,
-            doneBtnText: "Next: Home Tour",
+            doneBtnText: "Finish Navbar",
             closeBtnText: "Skip",
             nextBtnText: "Next",
             prevBtnText: "Previous",

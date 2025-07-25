@@ -259,7 +259,7 @@ setPayment(res.data.completedPayouts)
             opacity: 0.5,
             stageBackground: "rgba(0, 0, 0, 0.5)",
             allowClose: true,
-            doneBtnText: "Finish Tour",
+            doneBtnText: "Next",
             closeBtnText: "Skip",
             nextBtnText: "Next",
             prevBtnText: "Previous",
