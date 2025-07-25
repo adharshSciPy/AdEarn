@@ -65,6 +65,7 @@ const createPayoutRequest = async (req, res) => {
         starCount,
         amount,
         requestedBy: user._id,
+        payoutStatus: "pending"
       }],
       { session }
     );
@@ -156,7 +157,7 @@ const createPayoutRequest = async (req, res) => {
 const getAllUnVerifiedPayoutRequest = async (req, res) => {
   try {
     const allRequests = await PayoutRequest.find({
-      isVerified: false,
+       payoutStatus: "pending",
     }).populate({
       path: "requestedBy",
       select: "firstName lastName email",
@@ -170,7 +171,7 @@ const getAllUnVerifiedPayoutRequest = async (req, res) => {
     }
 
     const formattedRequests = allRequests
-      .filter((req) => req.requestedBy) // Ensure requestedBy is populated
+      .filter((req) => req.requestedBy)
       .map((req) => ({
         userName: `${req.requestedBy.firstName || ""} ${
           req.requestedBy.lastName || ""
@@ -203,7 +204,8 @@ const singleUnverifiedPayoutRequest = async (req, res) => {
       return res.status(400).json({ message: "Payout request ID is required" });
     }
 
-    const payout = await PayoutRequest.findOne({ _id: id, isVerified: false })
+    const payout = await PayoutRequest.findOne({ _id: id, payoutStatus: "pending" })
+
       .populate({
         path: "requestedBy",
         select: "-password",
@@ -251,9 +253,10 @@ const verifyPayoutRequest = async (req, res) => {
     }
 
     const updatedPayout = await PayoutRequest.findOneAndUpdate(
-      { _id: id, isVerified: false },
+      { _id: id, payoutStatus: "pending" }
+,
       {
-        isVerified: true,
+        payoutStatus: "verified",
         verifiedAt: new Date(),
           
       },
@@ -472,15 +475,14 @@ Thank you for using our service!`,
     return res.status(200).json({
       message: "Payout request verified successfully",
       payoutRequest: {
-        id: updatedPayout._id,
+       id: updatedPayout._id,
         starCount: updatedPayout.starCount,
         amount: updatedPayout.amount,
         requestedAt: updatedPayout.requestedAt,
-        isVerified: updatedPayout.isVerified,
+        payoutStatus: updatedPayout.payoutStatus,
         verifiedAt: updatedPayout.verifiedAt,
-        isPayoutCompleted: updatedPayout.isPayoutCompleted,
       },
-      user: user,
+       user
     });
   } catch (error) {
     console.error("Error verifying payout request:", error.message);
@@ -505,34 +507,26 @@ const rejectPayoutRequest = async (req, res) => {
 
   try {
     const payout = await PayoutRequest.findById(id).session(session);
-    if (!payout) {
-      throw new Error("Payout request not found.");
-    }
+    if (!payout) throw new Error("Payout request not found.");
 
-    if (payout.isVerified) {
-      throw new Error("Cannot reject a verified payout.");
+    if (payout.payoutStatus === "verified" || payout.payoutStatus === "completed") {
+      throw new Error("Cannot reject a verified or completed payout.");
     }
 
     const user = await User.findById(payout.requestedBy)
       .populate("userWalletDetails")
       .session(session);
-    if (!user) {
-      throw new Error("Associated user not found.");
-    }
+    if (!user) throw new Error("Associated user not found.");
 
     const wallet = user.userWalletDetails;
-    if (!wallet) {
-      throw new Error("User wallet not found.");
-    }
+    if (!wallet) throw new Error("User wallet not found.");
 
-    // Refund stars
+    // Refund stars to user wallet
     wallet.totalStars += payout.starCount;
 
-    // Remove payout from user's payoutRequests safely
+    // Remove payout ID from user's payoutRequests array
     if (Array.isArray(user.payoutRequests)) {
-      user.payoutRequests = user.payoutRequests.filter(reqId => {
-        return reqId?.toString() !== payout._id.toString();
-      });
+      user.payoutRequests = user.payoutRequests.filter(reqId => reqId?.toString() !== payout._id.toString());
     }
 
     // Update super admin wallet
@@ -549,11 +543,16 @@ const rejectPayoutRequest = async (req, res) => {
       await superAdminWallet.save({ session });
     }
 
+    // Update payout status and reason
+    payout.payoutStatus = "rejected";
+    payout.rejectionReason = reason;
+    payout.rejectedAt = new Date();
+
     // Save all changes
     await Promise.all([
       wallet.save({ session }),
       user.save({ session }),
-      PayoutRequest.findByIdAndDelete(id).session(session)
+      payout.save({ session })
     ]);
 
     await session.commitTransaction();
@@ -604,10 +603,11 @@ const rejectPayoutRequest = async (req, res) => {
   }
 };
 
+
 // to get all verified payment requests
 const getAllVerifiedPayoutRequests = async (req, res) => {
   try {
-    const verifiedPayouts = await PayoutRequest.find({ isVerified: true })
+    const verifiedPayouts = await PayoutRequest.find({ payoutStatus: "verified" })
       .populate({
         path: "requestedBy",
         select: "firstName lastName email phoneNumber kycDetails",
@@ -618,26 +618,25 @@ const getAllVerifiedPayoutRequests = async (req, res) => {
       .lean();
 
     if (!verifiedPayouts.length) {
-      return res
-        .status(200)
-        .json({ message: "No verified payout requests found", data: [] });
+      return res.status(200).json({
+        message: "No verified payout requests found",
+        data: [],
+      });
     }
 
     const responseData = verifiedPayouts.map((payout) => ({
-      payoutRequestId: payout._id,
+      _id: payout._id,
       starCount: payout.starCount,
       amount: payout.amount,
+      requestedBy: payout.requestedBy?._id || null,
+      payoutStatus: payout.payoutStatus || "verified",
+      verifiedAt: payout.verifiedAt || null,
+      payoutCompletedAt: payout.payoutCompletedAt || null,
+      rejectedAt: payout.rejectedAt || null,
       requestedAt: payout.requestedAt,
-      isVerified: payout.isVerified,
-      isPayoutCompleted: payout.isPayoutCompleted,
-      user: {
-        _id: payout.requestedBy._id,
-        firstName: payout.requestedBy.firstName,
-        lastName: payout.requestedBy.lastName,
-        email: payout.requestedBy.email,
-        phoneNumber: payout.requestedBy.phoneNumber,
-        kycDetails: payout.requestedBy.kycDetails || null,
-      },
+      createdAt: payout.createdAt,
+      updatedAt: payout.updatedAt,
+      __v: payout.__v,
     }));
 
     return res.status(200).json({
@@ -653,6 +652,7 @@ const getAllVerifiedPayoutRequests = async (req, res) => {
     });
   }
 };
+
 //to fetch single verified payout request
 const getSingleVerifiedPayoutRequest = async (req, res) => {
   try {
@@ -662,7 +662,7 @@ const getSingleVerifiedPayoutRequest = async (req, res) => {
       return res.status(400).json({ message: "Request ID is required" });
     }
 
-    const payout = await PayoutRequest.findOne({ _id: id, isVerified: true })
+    const payout = await PayoutRequest.findOne({ _id: id,payoutStatus:"verified"})
       .populate({
         path: "requestedBy",
         select: "firstName lastName email phoneNumber kycDetails",
@@ -679,12 +679,18 @@ const getSingleVerifiedPayoutRequest = async (req, res) => {
     }
 
     const response = {
-      payoutRequestId: payout._id,
+     _id: payout._id,
       starCount: payout.starCount,
       amount: payout.amount,
+      requestedBy: payout.requestedBy?._id || null,
+      payoutStatus: payout.payoutStatus || "verified",
+      verifiedAt: payout.verifiedAt || null,
+      payoutCompletedAt: payout.payoutCompletedAt || null,
+      rejectedAt: payout.rejectedAt || null,
       requestedAt: payout.requestedAt,
-      isVerified: payout.isVerified,
-      isPayoutCompleted: payout.isPayoutCompleted,
+      createdAt: payout.createdAt,
+      updatedAt: payout.updatedAt,
+      __v: payout.__v,
       user: {
         _id: payout.requestedBy._id,
         firstName: payout.requestedBy.firstName,
@@ -720,9 +726,13 @@ const markPayoutAsCompleted = async (req, res) => {
     const completedAt = new Date();
 
     const payout = await PayoutRequest.findOneAndUpdate(
-      { _id: id, isVerified: true, isPayoutCompleted: false },
       {
-        isPayoutCompleted: true,
+        _id: id,
+        payoutStatus: "verified",
+        payoutCompletedAt: null,
+      },
+      {
+        payoutStatus: "completed",
         payoutCompletedAt: completedAt,
       },
       { new: true }
@@ -732,9 +742,7 @@ const markPayoutAsCompleted = async (req, res) => {
     });
 
     if (!payout) {
-      return res
-        .status(404)
-        .json({ message: "Verified & pending payout request not found" });
+      return res.status(404).json({ message: "Verified & pending payout request not found" });
     }
 
     const user = payout.requestedBy;
@@ -743,6 +751,7 @@ const markPayoutAsCompleted = async (req, res) => {
       return res.status(404).json({ message: "Associated user not found" });
     }
 
+    // Send in-app notification
     await sendNotification(
       user._id,
       USER_ROLE,
@@ -751,9 +760,10 @@ const markPayoutAsCompleted = async (req, res) => {
       connectedUsers
     );
 
+    // Send email
     if (user.email) {
       try {
-         await sgMail.send({
+        await sgMail.send({
           to: user.email,
           from: config.SENDGRID_SENDER_EMAIL,
           subject: "🎉 Payout Completed Successfully!",
@@ -771,7 +781,6 @@ Thank you for using our platform.`,
               <style>
                 body {
                   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                  line-height: 1.6;
                   color: #333;
                   max-width: 600px;
                   margin: 0 auto;
@@ -780,8 +789,8 @@ Thank you for using our platform.`,
                 .email-container {
                   border-radius: 10px;
                   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-                  overflow: hidden;
                   background: linear-gradient(135deg, #f9f9ff 0%, #f0f4ff 100%);
+                  overflow: hidden;
                 }
                 .header {
                   background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
@@ -817,36 +826,12 @@ Thank you for using our platform.`,
                   font-weight: 700;
                   color: #222;
                 }
-                .button {
-                  display: inline-block;
-                  padding: 12px 25px;
-                  color: white;
-                  text-decoration: none;
-                  border-radius: 5px;
-                  font-weight: 600;
-                  margin: 10px 5px;
-                  transition: all 0.3s ease;
-                }
-                .button-primary {
-                  background: #4CAF50;
-                }
-                .button-secondary {
-                  background: #2196F3;
-                }
-                .button:hover {
-                  transform: translateY(-2px);
-                  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                }
                 .footer {
                   text-align: center;
                   padding: 15px;
                   font-size: 12px;
                   color: #777;
                   background-color: #f5f5f5;
-                }
-                .action-buttons {
-                  text-align: center;
-                  margin: 25px 0;
                 }
                 .print-only {
                   display: none;
@@ -871,15 +856,13 @@ Thank you for using our platform.`,
             <body>
               <div class="email-container">
                 <div class="header">
-                  <!-- Replace with your actual logo URL -->
                   <img src="https://example.com/your-logo.png" alt="Company Logo" class="logo">
                   <h1>Payout Completed!</h1>
                   <p>Your funds have been successfully transferred</p>
                 </div>
-                
                 <div class="content">
                   <p>Hi ${user.firstName},</p>
-                  <p>We're happy to inform you that your payout has been <strong>successfully processed</strong> and the funds should reflect in your account shortly.</p>
+                  <p>We're happy to inform you that your payout has been <strong>successfully processed</strong>.</p>
                   
                   <div class="payout-card">
                     <div class="payout-detail">
@@ -899,61 +882,26 @@ Thank you for using our platform.`,
                       <span class="payout-value">${payout._id}</span>
                     </div>
                   </div>
-                  
-                  // <div class="action-buttons">
-                  //   <a href="#" class="button button-primary no-print" onclick="window.print()">Print Receipt</a>
-                  //   <a href="#" class="button button-secondary no-print" onclick="generatePDF()">Save as PDF</a>
-                  //   <a href="${config.APP_URL}/dashboard/payouts" class="button button-secondary">View in Dashboard</a>
-                  // </div>
-                  
+
                   <div class="print-only">
                     Payout receipt - Generated on ${new Date().toLocaleString()}
                   </div>
-                  
+
                   <p>If you don't see the funds in your account within 24 hours, please contact our support team.</p>
                   <p>Thank you for being a valued member of our platform!</p>
                 </div>
-                
                 <div class="footer">
                   <p>© ${new Date().getFullYear()} AdEarn. All rights reserved.</p>
                   <p>
-                    <a href="${config.APP_URL}/privacy" style="color: #4CAF50; text-decoration: none;">Privacy Policy</a> | 
+                    <a href="${config.APP_URL}/privacy" style="color: #4CAF50; text-decoration: none;">Privacy Policy</a> |
                     <a href="${config.APP_URL}/terms" style="color: #4CAF50; text-decoration: none;">Terms of Service</a>
                   </p>
                 </div>
               </div>
-              
-              <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-              <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-              <script>
-                // This script won't work in email clients but will work if opened in browser
-                document.addEventListener('DOMContentLoaded', function() {
-                  console.log('Email loaded in browser');
-                });
-                
-                function generatePDF() {
-                  const { jsPDF } = window.jspdf;
-                  
-                  // Get the email container element
-                  const element = document.querySelector('.email-container');
-                  
-                  // Use html2canvas to capture the element as an image
-                  html2canvas(element).then(canvas => {
-                    const imgData = canvas.toDataURL('image/png');
-                    const pdf = new jsPDF('p', 'mm', 'a4');
-                    const imgProps = pdf.getImageProperties(imgData);
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                    
-                    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                    pdf.save('payout-receipt-${payout._id}.pdf');
-                  });
-                }
-              </script>
             </body>
             </html>
           `,
-        })
+        });
       } catch (emailErr) {
         console.error("SendGrid Email Error:", emailErr.message);
       }
@@ -971,19 +919,14 @@ Thank you for using our platform.`,
     });
   } catch (error) {
     console.error("Error completing payout:", error);
-    return res
-      .status(500)
-      .json({ message: "Server error", error: error.message });
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 // to fetch completed payout details on the superadmin side
 const getAllCompletedPayouts = async (req, res) => {
   try {
-    const payouts = await PayoutRequest.find({
-      isVerified: true,
-      isPayoutCompleted: true,
-    })
-
+    const payouts = await PayoutRequest.find({ payoutStatus: "completed" })
       .populate({
         path: "requestedBy",
         select: "firstName lastName email phoneNumber",
@@ -995,27 +938,31 @@ const getAllCompletedPayouts = async (req, res) => {
       starCount: p.starCount,
       amount: p.amount,
       requestedAt: p.requestedAt,
-      user: {
-        _id: p.requestedBy?._id,
-        fullName: `${p.requestedBy?.firstName || ""} ${
-          p.requestedBy?.lastName || ""
-        }`.trim(),
-        email: p.requestedBy?.email,
-        phoneNumber: p.requestedBy?.phoneNumber,
-      },
+      payoutCompletedAt: p.payoutCompletedAt,
+      user: p.requestedBy
+        ? {
+            _id: p.requestedBy._id,
+            fullName: `${p.requestedBy.firstName || ""} ${p.requestedBy.lastName || ""}`.trim(),
+            email: p.requestedBy.email,
+            phoneNumber: p.requestedBy.phoneNumber,
+          }
+        : null,
     }));
 
     return res.status(200).json({
-      message: "Fetched all completed and verified payout requests",
+      message: "Fetched all completed payout requests successfully",
+      count: formatted.length,
       data: formatted,
     });
   } catch (error) {
     console.error("Error fetching completed payouts:", error);
-    return res
-      .status(500)
-      .json({ message: "Server error", error: error.message });
+    return res.status(500).json({
+      message: "Server error while fetching completed payout requests",
+      error: error.message,
+    });
   }
 };
+
 // to fetch same user's all payoutRequests...(isVerified:false,isPayoutCompleted:false)
 const myPayoutRequests = async (req, res) => {
   const { userId } = req.params;
@@ -1031,7 +978,9 @@ const myPayoutRequests = async (req, res) => {
 
     return res.status(200).json({
       message: "Payout requests fetched successfully",
+      count:user.payoutRequests.length,
       payoutRequests: user.payoutRequests || [],
+      
     });
   } catch (error) {
     console.error("Error fetching payout requests:", error);
@@ -1046,9 +995,9 @@ const myVerifiedPayouts = async (req, res) => {
     const user = await User.findById(userId).populate({
       path: "payoutRequests",
       match: {
-        isPayoutCompleted: true,
+        payoutStatus:"completed"
       },
-      options: { sort: { createdAt: -1 } }, // optional: newest first
+      options: { sort: { createdAt: -1 } },
     });
 
     if (!user) {
@@ -1057,6 +1006,7 @@ const myVerifiedPayouts = async (req, res) => {
 
     return res.status(200).json({
       message: "Completed payouts fetched successfully",
+      count: user.payoutRequests.length,
       completedPayouts: user.payoutRequests || [],
     });
   } catch (error) {
@@ -1074,7 +1024,7 @@ const myRejectedPayouts = async (req, res) => {
   try {
     const user = await User.findById(userId).populate({
       path: "payoutRequests",
-      match: { rejected: true },
+      match: { payoutStatus:"rejected" },
     });
 
     if (!user) {

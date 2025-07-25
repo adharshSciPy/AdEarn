@@ -20,7 +20,7 @@ import "driver.js/dist/driver.min.css";
 import axios from "axios";
 import baseUrl from "../../../baseurl";
 
-function Navbar() {
+function Navbar({ onTourComplete }) {
   const [activeTab, setActiveTab] = useState("home");
   const [notifications, setNotifications] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -118,9 +118,12 @@ function Navbar() {
   // ✅ Driver.js tour
   useEffect(() => {
     getNotifications();
-    const hasSeenNavTour = localStorage.getItem(`userTourNavbarDone_${userId}`);
+    // Check if tours are completely finished or if navbar tour was already completed
+    const tourCompleted = localStorage.getItem(`userTourCompleted_${userId}`);
+    const navbarTourDone = localStorage.getItem(`navbarTourDone_${userId}`);
 
-    if (!hasSeenNavTour) {
+    // Only start navbar tour if it hasn't been done and full tour isn't complete
+    if (!tourCompleted && !navbarTourDone) {
       let attempts = 0;
       const navSelectors = [
         "#user-home",
@@ -153,12 +156,16 @@ function Navbar() {
             opacity: 0.5,
             stageBackground: "rgba(0, 0, 0, 0.5)",
             allowClose: true,
-            doneBtnText: "Next: Ads Tour",
+            doneBtnText: "Next: Home Tour",
             closeBtnText: "Skip",
             nextBtnText: "Next",
             prevBtnText: "Previous",
             onReset: () => {
-              localStorage.setItem(`userTourNavbarDone_${userId}`, "true");
+              // Mark navbar tour as completed
+              localStorage.setItem(`navbarTourDone_${userId}`, "true");
+              if (onTourComplete) {
+                onTourComplete('navbar');
+              }
             },
           });
 
@@ -184,7 +191,8 @@ function Navbar() {
 
       return () => clearInterval(interval);
     }
-  }, [userId]);
+  }, [userId, onTourComplete]);
+
   const getNotifications = async () => {
     
   try {
@@ -253,9 +261,8 @@ function Navbar() {
         {navItems.map((item, index) => (
           <div
             key={index}
-            className={`${styles.bottomNavItem} ${
-              activeTab === item.label ? styles.active : ""
-            }`}
+            className={`${styles.bottomNavItem} ${activeTab === item.label ? styles.active : ""
+              }`}
             onClick={() => handleBottomNavClick(item.label)}
           >
             {typeof item.icon === "string" ? (
