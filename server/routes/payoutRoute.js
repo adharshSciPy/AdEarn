@@ -13,8 +13,8 @@ payoutRoute.route('/single-verified/request/:id').get(getSingleVerifiedPayoutReq
 payoutRoute.route('/complete-payout/:id').patch(markPayoutAsCompleted)// to  verify complete payout by superAdmin.
 payoutRoute.route('/completed-payouts').get(getAllCompletedPayouts)// to  fetch all completed payouts on superAdmin side.
 payoutRoute.route('/my-payouts/:userId').get(myPayoutRequests)
-payoutRoute.route('/my-payouts/verified/:userId').get(myVerifiedPayouts)
-payoutRoute.route('/my-payouts/rejected/:userId').get(myRejectedPayouts)
+payoutRoute.route('/my-payouts/verified/:userId').get(myVerifiedPayouts)//completed payouts
+payoutRoute.route('/my-payouts/rejected/:userId').get(myRejectedPayouts)//rejected payouys
 
 
 

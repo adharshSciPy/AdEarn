@@ -8,45 +8,37 @@ const payoutRequestSchema = new Schema({
   },
   amount: {
     type: Number,
-    required: true, 
+    required: true,
   },
   requestedAt: {
     type: Date,
     default: Date.now,
   },
   requestedBy: {
-    type: mongoose.Schema.Types.ObjectId, 
+    type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },
-  isVerified: {
-    type: Boolean,
-    default: false, 
+  payoutStatus: {
+    type: String,
+    enum: ["pending", "verified", "rejected", "completed"],
+    default: "pending",
   },
   verifiedAt: {
     type: Date,
-    default: null, 
+    default: null,
   },
-  isPayoutCompleted: {
-    type: Boolean,
-    default: false,
-  },
-   payoutCompletedAt: {
+  payoutCompletedAt: {
     type: Date,
-    default: null, 
-  },
-   rejected: {
-    type: Boolean,
-    default: false,
+    default: null,
   },
   rejectedAt: {
     type: Date,
+    default: null,
   },
   rejectionReason: {
     type: String,
   },
-
-},  {timestamps:true});
-
+}, { timestamps: true });
 
 export const PayoutRequest = mongoose.model("PayoutRequest", payoutRequestSchema);
