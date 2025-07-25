@@ -19,6 +19,16 @@ function Verifiedpayouts() {
         verifiedpayouts()
     }, [])
 
+
+    const data = [
+        { id: 1, Name: "Vishva", Age: 25, AdType: "Image", Status: "Verified" },
+        { id: 2, Name: "Sanju", Age: 25, AdType: "Video", Status: "NotVerified" },
+        { id: 3, Name: "Gokul", Age: 25, AdType: "Survey", Status: "Verified" },
+        { id: 4, Name: "Adithya", Age: 24, AdType: "Video", Status: "NotVerified" },
+        { id: 5, Name: "Akshay", Age: 26, AdType: "Image", Status: "Verified" }
+
+    ]
+
     return (
         <div className={styles.verifiedpayouts}>
             <div className={styles.verifiedpayoutsmain}>
@@ -26,24 +36,32 @@ function Verifiedpayouts() {
                 <SuperSidebar />
                 <div className={styles.verifiedpayoutcontainer}>
                     <div style={{ width: '100%', maxWidth: '1550px', height: '600px', padding: '30px' }} className={styles.SuperCard}>
-                        <div className={styles.payouts}>
-                            <h1>Verified Payouts</h1>
-                            <div>
-                                <table>
+                        <div className={styles.responsiveTableWrapper}>
+                            <h1 style={{ margin: "20px 0", textAlign: "left" }}>Payout Summary</h1>
+                            <div className={styles.tableContainer}>
+                                <table className={styles.responsiveTable}>
                                     <thead>
                                         <tr>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
+                                            <th>Name</th>
+                                            <th>Age</th>
+                                            <th>AdType</th>
+                                            <th>Status</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-
+                                        {data.map((value, index) => (
+                                            <tr key={index}>
+                                                <td>{value.Name}</td>
+                                                <td>{value.Age}</td>
+                                                <td>{value.AdType}</td>
+                                                <td>{value.Status}</td>
+                                            </tr>
+                                        ))}
                                     </tbody>
                                 </table>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>
