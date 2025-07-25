@@ -20,3 +20,45 @@
   justify-content: center;
   align-items: center;
 }
+
+.responsiveTableWrapper {
+  padding: 16px;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.tableContainer {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.responsiveTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 600px;
+}
+
+.responsiveTable thead {
+  background-color: #693bb8;
+  color: white;
+}
+
+.responsiveTable th,
+.responsiveTable td {
+  text-align: left;
+  padding: 12px 16px;
+  border: 1px solid #ddd;
+}
+
+@media (max-width: 768px) {
+  .responsiveTable {
+    font-size: 12px;
+    min-width: unset;
+  }
+
+  .responsiveTableWrapper {
+    padding: 8px;
+  }
+}
+
