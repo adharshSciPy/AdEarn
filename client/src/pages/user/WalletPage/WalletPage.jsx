@@ -20,7 +20,7 @@ const WalletPage = () => {
   const [payOutDetails, setPayoutDetails] = useState([]);
   const userId = useSelector((state) => state.user.id);
   const token = useSelector((state) => state.user.token);
-
+  const [payment,setPayment]=useState([])
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const navigate = useNavigate();
@@ -66,7 +66,6 @@ const WalletPage = () => {
 
   const tabs = [
     "Payouts",
-    "Redeem Payouts",
     "Payment History",
     "Cancelled payouts",
   ];
@@ -131,12 +130,13 @@ const verifiedPayouts=async()=>{
   try {
     const res=await axios.get(`${baseUrl}/api/v1/payout/my-payouts/verified/${userId}`);
     console.log("veri",res);
-    
+    setPayment(res.data.completedPayouts)
   } catch (error) {
     console.log(error);
     
   }
 }
+
   return (
     <>
       <Navbar />
@@ -231,7 +231,6 @@ const verifiedPayouts=async()=>{
                     <th>Status</th>
                     <th>Payout amount</th>
                     <th>Download pdf</th>
-                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -253,18 +252,7 @@ const verifiedPayouts=async()=>{
                           Download
                         </button>
                       </td>
-                      <td>
-                        {!item.isVerified ? (
-                          <button
-                            className={styles.cancelBtn}
-                            style={{ margin: "0" }}
-                          >
-                            Cancel
-                          </button>
-                        ) : (
-                          ""
-                        )}
-                      </td>
+                      
                     </tr>
                   ))}
                 </tbody>
@@ -272,7 +260,7 @@ const verifiedPayouts=async()=>{
             </section>
           )}
 
-          {activeTab === "Redeem Payouts" && (
+          {/* {activeTab === "Redeem Payouts" && (
             <section className={styles.payoutTableSection}>
               <h2>Redeem Payouts</h2>
               <table className={styles.payoutTable}>
@@ -313,7 +301,7 @@ const verifiedPayouts=async()=>{
                 </tbody>
               </table>
             </section>
-          )}
+          )} */}
           {activeTab === "Payment History" && (
             <section className={styles.payoutTableSection}>
               <h2>Payment History</h2>
