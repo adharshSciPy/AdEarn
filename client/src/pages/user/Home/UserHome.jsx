@@ -21,6 +21,10 @@ function UserHome() {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [bonusData, setBonusData] = useState(null);
   const [bonusFetched, setBonusFetched] = useState(false);
+  const [tourState, setTourState] = useState({
+    navbarCompleted: false,
+    homeCompleted: false
+  });
 
   const { id } = useParams();
   const location = useLocation();
@@ -140,92 +144,146 @@ function UserHome() {
     }
   }, [bonus, id, bonusFetched]);
 
+  // Handle tour completion
+  const handleTourComplete = (tourType) => {
+    setTourState(prev => ({
+      ...prev,
+      [tourType === 'navbar' ? 'navbarCompleted' : 'homeCompleted']: true
+    }));
+  };
+
   //driver.js
 
+  // Start home tour when navbar tour is completed
   useEffect(() => {
-    const hasSeenTour = localStorage.getItem(`userHomeTourSeen_${id}`);
+    const navbarTourDone = localStorage.getItem(`navbarTourDone_${id}`);
+    const tourCompleted = localStorage.getItem(`userTourCompleted_${id}`);
 
-    if (!hasSeenTour) {
-      let attempts = 0;
+    // Start home tour if navbar is done but full tour isn't complete
+    if (navbarTourDone && !tourCompleted) {
+      // Add a small delay to ensure all elements are rendered
+      setTimeout(() => {
+        startHomeTour();
+      }, 500);
+    }
+  }, [id]); // Remove tourState.navbarCompleted dependency
 
-      const interval = setInterval(() => {
-        const selectors = [
-          "#place-ads-btn",
-          "#image-ads-section",
-          "#video-ads-section",
-          "#survey-ads-section",
-        ];
+  // Also trigger when navbar completes via callback
+  useEffect(() => {
+    if (tourState.navbarCompleted) {
+      setTimeout(() => {
+        startHomeTour();
+      }, 500);
+    }
+  }, [tourState.navbarCompleted]);
 
-        const allExist = selectors.every((sel) => document.querySelector(sel));
-        if (allExist || attempts > 5) {
-          clearInterval(interval);
 
-          if (allExist) {
-            const driver = new Driver({
-              animate: true,
-              opacity: 0.5,
-              stageBackground: "rgba(0, 0, 0, 0.5)",
-              allowClose: true,
-              doneBtnText: "Finish",
-              closeBtnText: "Skip",
-              nextBtnText: "Next",
-              prevBtnText: "Previous",
-              onReset: () => {
-                localStorage.setItem(`userHomeTourSeen_${id}`, "true");
+  const startHomeTour = () => {
+    // Check again to prevent duplicate tours
+    const tourCompleted = localStorage.getItem(`userTourCompleted_${id}`);
+    if (tourCompleted) return;
+
+    let attempts = 0;
+
+    const interval = setInterval(() => {
+      const selectors = [
+        "#place-ads-btn",
+        "#image-ads-section",
+        "#video-ads-section",
+        "#survey-ads-section",
+      ];
+
+      const existingSelectors = selectors.filter(sel => document.querySelector(sel));
+      
+      // Start tour if at least the place-ads-btn exists (main requirement)
+      const canStartTour = document.querySelector("#place-ads-btn");
+      
+      if (canStartTour || attempts > 10) {
+        clearInterval(interval);
+
+        if (canStartTour) {
+          // Use only existing selectors for the tour
+          const tourSteps = [];
+          
+          if (document.querySelector("#place-ads-btn")) {
+            tourSteps.push({
+              element: "#place-ads-btn",
+              popover: {
+                title: "Place Your Ad",
+                description: "Click here to place a new advertisement.",
+                position: "bottom",
               },
             });
-
-            driver.defineSteps([
-              {
-                element: "#place-ads-btn",
-                popover: {
-                  title: "Place Your Ad",
-                  description: "Click here to place a new advertisement.",
-                  position: "bottom",
-                },
-              },
-              {
-                element: "#image-ads-section",
-                popover: {
-                  title: "Image Ads",
-                  description: "View image ads to earn stars.",
-                  position: "top",
-                },
-              },
-              {
-                element: "#video-ads-section",
-                popover: {
-                  title: "Video Ads",
-                  description: "Watch short videos to earn more stars.",
-                  position: "top",
-                },
-              },
-              {
-                element: "#survey-ads-section",
-                popover: {
-                  title: "Surveys",
-                  description: "Complete surveys for additional rewards.",
-                  position: "top",
-                },
-              },
-            ]);
-
-            driver.start();
-          } else {
-            console.warn("Some tour elements not found.");
           }
+          
+          if (document.querySelector("#image-ads-section")) {
+            tourSteps.push({
+              element: "#image-ads-section",
+              popover: {
+                title: "Image Ads",
+                description: "View image ads to earn stars.",
+                position: "top",
+              },
+            });
+          }
+          
+          if (document.querySelector("#video-ads-section")) {
+            tourSteps.push({
+              element: "#video-ads-section",
+              popover: {
+                title: "Video Ads",
+                description: "Watch short videos to earn more stars.",
+                position: "top",
+              },
+            });
+          }
+          
+          if (document.querySelector("#survey-ads-section")) {
+            tourSteps.push({
+              element: "#survey-ads-section",
+              popover: {
+                title: "Surveys",
+                description: "Complete surveys for additional rewards.",
+                position: "top",
+              },
+            });
+          }
+
+          const driver = new Driver({
+            animate: true,
+            opacity: 0.5,
+            stageBackground: "rgba(0, 0, 0, 0.5)",
+            allowClose: true,
+            doneBtnText: "Finish Tour",
+            closeBtnText: "Skip",
+            nextBtnText: "Next",
+            prevBtnText: "Previous",
+            onReset: () => {
+              // Mark both tours as completed
+              localStorage.setItem(`userTourCompleted_${id}`, "true");
+              setTourState(prev => ({
+                ...prev,
+                homeCompleted: true
+              }));
+            },
+          });
+
+          driver.defineSteps(tourSteps);
+          driver.start();
+        } else {
+          console.warn("Place ads button not found, completing tour anyway.");
+          // Still mark as completed if main element not found
+          localStorage.setItem(`userTourCompleted_${id}`, "true");
         }
+      }
 
-        attempts++;
-      }, 1000);
-
-      return () => clearInterval(interval);
-    }
-  }, [id]);
+      attempts++;
+    }, 1000);
+  };
 
   return (
-   <div>
-      <Navbar />
+    <div>
+      <Navbar onTourComplete={handleTourComplete} />
       <CreateAdPopup isOpen={showPopup} onClose={() => setShowPopup(false)} />
       <div className={styles.mainContainer}>
         <div className={styles.homeMainContainer}>
