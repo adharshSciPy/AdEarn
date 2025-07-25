@@ -47,7 +47,7 @@ function CompanyAccounts() {
   const [received, setReceived] = useState(0);
   const [spent, setSpent] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [payoutAmount, setPayoutAmount] = useState("");
+  const [payoutAmount, setPayoutAmount] = useState(0);
   const [payoutNote, setPayoutNote] = useState("");
 
   const showModal = () => setIsModalOpen(true);
@@ -93,7 +93,7 @@ function CompanyAccounts() {
   const handlePayout = async () => {
     try {
       const res = await axios.post(`${baseUrl}/api/v1/super-admin/payout`, {
-        starCount: payoutAmount,
+        amount: payoutAmount,
         note: payoutNote,
       });
       console.log(res);
@@ -330,7 +330,7 @@ function CompanyAccounts() {
               type="number"
               placeholder="Enter amount"
               value={payoutAmount}
-              onChange={(e) => setPayoutAmount(e.target.value)}
+              onChange={(e) => setPayoutAmount(parseInt(e.target.value))}
             />
           </Form.Item>
           <Form.Item label="Note">
