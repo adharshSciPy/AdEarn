@@ -1491,7 +1491,7 @@ const fetchVerifiedSurveyAd = async (req, res) => {
       if (!matchesLocation) continue;
 
       // Check if already completed
-      const hasUserCompleted = surveyAd.usersCompleted?.some(
+      const hasUserCompleted = surveyAd.viewersRewarded?.some(
         (entry) => entry.userId.toString() === userId
       );
 
