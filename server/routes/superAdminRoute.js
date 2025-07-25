@@ -47,10 +47,13 @@ import {
   getWelcomeBonusLogs,
   fetchTotalReceivedStars,
   fetchTotalGivenStars,
-  superAdminPayout
+  superAdminPayout,
+  postSuperAdminImageAd,
+  getAllSuperAdminImageAds 
   // selectAutomaticWinners
 } from "../controller/superAdminController.js";
 import { wrapMulter } from "../utils/wrapMulter.js";
+import  adMediaUpload  from "../multer/adImageMulter.js";
 import welcomeBonusUpload from "../multer/welBonusMulter.js";
 import contestPrizeUpload from "../multer/contestRewardMulter.js";
 import { assignAndApproveCouponRequest } from "../controller/adminController.js";
@@ -118,5 +121,7 @@ superAdminRouter.route("/welcome-bonus/logs").get(getWelcomeBonusLogs ); // incl
 superAdminRouter.route("/total-stars/received").get(fetchTotalReceivedStars);
 superAdminRouter.route("/total-stars/given").get(fetchTotalGivenStars);
 superAdminRouter.route("/payout").post(superAdminPayout);
+superAdminRouter.route("/ad/image").post(wrapMulter(adMediaUpload), postSuperAdminImageAd);
+superAdminRouter.route("/ad/image").get(getAllSuperAdminImageAds);
 
 export default superAdminRouter;

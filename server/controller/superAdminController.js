@@ -7,7 +7,7 @@ import SuperAdminWallet from "../model/superAdminWallet.js";
 import Coupon from "../model/couponModel.js";
 import WelcomeBonusSetting from "../model/WelcomeBonusSetting.js";
 import ContestEntry from "../model/contestEntrySchema.js";
-import ContestParticipant from "../model/contestParticipantsSchema.js"
+import ContestParticipant from "../model/contestParticipantsSchema.js";
 // import userEntrySchema from "../model/superAdminWallet.js"
 import { UserWallet } from "../model/userWallet.js";
 import kyc from "../model/kycModel.js";
@@ -23,7 +23,7 @@ import config from "../config.js";
 import getDateRange from "../utils/getDateRange.js";
 import getCouponAmount from "../utils/getCouponAmount.js";
 import couponRequestModel from "../model/couponRequestModel.js";
-import UserContestEntry from "../model/userContestEntryModel.js"
+import UserContestEntry from "../model/userContestEntryModel.js";
 // import superAdminWallet from "../model/superAdminWallet.js";
 import { VideoAd } from "../model/videoadModel.js";
 import { ImageAd } from "../model/imageadModel.js";
@@ -32,6 +32,8 @@ import { Ad } from "../model/AdsModel.js";
 // import superAdminWallet from "../model/superAdminWallet.js";
 import { convertStarsToRupees } from "../utils/convertStarsToRupees.js";
 import adminwalletModel from "../model/adminwalletModel.js";
+import SuperAdminAd from "../model/superAdminAdModel.js";
+
 const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
@@ -58,10 +60,8 @@ function generateRandomCode(length) {
 //   }
 // }
 
-
 // Utility function to convert amount to rupees
-const convertRupeesToStars = (rupees) => Math.floor(rupees*4); // Example: ₹1 = 4 stars
-
+const convertRupeesToStars = (rupees) => Math.floor(rupees * 4); // Example: ₹1 = 4 stars
 
 // register super admin
 const registerSuperAdmin = async (req, res) => {
@@ -96,41 +96,40 @@ const registerSuperAdmin = async (req, res) => {
 
     // ✅ Automatically create SuperAdminWallet
     await SuperAdminWallet.create({
-  totalStars: 0,
-  perUserWelcomeBonus: 0,
-  transactions: [],
-  expiredCouponRefunds: [],
-  deletedUserStars: [],
-  welcomeBonusWallet: {
-    totalReceived: 0,
-    remainingStars: 0,
-    given: [],
-    logs: [],
-  },
-  companyRewardWallet: {
-    totalReceived: 0,
-    remainingStars: 0,
-    companyDeposits: [],
-    givenToWinners: [],
-  },
-  contestEntryWallet: {
-    totalReceived: 0,
-    totalEntries: 0,
-    collectedFromUsers: [],
-  },
-  // Provide a default valid entry if starsUsed is required
-  userEntry: {
-    userId: newAdmin._id,
-    starsUsed: 0,
-    contestId: null,
-  },
-  blacklistedUserStars: {
-    userId: newAdmin._id,
-    starsTransferred: 0,
-  },
-  subscriptionLogs: [],
-});
-
+      totalStars: 0,
+      perUserWelcomeBonus: 0,
+      transactions: [],
+      expiredCouponRefunds: [],
+      deletedUserStars: [],
+      welcomeBonusWallet: {
+        totalReceived: 0,
+        remainingStars: 0,
+        given: [],
+        logs: [],
+      },
+      companyRewardWallet: {
+        totalReceived: 0,
+        remainingStars: 0,
+        companyDeposits: [],
+        givenToWinners: [],
+      },
+      contestEntryWallet: {
+        totalReceived: 0,
+        totalEntries: 0,
+        collectedFromUsers: [],
+      },
+      // Provide a default valid entry if starsUsed is required
+      userEntry: {
+        userId: newAdmin._id,
+        starsUsed: 0,
+        contestId: null,
+      },
+      blacklistedUserStars: {
+        userId: newAdmin._id,
+        starsTransferred: 0,
+      },
+      subscriptionLogs: [],
+    });
 
     const token = jwt.sign(
       { id: newAdmin._id, role: newAdmin.role },
@@ -261,23 +260,65 @@ const getSuperAdminWallet = async (req, res) => {
     const totals = {
       transactionsTotalStars: getTotal(Swallet.transactions, "starsReceived"),
       adExtraDeductionsTotalStars: getTotal(Swallet.adExtraDeductions, "stars"),
-      expiredCouponRefundsTotalStars: getTotal(Swallet.expiredCouponRefunds, "stars"),
-      deletedUserStarsTotalStars: getTotal(Swallet.deletedUserStars, "starsTransferred"),
-      welcomeBonusGivenTotalStars: getTotal(Swallet.welcomeBonusWallet?.given, "starsGiven"),
-      welcomeBonusLogsTotalStars: getTotal(Swallet.welcomeBonusWallet?.logs, "starsAdded"),
-      companyDepositsTotalStars: getTotal(Swallet.companyRewardWallet?.companyDeposits, "starsReceived"),
-      companyGivenToWinnersTotalStars: getTotal(Swallet.companyRewardWallet?.givenToWinners, "starsGiven"),
-      contestCollectedStars: getTotal(Swallet.contestEntryWallet?.collectedFromUsers, "starsUsed"),
+      expiredCouponRefundsTotalStars: getTotal(
+        Swallet.expiredCouponRefunds,
+        "stars"
+      ),
+      deletedUserStarsTotalStars: getTotal(
+        Swallet.deletedUserStars,
+        "starsTransferred"
+      ),
+      welcomeBonusGivenTotalStars: getTotal(
+        Swallet.welcomeBonusWallet?.given,
+        "starsGiven"
+      ),
+      welcomeBonusLogsTotalStars: getTotal(
+        Swallet.welcomeBonusWallet?.logs,
+        "starsAdded"
+      ),
+      companyDepositsTotalStars: getTotal(
+        Swallet.companyRewardWallet?.companyDeposits,
+        "starsReceived"
+      ),
+      companyGivenToWinnersTotalStars: getTotal(
+        Swallet.companyRewardWallet?.givenToWinners,
+        "starsGiven"
+      ),
+      contestCollectedStars: getTotal(
+        Swallet.contestEntryWallet?.collectedFromUsers,
+        "starsUsed"
+      ),
       userEntryTotalStars: getTotal(Swallet.userEntry, "starsUsed"),
-      blacklistedUserStarsTotal: getTotal(Swallet.blacklistedUserStars, "starsTransferred"),
+      blacklistedUserStarsTotal: getTotal(
+        Swallet.blacklistedUserStars,
+        "starsTransferred"
+      ),
       subscriptionStarsUsed: getTotal(Swallet.subscriptionLogs, "starsUsed"),
-      starDistributionsTotalStars: getTotal(Swallet.starDistributions, "starsGiven"),
-      couponGenerationTotalStars: getTotal(Swallet.couponGenerationLogs, "starsSpent"),
-      deletedAdStarsTotalStars: getTotal(Swallet.deletedAdStars, "starsReturned"),
-      adminTransfersTotalStars: getTotal(Swallet.adminTransfers, "starsTransferred"),
-      generatedStarsLogTotalStars: getTotal(Swallet.generatedStarsLog, "starsGenerated"),
+      starDistributionsTotalStars: getTotal(
+        Swallet.starDistributions,
+        "starsGiven"
+      ),
+      couponGenerationTotalStars: getTotal(
+        Swallet.couponGenerationLogs,
+        "starsSpent"
+      ),
+      deletedAdStarsTotalStars: getTotal(
+        Swallet.deletedAdStars,
+        "starsReturned"
+      ),
+      adminTransfersTotalStars: getTotal(
+        Swallet.adminTransfers,
+        "starsTransferred"
+      ),
+      generatedStarsLogTotalStars: getTotal(
+        Swallet.generatedStarsLog,
+        "starsGenerated"
+      ),
       payoutDetailsTotalStars: getTotal(Swallet.payoutDetails, "starCount"),
-      userPayoutTransactionsTotalStars: getTotal(Swallet.userPayoutTransactions, "starsTransferred"),
+      userPayoutTransactionsTotalStars: getTotal(
+        Swallet.userPayoutTransactions,
+        "starsTransferred"
+      ),
     };
 
     // Convert to rupees
@@ -294,28 +335,46 @@ const getSuperAdminWallet = async (req, res) => {
 
     // Group payout transactions by status
     const payoutGrouped = {
-      pending: Swallet.userPayoutTransactions.filter((tx) => tx.status === "pending"),
-      verified: Swallet.userPayoutTransactions.filter((tx) => tx.status === "verified"),
-      completed: Swallet.userPayoutTransactions.filter((tx) => tx.status === "completed"),
+      pending: Swallet.userPayoutTransactions.filter(
+        (tx) => tx.status === "pending"
+      ),
+      verified: Swallet.userPayoutTransactions.filter(
+        (tx) => tx.status === "verified"
+      ),
+      completed: Swallet.userPayoutTransactions.filter(
+        (tx) => tx.status === "completed"
+      ),
     };
 
     // Wallet views
     const welcomeBonusWallet = {
       ...Swallet.welcomeBonusWallet?._doc,
-      totalReceivedAmountInRupees: convertStarsToRupees(Swallet.welcomeBonusWallet?.totalReceived || 0),
-      remainingStarsAmountInRupees: convertStarsToRupees(Swallet.welcomeBonusWallet?.remainingStars || 0),
+      totalReceivedAmountInRupees: convertStarsToRupees(
+        Swallet.welcomeBonusWallet?.totalReceived || 0
+      ),
+      remainingStarsAmountInRupees: convertStarsToRupees(
+        Swallet.welcomeBonusWallet?.remainingStars || 0
+      ),
     };
 
     const companyRewardWallet = {
       ...Swallet.companyRewardWallet?._doc,
-      totalReceivedAmountInRupees: convertStarsToRupees(Swallet.companyRewardWallet?.totalReceived || 0),
-      remainingStarsAmountInRupees: convertStarsToRupees(Swallet.companyRewardWallet?.remainingStars || 0),
+      totalReceivedAmountInRupees: convertStarsToRupees(
+        Swallet.companyRewardWallet?.totalReceived || 0
+      ),
+      remainingStarsAmountInRupees: convertStarsToRupees(
+        Swallet.companyRewardWallet?.remainingStars || 0
+      ),
     };
 
     const contestEntryWallet = {
       ...Swallet.contestEntryWallet?._doc,
-      totalReceivedAmountInRupees: convertStarsToRupees(Swallet.contestEntryWallet?.totalReceived || 0),
-      reservedForContestsAmountInRupees: convertStarsToRupees(Swallet.contestEntryWallet?.reservedForContests || 0),
+      totalReceivedAmountInRupees: convertStarsToRupees(
+        Swallet.contestEntryWallet?.totalReceived || 0
+      ),
+      reservedForContestsAmountInRupees: convertStarsToRupees(
+        Swallet.contestEntryWallet?.reservedForContests || 0
+      ),
     };
 
     return res.status(200).json({
@@ -527,17 +586,9 @@ const distributeWelcomeBonus = async (newUserId) => {
   }
 };
 
-
-
-
 const generateCoupons = async (req, res) => {
-  const {
-    couponCount,
-    perStarCount,
-    generationDate,
-    expiryDate,
-    requestNote,
-  } = req.body;
+  const { couponCount, perStarCount, generationDate, expiryDate, requestNote } =
+    req.body;
 
   try {
     const totalStarsNeeded = couponCount * perStarCount;
@@ -556,7 +607,9 @@ const generateCoupons = async (req, res) => {
       });
     }
 
-    const generationDateObj = generationDate ? new Date(generationDate) : new Date();
+    const generationDateObj = generationDate
+      ? new Date(generationDate)
+      : new Date();
     const expiryDateObj = expiryDate ? new Date(expiryDate) : null;
 
     // Step 1: Create the coupon batch (unassigned)
@@ -570,7 +623,7 @@ const generateCoupons = async (req, res) => {
       generatedBy: null,
       createdByRole: "superadmin",
       requestNote: requestNote || "",
-      assignedTo: null,        // explicitly unassigned
+      assignedTo: null, // explicitly unassigned
       assignedAt: null,
     });
 
@@ -590,20 +643,20 @@ const generateCoupons = async (req, res) => {
     });
 
     const createdCoupons = await Coupon.insertMany(couponsToCreate);
-    newBatch.coupons = createdCoupons.map(c => c._id);
+    newBatch.coupons = createdCoupons.map((c) => c._id);
     await newBatch.save();
 
     // Step 3: Deduct stars and log transaction
     superAdminWallet.totalStars -= totalStarsNeeded;
-superAdminWallet.couponGenerationLogs.push({
-  starsSpent: totalStarsNeeded,
-  reason: `Generated ${couponCount} coupons (each ${perStarCount} stars)`,
-  reference: {
-    type: "CouponBatch",
-    id: newBatch._id
-  },
-  createdAt: new Date()
-});
+    superAdminWallet.couponGenerationLogs.push({
+      starsSpent: totalStarsNeeded,
+      reason: `Generated ${couponCount} coupons (each ${perStarCount} stars)`,
+      reference: {
+        type: "CouponBatch",
+        id: newBatch._id,
+      },
+      createdAt: new Date(),
+    });
 
     await superAdminWallet.save();
 
@@ -620,7 +673,6 @@ superAdminWallet.couponGenerationLogs.push({
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 const getAllCoupons = async (req, res) => {
   try {
@@ -839,14 +891,17 @@ const registerUserToContest = async (req, res) => {
       return res.status(404).json({ message: "SuperAdmin wallet not found" });
     }
 
-    const alreadyRegistered = adminWallet.contestEntryWallet.collectedFromUsers.find(
-      entry =>
-        entry.userId.toString() === userId.toString() &&
-        entry.contestId.toString() === contest._id.toString()
-    );
+    const alreadyRegistered =
+      adminWallet.contestEntryWallet.collectedFromUsers.find(
+        (entry) =>
+          entry.userId.toString() === userId.toString() &&
+          entry.contestId.toString() === contest._id.toString()
+      );
 
     if (alreadyRegistered) {
-      return res.status(400).json({ message: "User already registered for this contest" });
+      return res
+        .status(400)
+        .json({ message: "User already registered for this contest" });
     }
 
     const participantExists = await ContestParticipant.findOne({
@@ -855,7 +910,9 @@ const registerUserToContest = async (req, res) => {
     });
 
     if (participantExists) {
-      return res.status(400).json({ message: "User already registered (participant exists)" });
+      return res
+        .status(400)
+        .json({ message: "User already registered (participant exists)" });
     }
 
     const user = await User.findById(userId).populate("userWalletDetails");
@@ -864,7 +921,9 @@ const registerUserToContest = async (req, res) => {
     }
 
     if (user.userWalletDetails.totalStars < contest.entryStars) {
-      return res.status(400).json({ message: "Not enough stars to enter the contest" });
+      return res
+        .status(400)
+        .json({ message: "Not enough stars to enter the contest" });
     }
 
     // Deduct stars from user wallet
@@ -898,15 +957,21 @@ const registerUserToContest = async (req, res) => {
     // ✅ End contest only if automatic and full
     if (contest.currentParticipants >= contest.maxParticipants) {
       if (contest.winnerSelectionType === "Automatic") {
-        console.log("🎯 Max participants reached. Triggering automatic winner selection...");
+        console.log(
+          "🎯 Max participants reached. Triggering automatic winner selection..."
+        );
         await selectAutomaticWinnersInternal(contest._id);
       } else {
-        console.log("📌 Manual contest full – waiting for SuperAdmin to assign winners.");
+        console.log(
+          "📌 Manual contest full – waiting for SuperAdmin to assign winners."
+        );
         // ❌ Do not mark manual contest as ended here
       }
     }
 
-    const participants = await ContestParticipant.find({ contestId: contest._id })
+    const participants = await ContestParticipant.find({
+      contestId: contest._id,
+    })
       .populate("userId", "name email")
       .sort({ createdAt: 1 })
       .lean();
@@ -915,15 +980,11 @@ const registerUserToContest = async (req, res) => {
       message: "User registered to contest successfully",
       participants,
     });
-
   } catch (error) {
     console.error("❌ Error registering to contest:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
-
-
 
 // const autoSelectWinners = async (req, res) => {
 //   const { contestId } = req.params;
@@ -1180,69 +1241,71 @@ const getAllCouponBatches = async (req, res) => {
   }
 };
 
-  const couponDistribution = async (req, res) => {
-    const { batchId, adminId, note } = req.body;
-    const { io, connectedUsers } = req;
+const couponDistribution = async (req, res) => {
+  const { batchId, adminId, note } = req.body;
+  const { io, connectedUsers } = req;
 
-    try {
-      // Find the admin
-      const admin = await Admin.findById(adminId);
-      if (!admin) {
-        return res.status(404).json({ message: "Admin not found" });
-      }
-
-      // Find the coupon batch
-      const couponBatch = await couponBatchModel.findById(batchId);
-      if (!couponBatch) {
-        return res.status(404).json({ message: "Coupon batch not found" });
-      }
-
-      // Check if the batch is already assigned
-      if (couponBatch.assignedTo) {
-        return res.status(400).json({
-          success: false,
-          message: "Coupon batch is already assigned to another admin.",
-          assignedTo: couponBatch.assignedTo
-        });
-      }
-
-      // Assign the batch to the admin
-      couponBatch.assignedTo = admin._id;
-      couponBatch.assignedAt = new Date();
-      await couponBatch.save();
-
-      // Update the admin's assigned batch record
-      admin.assignedCouponBatches.push({
-        batchId: couponBatch._id,
-        assignedAt: new Date(),
-        note
-      });
-      await admin.save();
-
-      // Send real-time notification
-      await sendNotification(
-        admin._id,
-        process.env.ADMIN_ROLE,
-        `A new coupon batch (ID: ${couponBatch._id}) has been assigned to you.${note ? " Note: " + note : ""}`,
-        io,
-        connectedUsers,
-        `/admin/coupons/${couponBatch._id}`
-      );
-
-      // Respond
-      res.status(200).json({
-        success: true,
-        message: "Coupon batch assigned successfully",
-        data: {
-          adminId: admin._id,
-          batchId: couponBatch._id,
-        },
-      });
-    } catch (error) {
-      console.error("Error assigning coupon batch:", error);
-      res.status(500).json({ message: "Internal Server Error" });
+  try {
+    // Find the admin
+    const admin = await Admin.findById(adminId);
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
     }
-  };
+
+    // Find the coupon batch
+    const couponBatch = await couponBatchModel.findById(batchId);
+    if (!couponBatch) {
+      return res.status(404).json({ message: "Coupon batch not found" });
+    }
+
+    // Check if the batch is already assigned
+    if (couponBatch.assignedTo) {
+      return res.status(400).json({
+        success: false,
+        message: "Coupon batch is already assigned to another admin.",
+        assignedTo: couponBatch.assignedTo,
+      });
+    }
+
+    // Assign the batch to the admin
+    couponBatch.assignedTo = admin._id;
+    couponBatch.assignedAt = new Date();
+    await couponBatch.save();
+
+    // Update the admin's assigned batch record
+    admin.assignedCouponBatches.push({
+      batchId: couponBatch._id,
+      assignedAt: new Date(),
+      note,
+    });
+    await admin.save();
+
+    // Send real-time notification
+    await sendNotification(
+      admin._id,
+      process.env.ADMIN_ROLE,
+      `A new coupon batch (ID: ${couponBatch._id}) has been assigned to you.${
+        note ? " Note: " + note : ""
+      }`,
+      io,
+      connectedUsers,
+      `/admin/coupons/${couponBatch._id}`
+    );
+
+    // Respond
+    res.status(200).json({
+      success: true,
+      message: "Coupon batch assigned successfully",
+      data: {
+        adminId: admin._id,
+        batchId: couponBatch._id,
+      },
+    });
+  } catch (error) {
+    console.error("Error assigning coupon batch:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 const couponFetchById = async (req, res) => {
   const { id: batchId } = req.params;
@@ -1253,7 +1316,9 @@ const couponFetchById = async (req, res) => {
       return res.status(404).json({ message: "Batch not found" });
     }
 
-    const populatedBatch = await couponBatchModel.findById(batchId).populate("coupons");
+    const populatedBatch = await couponBatchModel
+      .findById(batchId)
+      .populate("coupons");
 
     return res.status(200).json({
       message: "Coupons fetched successfully",
@@ -1264,7 +1329,6 @@ const couponFetchById = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 // password reset for superAdmin
 const sendSuperAdminForgotPasswordOtp = async (req, res) => {
@@ -1358,28 +1422,39 @@ const getAdminJobStats = async (req, res) => {
     const isFiltering = startDate && endDate;
 
     const start = isFiltering ? new Date(startDate) : null;
-    const end = isFiltering ? new Date(new Date(endDate).setHours(23, 59, 59, 999)) : null;
+    const end = isFiltering
+      ? new Date(new Date(endDate).setHours(23, 59, 59, 999))
+      : null;
 
     const filterByDate = (arr, dateField) => {
-      return arr.filter(entry => {
+      return arr.filter((entry) => {
         const date = new Date(entry[dateField]);
         return date >= start && date <= end;
       });
     };
 
     if (isFiltering) {
-      verifiedAds = filterByDate(verifiedAds, "verifiedAt").filter(a => a.status === "verified");
-      rejectedAds = filterByDate(admin.verifiedAds || [], "verifiedAt").filter(a => a.status === "rejected");
+      verifiedAds = filterByDate(verifiedAds, "verifiedAt").filter(
+        (a) => a.status === "verified"
+      );
+      rejectedAds = filterByDate(admin.verifiedAds || [], "verifiedAt").filter(
+        (a) => a.status === "rejected"
+      );
 
-      approvedKycs = filterByDate(approvedKycs, "verifiedAt").filter(k => k.status === "approved");
-      rejectedKycs = filterByDate(admin.kycsVerified || [], "verifiedAt").filter(k => k.status === "rejected");
+      approvedKycs = filterByDate(approvedKycs, "verifiedAt").filter(
+        (k) => k.status === "approved"
+      );
+      rejectedKycs = filterByDate(
+        admin.kycsVerified || [],
+        "verifiedAt"
+      ).filter((k) => k.status === "rejected");
     } else {
       // If no filter applied, just separate by status
-      rejectedAds = verifiedAds.filter(a => a.status === "rejected");
-      verifiedAds = verifiedAds.filter(a => a.status === "verified");
+      rejectedAds = verifiedAds.filter((a) => a.status === "rejected");
+      verifiedAds = verifiedAds.filter((a) => a.status === "verified");
 
-      rejectedKycs = approvedKycs.filter(k => k.status === "rejected");
-      approvedKycs = approvedKycs.filter(k => k.status === "approved");
+      rejectedKycs = approvedKycs.filter((k) => k.status === "rejected");
+      approvedKycs = approvedKycs.filter((k) => k.status === "approved");
     }
 
     return res.status(200).json({
@@ -1406,22 +1481,32 @@ const createContest = async (req, res) => {
       entryStars,
       maxParticipants,
       winnerSelectionType,
-      rewardStructure
+      rewardStructure,
     } = req.body;
 
     // ✅ Validate required fields
-    if (!contestName || !contestNumber || !startDate || !entryStars || !maxParticipants) {
-      return res.status(400).json({ message: "All required fields must be filled" });
+    if (
+      !contestName ||
+      !contestNumber ||
+      !startDate ||
+      !entryStars ||
+      !maxParticipants
+    ) {
+      return res
+        .status(400)
+        .json({ message: "All required fields must be filled" });
     }
 
     // ✅ Parse startDate and validate it's today or future
     const start = new Date(startDate);
     const today = new Date();
-    today.setHours(0, 0, 0, 0);   // Remove time from today's date
-    start.setHours(0, 0, 0, 0);   // Remove time from start date
+    today.setHours(0, 0, 0, 0); // Remove time from today's date
+    start.setHours(0, 0, 0, 0); // Remove time from start date
 
     if (start < today) {
-      return res.status(400).json({ message: "Contest start date cannot be in the past" });
+      return res
+        .status(400)
+        .json({ message: "Contest start date cannot be in the past" });
     }
 
     // ✅ Parse reward structure
@@ -1432,8 +1517,13 @@ const createContest = async (req, res) => {
       try {
         parsedRewardStructure = JSON.parse(rewardStructure);
 
-        if (!Array.isArray(parsedRewardStructure) || parsedRewardStructure.length === 0) {
-          return res.status(400).json({ message: "Invalid reward structure format" });
+        if (
+          !Array.isArray(parsedRewardStructure) ||
+          parsedRewardStructure.length === 0
+        ) {
+          return res
+            .status(400)
+            .json({ message: "Invalid reward structure format" });
         }
 
         for (const reward of parsedRewardStructure) {
@@ -1441,12 +1531,16 @@ const createContest = async (req, res) => {
             typeof reward.position !== "number" ||
             typeof reward.stars !== "number"
           ) {
-            return res.status(400).json({ message: "Each reward must include numeric position and stars" });
+            return res.status(400).json({
+              message: "Each reward must include numeric position and stars",
+            });
           }
           totalRewardStars += reward.stars;
         }
       } catch (err) {
-        return res.status(400).json({ message: "Failed to parse reward structure" });
+        return res
+          .status(400)
+          .json({ message: "Failed to parse reward structure" });
       }
     }
 
@@ -1465,9 +1559,9 @@ const createContest = async (req, res) => {
     }
 
     // ✅ Merge image into reward structure by position
-    parsedRewardStructure = parsedRewardStructure.map(reward => ({
+    parsedRewardStructure = parsedRewardStructure.map((reward) => ({
       ...reward,
-      image: imageMap[reward.position] || ""
+      image: imageMap[reward.position] || "",
     }));
 
     // ✅ Check contest number uniqueness
@@ -1479,12 +1573,15 @@ const createContest = async (req, res) => {
     // ✅ Deduct stars from Super Admin wallet
     const adminWallet = await SuperAdminWallet.findOne();
     if (!adminWallet || adminWallet.totalStars < totalRewardStars) {
-      return res.status(400).json({ message: "Not enough stars in SuperAdmin wallet" });
+      return res
+        .status(400)
+        .json({ message: "Not enough stars in SuperAdmin wallet" });
     }
 
     adminWallet.totalStars -= totalRewardStars;
     adminWallet.contestEntryWallet.reservedForContests =
-      (adminWallet.contestEntryWallet.reservedForContests || 0) + totalRewardStars;
+      (adminWallet.contestEntryWallet.reservedForContests || 0) +
+      totalRewardStars;
     await adminWallet.save();
 
     // ✅ Set contest status based on startDate
@@ -1504,16 +1601,15 @@ const createContest = async (req, res) => {
       contestEntryWallet: totalRewardStars,
       winnerSelectionType: winnerSelectionType || "Manual",
       status,
-      manuallyStopped: false
+      manuallyStopped: false,
     });
 
     await contest.save();
 
     return res.status(201).json({
       message: "Contest created successfully",
-      contest
+      contest,
     });
-
   } catch (error) {
     console.error("Error creating contest:", error);
     return res.status(500).json({ message: "Internal Server Error" });
@@ -1527,8 +1623,8 @@ const selectAutomaticWinnersInternal = async (contestId) => {
   const adminWallet = await SuperAdminWallet.findOne();
   const allEntries = adminWallet.contestEntryWallet?.collectedFromUsers || [];
 
-  const contestEntries = allEntries.filter(entry =>
-    entry.contestId.toString() === contestId.toString()
+  const contestEntries = allEntries.filter(
+    (entry) => entry.contestId.toString() === contestId.toString()
   );
 
   const rewardStructure = contest.rewardStructure || [];
@@ -1544,18 +1640,21 @@ const selectAutomaticWinnersInternal = async (contestId) => {
   const selected = shuffled.slice(0, rewardStructure.length);
 
   const winners = selected.map((entry, index) => {
-    const rewardTier = rewardStructure.find(r => r.position === index + 1);
+    const rewardTier = rewardStructure.find((r) => r.position === index + 1);
     return {
       userId: new mongoose.Types.ObjectId(entry.userId),
       position: index + 1,
       prize: {
         stars: rewardTier?.stars || 0,
-        image: rewardTier?.image || ""
-      }
+        image: rewardTier?.image || "",
+      },
     };
   });
 
-  const totalReward = winners.reduce((sum, w) => sum + (w.prize?.stars || 0), 0);
+  const totalReward = winners.reduce(
+    (sum, w) => sum + (w.prize?.stars || 0),
+    0
+  );
 
   if (adminWallet.contestEntryWallet.reservedForContests < totalReward) {
     console.log("Not enough reserved stars for reward distribution");
@@ -1564,7 +1663,9 @@ const selectAutomaticWinnersInternal = async (contestId) => {
 
   for (const winner of winners) {
     if (winner.prize.stars > 0) {
-      const user = await User.findById(winner.userId).populate("userWalletDetails");
+      const user = await User.findById(winner.userId).populate(
+        "userWalletDetails"
+      );
       if (user?.userWalletDetails) {
         user.userWalletDetails.totalStars += winner.prize.stars;
         await user.userWalletDetails.save();
@@ -1602,8 +1703,9 @@ const stopContestManually = async (req, res) => {
     // ✅ Early return if winners are already selected
     if (contest.winners && contest.winners.length > 0) {
       return res.status(200).json({
-        message: "Contest manually stopped, but winners already selected. No refunds issued.",
-        contest
+        message:
+          "Contest manually stopped, but winners already selected. No refunds issued.",
+        contest,
       });
     }
 
@@ -1614,12 +1716,17 @@ const stopContestManually = async (req, res) => {
     }
 
     // ✅ Calculate reward stars to return to SuperAdmin wallet
-    const totalRewardStars = contest.rewardStructure?.reduce((total, reward) => total + reward.stars, 0) || 0;
+    const totalRewardStars =
+      contest.rewardStructure?.reduce(
+        (total, reward) => total + reward.stars,
+        0
+      ) || 0;
 
     // ✅ Find contest entries and refund entry fees to users
-    const contestEntries = adminWallet.contestEntryWallet?.collectedFromUsers?.filter(
-      (entry) => entry.contestId.toString() === contest._id.toString()
-    ) || [];
+    const contestEntries =
+      adminWallet.contestEntryWallet?.collectedFromUsers?.filter(
+        (entry) => entry.contestId.toString() === contest._id.toString()
+      ) || [];
 
     const starsToRefund = contest.entryStars;
     const totalRefundAmount = contestEntries.length * starsToRefund;
@@ -1629,7 +1736,9 @@ const stopContestManually = async (req, res) => {
 
     // ✅ Refund entry fees to users
     for (const entry of contestEntries) {
-      const user = await User.findById(entry.userId).populate("userWalletDetails");
+      const user = await User.findById(entry.userId).populate(
+        "userWalletDetails"
+      );
       if (!user || !user.userWalletDetails) continue;
 
       // ✅ Store user's balance before refund for logging
@@ -1643,26 +1752,27 @@ const stopContestManually = async (req, res) => {
       // ✅ Create detailed refund log entry
       refundLogs.push({
         userId: user._id,
-        userName: user.name || user.email || 'Unknown User',
+        userName: user.name || user.email || "Unknown User",
         starsRefunded: starsToRefund,
         balanceBeforeRefund: balanceBeforeRefund,
         balanceAfterRefund: user.userWalletDetails.totalStars,
         contestId: contest._id,
         contestName: contest.contestName,
         refundedAt: new Date(),
-        reason: 'Contest manually stopped - entry fee refund'
+        reason: "Contest manually stopped - entry fee refund",
       });
     }
 
     // ✅ Remove refunded entries from admin wallet
-    adminWallet.contestEntryWallet.collectedFromUsers = adminWallet.contestEntryWallet.collectedFromUsers.filter(
-      (entry) => entry.contestId.toString() !== contest._id.toString()
-    );
+    adminWallet.contestEntryWallet.collectedFromUsers =
+      adminWallet.contestEntryWallet.collectedFromUsers.filter(
+        (entry) => entry.contestId.toString() !== contest._id.toString()
+      );
 
     // ✅ Update contest entry wallet values (for entry fees)
     adminWallet.contestEntryWallet.totalReceived -= totalRefundAmount;
     adminWallet.contestEntryWallet.totalEntries -= refundedUsers.length;
-    
+
     // ✅ Return reserved reward stars to main SuperAdmin wallet
     adminWallet.contestEntryWallet.reservedForContests -= totalRewardStars;
     adminWallet.totalStars += totalRewardStars;
@@ -1680,7 +1790,7 @@ const stopContestManually = async (req, res) => {
       rewardStarsReturned: totalRewardStars,
       refundedUsers: refundLogs,
       refundedAt: new Date(),
-      reason: 'Contest manually stopped'
+      reason: "Contest manually stopped",
     };
 
     // ✅ Add to contest refund logs (you may need to add this field to your schema)
@@ -1692,50 +1802,57 @@ const stopContestManually = async (req, res) => {
     await adminWallet.save();
 
     return res.status(200).json({
-      message: "Contest manually stopped. Entry fees refunded to users and reward stars returned to SuperAdmin wallet.",
+      message:
+        "Contest manually stopped. Entry fees refunded to users and reward stars returned to SuperAdmin wallet.",
       details: {
         refundedUsers: refundedUsers.length,
         totalEntryFeesRefunded: totalRefundAmount,
-        totalRewardStarsReturned: totalRewardStars
+        totalRewardStarsReturned: totalRewardStars,
       },
       refundLogs: refundLogs, // ✅ Include detailed refund logs in response
-      contest
+      contest,
     });
-
   } catch (err) {
     console.error("Manual Stop Error:", err);
-    res.status(500).json({ message: "Internal Server Error", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: err.message });
   }
 };
 //to fetch admin coupon requests
 const fetchAdminCouponsRequests = async (req, res) => {
   try {
-    const requests = await couponRequestModel.find({
-      adminId: { $ne: null },// Ensure it's an admin request
-      isApproved: false,               
-      isProcessed: false,
-      paymentStatus: "pending"
-    }).populate({
-      path: "adminId",
-      select: "adminName adminEmail"   
-    });
+    const requests = await couponRequestModel
+      .find({
+        adminId: { $ne: null }, // Ensure it's an admin request
+        isApproved: false,
+        isProcessed: false,
+        paymentStatus: "pending",
+      })
+      .populate({
+        path: "adminId",
+        select: "adminName adminEmail",
+      });
 
     if (!requests.length) {
-      return res.status(404).json({ message: "No pending admin coupon requests found" });
+      return res
+        .status(404)
+        .json({ message: "No pending admin coupon requests found" });
     }
 
     // Format with admin name if needed
-    const formatted = requests.map(req => {
+    const formatted = requests.map((req) => {
       const adminName = req.adminId?.adminName || "Admin";
-          const starCountPerCoupon = req.starCountPerCoupon || 0;
+      const starCountPerCoupon = req.starCountPerCoupon || 0;
       const totalStars = req.totalStars || 0;
-      const couponCount = starCountPerCoupon > 0 ? totalStars / starCountPerCoupon : 0;
+      const couponCount =
+        starCountPerCoupon > 0 ? totalStars / starCountPerCoupon : 0;
       return {
         ...req._doc,
         adminName,
-         starCountPerCoupon,
+        starCountPerCoupon,
         totalStars,
-        couponCount
+        couponCount,
       };
     });
 
@@ -1743,9 +1860,8 @@ const fetchAdminCouponsRequests = async (req, res) => {
       success: true,
       message: "Fetched admin coupon requests",
       count: formatted.length,
-      data: formatted
+      data: formatted,
     });
-
   } catch (error) {
     console.error("Error fetching admin coupon requests:", error);
     return res.status(500).json({ message: "Internal server error", error });
@@ -1770,25 +1886,31 @@ const approveAndDistributeCouponForAdminRequest = async (req, res) => {
     }
 
     if (request.adminId.toString() !== adminId) {
-      return res.status(403).json({ message: "Request does not belong to this admin" });
+      return res
+        .status(403)
+        .json({ message: "Request does not belong to this admin" });
     }
 
     if (request.isApproved || request.isProcessed) {
-      return res.status(400).json({ message: "Request already approved or processed" });
+      return res
+        .status(400)
+        .json({ message: "Request already approved or processed" });
     }
 
     const { starCountPerCoupon, totalStars } = request;
     const couponCount = totalStars / starCountPerCoupon;
 
     // STEP 3: Get superadmin coupons
-    const batches = await couponBatchModel.find({ createdByRole: "superadmin" }).populate({
-      path: "coupons",
-      match: {
-        isClaimed: false,
-        isApproved: false,
-        perStarCount: starCountPerCoupon
-      }
-    });
+    const batches = await couponBatchModel
+      .find({ createdByRole: "superadmin" })
+      .populate({
+        path: "coupons",
+        match: {
+          isClaimed: false,
+          isApproved: false,
+          perStarCount: starCountPerCoupon,
+        },
+      });
 
     const availableCoupons = [];
     const usedBatchIds = new Set();
@@ -1810,7 +1932,7 @@ const approveAndDistributeCouponForAdminRequest = async (req, res) => {
       return res.status(400).json({ success: false, message });
     }
 
-    const couponIds = availableCoupons.map(c => c._id);
+    const couponIds = availableCoupons.map((c) => c._id);
 
     // STEP 4: Mark coupons as claimed and approved
     await Coupon.updateMany(
@@ -1822,8 +1944,8 @@ const approveAndDistributeCouponForAdminRequest = async (req, res) => {
           requestedByUser: adminId,
           isUserRequestApproved: true,
           assignedToRequest: request._id,
-          requestNote: request.note
-        }
+          requestNote: request.note,
+        },
       }
     );
 
@@ -1834,16 +1956,16 @@ const approveAndDistributeCouponForAdminRequest = async (req, res) => {
     await request.save();
 
     // STEP 6: Push batch info to admin's assignedCouponBatches
-    const batchLog = Array.from(usedBatchIds).map(batchId => ({
+    const batchLog = Array.from(usedBatchIds).map((batchId) => ({
       batchId,
       assignedAt: new Date(),
-      note: request.note || ""
+      note: request.note || "",
     }));
 
     await Admin.findByIdAndUpdate(admin._id, {
       $push: {
-        assignedCouponBatches: { $each: batchLog }
-      }
+        assignedCouponBatches: { $each: batchLog },
+      },
     });
 
     // STEP 7: Notify admin
@@ -1852,7 +1974,7 @@ const approveAndDistributeCouponForAdminRequest = async (req, res) => {
       400,
       `Your coupon request (${starCountPerCoupon} stars x ${couponCount}) has been approved.`,
       io,
-      connectedUsers,
+      connectedUsers
       // `/admin/my-coupons`
     );
 
@@ -1861,23 +1983,24 @@ const approveAndDistributeCouponForAdminRequest = async (req, res) => {
       message: "Admin coupon request approved and coupons distributed",
       approvedCouponCount: availableCoupons.length,
       requestId: request._id,
-      assignedCoupons: availableCoupons
+      assignedCoupons: availableCoupons,
     });
-
   } catch (error) {
     console.error("Error in approveAndDistributeCouponForAdminRequest:", error);
     return res.status(500).json({
       message: "Internal Server Error",
-      error: error.message
+      error: error.message,
     });
   }
 };
-//to distribute stars to user 
+//to distribute stars to user
 const distributeStarsToUser = async (req, res) => {
-  let { userId, starCount,} = req.body;
+  let { userId, starCount } = req.body;
 
   if (!userId || starCount == null) {
-    return res.status(400).json({ message: "User ID and star count are required." });
+    return res
+      .status(400)
+      .json({ message: "User ID and star count are required." });
   }
 
   starCount = Number(starCount);
@@ -1890,13 +2013,17 @@ const distributeStarsToUser = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const wallet = user.userWalletDetails;
-    if (!wallet) return res.status(404).json({ message: "User wallet not found" });
+    if (!wallet)
+      return res.status(404).json({ message: "User wallet not found" });
 
     const saWallet = await SuperAdminWallet.findOne();
-    if (!saWallet) return res.status(500).json({ message: "Super admin wallet not found" });
+    if (!saWallet)
+      return res.status(500).json({ message: "Super admin wallet not found" });
 
     if (saWallet.totalStars < starCount) {
-      return res.status(400).json({ message: "Insufficient stars in SuperAdmin wallet" });
+      return res
+        .status(400)
+        .json({ message: "Insufficient stars in SuperAdmin wallet" });
     }
     saWallet.totalStars -= starCount;
     saWallet.starDistributions.push({
@@ -1908,7 +2035,6 @@ const distributeStarsToUser = async (req, res) => {
 
     await saWallet.save();
 
-    
     const logEntry = {
       starCount,
       note,
@@ -1928,10 +2054,11 @@ const distributeStarsToUser = async (req, res) => {
       superAdminRemainingStars: saWallet.totalStars,
       log: logEntry,
     });
-
   } catch (error) {
     console.error("Error in distributeStarsToUser:", error);
-    return res.status(500).json({ message: "Internal Server Error", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
 
@@ -1953,12 +2080,12 @@ const getContests = async (req, res) => {
     // ✅ Add slotsLeft to each contest
     const contestsWithSlots = contests.map((contest) => ({
       ...contest,
-      slotsLeft: contest.maxParticipants - contest.currentParticipants
+      slotsLeft: contest.maxParticipants - contest.currentParticipants,
     }));
 
     return res.status(200).json({
       message: contestNumber ? "Contest fetched" : "Active contests fetched",
-      contests: contestsWithSlots
+      contests: contestsWithSlots,
     });
   } catch (error) {
     console.error("Error fetching contests:", error);
@@ -1970,7 +2097,7 @@ const getAdminAccountDetails = async (req, res) => {
   try {
     const adminWallet = await adminwalletModel.findOne().populate({
       path: "transactions.userId",
-      select: "email firstName lastName"
+      select: "email firstName lastName",
     });
 
     if (!adminWallet) {
@@ -2018,10 +2145,10 @@ const getSubscriptionAccountDetails = async (req, res) => {
 //to fetch adAccounts(stars)
 const getAllUserAdSummaries = async (req, res) => {
   try {
-    
-    const users = await User.find({ ads: { $exists: true, $not: { $size: 0 } } }).populate("ads");
+    const users = await User.find({
+      ads: { $exists: true, $not: { $size: 0 } },
+    }).populate("ads");
 
- 
     const videoAdIds = [];
     const imageAdIds = [];
     const surveyAdIds = [];
@@ -2040,12 +2167,10 @@ const getAllUserAdSummaries = async (req, res) => {
       SurveyAd.find({ _id: { $in: surveyAdIds } }).lean(),
     ]);
 
-   
-    const videoAdMap = new Map(videoAds.map(ad => [ad._id.toString(), ad]));
-    const imageAdMap = new Map(imageAds.map(ad => [ad._id.toString(), ad]));
-    const surveyAdMap = new Map(surveyAds.map(ad => [ad._id.toString(), ad]));
+    const videoAdMap = new Map(videoAds.map((ad) => [ad._id.toString(), ad]));
+    const imageAdMap = new Map(imageAds.map((ad) => [ad._id.toString(), ad]));
+    const surveyAdMap = new Map(surveyAds.map((ad) => [ad._id.toString(), ad]));
 
-   
     const userSummaries = [];
 
     for (const user of users) {
@@ -2080,7 +2205,8 @@ const getAllUserAdSummaries = async (req, res) => {
           rejectedAdCount++;
         } else if (adDoc.isAdVerified) {
           status = "Verified";
-          starsSpent = (adDoc.totalStarsAllocated || 0) + (adDoc.extraDeductedStars || 0);
+          starsSpent =
+            (adDoc.totalStarsAllocated || 0) + (adDoc.extraDeductedStars || 0);
           verifiedAdCount++;
         }
 
@@ -2138,14 +2264,22 @@ const assignWinnerManually = async (req, res) => {
       contest.winners = [];
     }
 
-    const prizeFromStructure = contest.rewardStructure?.find(r => r.position === position);
+    const prizeFromStructure = contest.rewardStructure?.find(
+      (r) => r.position === position
+    );
     if (!prizeFromStructure) {
-      return res.status(400).json({ message: `Position ${position} is not defined in rewardStructure` });
+      return res.status(400).json({
+        message: `Position ${position} is not defined in rewardStructure`,
+      });
     }
 
-    const alreadyAssigned = contest.winners.find(w => w?.userId?.toString() === userId.toString());
+    const alreadyAssigned = contest.winners.find(
+      (w) => w?.userId?.toString() === userId.toString()
+    );
     if (alreadyAssigned) {
-      return res.status(400).json({ message: "User already assigned as a winner" });
+      return res
+        .status(400)
+        .json({ message: "User already assigned as a winner" });
     }
 
     // ✅ Use both stars and image from rewardStructure
@@ -2155,7 +2289,7 @@ const assignWinnerManually = async (req, res) => {
     contest.winners.push({
       userId,
       position,
-      prize: { stars, image }
+      prize: { stars, image },
     });
 
     if (stars > 0) {
@@ -2166,8 +2300,8 @@ const assignWinnerManually = async (req, res) => {
       }
     }
 
-    const assignedRewardedPositions = contest.winners.filter(w =>
-      contest.rewardStructure?.some(r => r.position === w.position)
+    const assignedRewardedPositions = contest.winners.filter((w) =>
+      contest.rewardStructure?.some((r) => r.position === w.position)
     ).length;
 
     if (assignedRewardedPositions === contest.rewardStructure?.length) {
@@ -2179,31 +2313,26 @@ const assignWinnerManually = async (req, res) => {
 
     res.status(200).json({
       message: "Winner assigned successfully",
-      winners: contest.winners
+      winners: contest.winners,
     });
-
   } catch (err) {
     console.error("Manual winner assignment error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-
 //to fetch total amount in superadmin wallet(rupees)
-const getSuperAdminTotalAmount=async(req,res)=>{
+const getSuperAdminTotalAmount = async (req, res) => {
   try {
-  const superAdminWallet=await SuperAdminWallet.findOne();
-    if(!superAdminWallet){
-      return res.status(404).json({message:"SuperAdmin wallet not found "})
+    const superAdminWallet = await SuperAdminWallet.findOne();
+    if (!superAdminWallet) {
+      return res.status(404).json({ message: "SuperAdmin wallet not found " });
     }
-    const superAdminTotalStars=superAdminWallet.totalStars;
+    const superAdminTotalStars = superAdminWallet.totalStars;
 
     console.log(convertStarsToRupees(superAdminTotalStars));
-    
-  } catch (error) {
-    
-  }
-}
+  } catch (error) {}
+};
 //to fetch admin share in amount (rupees)
 const getAdminWalletWithTransactionDetails = async (req, res) => {
   try {
@@ -2219,7 +2348,9 @@ const getAdminWalletWithTransactionDetails = async (req, res) => {
     // Prepare enriched transactions
     const transactionsWithUserDetails = await Promise.all(
       adminWallet.transactions.map(async (txn) => {
-        const user = await User.findById(txn.userId).select("firstName lastName email");
+        const user = await User.findById(txn.userId).select(
+          "firstName lastName email"
+        );
         return {
           userId: txn.userId,
           userName: `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
@@ -2247,7 +2378,7 @@ const getAdminWalletWithTransactionDetails = async (req, res) => {
   }
 };
 //to fetch subscriptionAccount deatils in amount(rupees)
- const getSubscriptionAccountDetailsInAmount = async (req, res) => {
+const getSubscriptionAccountDetailsInAmount = async (req, res) => {
   try {
     const superAdmin = await SuperAdminWallet.findOne();
 
@@ -2264,8 +2395,12 @@ const getAdminWalletWithTransactionDetails = async (req, res) => {
 
     const enrichedLogs = await Promise.all(
       subscriptionLogs.map(async (log) => {
-        const user = await User.findById(log.userId).select("firstName lastName");
-        const userName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim();
+        const user = await User.findById(log.userId).select(
+          "firstName lastName"
+        );
+        const userName = `${user?.firstName || ""} ${
+          user?.lastName || ""
+        }`.trim();
         const amountInRupees = convertStarsToRupees(log.starsUsed || 0);
 
         totalStarsUsed += log.starsUsed || 0;
@@ -2306,7 +2441,7 @@ const getAdminWalletWithTransactionDetails = async (req, res) => {
 const getAllUserAdSummariesInAmount = async (req, res) => {
   try {
     const users = await User.find({
-      ads: { $exists: true, $not: { $size: 0 } }
+      ads: { $exists: true, $not: { $size: 0 } },
     }).populate("ads");
 
     const videoAdIds = [];
@@ -2327,9 +2462,9 @@ const getAllUserAdSummariesInAmount = async (req, res) => {
       SurveyAd.find({ _id: { $in: surveyAdIds } }).lean(),
     ]);
 
-    const videoAdMap = new Map(videoAds.map(ad => [ad._id.toString(), ad]));
-    const imageAdMap = new Map(imageAds.map(ad => [ad._id.toString(), ad]));
-    const surveyAdMap = new Map(surveyAds.map(ad => [ad._id.toString(), ad]));
+    const videoAdMap = new Map(videoAds.map((ad) => [ad._id.toString(), ad]));
+    const imageAdMap = new Map(imageAds.map((ad) => [ad._id.toString(), ad]));
+    const surveyAdMap = new Map(surveyAds.map((ad) => [ad._id.toString(), ad]));
 
     const userSummaries = [];
     let grandTotalAmountInRupees = 0;
@@ -2366,7 +2501,8 @@ const getAllUserAdSummariesInAmount = async (req, res) => {
           rejectedAdCount++;
         } else if (adDoc.isAdVerified) {
           status = "Verified";
-          starsSpent = (adDoc.totalStarsAllocated || 0) + (adDoc.extraDeductedStars || 0);
+          starsSpent =
+            (adDoc.totalStarsAllocated || 0) + (adDoc.extraDeductedStars || 0);
           verifiedAdCount++;
         }
 
@@ -2421,12 +2557,13 @@ const getAllContestsForSuperAdmin = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate({
         path: "winners.userId",
-        select: "firstName email"
+        select: "firstName email",
       })
       .lean();
 
-    const result = contests.map(contest => {
-      const totalStarsCollected = (contest.entryStars || 0) * (contest.totalEntries || 0);
+    const result = contests.map((contest) => {
+      const totalStarsCollected =
+        (contest.entryStars || 0) * (contest.totalEntries || 0);
 
       return {
         _id: contest._id,
@@ -2443,35 +2580,37 @@ const getAllContestsForSuperAdmin = async (req, res) => {
         prizeImages: contest.prizeImages,
         rewardStructure: contest.rewardStructure,
         numberOfWinners: contest.rewardStructure.length,
-        totalRewardStars: contest.rewardStructure.reduce((sum, r) => sum + r.stars, 0),
+        totalRewardStars: contest.rewardStructure.reduce(
+          (sum, r) => sum + r.stars,
+          0
+        ),
         manuallyStopped: contest.manuallyStopped,
         createdAt: contest.createdAt,
         updatedAt: contest.updatedAt,
         result: contest.result || "Pending",
 
-        winners: (contest.winners || []).map(w => ({
+        winners: (contest.winners || []).map((w) => ({
           position: w?.position,
           stars: w?.prize?.stars || 0,
           image: w?.prize?.image || "",
           user: {
             _id: w?.userId?._id,
             name: w?.userId?.firstName || "N/A",
-            email: w?.userId?.email || "N/A"
-          }
-        }))
+            email: w?.userId?.email || "N/A",
+          },
+        })),
       };
     });
 
     res.status(200).json({
       message: "Contests fetched successfully",
-      contests: result
+      contests: result,
     });
   } catch (err) {
     console.error("Error fetching contests:", err);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 //to fetch coupon batch details in both star and amount
 const getAllCouponBatchSummaries = async (req, res) => {
@@ -2521,32 +2660,33 @@ const getAllCouponBatchSummaries = async (req, res) => {
   }
 };
 
-const getActiveManualContests =async (req, res) => {
+const getActiveManualContests = async (req, res) => {
   try {
     const contests = await ContestEntry.find({
       status: "Active",
-      winnerSelectionType: "Manual"
-    })
-      .lean();
+      winnerSelectionType: "Manual",
+    }).lean();
 
     // Fetch participants for each contest
     const enrichedContests = await Promise.all(
       contests.map(async (contest) => {
-        const participants = await ContestParticipant.find({ contestId: contest._id })
+        const participants = await ContestParticipant.find({
+          contestId: contest._id,
+        })
           .populate("userId", "firstName email")
           .sort({ createdAt: 1 })
           .lean();
 
         return {
           ...contest,
-          participants
+          participants,
         };
       })
     );
 
     return res.status(200).json({
       message: "Active manual contests with participants",
-      contests: enrichedContests
+      contests: enrichedContests,
     });
   } catch (error) {
     console.error("Error fetching active manual contests:", error);
@@ -2560,14 +2700,18 @@ const getManualContestById = async (req, res) => {
     const contest = await ContestEntry.findOne({
       _id: id,
       status: "Active",
-      winnerSelectionType: "Manual"
+      winnerSelectionType: "Manual",
     }).lean();
 
     if (!contest) {
-      return res.status(404).json({ message: "Manual active contest not found" });
+      return res
+        .status(404)
+        .json({ message: "Manual active contest not found" });
     }
 
-    const participants = await ContestParticipant.find({ contestId: contest._id })
+    const participants = await ContestParticipant.find({
+      contestId: contest._id,
+    })
       .populate("userId", "firstName email")
       .sort({ createdAt: 1 })
       .lean();
@@ -2576,8 +2720,8 @@ const getManualContestById = async (req, res) => {
       message: "Manual contest fetched successfully",
       contest: {
         ...contest,
-        participants
-      }
+        participants,
+      },
     });
   } catch (error) {
     console.error("Error fetching manual contest:", error);
@@ -2589,17 +2733,18 @@ const generateStars = async (req, res) => {
     const { stars, note } = req.body;
 
     if (!stars || stars <= 0) {
-      return res.status(400).json({ message: "Stars must be greater than zero" });
+      return res
+        .status(400)
+        .json({ message: "Stars must be greater than zero" });
     }
 
     const amount = convertStarsToRupees(stars);
     const superWallet = await SuperAdminWallet.findOne();
-    if (!superWallet) return res.status(404).json({ message: "SuperAdmin wallet not found" });
+    if (!superWallet)
+      return res.status(404).json({ message: "SuperAdmin wallet not found" });
 
-    
     superWallet.totalStars += stars;
 
-    
     superWallet.generatedStarsLog.push({
       starsGenerated: stars,
       amount,
@@ -2615,10 +2760,11 @@ const generateStars = async (req, res) => {
       amount,
       currentTotalStars: superWallet.totalStars,
     });
-
   } catch (err) {
     console.error("Error generating stars:", err);
-    res.status(500).json({ message: "Internal server error", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
   }
 };
 //fetch total stars earned/received in superadminwallet(company wallet)+
@@ -2631,7 +2777,9 @@ const fetchTotalReceivedStars = async (req, res) => {
     }
 
     const getTotal = (array = [], key) =>
-      Array.isArray(array) ? array.reduce((sum, item) => sum + (item[key] || 0), 0) : 0;
+      Array.isArray(array)
+        ? array.reduce((sum, item) => sum + (item[key] || 0), 0)
+        : 0;
 
     const {
       transactions,
@@ -2651,15 +2799,33 @@ const fetchTotalReceivedStars = async (req, res) => {
 
     const totalFromTransactions = getTotal(transactions, "starsReceived");
     const totalFromExpiredCoupons = getTotal(expiredCouponRefunds, "stars");
-    const totalFromDeletedUsers = getTotal(deletedUserStars, "starsTransferred");
+    const totalFromDeletedUsers = getTotal(
+      deletedUserStars,
+      "starsTransferred"
+    );
     const totalFromSubscriptionLogs = getTotal(subscriptionLogs, "starsUsed");
-    const totalFromBlacklistUsers = getTotal(blacklistedUserStars, "starsTransferred");
+    const totalFromBlacklistUsers = getTotal(
+      blacklistedUserStars,
+      "starsTransferred"
+    );
     const totalFromAdExtraDeductions = getTotal(adExtraDeductions, "stars");
-    const totalFromGeneratedStarLogs = getTotal(generatedStarsLog, "starsGenerated");
-    const totalFromStarDistributions = getTotal(starDistributions, "starsGiven");
-    const totalFromAdminTransfers = getTotal(adminTransfers, "starsTransferred");
+    const totalFromGeneratedStarLogs = getTotal(
+      generatedStarsLog,
+      "starsGenerated"
+    );
+    const totalFromStarDistributions = getTotal(
+      starDistributions,
+      "starsGiven"
+    );
+    const totalFromAdminTransfers = getTotal(
+      adminTransfers,
+      "starsTransferred"
+    );
     const totalFromDeletedAds = getTotal(deletedAdStars, "starsReturned");
-    const totalFromUserPayoutTransactions = getTotal(userPayoutTransactions, "starsTransferred");
+    const totalFromUserPayoutTransactions = getTotal(
+      userPayoutTransactions,
+      "starsTransferred"
+    );
 
     const totalFromContestEntry = contestEntryWallet?.totalReceived || 0;
     const totalFromCompanyTransfers = companyRewardWallet?.totalReceived || 0;
@@ -2705,7 +2871,6 @@ const fetchTotalReceivedStars = async (req, res) => {
   }
 };
 
-
 //fetch the total stars given /taken from superadmin wallet(company wallet)-
 const fetchTotalGivenStars = async (req, res) => {
   try {
@@ -2715,7 +2880,9 @@ const fetchTotalGivenStars = async (req, res) => {
     }
 
     const getTotal = (array = [], key) =>
-      Array.isArray(array) ? array.reduce((sum, item) => sum + (item[key] || 0), 0) : 0;
+      Array.isArray(array)
+        ? array.reduce((sum, item) => sum + (item[key] || 0), 0)
+        : 0;
 
     const {
       welcomeBonusWallet,
@@ -2723,16 +2890,16 @@ const fetchTotalGivenStars = async (req, res) => {
       starDistributions,
       couponGenerationLogs,
       contestEntryWallet,
-      payoutDetails
+      payoutDetails,
     } = superAdminWallet;
 
     const totalWelcomeBonusGiven = getTotal(welcomeBonusWallet?.given, "stars");
     // const totalCompanyStarsToWinners = getTotal(companyRewardWallet?.givenToWinners, "stars");
     const totalStarDistributions = getTotal(starDistributions, "stars");
     const totalCouponGeneration = getTotal(couponGenerationLogs, "starsSpent");
-    const totalReservedForContests = contestEntryWallet?.reservedForContests || 0;
+    const totalReservedForContests =
+      contestEntryWallet?.reservedForContests || 0;
     const totalPayoutStars = getTotal(payoutDetails, "starCount");
-
 
     const totalStarsGiven =
       totalWelcomeBonusGiven +
@@ -2742,7 +2909,8 @@ const fetchTotalGivenStars = async (req, res) => {
       totalReservedForContests;
 
     return res.status(200).json({
-      message: "Total stars given from SuperAdmin wallet calculated successfully",
+      message:
+        "Total stars given from SuperAdmin wallet calculated successfully",
       totalStarsGiven,
       totalAmountInRupees: convertStarsToRupees(totalStarsGiven),
       breakdown: {
@@ -2751,7 +2919,7 @@ const fetchTotalGivenStars = async (req, res) => {
         totalStarDistributions,
         totalCouponGeneration,
         totalReservedForContests,
-        totalPayoutStars
+        totalPayoutStars,
       },
     });
   } catch (error) {
@@ -2759,7 +2927,6 @@ const fetchTotalGivenStars = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 // const getSuperAdminWallet = async (req, res) => {
 //   try {
@@ -2786,7 +2953,7 @@ const resetContestEntryWallet = async (req, res) => {
     const wallet = await SuperAdminWallet.findOne();
 
     if (!wallet) {
-      return res.status(404).json({ message: 'SuperAdmin Wallet not found' });
+      return res.status(404).json({ message: "SuperAdmin Wallet not found" });
     }
 
     wallet.contestEntryWallet = {
@@ -2794,14 +2961,18 @@ const resetContestEntryWallet = async (req, res) => {
       totalEntries: 0,
       reservedForContests: 0,
       collectedFromUsers: [],
-      userEntry: []
+      userEntry: [],
     };
 
     await wallet.save();
-    res.status(200).json({ message: 'Contest Entry Wallet reset successfully' });
+    res
+      .status(200)
+      .json({ message: "Contest Entry Wallet reset successfully" });
   } catch (error) {
     console.error("Error resetting wallet:", error);
-    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
 const getContestEntryWallet = async (req, res) => {
@@ -2815,7 +2986,7 @@ const getContestEntryWallet = async (req, res) => {
     res.status(200).json({
       contestEntryWallet: wallet.contestEntryWallet || {},
       totalEntries: wallet.totalEntries || 0,
-      reservedForContests: wallet.reservedForContests || 0
+      reservedForContests: wallet.reservedForContests || 0,
     });
   } catch (error) {
     console.error("Error fetching contest entry wallet:", error);
@@ -2831,15 +3002,20 @@ const getWelcomeBonusLogs = async (req, res) => {
     );
 
     if (!wallet || !wallet.welcomeBonusWallet) {
-      return res.status(404).json({ message: "Welcome bonus wallet not found" });
+      return res
+        .status(404)
+        .json({ message: "Welcome bonus wallet not found" });
     }
 
-    const { totalReceived, remainingStars, given, logs } = wallet.welcomeBonusWallet;
+    const { totalReceived, remainingStars, given, logs } =
+      wallet.welcomeBonusWallet;
 
     // Add username for each entry in 'given'
-    const givenWithUsernames = given.map(entry => ({
+    const givenWithUsernames = given.map((entry) => ({
       ...entry._doc,
-      username: `${entry.userId?.firstName || ""} ${entry.userId?.lastName || ""}`.trim()
+      username: `${entry.userId?.firstName || ""} ${
+        entry.userId?.lastName || ""
+      }`.trim(),
     }));
 
     return res.status(200).json({
@@ -2847,7 +3023,7 @@ const getWelcomeBonusLogs = async (req, res) => {
       remainingStars,
       totalGiven: given.reduce((sum, entry) => sum + entry.starsGiven, 0),
       given: givenWithUsernames,
-      logs
+      logs,
     });
   } catch (error) {
     console.error("Error fetching welcome bonus logs:", error);
@@ -2859,7 +3035,9 @@ const superAdminPayout = async (req, res) => {
   const { amount, note } = req.body;
 
   if (!amount || amount <= 0) {
-    return res.status(400).json({ message: "Valid amount (in rupees) is required" });
+    return res
+      .status(400)
+      .json({ message: "Valid amount (in rupees) is required" });
   }
 
   try {
@@ -2885,7 +3063,7 @@ const superAdminPayout = async (req, res) => {
       starCount,
       amountToCheckout: amount,
       note: note || "",
-      date: new Date()
+      date: new Date(),
     });
 
     // ✅ Save wallet
@@ -2899,18 +3077,64 @@ const superAdminPayout = async (req, res) => {
         starCount,
         amountToCheckout: amount,
         note,
-        date: new Date()
-      }
+        date: new Date(),
+      },
     });
   } catch (error) {
     console.error("Error in superAdminPayout:", error);
     return res.status(500).json({
       message: "Internal server error",
-      error: error.message
+      error: error.message,
     });
   }
 };
 
+const postSuperAdminImageAd = async (req, res) => {
+  try {
+    // Check if imageAd file is present in req.files
+    const { heading, description } = req.body;
+    if (!req.files || !req.files.imageAd || req.files.imageAd.length === 0) {
+      return res.status(400).json({ message: "Image file is required" });
+    }
+    const audioFile = req.files?.audioAd?.[0];
+
+    const uploadedImage = req.files.imageAd[0];
+    let audioUrl = null;
+    if (audioFile) {
+      audioUrl = `/imgAdUploads/${audioFile.filename}`;
+    } else if (req.body.existingAudioUrl) {
+      audioUrl = req.body.existingAudioUrl;
+    }
+    // Create a new ad document
+    const newAd = new SuperAdminAd({
+      heading,
+      description,
+      imageUrl: `/imgAdUploads/${uploadedImage.filename}`,
+      postedAt: new Date(),
+      audioUrl,
+    });
+
+    await newAd.save();
+
+    return res.status(201).json({
+      message: "Super Admin Ad posted successfully",
+      ad: newAd,
+    });
+  } catch (error) {
+    console.error("Error posting Super Admin Ad:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+const getAllSuperAdminImageAds = async (req, res) => {
+  try {
+    const ads = await SuperAdminAd.find().sort({ postedAt: -1 });
+    return res.status(200).json({ ads });
+  } catch (error) {
+    console.error("Error fetching Super Admin Ads:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 export {
   registerSuperAdmin,
@@ -2948,13 +3172,13 @@ export {
   getAdminAccountDetails,
   getSubscriptionAccountDetails,
   getAllUserAdSummaries,
-  assignWinnerManually ,
+  assignWinnerManually,
   getSuperAdminTotalAmount,
   getAdminWalletWithTransactionDetails,
   getSubscriptionAccountDetailsInAmount,
   getAllUserAdSummariesInAmount,
   getAllContestsForSuperAdmin,
-  getActiveManualContests ,
+  getActiveManualContests,
   getManualContestById,
   getAllCouponBatchSummaries,
   generateStars,
@@ -2964,5 +3188,7 @@ export {
   getWelcomeBonusLogs,
   fetchTotalReceivedStars,
   fetchTotalGivenStars,
-  superAdminPayout
+  superAdminPayout,
+  postSuperAdminImageAd,
+  getAllSuperAdminImageAds,
 };

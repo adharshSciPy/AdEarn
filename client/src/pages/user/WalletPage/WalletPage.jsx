@@ -10,7 +10,6 @@ import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
 import { Modal, Input, Form } from "antd";
 import { toast } from "react-toastify";
 
-
 const WalletPage = () => {
   const [activeTab, setActiveTab] = useState("Payouts");
   const [showPopup, setShowPopup] = useState(false);
@@ -18,7 +17,7 @@ const WalletPage = () => {
   const [walletDetails, setWalletDetails] = useState([]);
   const [showBuyStarsModal, setShowBuyStarsModal] = useState(false);
   const [payoutAmount, setPayoutAmount] = useState(0);
-
+  const [payOutDetails, setPayoutDetails] = useState([]);
   const userId = useSelector((state) => state.user.id);
   const token = useSelector((state) => state.user.token);
 
@@ -27,8 +26,8 @@ const WalletPage = () => {
   const navigate = useNavigate();
   const handlePayout = async () => {
     console.log("token", token);
-    console.log(typeof(payoutAmount));
-    
+    console.log(typeof payoutAmount);
+
     try {
       const res = await axios.post(
         `${baseUrl}/api/v1/payout/request`,
@@ -37,14 +36,16 @@ const WalletPage = () => {
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`, 
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-      if (res?.status >= 200 && res?.status < 300){
+      if (res?.status >= 200 && res?.status < 300) {
         setIsModalOpen(false);
         setPayoutAmount("");
-        toast.success("Payout request send successfully")
+        toast.success("Payout request send successfully");
+        getPayoutDetails();
+        getUserWalletDetails()
       }
       console.log(res);
     } catch (error) {
@@ -81,7 +82,9 @@ const WalletPage = () => {
   };
   useEffect(() => {
     getUserWalletDetails();
-    console.log("userid", userId);
+    getPayoutDetails();
+    getCancelledPayout();
+    verifiedPayouts();
   }, []);
 
   // const handleClick = () => {
@@ -102,6 +105,38 @@ const WalletPage = () => {
       console.log(error);
     }
   };
+
+  const getPayoutDetails = async () => {
+    try {
+      const res = await axios.get(
+        `${baseUrl}/api/v1/payout/my-payouts/${userId}`
+      );
+      console.log("pay", res);
+      setPayoutDetails(res.data.payoutRequests);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const getCancelledPayout = async () => {
+    try {
+      const res = await axios.get(`${baseUrl}/api/v1/payout/my-payouts/rejected/${userId}`);
+      console.log("cancelled",res);
+      
+    } catch (error) {
+      console.log(error);
+      
+    }
+  };
+const verifiedPayouts=async()=>{
+  try {
+    const res=await axios.get(`${baseUrl}/api/v1/payout/my-payouts/verified/${userId}`);
+    console.log("veri",res);
+    
+  } catch (error) {
+    console.log(error);
+    
+  }
+}
   return (
     <>
       <Navbar />
@@ -192,35 +227,46 @@ const WalletPage = () => {
                 <thead>
                   <tr>
                     <th>Date</th>
-                    <th>Request no</th>
+                    <th>Request Id</th>
                     <th>Status</th>
                     <th>Payout amount</th>
-                    <th>Redeem money</th>
+                    <th>Download pdf</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>03/04/2025</td>
-                    <td>Request 1</td>
-                    <td>Accepted</td>
-                    <td>500</td>
-                    <td
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-around",
-                      }}
-                    >
-                      <button
-                        className={styles.redeemBtn}
-                        onClick={handleRedeemClick}
-                      >
-                        Redeem now
-                      </button>
-                      <button className={styles.cancelBtn}>
-                        Cancel payout
-                      </button>
-                    </td>
-                  </tr>
+                  {payOutDetails.map((item, index) => (
+                    <tr key={index}>
+                      <td>{item.requestedAt || ""}</td>
+                      <td>{item._id || ""}</td>
+                      <td>
+                        {!item.isPayoutCompleted ? "pending" : "Completed"}
+                      </td>
+
+                      <td>{item.amount || ""}</td>
+                      <td>
+                        <button
+                          className={styles.redeemBtn}
+                          onClick={handleRedeemClick}
+                          style={{ margin: "0" }}
+                        >
+                          Download
+                        </button>
+                      </td>
+                      <td>
+                        {!item.isVerified ? (
+                          <button
+                            className={styles.cancelBtn}
+                            style={{ margin: "0" }}
+                          >
+                            Cancel
+                          </button>
+                        ) : (
+                          ""
+                        )}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </section>

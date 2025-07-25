@@ -194,6 +194,12 @@ function Sidebar() {
       icon: <ContainerOutlined />,
       path: "/Superadminverifiedpayouts"
     },
+    {
+      key: "publishads",
+      label: "Publish Ads",
+      icon: <UserOutlined />,
+      path: "/Superadminpublishads"
+    },
   ]);
 
   const pathKey = useMemo(() => {
