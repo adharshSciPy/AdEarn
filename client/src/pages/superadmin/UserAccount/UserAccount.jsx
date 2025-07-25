@@ -133,7 +133,7 @@ function UserAccount() {
             .map((user, index) => (
               <div className={styles.tableRow} key={index}>
                 <div className={styles.userCell}>
-                  <span>{user.userName}</span>
+                  {activeTab==="requests"? (<span>{user.userName}</span>):(<span>{user.requestedBy.firstName}</span>)}
                 </div>
                 <div>{user.starCount}</div>
                 <div>{user.amount}</div>
