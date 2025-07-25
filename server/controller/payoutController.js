@@ -1024,12 +1024,12 @@ const myRejectedPayouts = async (req, res) => {
   try {
     const rejectedPayouts = await PayoutRequest.find({
       requestedBy: userId,
-      payoutStatus: "rejected"
-    });
+      payoutStatus: "rejected",
+    }).sort({ createdAt: -1 })  .lean();
 
     return res.status(200).json({
       message: "Rejected payouts fetched successfully",
-      rejectedPayouts
+      rejectedPayouts,
     });
   } catch (error) {
     console.error("Error fetching rejected payouts:", error);
@@ -1039,6 +1039,7 @@ const myRejectedPayouts = async (req, res) => {
     });
   }
 };
+
 
 
 
