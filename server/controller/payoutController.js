@@ -605,53 +605,63 @@ const rejectPayoutRequest = async (req, res) => {
 
 
 // to get all verified payment requests
-const getAllVerifiedPayoutRequests = async (req, res) => {
-  try {
-    const verifiedPayouts = await PayoutRequest.find({ payoutStatus: "verified" })
-      .populate({
-        path: "requestedBy",
-        select: "firstName lastName email phoneNumber kycDetails",
-        populate: {
-          path: "kycDetails",
-        },
-      })
-      .lean();
+  const getAllVerifiedPayoutRequests = async (req, res) => {
+    try {
+      const verifiedPayouts = await PayoutRequest.find({ payoutStatus: "verified" })
+        .populate({
+          path: "requestedBy",
+          select: "firstName lastName email phoneNumber kycDetails",
+          populate: {
+            path: "kycDetails",
+          },
+        })
+        .lean();
 
-    if (!verifiedPayouts.length) {
+      if (!verifiedPayouts.length) {
+        return res.status(200).json({
+          message: "No verified payout requests found",
+          data: [],
+        });
+      }
+
+      const responseData = verifiedPayouts.map((payout) => ({
+        _id: payout._id,
+        starCount: payout.starCount,
+        amount: payout.amount,
+        requestedBy: payout.requestedBy?._id || null,
+        payoutStatus: payout.payoutStatus || "verified",
+        verifiedAt: payout.verifiedAt || null,
+        payoutCompletedAt: payout.payoutCompletedAt || null,
+        rejectedAt: payout.rejectedAt || null,
+        requestedAt: payout.requestedAt,
+        createdAt: payout.createdAt,
+        updatedAt: payout.updatedAt,
+        __v: payout.__v,
+         requestedBy: payout.requestedBy
+        ? {
+            _id: payout.requestedBy._id,
+            firstName: payout.requestedBy.firstName,
+            lastName: payout.requestedBy.lastName,
+            email: payout.requestedBy.email,
+            phoneNumber: payout.requestedBy.phoneNumber,
+            kycDetails: payout.requestedBy.kycDetails || null,
+          }
+        : null,
+      }));
+
       return res.status(200).json({
-        message: "No verified payout requests found",
-        data: [],
+        message: "Verified payout requests fetched successfully",
+        count: responseData.length,
+        data: responseData,
+      });
+    } catch (error) {
+      console.error("Error fetching verified payout requests:", error.message);
+      return res.status(500).json({
+        message: "An error occurred while fetching verified payout requests",
+        error: error.message,
       });
     }
-
-    const responseData = verifiedPayouts.map((payout) => ({
-      _id: payout._id,
-      starCount: payout.starCount,
-      amount: payout.amount,
-      requestedBy: payout.requestedBy?._id || null,
-      payoutStatus: payout.payoutStatus || "verified",
-      verifiedAt: payout.verifiedAt || null,
-      payoutCompletedAt: payout.payoutCompletedAt || null,
-      rejectedAt: payout.rejectedAt || null,
-      requestedAt: payout.requestedAt,
-      createdAt: payout.createdAt,
-      updatedAt: payout.updatedAt,
-      __v: payout.__v,
-    }));
-
-    return res.status(200).json({
-      message: "Verified payout requests fetched successfully",
-      count: responseData.length,
-      data: responseData,
-    });
-  } catch (error) {
-    console.error("Error fetching verified payout requests:", error.message);
-    return res.status(500).json({
-      message: "An error occurred while fetching verified payout requests",
-      error: error.message,
-    });
-  }
-};
+  };
 
 //to fetch single verified payout request
 const getSingleVerifiedPayoutRequest = async (req, res) => {
@@ -1022,18 +1032,14 @@ const myRejectedPayouts = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const user = await User.findById(userId).populate({
-      path: "payoutRequests",
-      match: { payoutStatus:"rejected" },
-    });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    const rejectedPayouts = await PayoutRequest.find({
+      requestedBy: userId,
+      payoutStatus: "rejected",
+    }).sort({ createdAt: -1 })  .lean();
 
     return res.status(200).json({
       message: "Rejected payouts fetched successfully",
-      rejectedPayouts: user.payoutRequests || [],
+      rejectedPayouts,
     });
   } catch (error) {
     console.error("Error fetching rejected payouts:", error);
@@ -1043,6 +1049,8 @@ const myRejectedPayouts = async (req, res) => {
     });
   }
 };
+
+
 
 
 export {
