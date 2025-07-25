@@ -5,9 +5,19 @@ const superAdminAdSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  heading: {
+    type: String,
+  },
+  description: {
+    type: String,
+  },
   postedAt: {
     type: Date,
     default: Date.now,
+  },
+  audioUrl: {
+    type: String,
+    required: false,
   },
 });
 
