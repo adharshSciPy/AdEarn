@@ -28,7 +28,7 @@ const WalletPage = () => {
 
   const userId = useSelector((state) => state.user.id);
   const token = useSelector((state) => state.user.token);
-
+  const [payment,setPayment]=useState([])
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const navigate = useNavigate();
@@ -74,7 +74,6 @@ const WalletPage = () => {
 
   const tabs = [
     "Payouts",
-    "Redeem Payouts",
     "Payment History",
     "Cancelled payouts",
   ];
@@ -139,12 +138,13 @@ const WalletPage = () => {
     try {
       const res = await axios.get(`${baseUrl}/api/v1/payout/my-payouts/verified/${userId}`);
       console.log("veri", res);
-
+setPayment(res.data.completedPayouts)
     } catch (error) {
       console.log(error);
 
     }
   }
+
 
   // Handle tour completion
   const handleTourComplete = (tourType) => {
@@ -383,7 +383,6 @@ const WalletPage = () => {
                     <th>Status</th>
                     <th>Payout amount</th>
                     <th>Download pdf</th>
-                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -405,18 +404,7 @@ const WalletPage = () => {
                           Download
                         </button>
                       </td>
-                      <td>
-                        {!item.isVerified ? (
-                          <button
-                            className={styles.cancelBtn}
-                            style={{ margin: "0" }}
-                          >
-                            Cancel
-                          </button>
-                        ) : (
-                          ""
-                        )}
-                      </td>
+                      
                     </tr>
                   ))}
                 </tbody>
@@ -424,7 +412,7 @@ const WalletPage = () => {
             </section>
           )}
 
-          {activeTab === "Redeem Payouts" && (
+          {/* {activeTab === "Redeem Payouts" && (
             <section className={styles.payoutTableSection}>
               <h2 id="redeem-payouts">Redeem Payouts</h2>
               <table className={styles.payoutTable}>
@@ -465,7 +453,7 @@ const WalletPage = () => {
                 </tbody>
               </table>
             </section>
-          )}
+          )} */}
           {activeTab === "Payment History" && (
             <section className={styles.payoutTableSection}>
               <h2 id="payment-history">Payment History</h2>

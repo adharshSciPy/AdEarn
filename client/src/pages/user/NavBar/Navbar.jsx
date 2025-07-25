@@ -194,22 +194,18 @@ function Navbar({ onTourComplete }) {
   }, [userId, onTourComplete]);
 
   const getNotifications = async () => {
-    console.log(userToken);
-
-    try {
-      const res = await axios.get(`${baseUrl}/api/v1/notifications/get-notifications`, {
-        headers: {
-          Authorization: `Bearer ${userToken}`,
-        },
-      });
-      setNotifications(res.data.notifications)
-
-      console.log(res);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  console.log("w", notifications);
+    
+  try {
+    const res = await axios.get(`${baseUrl}/api/v1/notifications/get-notifications`, {
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+      },
+    });
+    setNotifications(res.data.notifications)
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 
   return (

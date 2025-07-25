@@ -1230,26 +1230,32 @@ const fetchVerifiedImgAd = async (req, res) => {
   }
 };
 
-//commented
+// correct and old one 
 // const fetchVerifiedImgAd = async (req, res) => {
 //   try {
 //     const { userId } = req.params;
-//     const userLat = parseFloat(req.query.lat);
-//     const userLng = parseFloat(req.query.lng);
+//     let userLat = parseFloat(req.query.lat);
+//     let userLng = parseFloat(req.query.lng);
 
 //     const user = await User.findById(userId);
 //     if (!user) return res.status(404).json({ message: "User not found" });
 
-//     const profileCoords = user.locationCoordinates?.lat && user.locationCoordinates?.lng
+//     const profileCoords = user.locationCoordinates
 //       ? { lat: user.locationCoordinates.lat, lng: user.locationCoordinates.lng }
 //       : null;
 
-//     const userState = user.state?.trim().toLowerCase();
-//     const userDistrict = user.district?.trim().toLowerCase();
+//     const userState = user.state?.toLowerCase();
+//     const userDistrict = user.district?.toLowerCase();
 
-//     if ((!userLat || !userLng) && !profileCoords && !userState && !userDistrict) {
+//     if (
+//       (!userLat || !userLng) &&
+//       !profileCoords &&
+//       !userState &&
+//       !userDistrict
+//     ) {
 //       return res.status(400).json({
-//         message: "User must have location coordinates, state and district for ad matching",
+//         message:
+//           "No valid user location or region data available for ad matching",
 //       });
 //     }
 
@@ -1261,103 +1267,308 @@ const fetchVerifiedImgAd = async (req, res) => {
 //       const imgAd = ad.imgAdRef;
 //       if (!imgAd || imgAd.createdBy?.toString() === userId) continue;
 
-//       // ✅ Skip already viewed ads
-//       const hasUserViewed = imgAd.viewersRewarded?.some(
-//         (entry) => entry.userId.toString() === userId
-//       );
-//       if (hasUserViewed && !imgAd.adRepetition) continue;
+//       // 🔍 Region-based targeting
+//       const isUserInTargetRegion = imgAd.targetRegions?.some((region) => {
+//         if (!region?.location?.coordinates) return false;
 
-//       if (imgAd.adRepetition) {
-//         const schedule = imgAd.adRepeatSchedule?.find(e => e.userId.toString() === userId);
-//         if (schedule && schedule.nextScheduledAt > currentDate) continue;
+//         const [targetLat, targetLng] = region.location.coordinates;
+//         const radiusMeters = region.radius * 1000;
+
+//         const withinLiveLocation =
+//           userLat &&
+//           userLng &&
+//           calculateDistance(userLat, userLng, targetLat, targetLng) <=
+//             radiusMeters;
+
+//         const withinProfileLocation =
+//           profileCoords &&
+//           calculateDistance(
+//             profileCoords.lat,
+//             profileCoords.lng,
+//             targetLat,
+//             targetLng
+//           ) <= radiusMeters;
+
+//         return withinLiveLocation || withinProfileLocation;
+//       });
+
+//       // 🔍 State + District Targeting
+//       let isUserInTargetState = false;
+//       let isUserInTargetDistrict = false;
+
+//       if (imgAd.targetStates?.length > 0) {
+//         isUserInTargetState = imgAd.targetStates.some(
+//           (state) => state.toLowerCase() === userState
+//         );
+
+//         if (isUserInTargetState && imgAd.targetDistricts?.length > 0) {
+//           const normalizedDistricts = imgAd.targetDistricts.map((d) =>
+//             d.toLowerCase()
+//           );
+
+//           if (normalizedDistricts.includes("all")) {
+//             isUserInTargetDistrict = true;
+//           } else {
+//             isUserInTargetDistrict = normalizedDistricts.includes(userDistrict);
+//           }
+//         }
 //       }
 
-//       // ✅ Only active ads
-//       const isActive = imgAd.isAdVerified && imgAd.isAdVisible && imgAd.isAdOn &&
+//       // ✅ Combined location targeting logic
+//       const matchesLocation =
+//         isUserInTargetRegion ||
+//         (isUserInTargetState && imgAd.targetDistricts.length === 0) ||
+//         (isUserInTargetState && isUserInTargetDistrict);
+
+//       if (!matchesLocation) continue;
+
+//       // ✅ Has user already seen the ad?
+//       const hasUserViewed = imgAd.viewersRewarded.some(
+//         (entry) => entry.userId.toString() === userId
+//       );
+
+//       // ✅ Is ad active?
+//       const adIsActive =
+//         imgAd.isAdVerified &&
+//         imgAd.isAdVisible &&
+//         imgAd.isAdOn &&
 //         imgAd.totalViewCount < imgAd.userViewsNeeded &&
 //         (!imgAd.adExpirationTime || imgAd.adExpirationTime > currentDate);
 
-//       if (!isActive) {
+//       if (adIsActive) {
+//         if (!imgAd.adRepetition && hasUserViewed) continue;
+
+//         if (imgAd.adRepetition) {
+//           const userSchedule = imgAd.adRepeatSchedule.find(
+//             (entry) => entry.userId.toString() === userId
+//           );
+//           if (userSchedule && userSchedule.nextScheduledAt > currentDate)
+//             continue;
+//         }
+
+//         verifiedImgAds.push({
+//           _id: ad._id,
+//           imageAd: {
+//             ...imgAd.toObject(),
+//             isVerified: imgAd.isAdVerified,
+//           },
+//         });
+//       } else {
+//         // Update expired or fully viewed ads
 //         const updateFields = {};
 //         let shouldUpdate = false;
 
-//         if (imgAd.totalViewCount >= imgAd.userViewsNeeded && !imgAd.isViewsReached) {
+//         if (
+//           imgAd.totalViewCount >= imgAd.userViewsNeeded &&
+//           !imgAd.isViewsReached
+//         ) {
 //           updateFields.isViewsReached = true;
 //           shouldUpdate = true;
 //         }
 
-//         if (imgAd.adExpirationTime && imgAd.adExpirationTime <= currentDate && imgAd.isAdVisible) {
+//         if (
+//           imgAd.adExpirationTime &&
+//           imgAd.adExpirationTime <= currentDate &&
+//           imgAd.isAdVisible
+//         ) {
 //           updateFields.isAdVisible = false;
 //           shouldUpdate = true;
 //         }
 
-//         if (shouldUpdate) await ImageAd.findByIdAndUpdate(imgAd._id, updateFields);
-//         continue;
+//         if (shouldUpdate) {
+//           await ImageAd.findByIdAndUpdate(imgAd._id, updateFields);
+//         }
 //       }
-
-//       // ✅ Match by location (live or profile)
-//       const isInTargetRegion = imgAd.targetRegions?.some((region) => {
-//         if (!region?.location?.coordinates) return false;
-//         const [targetLat, targetLng] = region.location.coordinates;
-//         const radiusMeters = region.radius * 1000;
-
-//         const fromLive = userLat && userLng &&
-//           calculateDistance(userLat, userLng, targetLat, targetLng) <= radiusMeters;
-
-//         const fromProfile = profileCoords &&
-//           calculateDistance(profileCoords.lat, profileCoords.lng, targetLat, targetLng) <= radiusMeters;
-
-//         return fromLive || fromProfile;
-//       });
-
-//       // ✅ Match by state and district
-//       const adStates = (imgAd.targetStates || []).map(s => s.toLowerCase());
-//       const adDistricts = (imgAd.targetDistricts || []).map(d => d.toLowerCase());
-
-//       const stateMatch = adStates.includes(userState);
-//       const districtMatch =
-//         adDistricts.length === 0 ||
-//         adDistricts.includes("all") ||
-//         adDistricts.includes(userDistrict);
-
-//       const isStateDistrictMatched = stateMatch && districtMatch;
-
-//       // ✅ Final matching logic
-//       const isRegionOrStateDistrictMatched = isInTargetRegion || isStateDistrictMatched;
-
-//       if (!isRegionOrStateDistrictMatched) continue;
-
-//       // ✅ Add to final result
-//       verifiedImgAds.push({
-//         _id: ad._id,
-//         imageAd: {
-//           ...imgAd.toObject(),
-//           isVerified: imgAd.isAdVerified,
-//         },
-//       });
 //     }
 
 //     if (verifiedImgAds.length === 0) {
 //       return res.status(404).json({
-//         message: "No verified and eligible image ads found for your location, state or district",
+//         message:
+//           "No verified and eligible image ads found for your location or region",
 //       });
 //     }
 
 //     return res.status(200).json({
 //       message: "Verified image ads fetched successfully",
-//       count: verifiedImgAds.length,
+//       count:verifiedImgAds.length,
 //       ads: verifiedImgAds,
 //     });
-
 //   } catch (error) {
 //     console.error("Error fetching verified image ads:", error);
 //     return res.status(500).json({ message: "Internal server error" });
 //   }
 // };
 
-
 // to fetch verified imageAd based on repation if any periodic fetchng and only if the view count is not reached
-const fetchVerifiedVideoAd = async (req, res) => {  
+// correct and old one video ad fetch
+// const fetchVerifiedVideoAd = async (req, res) => {  
+//   try {
+//     const { userId } = req.params;
+//     let userLat = parseFloat(req.query.lat);
+//     let userLng = parseFloat(req.query.lng);
+
+//     const user = await User.findById(userId);
+//     if (!user) return res.status(404).json({ message: "User not found" });
+
+//     const profileCoords = user.locationCoordinates
+//       ? { lat: user.locationCoordinates.lat, lng: user.locationCoordinates.lng }
+//       : null;
+
+//     const userState = user.state?.toLowerCase();
+//     const userDistrict = user.district?.toLowerCase();
+
+//     if (
+//       (!userLat || !userLng) &&
+//       !profileCoords &&
+//       !userState &&
+//       !userDistrict
+//     ) {
+//       return res.status(400).json({
+//         message:
+//           "No valid user location or region data available for ad matching",
+//       });
+//     }
+
+//     const allAds = await Ad.find().populate("videoAdRef");
+//     const currentDate = new Date();
+//     const verifiedVideoAds = [];
+
+//     for (const ad of allAds) {
+//       const videoAd = ad.videoAdRef;
+//       if (!videoAd || videoAd.createdBy?.toString() === userId) continue;
+
+//       // 🔍 Region-based targeting
+//       const isUserInTargetRegion = videoAd.targetRegions?.some((region) => {
+//         if (!region?.location?.coordinates) return false;
+
+//         const [targetLat, targetLng] = region.location.coordinates;
+//         const radiusMeters = region.radius * 1000;
+
+//         const withinLiveLocation =
+//           userLat &&
+//           userLng &&
+//           calculateDistance(userLat, userLng, targetLat, targetLng) <=
+//             radiusMeters;
+
+//         const withinProfileLocation =
+//           profileCoords &&
+//           calculateDistance(
+//             profileCoords.lat,
+//             profileCoords.lng,
+//             targetLat,
+//             targetLng
+//           ) <= radiusMeters;
+
+//         return withinLiveLocation || withinProfileLocation;
+//       });
+
+//       // 🔍 State + District Targeting
+//       let isUserInTargetState = false;
+//       let isUserInTargetDistrict = false;
+
+//       if (videoAd.targetStates?.length > 0) {
+//         isUserInTargetState = videoAd.targetStates.some(
+//           (state) => state.toLowerCase() === userState
+//         );
+
+//         if (isUserInTargetState && videoAd.targetDistricts?.length > 0) {
+//           const normalizedDistricts = videoAd.targetDistricts.map((d) =>
+//             d.toLowerCase()
+//           );
+
+//           if (normalizedDistricts.includes("all")) {
+//             isUserInTargetDistrict = true;
+//           } else {
+//             isUserInTargetDistrict = normalizedDistricts.includes(userDistrict);
+//           }
+//         }
+//       }
+
+//       // ✅ Combined location targeting logic
+//       const matchesLocation =
+//         isUserInTargetRegion ||
+//         (isUserInTargetState && videoAd.targetDistricts.length === 0) ||
+//         (isUserInTargetState && isUserInTargetDistrict);
+
+//       if (!matchesLocation) continue;
+
+//       // ✅ Has user already seen the ad?
+//       const hasUserViewed = videoAd.viewersRewarded.some(
+//         (entry) => entry.userId.toString() === userId
+//       );
+
+//       // ✅ Is ad active?
+//       const adIsActive =
+//         videoAd.isAdVerified &&
+//         videoAd.isAdVisible &&
+//         videoAd.isAdOn &&
+//         videoAd.totalViewCount < videoAd.userViewsNeeded &&
+//         (!videoAd.adExpirationTime || videoAd.adExpirationTime > currentDate);
+
+//       if (adIsActive) {
+//         if (!videoAd.adRepetition && hasUserViewed) continue;
+
+//         if (videoAd.adRepetition) {
+//           const userSchedule = videoAd.adRepeatSchedule.find(
+//             (entry) => entry.userId.toString() === userId
+//           );
+//           if (userSchedule && userSchedule.nextScheduledAt > currentDate)
+//             continue;
+//         }
+
+//         verifiedVideoAds.push({
+//           _id: ad._id,
+//           videoAd: {
+//             ...videoAd.toObject(),
+//             isVerified: videoAd.isAdVerified,
+//           },
+//         });
+//       } else {
+//         // Update expired or fully viewed ads
+//         const updateFields = {};
+//         let shouldUpdate = false;
+
+//         if (
+//           videoAd.totalViewCount >= videoAd.userViewsNeeded &&
+//           !videoAd.isViewsReached
+//         ) {
+//           updateFields.isViewsReached = true;
+//           shouldUpdate = true;
+//         }
+
+//         if (
+//           videoAd.adExpirationTime &&
+//           videoAd.adExpirationTime <= currentDate &&
+//           videoAd.isAdVisible
+//         ) {
+//           updateFields.isAdVisible = false;
+//           shouldUpdate = true;
+//         }
+
+//         if (shouldUpdate) {
+//           await VideoAd.findByIdAndUpdate(videoAd._id, updateFields);
+//         }
+//       }
+//     }
+
+//     if (verifiedVideoAds.length === 0) {
+//       return res.status(404).json({
+//         message:
+//           "No verified and eligible video ads found for your location or region",
+//       });
+//     }
+
+//     return res.status(200).json({
+//       message: "Verified video ads fetched successfully",
+//       count:verifiedVideoAds.length,
+//       ads: verifiedVideoAds,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching verified video ads:", error);
+//     return res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+const fetchVerifiedVideoAd = async (req, res) => {
   try {
     const { userId } = req.params;
     let userLat = parseFloat(req.query.lat);
@@ -1389,71 +1600,11 @@ const fetchVerifiedVideoAd = async (req, res) => {
     const currentDate = new Date();
     const verifiedVideoAds = [];
 
-    for (const ad of allAds) {
-      const videoAd = ad.videoAdRef;
-      if (!videoAd || videoAd.createdBy?.toString() === userId) continue;
-
-      // 🔍 Region-based targeting
-      const isUserInTargetRegion = videoAd.targetRegions?.some((region) => {
-        if (!region?.location?.coordinates) return false;
-
-        const [targetLat, targetLng] = region.location.coordinates;
-        const radiusMeters = region.radius * 1000;
-
-        const withinLiveLocation =
-          userLat &&
-          userLng &&
-          calculateDistance(userLat, userLng, targetLat, targetLng) <=
-            radiusMeters;
-
-        const withinProfileLocation =
-          profileCoords &&
-          calculateDistance(
-            profileCoords.lat,
-            profileCoords.lng,
-            targetLat,
-            targetLng
-          ) <= radiusMeters;
-
-        return withinLiveLocation || withinProfileLocation;
-      });
-
-      // 🔍 State + District Targeting
-      let isUserInTargetState = false;
-      let isUserInTargetDistrict = false;
-
-      if (videoAd.targetStates?.length > 0) {
-        isUserInTargetState = videoAd.targetStates.some(
-          (state) => state.toLowerCase() === userState
-        );
-
-        if (isUserInTargetState && videoAd.targetDistricts?.length > 0) {
-          const normalizedDistricts = videoAd.targetDistricts.map((d) =>
-            d.toLowerCase()
-          );
-
-          if (normalizedDistricts.includes("all")) {
-            isUserInTargetDistrict = true;
-          } else {
-            isUserInTargetDistrict = normalizedDistricts.includes(userDistrict);
-          }
-        }
-      }
-
-      // ✅ Combined location targeting logic
-      const matchesLocation =
-        isUserInTargetRegion ||
-        (isUserInTargetState && videoAd.targetDistricts.length === 0) ||
-        (isUserInTargetState && isUserInTargetDistrict);
-
-      if (!matchesLocation) continue;
-
-      // ✅ Has user already seen the ad?
+    const adIfEligible = async (videoAd, ad) => {
       const hasUserViewed = videoAd.viewersRewarded.some(
         (entry) => entry.userId.toString() === userId
       );
 
-      // ✅ Is ad active?
       const adIsActive =
         videoAd.isAdVerified &&
         videoAd.isAdVisible &&
@@ -1462,14 +1613,13 @@ const fetchVerifiedVideoAd = async (req, res) => {
         (!videoAd.adExpirationTime || videoAd.adExpirationTime > currentDate);
 
       if (adIsActive) {
-        if (!videoAd.adRepetition && hasUserViewed) continue;
+        if (!videoAd.adRepetition && hasUserViewed) return;
 
         if (videoAd.adRepetition) {
           const userSchedule = videoAd.adRepeatSchedule.find(
             (entry) => entry.userId.toString() === userId
           );
-          if (userSchedule && userSchedule.nextScheduledAt > currentDate)
-            continue;
+          if (userSchedule && userSchedule.nextScheduledAt > currentDate) return;
         }
 
         verifiedVideoAds.push({
@@ -1480,7 +1630,6 @@ const fetchVerifiedVideoAd = async (req, res) => {
           },
         });
       } else {
-        // Update expired or fully viewed ads
         const updateFields = {};
         let shouldUpdate = false;
 
@@ -1505,6 +1654,70 @@ const fetchVerifiedVideoAd = async (req, res) => {
           await VideoAd.findByIdAndUpdate(videoAd._id, updateFields);
         }
       }
+    };
+
+    for (const ad of allAds) {
+      const videoAd = ad.videoAdRef;
+      if (!videoAd || videoAd.createdBy?.toString() === userId) continue;
+
+      const isUserInTargetRegion = videoAd.targetRegions?.some((region) => {
+        if (!region?.location?.coordinates) return false;
+        const [targetLat, targetLng] = region.location.coordinates;
+        const radiusMeters = region.radius * 1000;
+
+        const withinLiveLocation =
+          userLat &&
+          userLng &&
+          calculateDistance(userLat, userLng, targetLat, targetLng) <=
+            radiusMeters;
+
+        const withinProfileLocation =
+          profileCoords &&
+          calculateDistance(
+            profileCoords.lat,
+            profileCoords.lng,
+            targetLat,
+            targetLng
+          ) <= radiusMeters;
+
+        return withinLiveLocation || withinProfileLocation;
+      });
+
+      if (isUserInTargetRegion) {
+        await adIfEligible(videoAd, ad);
+        continue;
+      }
+
+      let isUserInTargetState = false;
+      let isUserInTargetDistrict = false;
+
+      if (videoAd.targetStates?.length > 0) {
+        isUserInTargetState = videoAd.targetStates.some(
+          (state) => state.toLowerCase() === userState
+        );
+
+        if (isUserInTargetState && videoAd.targetDistricts?.length > 0) {
+          const normalizedDistricts = videoAd.targetDistricts.map((d) =>
+            d.toLowerCase()
+          );
+
+          if (normalizedDistricts.includes("all")) {
+            isUserInTargetDistrict = true;
+          } else {
+            isUserInTargetDistrict = normalizedDistricts.includes(userDistrict);
+          }
+        }
+      }
+
+      if (isUserInTargetState && isUserInTargetDistrict) {
+        await adIfEligible(videoAd, ad);
+        continue;
+      }
+
+      if (isUserInTargetState && videoAd.targetDistricts.length === 0) {
+        await adIfEligible(videoAd, ad);
+        continue;
+      }
     }
 
     if (verifiedVideoAds.length === 0) {
@@ -1516,7 +1729,7 @@ const fetchVerifiedVideoAd = async (req, res) => {
 
     return res.status(200).json({
       message: "Verified video ads fetched successfully",
-      count:verifiedVideoAds.length,
+      count: verifiedVideoAds.length,
       ads: verifiedVideoAds,
     });
   } catch (error) {
@@ -1526,23 +1739,175 @@ const fetchVerifiedVideoAd = async (req, res) => {
 };
 
 // to fetch verified surveyAd
+// correct and old one 
+// const fetchVerifiedSurveyAd = async (req, res) => {
+//   try {
+//     const { userId } = req.params;
+//     let userLat = parseFloat(req.query.lat); // ✅ use let, not const
+//     let userLng = parseFloat(req.query.lng);
+//     const user = await User.findById(userId);
+//     if (!user) return res.status(404).json({ message: "User not found" });
+//     // Fallback to profile coordinates
+//     if (isNaN(userLat) || isNaN(userLng)) {
+//       if (user.locationCoordinates) {
+//         userLat = user.locationCoordinates.lat;
+//         userLng = user.locationCoordinates.lng;
+//       }
+//     }
+//     const profileCoords = user.locationCoordinates
+//       ? { lat: user.locationCoordinates.lat, lng: user.locationCoordinates.lng }
+//       : null;
+
+//     const userState = user.state?.toLowerCase();
+//     const userDistrict = user.district?.toLowerCase();
+
+//     if (
+//       (!userLat || !userLng) &&
+//       !profileCoords &&
+//       !userState &&
+//       !userDistrict
+//     ) {
+//       return res.status(400).json({
+//         message: "No valid user location or region data available for ad matching",
+//       });
+//     }
+
+//     const allAds = await Ad.find().populate("surveyAdRef");
+//     const currentDate = new Date();
+//     const verifiedSurveyAds = [];
+
+//     for (const ad of allAds) {
+//       let surveyAd = ad.surveyAdRef;
+//       if (!surveyAd) continue;
+//       if (surveyAd.createdBy?.toString() === userId) continue;
+
+//       //  Region-based targeting
+//       const isUserInTargetRegion = surveyAd.targetRegions?.some((region) => {
+//         if (!region?.location?.coordinates) return false;
+
+//         const [lat, lng] = region.location.coordinates;
+//         const radiusMeters = region.radius * 1000;
+
+//         const withinLiveLocation =
+//           userLat &&
+//           userLng &&
+//           calculateDistance(userLat, userLng, lat, lng) <= radiusMeters;
+
+//         const withinProfileLocation =
+//           profileCoords &&
+//           calculateDistance(profileCoords.lat, profileCoords.lng, lat, lng) <= radiusMeters;
+
+//         return withinLiveLocation || withinProfileLocation;
+//       });
+
+//       // State & District targeting
+//       let isUserInTargetState = false;
+//       let isUserInTargetDistrict = false;
+
+//       if (surveyAd.targetStates?.length > 0) {
+//         isUserInTargetState = surveyAd.targetStates.some(
+//           (state) => state.toLowerCase() === userState
+//         );
+
+//         if (isUserInTargetState && surveyAd.targetDistricts?.length > 0) {
+//           const normalizedDistricts = surveyAd.targetDistricts.map((d) =>
+//             d.toLowerCase()
+//           );
+//           isUserInTargetDistrict =
+//             normalizedDistricts.includes("all") ||
+//             normalizedDistricts.includes(userDistrict);
+//         }
+//       }
+
+//       const matchesLocation =
+//         isUserInTargetRegion ||
+//         (isUserInTargetState && surveyAd.targetDistricts.length === 0) ||
+//         (isUserInTargetState && isUserInTargetDistrict);
+
+//       if (!matchesLocation) continue;
+
+//       // Check if already completed
+//       const hasUserCompleted = surveyAd.usersCompleted?.some(
+//         (entry) => entry.userId.toString() === userId
+//       );
+
+//       // ✅ Check ad is active
+//       const adIsActive =
+//         surveyAd.isAdVerified &&
+//         surveyAd.isAdVisible &&
+//         surveyAd.isAdOn &&
+//         surveyAd.totalViewCount < surveyAd.userViewsNeeded &&
+//         (!surveyAd.adExpirationTime || surveyAd.adExpirationTime > currentDate);
+
+//       if (adIsActive) {
+//         if (!surveyAd.adRepetition && hasUserCompleted) continue;
+
+//         if (surveyAd.adRepetition) {
+//           const userSchedule = surveyAd.repeatSchedule?.find(
+//             (entry) => entry.userId.toString() === userId
+//           );
+//           if (userSchedule && userSchedule.nextScheduledAt > currentDate) continue;
+//         }
+
+//         verifiedSurveyAds.push({
+//           _id: ad._id,
+//           surveyAd: {
+//             ...surveyAd.toObject(),
+//             isVerified: surveyAd.isAdVerified,
+//           },
+//         });
+//       } else {
+//         // 🔄 Update status if needed
+//         const updateFields = {};
+//         let shouldUpdate = false;
+
+//         if (
+//           surveyAd.totalViewCount >= surveyAd.userViewsNeeded &&
+//           !surveyAd.isViewsReached
+//         ) {
+//           updateFields.isViewsReached = true;
+//           shouldUpdate = true;
+//         }
+
+//         if (
+//           surveyAd.adExpirationTime &&
+//           surveyAd.adExpirationTime <= currentDate &&
+//           surveyAd.isAdVisible
+//         ) {
+//           updateFields.isAdVisible = false;
+//           shouldUpdate = true;
+//         }
+
+//         if (shouldUpdate) {
+//           await SurveyAd.findByIdAndUpdate(surveyAd._id, updateFields);
+//         }
+//       }
+//     }
+
+//     if (verifiedSurveyAds.length === 0) {
+//       return res.status(404).json({
+//         message: "No verified and eligible survey ads found for your location or region",
+//       });
+//     }
+
+//     return res.status(200).json({
+//       message: "Verified survey ads fetched successfully",
+//       ads: verifiedSurveyAds,
+//     });
+//   } catch (error) {
+//     console.error("❌ Error fetching verified survey ads:", error);
+//     return res.status(500).json({ message: "Internal server error" });
+//   }
+// };
 const fetchVerifiedSurveyAd = async (req, res) => {
   try {
     const { userId } = req.params;
-
-    let userLat = parseFloat(req.query.lat); // ✅ use let, not const
+    let userLat = parseFloat(req.query.lat);
     let userLng = parseFloat(req.query.lng);
+    const currentDate = new Date();
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
-
-    // Fallback to profile coordinates
-    if (isNaN(userLat) || isNaN(userLng)) {
-      if (user.locationCoordinates) {
-        userLat = user.locationCoordinates.lat;
-        userLng = user.locationCoordinates.lng;
-      }
-    }
 
     const profileCoords = user.locationCoordinates
       ? { lat: user.locationCoordinates.lat, lng: user.locationCoordinates.lng }
@@ -1552,7 +1917,7 @@ const fetchVerifiedSurveyAd = async (req, res) => {
     const userDistrict = user.district?.toLowerCase();
 
     if (
-      (!userLat || !userLng) &&
+      (!userLat || !userLng || isNaN(userLat) || isNaN(userLng)) &&
       !profileCoords &&
       !userState &&
       !userDistrict
@@ -1563,65 +1928,13 @@ const fetchVerifiedSurveyAd = async (req, res) => {
     }
 
     const allAds = await Ad.find().populate("surveyAdRef");
-    const currentDate = new Date();
     const verifiedSurveyAds = [];
 
-    for (const ad of allAds) {
-      let surveyAd = ad.surveyAdRef;
-      if (!surveyAd) continue;
-      if (surveyAd.createdBy?.toString() === userId) continue;
-
-      //  Region-based targeting
-      const isUserInTargetRegion = surveyAd.targetRegions?.some((region) => {
-        if (!region?.location?.coordinates) return false;
-
-        const [lat, lng] = region.location.coordinates;
-        const radiusMeters = region.radius * 1000;
-
-        const withinLiveLocation =
-          userLat &&
-          userLng &&
-          calculateDistance(userLat, userLng, lat, lng) <= radiusMeters;
-
-        const withinProfileLocation =
-          profileCoords &&
-          calculateDistance(profileCoords.lat, profileCoords.lng, lat, lng) <= radiusMeters;
-
-        return withinLiveLocation || withinProfileLocation;
-      });
-
-      // State & District targeting
-      let isUserInTargetState = false;
-      let isUserInTargetDistrict = false;
-
-      if (surveyAd.targetStates?.length > 0) {
-        isUserInTargetState = surveyAd.targetStates.some(
-          (state) => state.toLowerCase() === userState
-        );
-
-        if (isUserInTargetState && surveyAd.targetDistricts?.length > 0) {
-          const normalizedDistricts = surveyAd.targetDistricts.map((d) =>
-            d.toLowerCase()
-          );
-          isUserInTargetDistrict =
-            normalizedDistricts.includes("all") ||
-            normalizedDistricts.includes(userDistrict);
-        }
-      }
-
-      const matchesLocation =
-        isUserInTargetRegion ||
-        (isUserInTargetState && surveyAd.targetDistricts.length === 0) ||
-        (isUserInTargetState && isUserInTargetDistrict);
-
-      if (!matchesLocation) continue;
-
-      // Check if already completed
-      const hasUserCompleted = surveyAd.viewersRewarded?.some(
+    const addIfEligible = async (surveyAd, ad) => {
+      const hasUserCompleted = surveyAd.usersCompleted?.some(
         (entry) => entry.userId.toString() === userId
       );
 
-      // ✅ Check ad is active
       const adIsActive =
         surveyAd.isAdVerified &&
         surveyAd.isAdVisible &&
@@ -1630,13 +1943,13 @@ const fetchVerifiedSurveyAd = async (req, res) => {
         (!surveyAd.adExpirationTime || surveyAd.adExpirationTime > currentDate);
 
       if (adIsActive) {
-        if (!surveyAd.adRepetition && hasUserCompleted) continue;
+        if (!surveyAd.adRepetition && hasUserCompleted) return;
 
         if (surveyAd.adRepetition) {
           const userSchedule = surveyAd.repeatSchedule?.find(
             (entry) => entry.userId.toString() === userId
           );
-          if (userSchedule && userSchedule.nextScheduledAt > currentDate) continue;
+          if (userSchedule && userSchedule.nextScheduledAt > currentDate) return;
         }
 
         verifiedSurveyAds.push({
@@ -1647,7 +1960,6 @@ const fetchVerifiedSurveyAd = async (req, res) => {
           },
         });
       } else {
-        // 🔄 Update status if needed
         const updateFields = {};
         let shouldUpdate = false;
 
@@ -1671,6 +1983,73 @@ const fetchVerifiedSurveyAd = async (req, res) => {
         if (shouldUpdate) {
           await SurveyAd.findByIdAndUpdate(surveyAd._id, updateFields);
         }
+      }
+    };
+
+    for (const ad of allAds) {
+      const surveyAd = ad.surveyAdRef;
+      if (!surveyAd || surveyAd.createdBy?.toString() === userId) continue;
+
+      // 1. Region match
+      const isUserInTargetRegion = surveyAd.targetRegions?.some((region) => {
+        if (!region?.location?.coordinates) return false;
+        const [targetLat, targetLng] = region.location.coordinates;
+        const radiusMeters = region.radius * 1000;
+
+        const withinLiveLocation =
+          userLat &&
+          userLng &&
+          calculateDistance(userLat, userLng, targetLat, targetLng) <=
+            radiusMeters;
+
+        const withinProfileLocation =
+          profileCoords &&
+          calculateDistance(
+            profileCoords.lat,
+            profileCoords.lng,
+            targetLat,
+            targetLng
+          ) <= radiusMeters;
+
+        return withinLiveLocation || withinProfileLocation;
+      });
+
+      if (isUserInTargetRegion) {
+        await addIfEligible(surveyAd, ad);
+        continue;
+      }
+
+      // 2–4. State/district matching
+      let isUserInTargetState = false;
+      let isUserInTargetDistrict = false;
+
+      if (surveyAd.targetStates?.length > 0) {
+        isUserInTargetState = surveyAd.targetStates.some(
+          (state) => state.toLowerCase() === userState
+        );
+
+        if (isUserInTargetState && surveyAd.targetDistricts?.length > 0) {
+          const normalizedDistricts = surveyAd.targetDistricts.map((d) =>
+            d.toLowerCase()
+          );
+
+          if (normalizedDistricts.includes("all")) {
+            await addIfEligible(surveyAd, ad);
+            continue;
+          }
+
+          isUserInTargetDistrict = normalizedDistricts.includes(userDistrict);
+        }
+      }
+
+      if (isUserInTargetState && isUserInTargetDistrict) {
+        await addIfEligible(surveyAd, ad);
+        continue;
+      }
+
+      if (isUserInTargetState && surveyAd.targetDistricts.length === 0) {
+        await addIfEligible(surveyAd, ad);
+        continue;
       }
     }
 

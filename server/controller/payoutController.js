@@ -1022,18 +1022,14 @@ const myRejectedPayouts = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const user = await User.findById(userId).populate({
-      path: "payoutRequests",
-      match: { payoutStatus:"rejected" },
-    });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    const rejectedPayouts = await PayoutRequest.find({
+      requestedBy: userId,
+      payoutStatus: "rejected",
+    }).sort({ createdAt: -1 })  .lean();
 
     return res.status(200).json({
       message: "Rejected payouts fetched successfully",
-      rejectedPayouts: user.payoutRequests || [],
+      rejectedPayouts,
     });
   } catch (error) {
     console.error("Error fetching rejected payouts:", error);
@@ -1043,6 +1039,8 @@ const myRejectedPayouts = async (req, res) => {
     });
   }
 };
+
+
 
 
 export {

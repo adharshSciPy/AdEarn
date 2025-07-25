@@ -59,7 +59,7 @@ function UserHome() {
       }
 
       const response = await axios.get(url);
-      console.log("url", url);
+      console.log("response", response);
 
       setImageAd(response.data.ads);
     } catch (error) {
