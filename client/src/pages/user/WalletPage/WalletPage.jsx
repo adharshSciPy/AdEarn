@@ -9,6 +9,8 @@ import { useNavigate } from "react-router-dom";
 import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
 import { Modal, Input, Form } from "antd";
 import { toast } from "react-toastify";
+import Driver from "driver.js";
+import "driver.js/dist/driver.min.css";
 
 const WalletPage = () => {
   const [activeTab, setActiveTab] = useState("Payouts");
@@ -18,6 +20,12 @@ const WalletPage = () => {
   const [showBuyStarsModal, setShowBuyStarsModal] = useState(false);
   const [payoutAmount, setPayoutAmount] = useState(0);
   const [payOutDetails, setPayoutDetails] = useState([]);
+  const [tourState, setTourState] = useState({
+    navbarCompleted: false,
+    homeCompleted: false
+  });
+
+
   const userId = useSelector((state) => state.user.id);
   const token = useSelector((state) => state.user.token);
 
@@ -120,26 +128,168 @@ const WalletPage = () => {
   const getCancelledPayout = async () => {
     try {
       const res = await axios.get(`${baseUrl}/api/v1/payout/my-payouts/rejected/${userId}`);
-      console.log("cancelled",res);
-      
+      console.log("cancelled", res);
+
     } catch (error) {
       console.log(error);
-      
+
     }
   };
-const verifiedPayouts=async()=>{
-  try {
-    const res=await axios.get(`${baseUrl}/api/v1/payout/my-payouts/verified/${userId}`);
-    console.log("veri",res);
-    
-  } catch (error) {
-    console.log(error);
-    
+  const verifiedPayouts = async () => {
+    try {
+      const res = await axios.get(`${baseUrl}/api/v1/payout/my-payouts/verified/${userId}`);
+      console.log("veri", res);
+
+    } catch (error) {
+      console.log(error);
+
+    }
   }
-}
+
+  // Handle tour completion
+  const handleTourComplete = (tourType) => {
+    setTourState(prev => ({
+      ...prev,
+      [tourType === 'navbar' ? 'navbarCompleted' : 'homeCompleted']: true
+    }));
+  };
+
+  //driver.js
+
+  // Start home tour when navbar tour is completed
+  useEffect(() => {
+    const hometourCompleted = localStorage.getItem(`userTourCompleted_${userId}`);
+    const walletpageCompleted = localStorage.getItem(`walletpageCompleted_${userId}`)
+
+
+    // Start home tour if navbar is done but full tour isn't complete
+    if (hometourCompleted && !walletpageCompleted) {
+      // Add a small delay to ensure all elements are rendered
+      setTimeout(() => {
+        startHomeTour();
+      }, 500);
+    }
+  }, [userId]); // Remove tourState.navbarCompleted dependency
+
+  // Also trigger when navbar completes via callback
+  useEffect(() => {
+    if (tourState.navbarCompleted) {
+      setTimeout(() => {
+        startHomeTour();
+      }, 500);
+    }
+  }, [tourState.navbarCompleted]);
+
+
+  const startHomeTour = () => {
+    // Check again to prevent duplicate tours
+    const wallettourCompleted = localStorage.getItem(`walletpageCompleted_${userId}`);
+    if (wallettourCompleted) return;
+
+    let attempts = 0;
+
+    const interval = setInterval(() => {
+      const selectors = [
+        "#place-ads-btn",
+        "#buy-stars",
+        "#payout-request",
+        "#payouts"
+      ];
+
+      const existingSelectors = selectors.filter(sel => document.querySelector(sel));
+
+      // Start tour if at least the place-ads-btn exists (main requirement)
+      const canStartTour = document.querySelector("#place-ads-btn");
+
+      if (canStartTour || attempts > 10) {
+        clearInterval(interval);
+
+        if (canStartTour) {
+          // Use only existing selectors for the tour
+          const tourSteps = [];
+
+          if (document.querySelector("#place-ads-btn")) {
+            tourSteps.push({
+              element: "#place-ads-btn",
+              popover: {
+                title: "Place Your Ad",
+                description: "Click here to place a new advertisement.",
+                position: "bottom",
+              },
+            });
+          }
+
+          if (document.querySelector("#buy-stars")) {
+            tourSteps.push({
+              element: "#buy-stars",
+              popover: {
+                title: "Buy Stars",
+                description: "For buying stars.",
+                position: "top",
+              },
+            });
+          }
+
+          if (document.querySelector("#payout-request")) {
+            tourSteps.push({
+              element: "#payout-request",
+              popover: {
+                title: "Payout Request",
+                description: "To add payout request.",
+                position: "top",
+              },
+            });
+          }
+
+          if (document.querySelector("#payouts")) {
+            tourSteps.push({
+              element: "#payouts",
+              popover: {
+                title: "Payouts",
+                description: "View payouts details.",
+                position: "top",
+              },
+            });
+          }
+
+
+
+          const driver = new Driver({
+            animate: true,
+            opacity: 0.5,
+            stageBackground: "rgba(0, 0, 0, 0.5)",
+            allowClose: true,
+            doneBtnText: "Finish Tour",
+            closeBtnText: "Skip",
+            nextBtnText: "Next",
+            prevBtnText: "Previous",
+            onReset: () => {
+              // Mark both tours as completed
+              localStorage.setItem(`walletpageCompleted_${userId}`, "true");
+              setTourState(prev => ({
+                ...prev,
+                homeCompleted: true
+              }));
+            },
+          });
+
+          driver.defineSteps(tourSteps);
+          driver.start();
+        } else {
+          console.warn("Place ads button not found, completing tour anyway.");
+          // Still mark as completed if main element not found
+          localStorage.setItem(`walletpageCompleted_${userId}`, "true");
+        }
+      }
+
+      attempts++;
+    }, 1000);
+  };
+
+
   return (
     <>
-      <Navbar />
+      <Navbar onTourComplete={handleTourComplete} />
       <CreateAdPopup isOpen={showPopup} onClose={() => setShowPopup(false)} />
 
       <div className={styles.walletContainer}>
@@ -157,7 +307,7 @@ const verifiedPayouts=async()=>{
                   </p>
                 </div>
                 <div className={styles.firstMainbutton}>
-                  <button onClick={() => setShowPopup(true)}>Place Ads</button>
+                  <button id="place-ads-btn" onClick={() => setShowPopup(true)}>Place Ads</button>
                 </div>
               </div>
 
@@ -178,6 +328,7 @@ const verifiedPayouts=async()=>{
                 <span style={{ color: "gold", fontSize: "30px" }}>★</span>{" "}
               </div>
               <button
+                id="buy-stars"
                 className={styles.buyButton}
                 onClick={() => setShowBuyStarsModal(true)}
               >
@@ -196,6 +347,7 @@ const verifiedPayouts=async()=>{
             <div className={styles.requestBox}>
               <p>Redeem your stars to physical money</p>
               <button
+                id="payout-request"
                 className={styles.requestBtn}
                 onClick={() => {
                   setIsModalOpen(true);
@@ -221,7 +373,7 @@ const verifiedPayouts=async()=>{
           </nav>
 
           {activeTab === "Payouts" && (
-            <section className={styles.payoutTableSection}>
+            <section className={styles.payoutTableSection} id="payouts">
               <h2>Payout requests</h2>
               <table className={styles.payoutTable}>
                 <thead>
@@ -274,7 +426,7 @@ const verifiedPayouts=async()=>{
 
           {activeTab === "Redeem Payouts" && (
             <section className={styles.payoutTableSection}>
-              <h2>Redeem Payouts</h2>
+              <h2 id="redeem-payouts">Redeem Payouts</h2>
               <table className={styles.payoutTable}>
                 <thead>
                   <tr>
@@ -316,7 +468,7 @@ const verifiedPayouts=async()=>{
           )}
           {activeTab === "Payment History" && (
             <section className={styles.payoutTableSection}>
-              <h2>Payment History</h2>
+              <h2 id="payment-history">Payment History</h2>
               <table className={styles.payoutTable}>
                 <thead>
                   <tr>
@@ -358,7 +510,7 @@ const verifiedPayouts=async()=>{
           )}
           {activeTab === "Cancelled payouts" && (
             <section className={styles.payoutTableSection}>
-              <h2>Cancelled payouts</h2>
+              <h2 id="cancelled-payouts">Cancelled payouts</h2>
               <table className={styles.payoutTable}>
                 <thead>
                   <tr>
