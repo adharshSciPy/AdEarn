@@ -86,7 +86,7 @@ const createPayoutRequest = async (req, res) => {
     // Add transaction record
     superAdminWallet.userPayoutTransactions.push({
       userId: user._id,
-      starsTransferred: starCount,  // Using correct field name from schema
+      starsTransferred: starCount, 
       amount,
       payoutId: payout[0]._id,
       timestamp: new Date()
@@ -1016,6 +1016,84 @@ const getAllCompletedPayouts = async (req, res) => {
       .json({ message: "Server error", error: error.message });
   }
 };
+// to fetch same user's all payoutRequests...(isVerified:false,isPayoutCompleted:false)
+const myPayoutRequests = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await User.findById(userId).populate({
+      path: "payoutRequests"
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({
+      message: "Payout requests fetched successfully",
+      payoutRequests: user.payoutRequests || [],
+    });
+  } catch (error) {
+    console.error("Error fetching payout requests:", error);
+    return res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+};
+// to fetch completed payouts(isVerified:true,isPayoutCompleted:true)
+const myVerifiedPayouts = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await User.findById(userId).populate({
+      path: "payoutRequests",
+      match: {
+        isPayoutCompleted: true,
+      },
+      options: { sort: { createdAt: -1 } }, // optional: newest first
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({
+      message: "Completed payouts fetched successfully",
+      completedPayouts: user.payoutRequests || [],
+    });
+  } catch (error) {
+    console.error("Error fetching completed payouts:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+//to fetch rejected payouts(rejcted:true)
+const myRejectedPayouts = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await User.findById(userId).populate({
+      path: "payoutRequests",
+      match: { rejected: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({
+      message: "Rejected payouts fetched successfully",
+      rejectedPayouts: user.payoutRequests || [],
+    });
+  } catch (error) {
+    console.error("Error fetching rejected payouts:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
 
 export {
   createPayoutRequest,
@@ -1026,5 +1104,8 @@ export {
   getSingleVerifiedPayoutRequest,
   markPayoutAsCompleted,
   getAllCompletedPayouts,
-  rejectPayoutRequest
+  rejectPayoutRequest,
+  myPayoutRequests,
+  myVerifiedPayouts,
+  myRejectedPayouts
 };

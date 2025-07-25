@@ -7,6 +7,9 @@ import axios from "axios";
 import baseUrl from "../../../baseurl";
 import { useNavigate } from "react-router-dom";
 import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
+import { Modal, Input, Form } from "antd";
+import { toast } from "react-toastify";
+
 
 const WalletPage = () => {
   const [activeTab, setActiveTab] = useState("Payouts");
@@ -14,8 +17,44 @@ const WalletPage = () => {
   const [stars, setStars] = useState("");
   const [walletDetails, setWalletDetails] = useState([]);
   const [showBuyStarsModal, setShowBuyStarsModal] = useState(false);
+  const [payoutAmount, setPayoutAmount] = useState(0);
+
   const userId = useSelector((state) => state.user.id);
+  const token = useSelector((state) => state.user.token);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const navigate = useNavigate();
+  const handlePayout = async () => {
+    console.log("token", token);
+    console.log(typeof(payoutAmount));
+    
+    try {
+      const res = await axios.post(
+        `${baseUrl}/api/v1/payout/request`,
+        {
+          starCount: payoutAmount,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, 
+          },
+        }
+      );
+      if (res?.status >= 200 && res?.status < 300){
+        setIsModalOpen(false);
+        setPayoutAmount("");
+        toast.success("Payout request send successfully")
+      }
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const handleCancel = () => {
+    setIsModalOpen(false);
+    setPayoutAmount("");
+  };
   const handleTabClick = (tabName) => {
     setActiveTab(tabName);
   };
@@ -44,7 +83,7 @@ const WalletPage = () => {
     getUserWalletDetails();
     console.log("userid", userId);
   }, []);
- 
+
   // const handleClick = () => {
   //   navigate(`/adform/${userId}`); // replace with your route
   // };
@@ -121,7 +160,14 @@ const WalletPage = () => {
             </div>
             <div className={styles.requestBox}>
               <p>Redeem your stars to physical money</p>
-              <button className={styles.requestBtn}>Request payout</button>
+              <button
+                className={styles.requestBtn}
+                onClick={() => {
+                  setIsModalOpen(true);
+                }}
+              >
+                Request payout
+              </button>
             </div>
           </section>
 
@@ -327,6 +373,24 @@ const WalletPage = () => {
           </div>
         )}
       </div>
+      <Modal
+        title="Make a Payout"
+        open={isModalOpen}
+        onOk={handlePayout}
+        onCancel={handleCancel}
+        okText="Submit"
+      >
+        <Form layout="vertical">
+          <Form.Item label="Enter Star" required>
+            <Input
+              type="number"
+              placeholder="Minimum 1000 star is needed"
+              value={payoutAmount}
+              onChange={(e) => setPayoutAmount(parseInt(e.target.value) || 0)}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </>
   );
 };

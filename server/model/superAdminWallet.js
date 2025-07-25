@@ -236,12 +236,6 @@ const userPayoutTransactionLogSchema = new Schema(
     transactionDate: { type: Date, default: Date.now },
     reason: { type: String, default: "User Payout deduction" },
     note: { type: String },
-    
-    status: {
-      type: String,
-      enum: ["pending", "verified", "completed"],
-      default: "pending",
-    },
   },
   { _id: false }
 );
