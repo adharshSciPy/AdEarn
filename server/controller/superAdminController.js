@@ -32,6 +32,8 @@ import { Ad } from "../model/AdsModel.js";
 // import superAdminWallet from "../model/superAdminWallet.js";
 import { convertStarsToRupees } from "../utils/convertStarsToRupees.js";
 import adminwalletModel from "../model/adminwalletModel.js";
+import SuperAdminAd from "../model/superAdminAdModel.js"
+
 const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
@@ -2864,49 +2866,89 @@ const superAdminPayout = async (req, res) => {
 
   try {
     const superAdminWallet = await SuperAdminWallet.findOne();
-
     if (!superAdminWallet) {
       return res.status(404).json({ message: "Super Admin Wallet not found" });
     }
 
-    const starCount = convertRupeesToStars(amount); 
+    const starCount = convertRupeesToStars(amount);
+    const currentStars = Number(superAdminWallet.totalStars) || 0;
 
-    if (superAdminWallet.totalStars < starCount) {
+    if (currentStars < starCount) {
       return res.status(400).json({
-        message: `Insufficient stars in Super Admin Wallet. Required: ${starCount}, Available: ${superAdminWallet.totalStars}`,
+        message: `Insufficient stars in Super Admin Wallet. Required: ${starCount}, Available: ${currentStars}`,
       });
     }
 
- 
-    superAdminWallet.totalStars -= starCount;
+    // ✅ Deduct stars
+    superAdminWallet.totalStars = currentStars - starCount;
 
-   
-    const payoutEntry = {
+    // ✅ Add to payoutDetails array
+    superAdminWallet.payoutDetails.push({
       starCount,
       amountToCheckout: amount,
       note: note || "",
-      date: new Date(),
-    };
+      date: new Date()
+    });
 
-    superAdminWallet.payoutDetails.push(payoutEntry);
-
+    // ✅ Save wallet
     await superAdminWallet.save();
 
     return res.status(200).json({
       message: "Payout recorded successfully",
       starsDeducted: starCount,
       remainingStars: superAdminWallet.totalStars,
-      recentPayout: payoutEntry,
+      recentPayout: {
+        starCount,
+        amountToCheckout: amount,
+        note,
+        date: new Date()
+      }
     });
   } catch (error) {
     console.error("Error in superAdminPayout:", error);
     return res.status(500).json({
       message: "Internal server error",
-      error: error.message,
+      error: error.message
     });
   }
 };
 
+const postSuperAdminImageAd = async (req, res) => {
+  try {
+    // Check if imageAd file is present in req.files
+    if (!req.files || !req.files.imageAd || req.files.imageAd.length === 0) {
+      return res.status(400).json({ message: "Image file is required" });
+    }
+
+    const uploadedImage = req.files.imageAd[0];
+
+    // Create a new ad document
+    const newAd = new SuperAdminAd({
+      imageUrl : `/imgAdUploads/${uploadedImage.filename}`,
+      postedAt: new Date(),
+    });
+
+    await newAd.save();
+
+    return res.status(201).json({
+      message: "Super Admin Ad posted successfully",
+      ad: newAd,
+    });
+  } catch (error) {
+    console.error("Error posting Super Admin Ad:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+const getAllSuperAdminImageAds = async (req, res) => {
+  try {
+    const ads = await SuperAdminAd.find().sort({ postedAt: -1 });
+    return res.status(200).json({ ads });
+  } catch (error) {
+    console.error("Error fetching Super Admin Ads:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 export {
   registerSuperAdmin,
@@ -2960,5 +3002,7 @@ export {
   getWelcomeBonusLogs,
   fetchTotalReceivedStars,
   fetchTotalGivenStars,
-  superAdminPayout
+  superAdminPayout,
+  postSuperAdminImageAd,
+  getAllSuperAdminImageAds
 };
