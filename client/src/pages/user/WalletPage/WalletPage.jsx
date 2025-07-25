@@ -20,7 +20,7 @@ const WalletPage = () => {
   const [payOutDetails, setPayoutDetails] = useState([]);
   const userId = useSelector((state) => state.user.id);
   const token = useSelector((state) => state.user.token);
-  const [payment,setPayment]=useState([])
+  const [paymentDetails, setPayment] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const navigate = useNavigate();
@@ -45,7 +45,7 @@ const WalletPage = () => {
         setPayoutAmount("");
         toast.success("Payout request send successfully");
         getPayoutDetails();
-        getUserWalletDetails()
+        getUserWalletDetails();
       }
       console.log(res);
     } catch (error) {
@@ -64,11 +64,7 @@ const WalletPage = () => {
     setActiveTab("Redeem Payouts");
   };
 
-  const tabs = [
-    "Payouts",
-    "Payment History",
-    "Cancelled payouts",
-  ];
+  const tabs = ["Payouts", "Payment History", "Cancelled payouts"];
   const getUserWalletDetails = async () => {
     try {
       const response = await axios.get(
@@ -118,24 +114,27 @@ const WalletPage = () => {
   };
   const getCancelledPayout = async () => {
     try {
-      const res = await axios.get(`${baseUrl}/api/v1/payout/my-payouts/rejected/${userId}`);
-      console.log("cancelled",res);
-      
+      const res = await axios.get(
+        `${baseUrl}/api/v1/payout/my-payouts/rejected/${userId}`
+      );
+      console.log("cancelled", res);
     } catch (error) {
       console.log(error);
-      
     }
   };
-const verifiedPayouts=async()=>{
-  try {
-    const res=await axios.get(`${baseUrl}/api/v1/payout/my-payouts/verified/${userId}`);
-    console.log("veri",res);
-    setPayment(res.data.completedPayouts)
-  } catch (error) {
-    console.log(error);
-    
-  }
-}
+  const verifiedPayouts = async () => {
+    try {
+      const res = await axios.get(
+        `${baseUrl}/api/v1/payout/my-payouts/verified/${userId}`
+      );
+      console.log("veri", res);
+      setPayment(res.data.completedPayouts);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  console.log("sed", paymentDetails);
 
   return (
     <>
@@ -252,7 +251,6 @@ const verifiedPayouts=async()=>{
                           Download
                         </button>
                       </td>
-                      
                     </tr>
                   ))}
                 </tbody>
@@ -310,36 +308,32 @@ const verifiedPayouts=async()=>{
                   <tr>
                     <th>Date</th>
                     <th>Request no</th>
-                    <th>Star</th>
-                    <th>Payout amount</th>
-                    <th>Export</th>
-                    <th>Delete</th>
+                    <th>Status</th>
+                    <th>Payout Star</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>03/04/2025</td>
-                    <td>Request 1</td>
-                    <td>50</td>
-                    <td>500</td>
-                    <td>
-                      <button
-                        className={styles.redeemBtn}
-                        onClick={handleRedeemClick}
-                        style={{ margin: "0" }}
-                      >
-                        Download
-                      </button>
-                    </td>
-                    <td>
-                      <button
-                        className={styles.cancelBtn}
-                        style={{ margin: "0" }}
-                      >
-                        <img className={styles.image} src={Delete} alt="" />
-                      </button>
-                    </td>
-                  </tr>
+                  {paymentDetails?.map((item, index) => {
+                    return (
+                      <tr key={index}>
+                        <td>{item.requestedAt}</td>
+                        <td>{item._id}</td>
+                        <td>{item.payoutStatus}</td>
+                        <td>{item.starCount}</td>
+                        <td>
+                          <button
+                            className={styles.redeemBtn}
+                            onClick={handleRedeemClick}
+                            style={{ margin: "0" }}
+                          >
+                            Download
+                          </button>
+                        </td>
+                        
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </section>
