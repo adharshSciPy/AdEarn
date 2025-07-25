@@ -121,7 +121,7 @@ superAdminRouter.route("/welcome-bonus/logs").get(getWelcomeBonusLogs ); // incl
 superAdminRouter.route("/total-stars/received").get(fetchTotalReceivedStars);
 superAdminRouter.route("/total-stars/given").get(fetchTotalGivenStars);
 superAdminRouter.route("/payout").post(superAdminPayout);
-superAdminRouter.route("/ad/image").post(adMediaUpload, postSuperAdminImageAd);
+superAdminRouter.route("/ad/image").post(wrapMulter(adMediaUpload), postSuperAdminImageAd);
 superAdminRouter.route("/ad/image").get(getAllSuperAdminImageAds);
 
 export default superAdminRouter;
