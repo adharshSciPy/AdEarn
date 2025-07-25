@@ -186,7 +186,6 @@ function Navbar() {
     }
   }, [userId]);
   const getNotifications = async () => {
-    console.log(userToken);
     
   try {
     const res = await axios.get(`${baseUrl}/api/v1/notifications/get-notifications`, {
@@ -195,13 +194,10 @@ function Navbar() {
       },
     });
     setNotifications(res.data.notifications)
-    
-    console.log(res); 
   } catch (error) {
     console.log(error);
   }
 };
-console.log("w",notifications);
 
 
   return (
