@@ -32,6 +32,8 @@ import { Ad } from "../model/AdsModel.js";
 // import superAdminWallet from "../model/superAdminWallet.js";
 import { convertStarsToRupees } from "../utils/convertStarsToRupees.js";
 import adminwalletModel from "../model/adminwalletModel.js";
+import SuperAdminAd from "../model/superAdminAdModel.js"
+
 const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
@@ -2873,6 +2875,42 @@ try {
     return res.status(500).json({ message: "Internal server error", error: error.message });
 }
 }
+const postSuperAdminImageAd = async (req, res) => {
+  try {
+    // Check if imageAd file is present in req.files
+    if (!req.files || !req.files.imageAd || req.files.imageAd.length === 0) {
+      return res.status(400).json({ message: "Image file is required" });
+    }
+
+    const uploadedImage = req.files.imageAd[0];
+
+    // Create a new ad document
+    const newAd = new SuperAdminAd({
+      imageUrl : `/imgAdUploads/${uploadedImage.filename}`,
+      postedAt: new Date(),
+    });
+
+    await newAd.save();
+
+    return res.status(201).json({
+      message: "Super Admin Ad posted successfully",
+      ad: newAd,
+    });
+  } catch (error) {
+    console.error("Error posting Super Admin Ad:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+const getAllSuperAdminImageAds = async (req, res) => {
+  try {
+    const ads = await SuperAdminAd.find().sort({ postedAt: -1 });
+    return res.status(200).json({ ads });
+  } catch (error) {
+    console.error("Error fetching Super Admin Ads:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 export {
   registerSuperAdmin,
@@ -2926,5 +2964,7 @@ export {
   getWelcomeBonusLogs,
   fetchTotalReceivedStars,
   fetchTotalGivenStars,
-  superAdminPayout
+  superAdminPayout,
+  postSuperAdminImageAd,
+  getAllSuperAdminImageAds
 };
