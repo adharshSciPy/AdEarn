@@ -3,8 +3,8 @@ import styles from "./../../ContestAccount/Contest.module.css";
 import SuperSidebar from "../../../../components/SuperAdminSideBar/SuperSidebar";
 import Header from "../../../../components/Header/Header";
 import { Button, Modal, Input, Pagination } from "antd";
-import axios from 'axios'
-import baseUrl from '../../../../baseurl'
+import axios from "axios";
+import baseUrl from "../../../../baseurl";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -87,27 +87,31 @@ function ContestStar() {
     },
   };
 
-
-
   useEffect(() => {
     const conteststar = async () => {
       try {
-        const response = await axios.get(`${baseUrl}/api/v1/super-admin/all-contests`, {
-          params: {
-            page: currentPage,
-            limit: pageSize,
+        const response = await axios.get(
+          `${baseUrl}/api/v1/super-admin/all-contests`,
+          {
+            params: {
+              page: currentPage,
+              limit: pageSize,
+            },
           }
-        });
-        setDatacontest(response.data.contests)
-        console.log(response)
+        );
+        setDatacontest(response.data.contests);
+        console.log(response);
       } catch (error) {
-        console.log(error)
+        console.log(error);
       }
-    }
-    conteststar()
-  }, [currentPage, pageSize])
+    };
+    conteststar();
+  }, [currentPage, pageSize]);
 
-  const totalstar = datacontest.reduce((sum, item) => sum + (item.totalStarsCollected) || 0, 0)
+  const totalstar = datacontest.reduce(
+    (sum, item) => sum + item.totalStarsCollected || 0,
+    0
+  );
 
   return (
     <div className={styles.accountsmain}>
@@ -139,7 +143,19 @@ function ContestStar() {
             <div className={styles.totalamountsection}>
               <div className={styles.accountsheadsection}>
                 <h1>Total Amount</h1>
-                <h1>₹ {totalstar}</h1>
+                <h1>
+                  {" "}
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="gold"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
+                  </svg>{" "}
+                  {totalstar}
+                </h1>
                 <div className={styles.accountamountdetails}>
                   <p>Company account</p>
                   <p>+8% from yesterday</p>
@@ -152,7 +168,6 @@ function ContestStar() {
                 <div className={styles.tabletitle}>
                   <h2>Contest Details</h2>
                 </div>
-
               </div>
 
               <div className={styles.tablesection}>
@@ -167,42 +182,54 @@ function ContestStar() {
                     </tr>
                   </thead>
                   <tbody>
-                    {datacontest.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((value, index) => (
-                      <tr key={index}>
-                        <td className={styles.tableCell}>{value.contestName}</td>
-                        <td className={styles.tableCell}>{value.winnerSelectionType}</td>
-                        <td className={styles.tableCell}>{value.entryStars}</td>
-                        <td className={styles.tableCell}>
-                          {value.status}
-                        </td>
-                        <td
-                          className={styles.tableCell}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                          }}
-                        >
-                          <svg
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="gold"
-                            xmlns="http://www.w3.org/2000/svg"
+                    {datacontest
+                      .slice(
+                        (currentPage - 1) * pageSize,
+                        currentPage * pageSize
+                      )
+                      .map((value, index) => (
+                        <tr key={index}>
+                          <td className={styles.tableCell}>
+                            {value.contestName}
+                          </td>
+                          <td className={styles.tableCell}>
+                            {value.winnerSelectionType}
+                          </td>
+                          <td className={styles.tableCell}>
+                            {value.entryStars}
+                          </td>
+                          <td className={styles.tableCell}>{value.status}</td>
+                          <td
+                            className={styles.tableCell}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                            }}
                           >
-                            <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                          </svg>
-                          {value.totalStarsCollected}
-                        </td>
-                      </tr>
-                    ))}
+                            <svg
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill="gold"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
+                            </svg>
+                            {value.totalStarsCollected}
+                          </td>
+                        </tr>
+                      ))}
 
                     <tr style={{ background: "#693bb8" }}>
                       <td
                         colSpan="4"
-
                         className={styles.tableCell}
-                        style={{ fontWeight: "bold", color: "white", textAlign: "left" }}
+                        style={{
+                          fontWeight: "bold",
+                          color: "white",
+                          textAlign: "left",
+                        }}
                       >
                         Total Stars
                       </td>
@@ -214,7 +241,7 @@ function ContestStar() {
                           gap: "6px",
                           fontWeight: "bold",
                           color: "white",
-                          width: "100%"
+                          width: "100%",
                         }}
                       >
                         <svg
@@ -236,22 +263,26 @@ function ContestStar() {
                   pageSize={pageSize}
                   total={datacontest.length}
                   showSizeChanger
-                  pageSizeOptions={['10', '20', '50', '100']}
+                  pageSizeOptions={["10", "20", "50", "100"]}
                   onChange={(page, size) => {
                     setCurrentPage(page);
                     setPageSize(size);
                   }}
-                  style={{ marginTop: "20px", textAlign: "right", display: "flex", justifyContent: "end", alignItems: "end" }}
+                  style={{
+                    marginTop: "20px",
+                    textAlign: "right",
+                    display: "flex",
+                    justifyContent: "end",
+                    alignItems: "end",
+                  }}
                 />
               </div>
             </div>
           </div>
         </div>
       </div>
-
-
     </div>
   );
 }
 
-export default ContestStar
+export default ContestStar;
