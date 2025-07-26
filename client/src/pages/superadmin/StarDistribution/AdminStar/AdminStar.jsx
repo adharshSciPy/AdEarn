@@ -13,7 +13,7 @@ function AdminStar() {
   const [totalStar, setTotalStar] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-
+    const[totalRs,setTotalRs]=useState()
   const handleApprove = (user) => {
     setSelectedUser(user);
     setShowModal(true);
@@ -41,6 +41,10 @@ function AdminStar() {
       try {
         const walletRes = await axios.get(`${baseUrl}/api/v1/admin/admin-wallet`);
         setTotalStar(walletRes.data.transactions);
+        setTotalRs(walletRes.data.totalStars)
+        console.log(walletRes);
+
+        
       } catch (error) {
         console.error("Error fetching admin wallet:", error);
       }
@@ -83,7 +87,7 @@ function AdminStar() {
               >
                 <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
               </svg>
-              {totalStarSum}
+              {totalRs || ""}
             </h1>
           </div>
           <div className={styles.rightText}>
@@ -111,13 +115,12 @@ function AdminStar() {
               <div className={styles.tableRow} key={user._id || index}>
                 <div className={styles.userCell}>
                   <span>
-                    {user.userId?.firstName || ""}{" "}
-                    {user.userDetails?.lastName || ""}
+                    {user.userId?.firstName || ""}
                   </span>
                 </div>
                 <div>{user.starsReceived}</div>
                 <div>{formatDate(user.date)}</div>
-                <div>{user.userDetails?.email || "N/A"}</div>
+                <div>{user.userId?.email || "N/A"}</div>
               </div>
             ))
           ) : (
