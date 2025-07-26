@@ -577,10 +577,12 @@ const verifyAdById = async (req, res) => {
 
 const getAdminWallet = async (req, res) => {
   try {
-    const wallet = await AdminWallet.findOne().populate(
-      "transactions.userId",
-      "email"
-    );
+    const wallet = await AdminWallet.findOne()
+      .populate({
+        path: "transactions.userId",
+        select: "email firstName lastName phoneNumber", // Add more fields as needed
+      })
+      .lean(); // Faster and returns plain JS object
 
     if (!wallet) {
       return res.status(404).json({ message: "Admin wallet not found" });
@@ -589,13 +591,14 @@ const getAdminWallet = async (req, res) => {
     return res.status(200).json({
       message: "Admin wallet fetched successfully",
       totalStars: wallet.totalStars,
-      transactions: wallet.transactions,
+      transactions: wallet.transactions || [],
     });
   } catch (error) {
     console.error("Error fetching admin wallet:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 const getSuperAdminWallet = async (req, res) => {
   try {
     const wallet = await AdminWallet.findOne().populate(
