@@ -207,3 +207,30 @@
   background-color: #5325b5;
   color: white;
 }
+.tabButtons {
+  display: flex;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.activeTab {
+  background-color: #1a73e8;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.inactiveTab {
+  background-color: #f0f0f0;
+  color: black;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+}
+
+.confirmed {
+  color: green;
+  font-weight: bold;
+}

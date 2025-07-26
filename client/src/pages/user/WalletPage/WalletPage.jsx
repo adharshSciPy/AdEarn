@@ -7,7 +7,7 @@ import axios from "axios";
 import baseUrl from "../../../baseurl";
 import { useNavigate } from "react-router-dom";
 import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
-import { Modal, Input, Form } from "antd";
+import { Modal, Input, Form, Pagination } from "antd";
 import { toast } from "react-toastify";
 import Driver from "driver.js";
 import "driver.js/dist/driver.min.css";
@@ -22,14 +22,23 @@ const WalletPage = () => {
   const [payOutDetails, setPayoutDetails] = useState([]);
   const [tourState, setTourState] = useState({
     navbarCompleted: false,
-    homeCompleted: false
+    homeCompleted: false,
   });
-
 
   const userId = useSelector((state) => state.user.id);
   const token = useSelector((state) => state.user.token);
-  const [payment,setPayment]=useState([])
+  const [paymentDetails, setPayment] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [cancelledPayout, setcancelledPayout] = useState([]);
+  // Pagination states
+  const [payoutPage, setPayoutPage] = useState(1);
+  const [payoutPageSize, setPayoutPageSize] = useState(5);
+
+  const [paymentPage, setPaymentPage] = useState(1);
+  const [paymentPageSize, setPaymentPageSize] = useState(5);
+
+  const [cancelledPage, setCancelledPage] = useState(1);
+  const [cancelledPageSize, setCancelledPageSize] = useState(5);
 
   const navigate = useNavigate();
   const handlePayout = async () => {
@@ -53,7 +62,7 @@ const WalletPage = () => {
         setPayoutAmount("");
         toast.success("Payout request send successfully");
         getPayoutDetails();
-        getUserWalletDetails()
+        getUserWalletDetails();
       }
       console.log(res);
     } catch (error) {
@@ -72,11 +81,7 @@ const WalletPage = () => {
     setActiveTab("Redeem Payouts");
   };
 
-  const tabs = [
-    "Payouts",
-    "Payment History",
-    "Cancelled payouts",
-  ];
+  const tabs = ["Payouts", "Payment History", "Cancelled payouts"];
   const getUserWalletDetails = async () => {
     try {
       const response = await axios.get(
@@ -126,31 +131,32 @@ const WalletPage = () => {
   };
   const getCancelledPayout = async () => {
     try {
-      const res = await axios.get(`${baseUrl}/api/v1/payout/my-payouts/rejected/${userId}`);
+      const res = await axios.get(
+        `${baseUrl}/api/v1/payout/my-payouts/rejected/${userId}`
+      );
       console.log("cancelled", res);
-
+      setcancelledPayout(res.data.rejectedPayouts);
     } catch (error) {
       console.log(error);
-
     }
   };
   const verifiedPayouts = async () => {
     try {
-      const res = await axios.get(`${baseUrl}/api/v1/payout/my-payouts/verified/${userId}`);
+      const res = await axios.get(
+        `${baseUrl}/api/v1/payout/my-payouts/verified/${userId}`
+      );
       console.log("veri", res);
-setPayment(res.data.completedPayouts)
+      setPayment(res.data.completedPayouts);
     } catch (error) {
       console.log(error);
-
     }
-  }
-
+  };
 
   // Handle tour completion
   const handleTourComplete = (tourType) => {
-    setTourState(prev => ({
+    setTourState((prev) => ({
       ...prev,
-      [tourType === 'navbar' ? 'navbarCompleted' : 'homeCompleted']: true
+      [tourType === "navbar" ? "navbarCompleted" : "homeCompleted"]: true,
     }));
   };
 
@@ -158,9 +164,12 @@ setPayment(res.data.completedPayouts)
 
   // Start home tour when navbar tour is completed
   useEffect(() => {
-    const hometourCompleted = localStorage.getItem(`userTourCompleted_${userId}`);
-    const walletpageCompleted = localStorage.getItem(`walletpageCompleted_${userId}`)
-
+    const hometourCompleted = localStorage.getItem(
+      `userTourCompleted_${userId}`
+    );
+    const walletpageCompleted = localStorage.getItem(
+      `walletpageCompleted_${userId}`
+    );
 
     // Start home tour if navbar is done but full tour isn't complete
     if (hometourCompleted && !walletpageCompleted) {
@@ -180,10 +189,11 @@ setPayment(res.data.completedPayouts)
     }
   }, [tourState.navbarCompleted]);
 
-
   const startHomeTour = () => {
     // Check again to prevent duplicate tours
-    const wallettourCompleted = localStorage.getItem(`walletpageCompleted_${userId}`);
+    const wallettourCompleted = localStorage.getItem(
+      `walletpageCompleted_${userId}`
+    );
     if (wallettourCompleted) return;
 
     let attempts = 0;
@@ -193,10 +203,12 @@ setPayment(res.data.completedPayouts)
         "#place-ads-btn",
         "#buy-stars",
         "#payout-request",
-        "#payouts"
+        "#payouts",
       ];
 
-      const existingSelectors = selectors.filter(sel => document.querySelector(sel));
+      const existingSelectors = selectors.filter((sel) =>
+        document.querySelector(sel)
+      );
 
       // Start tour if at least the place-ads-btn exists (main requirement)
       const canStartTour = document.querySelector("#place-ads-btn");
@@ -252,23 +264,21 @@ setPayment(res.data.completedPayouts)
             });
           }
 
-
-
           const driver = new Driver({
             animate: true,
             opacity: 0.5,
             stageBackground: "rgba(0, 0, 0, 0.5)",
             allowClose: true,
-            doneBtnText: "Finish Tour",
+            doneBtnText: "Next",
             closeBtnText: "Skip",
             nextBtnText: "Next",
             prevBtnText: "Previous",
             onReset: () => {
               // Mark both tours as completed
               localStorage.setItem(`walletpageCompleted_${userId}`, "true");
-              setTourState(prev => ({
+              setTourState((prev) => ({
                 ...prev,
-                homeCompleted: true
+                homeCompleted: true,
               }));
             },
           });
@@ -285,7 +295,6 @@ setPayment(res.data.completedPayouts)
       attempts++;
     }, 1000);
   };
-
 
   return (
     <>
@@ -307,7 +316,9 @@ setPayment(res.data.completedPayouts)
                   </p>
                 </div>
                 <div className={styles.firstMainbutton}>
-                  <button id="place-ads-btn" onClick={() => setShowPopup(true)}>Place Ads</button>
+                  <button id="place-ads-btn" onClick={() => setShowPopup(true)}>
+                    Place Ads
+                  </button>
                 </div>
               </div>
 
@@ -386,29 +397,42 @@ setPayment(res.data.completedPayouts)
                   </tr>
                 </thead>
                 <tbody>
-                  {payOutDetails.map((item, index) => (
-                    <tr key={index}>
-                      <td>{item.requestedAt || ""}</td>
-                      <td>{item._id || ""}</td>
-                      <td>
-                        {!item.isPayoutCompleted ? "pending" : "Completed"}
-                      </td>
-
-                      <td>{item.amount || ""}</td>
-                      <td>
-                        <button
-                          className={styles.redeemBtn}
-                          onClick={handleRedeemClick}
-                          style={{ margin: "0" }}
-                        >
-                          Download
-                        </button>
-                      </td>
-                      
-                    </tr>
-                  ))}
+                  {payOutDetails
+                    .slice(
+                      (payoutPage - 1) * payoutPageSize,
+                      payoutPage * payoutPageSize
+                    )
+                    .map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.requestedAt || ""}</td>
+                        <td>{item._id || ""}</td>
+                        <td>
+                          {!item.isPayoutCompleted ? "pending" : "Completed"}
+                        </td>
+                        <td>{item.amount || ""}</td>
+                        <td>
+                          <button
+                            className={styles.redeemBtn}
+                            onClick={handleRedeemClick}
+                          >
+                            Download
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
+              <Pagination
+                current={payoutPage}
+                pageSize={payoutPageSize}
+                total={payOutDetails.length}
+                onChange={(page, size) => {
+                  setPayoutPage(page);
+                  setPayoutPageSize(size);
+                }}
+                showSizeChanger
+                style={{ marginTop: "20px", textAlign: "right" }}
+              />
             </section>
           )}
 
@@ -462,38 +486,46 @@ setPayment(res.data.completedPayouts)
                   <tr>
                     <th>Date</th>
                     <th>Request no</th>
-                    <th>Star</th>
-                    <th>Payout amount</th>
-                    <th>Export</th>
-                    <th>Delete</th>
+                    <th>Status</th>
+                    <th>Payout Star</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>03/04/2025</td>
-                    <td>Request 1</td>
-                    <td>50</td>
-                    <td>500</td>
-                    <td>
-                      <button
-                        className={styles.redeemBtn}
-                        onClick={handleRedeemClick}
-                        style={{ margin: "0" }}
-                      >
-                        Download
-                      </button>
-                    </td>
-                    <td>
-                      <button
-                        className={styles.cancelBtn}
-                        style={{ margin: "0" }}
-                      >
-                        <img className={styles.image} src={Delete} alt="" />
-                      </button>
-                    </td>
-                  </tr>
+                  {paymentDetails
+                    .slice(
+                      (paymentPage - 1) * paymentPageSize,
+                      paymentPage * paymentPageSize
+                    )
+                    .map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.requestedAt}</td>
+                        <td>{item._id}</td>
+                        <td>{item.payoutStatus}</td>
+                        <td>{item.starCount}</td>
+                        <td>
+                          <button
+                            className={styles.redeemBtn}
+                            onClick={handleRedeemClick}
+                          >
+                            Download
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
+              <Pagination
+                current={paymentPage}
+                pageSize={paymentPageSize}
+                total={paymentDetails.length}
+                onChange={(page, size) => {
+                  setPaymentPage(page);
+                  setPaymentPageSize(size);
+                }}
+                showSizeChanger
+                style={{ marginTop: "20px", textAlign: "right" }}
+              />
             </section>
           )}
           {activeTab === "Cancelled payouts" && (
@@ -502,28 +534,43 @@ setPayment(res.data.completedPayouts)
               <table className={styles.payoutTable}>
                 <thead>
                   <tr>
-                    <th style={{ width: "20%" }}>Date</th>
+                    <th style={{ width: "20%" }}>Rejected Date</th>
                     <th style={{ width: "20%" }}>Request no</th>
                     <th style={{ width: "20%" }}>Star</th>
                     <th style={{ width: "20%" }}>Payout amount</th>
-                    <th style={{ width: "20%" }}>Reason</th>
+                    <th style={{ width: "20%" }}>Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td style={{ width: "19%" }}>03/04/2025</td>
-                    <td style={{ width: "19%" }}>Request 1</td>
-                    <td style={{ width: "19%" }}>50</td>
-                    <td style={{ width: "18%" }}>500</td>
-                    <td style={{ width: "25%" }}>
-                      <p>
-                        reason behind the cancellation reason behind the
-                        cancellation reason behind the cancellation
-                      </p>
-                    </td>
-                  </tr>
+                  {cancelledPayout
+                    .slice(
+                      (cancelledPage - 1) * cancelledPageSize,
+                      cancelledPage * cancelledPageSize
+                    )
+                    .map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.rejectedAt}</td>
+                        <td>{item._id}</td>
+                        <td>{item.starCount}</td>
+                        <td>{item.amount}</td>
+                        <td>
+                          <p>{item.rejectionReason}</p>
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
+              <Pagination
+                current={cancelledPage}
+                pageSize={cancelledPageSize}
+                total={cancelledPayout.length}
+                onChange={(page, size) => {
+                  setCancelledPage(page);
+                  setCancelledPageSize(size);
+                }}
+                showSizeChanger
+                style={{ marginTop: "20px", textAlign: "right" }}
+              />
             </section>
           )}
         </div>
