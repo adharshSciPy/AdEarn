@@ -153,7 +153,7 @@ const adminLogin = async (req, res) => {
 //to fetch all users
 const getAllUsers = async (req, res) => {
   try {
-    const allUsers = await User.find();
+    const allUsers = await User.find().populate("userWalletDetails").lean();
 
     if (!allUsers || allUsers.length === 0) {
       return res.status(404).json({ message: "No users found" });

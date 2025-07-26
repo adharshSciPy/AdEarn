@@ -240,11 +240,92 @@ cron.schedule("0 0 * * *", async () => {
 
   console.log(`[${new Date().toISOString()}] Daily maintenance job complete`);
 });
+// cron.schedule("* * * * *", async () => {
+//   const timeoutThreshold = new Date(Date.now() - 5 * 60 * 1000); // 5 min ago
+
+//   try {
+//     const expiredAssignments = await kyc.updateMany(
+//       {
+//         kycStatus: "pending",
+//         assignedAdminId: { $ne: null },
+//         assignmentTime: { $lt: timeoutThreshold },
+//       },
+//       {
+//         $set: {
+//           assignedAdminId: null,
+//           assignmentTime: null,
+//         },
+//       }
+//     );
+
+//     if (expiredAssignments.modifiedCount > 0) {
+//       console.log(`🔄 Unassigned ${expiredAssignments.modifiedCount} stale KYC requests`);
+//     }
+//   } catch (error) {
+//     console.error("❌ Error in KYC cleanup cron:", error);
+//   }
+// });
+// cron.schedule("* * * * *", async () => {
+//   const timeoutThreshold = new Date(Date.now() - 5 * 60 * 1000);
+
+//   try {
+//     const models = [ImageAd, VideoAd, SurveyAd];
+
+//     for (const Model of models) {
+//       const result = await Model.updateMany(
+//         {
+//           isAdVerified: false,
+//           isAdRejected: false,
+//           assignedAdminId: { $ne: null },
+//           assignmentTime: { $lt: timeoutThreshold },
+//         },
+//         {
+//           $set: {
+//             assignedAdminId: null,
+//             assignmentTime: null,
+//           },
+//         }
+//       );
+
+//       if (result.modifiedCount > 0) {
+//         console.log(`🔄 Unassigned ${result.modifiedCount} stale ${Model.modelName} ads`);
+//       }
+//     }
+//   } catch (error) {
+//     console.error("❌ Error in Ad cleanup cron:", error);
+//   }
+// });
+// cron.schedule("* * * * *", async () => {
+//   const timeoutThreshold = new Date(Date.now() - 5 * 60 * 1000); // 5 mins ago
+
+//   try {
+//     const result = await couponBatchModel.updateMany(
+//       {
+//         status: "pending", 
+//         assignedTo: { $ne: null },
+//         assignedAt: { $lt: timeoutThreshold },
+//       },
+//       {
+//         $set: {
+//           assignedTo: null,
+//           assignedAt: null,
+//         },
+//       }
+//     );
+
+//     if (result.modifiedCount > 0) {
+//       console.log(`🔄 Unassigned ${result.modifiedCount} stale pending CouponBatch(es)`);
+//     }
+//   } catch (error) {
+//     console.error("Error in CouponBatch cleanup cron:", error);
+//   }
+// });
+
 cron.schedule("* * * * *", async () => {
-  const timeoutThreshold = new Date(Date.now() - 5 * 60 * 1000); // 5 min ago
+  const timeoutThreshold = new Date(Date.now() - 5 * 60 * 1000); // 5 mins ago
 
   try {
-    const expiredAssignments = await kyc.updateMany(
+    const kycResult = await kyc.updateMany(
       {
         kycStatus: "pending",
         assignedAdminId: { $ne: null },
@@ -257,22 +338,12 @@ cron.schedule("* * * * *", async () => {
         },
       }
     );
-
-    if (expiredAssignments.modifiedCount > 0) {
-      console.log(`🔄 Unassigned ${expiredAssignments.modifiedCount} stale KYC requests`);
+    if (kycResult.modifiedCount > 0) {
+      console.log(`Unassigned ${kycResult.modifiedCount} stale KYC requests`);
     }
-  } catch (error) {
-    console.error("❌ Error in KYC cleanup cron:", error);
-  }
-});
-cron.schedule("* * * * *", async () => {
-  const timeoutThreshold = new Date(Date.now() - 5 * 60 * 1000);
-
-  try {
-    const models = [ImageAd, VideoAd, SurveyAd];
-
-    for (const Model of models) {
-      const result = await Model.updateMany(
+    const adModels = [ImageAd, VideoAd, SurveyAd];
+    for (const Model of adModels) {
+      const adResult = await Model.updateMany(
         {
           isAdVerified: false,
           isAdRejected: false,
@@ -287,21 +358,13 @@ cron.schedule("* * * * *", async () => {
         }
       );
 
-      if (result.modifiedCount > 0) {
-        console.log(`🔄 Unassigned ${result.modifiedCount} stale ${Model.modelName} ads`);
+      if (adResult.modifiedCount > 0) {
+        console.log(`Unassigned ${adResult.modifiedCount} stale ${Model.modelName} ads`);
       }
     }
-  } catch (error) {
-    console.error("❌ Error in Ad cleanup cron:", error);
-  }
-});
-cron.schedule("* * * * *", async () => {
-  const timeoutThreshold = new Date(Date.now() - 5 * 60 * 1000); // 5 mins ago
-
-  try {
-    const result = await couponBatchModel.updateMany(
+    const couponResult = await couponBatchModel.updateMany(
       {
-        status: "pending", 
+        status: "pending",
         assignedTo: { $ne: null },
         assignedAt: { $lt: timeoutThreshold },
       },
@@ -312,12 +375,12 @@ cron.schedule("* * * * *", async () => {
         },
       }
     );
-
-    if (result.modifiedCount > 0) {
-      console.log(`🔄 Unassigned ${result.modifiedCount} stale pending CouponBatch(es)`);
+    if (couponResult.modifiedCount > 0) {
+      console.log(`Unassigned ${couponResult.modifiedCount} stale pending CouponBatch(es)`);
     }
+
   } catch (error) {
-    console.error("Error in CouponBatch cleanup cron:", error);
+    console.error("Error in combined cleanup cron:", error);
   }
 });
 
