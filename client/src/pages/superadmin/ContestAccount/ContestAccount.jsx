@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./Contest.module.css";
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
 import Header from "../../../components/Header/Header";
@@ -14,6 +14,9 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import axios from "axios";
+import baseUrl from "../../../baseurl";
+import Item from "antd/es/list/Item";
 
 ChartJS.register(
   LineElement,
@@ -30,6 +33,7 @@ function ContestAccount() {
   const [previewImage, setPreviewImage] = useState(null);
   const [fileInputKey, setFileInputKey] = useState(Date.now());
   const [payoutStars, setPayoutStars] = useState("");
+  const [contestData, setContestData] = useState([]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -111,6 +115,24 @@ function ContestAccount() {
       stars: 400,
     },
   ];
+  const getContestData = async () => {
+    try {
+      const res = await axios.get(`${baseUrl}/api/v1/super-admin/all-contests`);
+      console.log("heu", res);
+      setContestData(res.data.contests);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    getContestData();
+  }, []);
+  const totalSuperAdminStars = contestData?.reduce((acc, txn) => {
+    if (txn.winners?.length > 0) {
+      return acc + Math.round(txn.totalStarsCollected - txn.totalRewardStars);
+    }
+    return acc;
+  }, 0);
 
   return (
     <div className={styles.accountsmain}>
@@ -131,9 +153,9 @@ function ContestAccount() {
               <Button>Log</Button>
             </div>
 
-            <div className={styles.companygraph}>
+            {/* <div className={styles.companygraph}>
               <Line data={data} options={options} />
-            </div>
+            </div> */}
 
             <div className={styles.accountshead}>
               <h1>Accounts</h1>
@@ -142,7 +164,7 @@ function ContestAccount() {
             <div className={styles.totalamountsection}>
               <div className={styles.accountsheadsection}>
                 <h1>Total Amount</h1>
-                <h1>₹ 5000</h1>
+                <h1>₹ {totalSuperAdminStars != null ? Math.round(totalSuperAdminStars / 4) : ""}</h1>
                 <div className={styles.accountamountdetails}>
                   <p>Company account</p>
                   <p>+8% from yesterday</p>
@@ -191,31 +213,80 @@ function ContestAccount() {
               </div>
 
               <div className={styles.tablesection}>
-                <table style={{ borderCollapse: "separate", width: "100%" }}>
+                <table
+                  style={{
+                    borderCollapse: "separate",
+                    width: "100%",
+                    tableLayout: "fixed",
+                  }}
+                >
                   <thead>
                     <tr>
                       <td className={styles.tableCell}>Contest</td>
-                      <td className={styles.tableCell}>Ads</td>
                       <td className={styles.tableCell}>Entry Stars</td>
                       <td className={styles.tableCell}>Status</td>
-                      <td className={styles.tableCell}>Winners</td>
                       <td className={styles.tableCell}>Total Stars</td>
+                      <td className={styles.tableCell}>SuperAdmin Stars</td>
                     </tr>
                   </thead>
                   <tbody>
-                    {transactions.map((txn) => (
+                    {contestData?.map((txn) => (
                       <tr key={txn.id}>
-                        <td className={styles.tableCell}>{txn.name}</td>
-                        <td className={styles.tableCell}>{txn.adsnumber}</td>
+                        <td className={styles.tableCell}>{txn.contestName}</td>
                         <td className={styles.tableCell}>{txn.entryStars}</td>
+                        <td className={styles.tableCell}>{txn.status}</td>
                         <td className={styles.tableCell}>
-                          {txn.contestStatus}
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                            }}
+                          >
+                            <svg
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill="gold"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
+                            </svg>
+                            {txn.totalStarsCollected}
+                          </div>
                         </td>
                         <td className={styles.tableCell}>
-                          <button className={styles.btnWinners}>Winners</button>
+                          {txn.winners?.length === 0
+                            ? "pending"
+                            : Math.round(
+                                txn.totalStarsCollected - txn.totalRewardStars
+                              )}
                         </td>
-                        <td
-                          className={styles.tableCell}
+                      </tr>
+                    ))}
+
+                    <tr style={{ background: "#693bb8" }}>
+                      <td
+                        className={styles.tableCell}
+                        colSpan="4"
+                        style={{
+                          fontWeight: "bold",
+                          color: "white",
+                          textAlign: "left",
+                          padding: "10px",
+                        }}
+                      >
+                        Total Stars
+                      </td>
+                      <td
+                        className={styles.tableCell}
+                        style={{
+                          fontWeight: "bold",
+                          color: "white",
+                          padding: "10px",
+                        }}
+                      >
+                        <div
                           style={{
                             display: "flex",
                             alignItems: "center",
@@ -231,44 +302,8 @@ function ContestAccount() {
                           >
                             <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
                           </svg>
-                          {txn.stars}
-                        </td>
-                      </tr>
-                    ))}
-
-                    <tr style={{ background: "#693bb8" }}>
-                      <td
-                        colSpan="5"
-
-                        className={styles.tableCell}
-                        style={{ fontWeight: "bold", color: "white",textAlign:"left" }}
-                      >
-                        Total Stars
-                      </td>
-                      <td
-                        className={styles.tableCell}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          fontWeight: "bold",
-                          color: "white",
-                          width:"100%"
-                        }}
-                      >
-                        <svg
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          fill="gold"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                        </svg>
-                        {transactions.reduce(
-                          (total, txn) => total + txn.stars,
-                          0
-                        )}
+                          {totalSuperAdminStars}
+                        </div>
                       </td>
                     </tr>
                   </tbody>
