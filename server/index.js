@@ -54,7 +54,6 @@ app.use('/videoAdUploads', express.static(path.join(__dirname, 'Uploads/videoAdU
 app.use('/Uploads/welcomeBonusImages', express.static(path.join(__dirname, 'Uploads/welcomeBonusImages')));
 app.use("/surveyAdUploads", express.static(path.join(__dirname, "Uploads/surveyAdImages")));
 app.use("/contestPrizeImages", express.static(path.join(__dirname, "Uploads/contestPrizeImages")));
-// app.use("/imgAdUploads", express.static(path.join(__dirname, "Uploads/imageAdUploads")));
 app.use("/api/v1/geocode", geocodeRouter);
 
 

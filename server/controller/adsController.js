@@ -1000,6 +1000,7 @@ const fetchVerifiedAds = async (req, res) => {
 
     return res.status(200).json({
       message: "Verified ads fetched successfully",
+      count:adsWithStatus.length,
       ads: adsWithStatus,
     });
   } catch (error) {

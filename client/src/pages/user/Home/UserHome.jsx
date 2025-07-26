@@ -252,7 +252,7 @@ function UserHome() {
           const driver = new Driver({
             animate: true,
             opacity: 0.5,
-            stageBackground: "rgba(0, 0, 0, 0.5)",
+            stageBackground: "rgba(0, 0, 0, 0.1)",
             allowClose: true,
             doneBtnText: "Finish Tour",
             closeBtnText: "Skip",

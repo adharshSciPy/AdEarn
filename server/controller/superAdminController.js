@@ -33,6 +33,7 @@ import { Ad } from "../model/AdsModel.js";
 import { convertStarsToRupees } from "../utils/convertStarsToRupees.js";
 import adminwalletModel from "../model/adminwalletModel.js";
 import SuperAdminAd from "../model/superAdminAdModel.js";
+import { calculateGrowth } from "../utils/calculateGrowth.js";
 
 const ObjectId = mongoose.Types.ObjectId;
 
@@ -3135,6 +3136,122 @@ const getAllSuperAdminImageAds = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+// to fetch the user count growth and ads count growth
+const getUserAndAdStats = async (req, res) => {
+  try {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+
+    const yesterdayEnd = new Date(yesterdayStart);
+    yesterdayEnd.setHours(23, 59, 59, 999);
+
+    const allTimeUsers = await User.countDocuments();
+    const allTimeAds = await Ad.countDocuments();
+
+    const todayUsers = await User.countDocuments({
+      createdAt: { $gte: todayStart, $lte: todayEnd },
+    });
+
+    const yesterdayUsers = await User.countDocuments({
+      createdAt: { $gte: yesterdayStart, $lte: yesterdayEnd },
+    });
+
+    const todayAds = await Ad.countDocuments({
+      createdAt: { $gte: todayStart, $lte: todayEnd },
+    });
+
+    const yesterdayAds = await Ad.countDocuments({
+      createdAt: { $gte: yesterdayStart, $lte: yesterdayEnd },
+    });
+
+    const userGrowth = calculateGrowth(yesterdayUsers, allTimeUsers);
+    const adGrowth = calculateGrowth(yesterdayAds, allTimeAds);
+
+    return res.status(200).json({
+      users: {
+        today: todayUsers,
+        yesterday: yesterdayUsers,
+        total: allTimeUsers,
+        growth: userGrowth.growth,
+        status: userGrowth.status,
+      },
+      ads: {
+        today: todayAds,
+        yesterday: yesterdayAds,
+        total: allTimeAds,
+        growth: adGrowth.growth,
+        status: adGrowth.status,
+      },
+    });
+  } catch (error) {
+    console.error("Growth stats error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+// to fetch total users and users who posted ads monthyly wise
+const getMonthlyUserAndAdPosterStats = async (req, res) => {
+  try {
+    const stats = await User.aggregate([
+      {
+        $project: {
+          createdAt: 1,
+          adsCount: { $size: { $ifNull: ["$ads", []] } },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          totalUsers: { $sum: 1 },
+          adUsers: {
+            $sum: {
+              $cond: [{ $gt: ["$adsCount", 0] }, 1, 0],
+            },
+          },
+        },
+      },
+      {
+        $sort: {
+          "_id.year": 1,
+          "_id.month": 1,
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          month: {
+            $concat: [
+              { $toString: "$_id.year" },
+              "-",
+              {
+                $cond: [
+                  { $lt: ["$_id.month", 10] },
+                  { $concat: ["0", { $toString: "$_id.month" }] },
+                  { $toString: "$_id.month" },
+                ],
+              },
+            ],
+          },
+          totalUsers: 1,
+          adUsers: 1,
+        },
+      },
+    ]);
+
+    return res.status(200).json(stats);
+  } catch (error) {
+    console.error("Monthly stats error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 export {
   registerSuperAdmin,
@@ -3191,4 +3308,6 @@ export {
   superAdminPayout,
   postSuperAdminImageAd,
   getAllSuperAdminImageAds,
+  getUserAndAdStats,
+  getMonthlyUserAndAdPosterStats
 };

@@ -32,13 +32,13 @@ const WalletPage = () => {
   const [cancelledPayout, setcancelledPayout] = useState([]);
   // Pagination states
   const [payoutPage, setPayoutPage] = useState(1);
-  const [payoutPageSize, setPayoutPageSize] = useState(5);
+  const [payoutPageSize, setPayoutPageSize] = useState(10);
 
   const [paymentPage, setPaymentPage] = useState(1);
-  const [paymentPageSize, setPaymentPageSize] = useState(5);
+  const [paymentPageSize, setPaymentPageSize] = useState(10);
 
   const [cancelledPage, setCancelledPage] = useState(1);
-  const [cancelledPageSize, setCancelledPageSize] = useState(5);
+  const [cancelledPageSize, setCancelledPageSize] = useState(10);
 
   const navigate = useNavigate();
   const handlePayout = async () => {
@@ -267,7 +267,7 @@ const WalletPage = () => {
           const driver = new Driver({
             animate: true,
             opacity: 0.5,
-            stageBackground: "rgba(0, 0, 0, 0.5)",
+            stageBackground: "rgba(0, 0, 0, 0.1)",
             allowClose: true,
             doneBtnText: "Next",
             closeBtnText: "Skip",
