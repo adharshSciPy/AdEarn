@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./Welcome.module.css";
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
 import Header from "../../../components/Header/Header";
@@ -14,6 +14,8 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import axios from "axios";
+import baseUrl from "../../../baseurl";
 
 ChartJS.register(
   LineElement,
@@ -29,7 +31,8 @@ function WelcomeBonus() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [fileInputKey, setFileInputKey] = useState(Date.now());
-
+  const [sourceData,setSourceData]=useState([])
+  const [totalAmount,setTotalAmount]=useState()
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -59,27 +62,27 @@ function WelcomeBonus() {
     ],
   };
 
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: { display: false },
-      tooltip: { mode: "index", intersect: false },
-    },
-    scales: {
-      x: { grid: { display: false } },
-      y: {
-        beginAtZero: true,
-        grid: { borderDash: [4, 4] },
-      },
-    },
-  };
+ const getWelcomeBonus=async()=>{
+  try {
+    const res=await axios.get(`${baseUrl}/api/v1/super-admin/welcome-bonus/logs`);
+    console.log("here",res);
+    setSourceData(res.data.logs)
+    setTotalAmount(res.data.remainingStars)
+    
+  } catch (error) {
+    console.log(error);
+    
+  }
+ }
 
   const transactions = [
     { id: 1, name: "ad earn", stars: 200 },
     { id: 2, name: "ad earn", stars: 300 },
     { id: 3, name: "ad earn", stars: 400 },
   ];
-
+useEffect(()=>{
+  getWelcomeBonus()
+},[])
   return (
     <div className={styles.accountsmain}>
       <div className={styles.accountscontainer}>
@@ -98,22 +101,16 @@ function WelcomeBonus() {
             <div className={styles.logbutton}>
               <Button>Log</Button>
             </div>
-            <div className={styles.companygraph}>
-              <Line data={data} options={options} />
-            </div>
             <div className={styles.accountshead}>
               <h1>Accounts</h1>
             </div>
             <div className={styles.totalamountsection}>
               <div className={styles.accountsheadsection}>
                 <h1>Total Amount</h1>
-                <h1>₹ 5000</h1>
+                <h1>₹ {totalAmount != null ? Math.round(totalAmount / 4) : ""}</h1>
                 <div className={styles.accountamountdetails}>
                   <p>Company account</p>
                   <p>+8% from yesterday</p>
-                  <button className={styles.addStar} onClick={showModal}>
-                    Add Stars
-                  </button>
                 </div>
               </div>
             </div>
@@ -155,10 +152,10 @@ function WelcomeBonus() {
                     </tr>
                   </thead>
                   <tbody>
-                    {transactions.map((txn) => (
+                    {sourceData.map((txn) => (
                       <tr key={txn.id}>
                         <td style={{ textAlign: "left", padding: "12px" }}>
-                          {txn.name}
+                          {txn.source}
                         </td>
                         <td
                           style={{
@@ -178,7 +175,7 @@ function WelcomeBonus() {
                           >
                             <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
                           </svg>
-                          {txn.stars}
+                          {txn.starsAdded}
                         </td>
                       </tr>
                     ))}
@@ -193,7 +190,7 @@ function WelcomeBonus() {
                           color: "white",
                         }}
                       >
-                        Total Stars
+                        Total Stars 
                       </td>
                       <td
                         style={{
@@ -216,8 +213,8 @@ function WelcomeBonus() {
                         >
                           <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
                         </svg>
-                        {transactions.reduce(
-                          (total, txn) => total + txn.stars,
+                        {sourceData.reduce(
+                          (total, txn) => total + txn.starsAdded,
                           0
                         )}
                       </td>
