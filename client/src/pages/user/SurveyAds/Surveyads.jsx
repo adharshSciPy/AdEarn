@@ -1,10 +1,12 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Select from "react-select";
 import baseUrl from "../../../baseurl";
 import Lottie from "lottie-react";
 import successAnimation from "../../../assets/sucess.json";
 import { useNavigate } from "react-router-dom";
+import Driver from "driver.js";
+import "driver.js/dist/driver.min.css";
 
 import {
   MapContainer,
@@ -495,6 +497,12 @@ function SurveyAds() {
   const [imageFile, setImageFile] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPaymentType, setSelectedPaymentType] = useState(null);
+
+  const [tourState, setTourState] = useState({
+    navbarCompleted: false,
+    homeCompleted: false
+  });
+
   const handleOptionChange = (index, value) => {
     const updatedOptions = [...mcOptions];
     updatedOptions[index] = value;
@@ -803,9 +811,9 @@ function SurveyAds() {
         setSubmitSuccess("Ad saved successfully!");
         setLoading(false);
       }
-    }else{
+    } else {
       console.log("error");
-      
+
     }
   };
   const [preview, setPreview] = useState(null);
@@ -826,9 +834,184 @@ function SurveyAds() {
   const isRegionSelected = form.state.length > 0;
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+
+  // Handle tour completion
+  const handleTourComplete = (tourType) => {
+    setTourState(prev => ({
+      ...prev,
+      [tourType === 'navbar' ? 'navbarCompleted' : 'homeCompleted']: true
+    }));
+  };
+
+  //driver.js
+
+  // Start home tour when navbar tour is completed
+  useEffect(() => {
+    const homeTourDone = localStorage.getItem(`userTourCompleted_${id}`);
+    const surveyadsCompleted = localStorage.getItem(`surveyAdTourCompleted_${id}`);
+
+    // Start home tour if navbar is done but full tour isn't complete
+    if (homeTourDone && !surveyadsCompleted) {
+      // Add a small delay to ensure all elements are rendered
+      setTimeout(() => {
+        startHomeTour();
+      }, 500);
+    }
+  }, [id]); // Remove tourState.navbarCompleted dependency
+
+  // Also trigger when navbar completes via callback
+  useEffect(() => {
+    if (tourState.navbarCompleted) {
+      setTimeout(() => {
+        startHomeTour();
+      }, 500);
+    }
+  }, [tourState.navbarCompleted]);
+
+
+  const startHomeTour = () => {
+    // Check again to prevent duplicate tours
+    const tourCompleted = localStorage.getItem(`surveyAdTourCompleted_${id}`);
+    if (tourCompleted) return;
+
+    let attempts = 0;
+
+    const interval = setInterval(() => {
+      const selectors = [
+        "#ads-name",
+        "#select-ads-category",
+        "#select-ads-location",
+        "#select-ads-region",
+        "#select-ads-period",
+        "#survey-ads-add",
+        "#view-requirement"
+      ];
+
+      const existingSelectors = selectors.filter(sel => document.querySelector(sel));
+
+      // Start tour if at least the place-ads-btn exists (main requirement)
+      const canStartTour = document.querySelector("#ads-name");
+
+      if (canStartTour || attempts > 10) {
+        clearInterval(interval);
+
+        if (canStartTour) {
+          // Use only existing selectors for the tour
+          const tourSteps = [];
+
+          if (document.querySelector("#ads-name")) {
+            tourSteps.push({
+              element: "#ads-name",
+              popover: {
+                title: "Add Your Ads Name",
+                description: "Click here to add your ads name.",
+                position: "bottom",
+              },
+            });
+          }
+
+          if (document.querySelector("#select-ads-category")) {
+            tourSteps.push({
+              element: "#select-ads-category",
+              popover: {
+                title: "Select Ads Category",
+                description: "Select here to add your ads category.",
+                position: "top",
+              },
+            });
+          }
+
+          if (document.querySelector("#select-ads-location")) {
+            tourSteps.push({
+              element: "#select-ads-location",
+              popover: {
+                title: "Select Your Ads Location",
+                description: "Select here to add your ads location.",
+                position: "top",
+              },
+            });
+          }
+
+          if (document.querySelector("#select-ads-region")) {
+            tourSteps.push({
+              element: "#select-ads-region",
+              popover: {
+                title: "Select Your Ads Region",
+                description: "Select here to add your ads region.",
+                position: "top",
+              },
+            });
+          }
+
+          if (document.querySelector("#select-ads-period")) {
+            tourSteps.push({
+              element: "#select-ads-period",
+              popover: {
+                title: "Select Your Ads Period Time",
+                description: "Select here to add your ads period time.",
+                position: "top",
+              },
+            });
+          }
+
+          if (document.querySelector("#survey-ads-add")) {
+            tourSteps.push({
+              element: "#survey-ads-add",
+              popover: {
+                title: "Select Your Survey Ad",
+                description: "Select here to add your survey ad.",
+                position: "top",
+              },
+            });
+          }
+
+          if (document.querySelector("#view-requirement")) {
+            tourSteps.push({
+              element: "#view-requirement",
+              popover: {
+                title: "Select Your Ads View Requirements",
+                description: "Select here to add your ads view requirements.",
+                position: "top",
+              },
+            });
+          }
+
+          const driver = new Driver({
+            animate: true,
+            opacity: 0.5,
+            stageBackground: "rgba(0, 0, 0, 0.1)",
+            allowClose: true,
+            doneBtnText: "Finish Tour",
+            closeBtnText: "Skip",
+            nextBtnText: "Next",
+            prevBtnText: "Previous",
+            onReset: () => {
+              // Mark both tours as completed
+              localStorage.setItem(`surveyAdTourCompleted_${id}`, "true");
+              setTourState(prev => ({
+                ...prev,
+                homeCompleted: true
+              }));
+            },
+          });
+
+          driver.defineSteps(tourSteps);
+          driver.start();
+        } else {
+          console.warn("Place ads button not found, completing tour anyway.");
+          // Still mark as completed if main element not found
+          localStorage.setItem(`surveyAdTourCompleted_${id}`, "true");
+        }
+      }
+
+      attempts++;
+    }, 1000);
+  };
+
+
   return (
     <>
-      <Navbar />
+      <Navbar onTourComplete={handleTourComplete} />
       <div className={styles.adFormMain}>
         {/* Ad Name */}
         <div className={styles.adName}>
@@ -836,7 +1019,7 @@ function SurveyAds() {
             <div className={styles.labelImg}>
               <img src={tickAd} alt="tick" />
             </div>
-            <div className={styles.AdNameHead}>
+            <div className={styles.AdNameHead} id="ads-name">
               <h2>Ad Name</h2>
               <input
                 className={styles.AdInput}
@@ -853,7 +1036,7 @@ function SurveyAds() {
             <div className={styles.labelImg}>
               <img src={tickAd} alt="tick" />
             </div>
-            <div className={styles.AdNameHead}>
+            <div className={styles.AdNameHead} id="select-ads-category">
               <h2>Ad Category</h2>
               <select
                 className={styles.selectOption}
@@ -874,6 +1057,7 @@ function SurveyAds() {
         </div>
         {/* Map and Location search */}
         <div
+          id="select-ads-location"
           className={styles.container}
           style={{
             pointerEvents: isRegionSelected ? "none" : "auto",
@@ -962,6 +1146,7 @@ function SurveyAds() {
         </div>
         {/* Region Selection */}
         <div
+          id="select-ads-region"
           className={styles.adName}
           style={{
             marginTop: "30px",
@@ -1060,7 +1245,7 @@ function SurveyAds() {
             <div className={styles.labelImg}>
               <img src={tickAd} alt="tick" />
             </div>
-            <div className={styles.AdNameHead}>
+            <div className={styles.AdNameHead} id="select-ads-period">
               <h2>Ad Period</h2>
               {/* Single Time Option */}
               <div
@@ -1148,12 +1333,12 @@ function SurveyAds() {
           </div>
         </div>
         <div className={styles.adName}>
-          <div className={styles.labelContainer}>
+          <div className={styles.labelContainer} id="survey-ads-add">
             <div className={styles.labelImg}>
               <img src={tickAd} alt="tick" />
             </div>
             <div className={styles.AdNameHead}>
-              <h2>Your Ad Video</h2>
+              <h2>Your Survey Ad</h2>
               <div className={styles.radioGroup}>
                 <label>
                   <input
@@ -1308,7 +1493,7 @@ function SurveyAds() {
             <div className={styles.labelImg}>
               <img src={tickAd} alt="tick" />
             </div>
-            <div className={styles.AdNameHead}>
+            <div className={styles.AdNameHead} id="view-requirement">
               <h2>View Required</h2>
               <select
                 className={styles.selectOption}
