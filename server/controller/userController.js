@@ -1257,7 +1257,7 @@ user.password=newPassword
   }
 };
 const sendCouponRequest = async (req, res) => {
-  const { id } = req.params; // could be userId or adminId
+  const { id } = req.params; 
   const { couponCount, perStarCount, note, role } = req.body;
 
   try {
