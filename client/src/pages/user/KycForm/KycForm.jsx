@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./Kyc.module.css";
 import Navbar from "../NavBar/Navbar";
 import axios from 'axios'
 import baseUrl from "../../../baseurl";
 import { useSelector } from "react-redux";
+import Driver from "driver.js";
+import "driver.js/dist/driver.min.css";
 
 function KycForm() {
   const userId = useSelector((state) => state.user.id)
@@ -25,6 +27,11 @@ function KycForm() {
     city: "",
     documentType: "",
     documentNumber: ""
+  });
+
+  const [tourState, setTourState] = useState({
+    navbarCompleted: false,
+    homeCompleted: false
   });
 
   const handleChange = (e) => {
@@ -475,11 +482,113 @@ function KycForm() {
     }
   };
 
+  // Handle tour completion
+  const handleTourComplete = (tourType) => {
+    setTourState(prev => ({
+      ...prev,
+      [tourType === 'navbar' ? 'navbarCompleted' : 'homeCompleted']: true
+    }));
+  };
+
+  //driver.js
+
+  // Start home tour when navbar tour is completed
+  useEffect(() => {
+    const navbarTourDone = localStorage.getItem(`navbarTourDone_${userId}`);
+    const kyctourCompleted = localStorage.getItem(`kycTourCompleted_${userId}`);
+
+    // Start home tour if navbar is done but full tour isn't complete
+    if (navbarTourDone && !kyctourCompleted) {
+      // Add a small delay to ensure all elements are rendered
+      setTimeout(() => {
+        startHomeTour();
+      }, 500);
+    }
+  }, [userId]); // Remove tourState.navbarCompleted dependency
+
+  // Also trigger when navbar completes via callback
+  useEffect(() => {
+    if (tourState.navbarCompleted) {
+      setTimeout(() => {
+        startHomeTour();
+      }, 500);
+    }
+  }, [tourState.navbarCompleted]);
+
+
+  const startHomeTour = () => {
+    // Check again to prevent duplicate tours
+    const tourCompleted = localStorage.getItem(`kycTourCompleted_${userId}`);
+    if (tourCompleted) return;
+
+    let attempts = 0;
+
+    const interval = setInterval(() => {
+      const selectors = [
+        "#submit-kyc"
+      ];
+
+      const existingSelectors = selectors.filter(sel => document.querySelector(sel));
+
+      // Start tour if at least the place-ads-btn exists (main requirement)
+      const canStartTour = document.querySelector("#submit-kyc");
+
+      if (canStartTour || attempts > 10) {
+        clearInterval(interval);
+
+        if (canStartTour) {
+          // Use only existing selectors for the tour
+          const tourSteps = [];
+
+          if (document.querySelector("#submit-kyc")) {
+            tourSteps.push({
+              element: "#submit-kyc",
+              popover: {
+                title: "Fill the Kyc Details",
+                description: "Fill the below form for kyc verification.",
+                position: "top",
+              },
+            });
+          }
+
+          const driver = new Driver({
+            animate: true,
+            opacity: 0.5,
+            stageBackground: "rgba(0, 0, 0, 0.1)",
+            allowClose: true,
+            doneBtnText: "Finish Tour",
+            closeBtnText: "Skip",
+            nextBtnText: "Next",
+            prevBtnText: "Previous",
+            onReset: () => {
+              // Mark both tours as completed
+              localStorage.setItem(`kycTourCompleted_${userId}`, "true");
+              setTourState(prev => ({
+                ...prev,
+                homeCompleted: true
+              }));
+            },
+          });
+
+          driver.defineSteps(tourSteps);
+          driver.start();
+        } else {
+          console.warn("Place ads button not found, completing tour anyway.");
+          // Still mark as completed if main element not found
+          localStorage.setItem(`kycTourCompleted_${userId}`, "true");
+        }
+      }
+
+      attempts++;
+    }, 1000);
+  };
+
+
   return (
     <>
-      <Navbar />
+      <Navbar onTourComplete={handleTourComplete} />
       <div className={styles.mainUserContainer}>
-        <div className={styles.profileWrapper}>
+        <div className={styles.profileWrapper} id="submit-kyc">
           <div className={styles.editformHeading}>
             <h2>KYC Form</h2>
           </div>
