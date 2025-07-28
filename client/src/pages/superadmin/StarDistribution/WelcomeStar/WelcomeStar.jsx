@@ -7,12 +7,10 @@ import axios from 'axios'
 import baseUrl from "../../../../baseurl"
 
 function WelcomeStar() {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [previewImage, setPreviewImage] = useState(null);
-    const [fileInputKey, setFileInputKey] = useState(Date.now());
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [data, setData] = useState([])
+    const [total,setTotal]=useState(0)
 
     useEffect(() => {
         const welcomestar = async () => {
@@ -24,6 +22,7 @@ function WelcomeStar() {
                     }
                 });
                 setData(response.data.given)
+                setTotal(response.data.remainingStars)
                 console.log(response)
             } catch (error) {
                 console.log(error)
@@ -32,12 +31,7 @@ function WelcomeStar() {
         welcomestar()
     }, [currentPage, pageSize])
 
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setPreviewImage(URL.createObjectURL(file));
-        }
-    };
+    
 
     function formatDateTime(isoString) {
         const date = new Date(isoString);
@@ -49,6 +43,8 @@ function WelcomeStar() {
     }
 
     const totalstar = data.reduce((sum, item) => sum + (item.starsGiven) || 0, 0)
+
+    
 
     return (
         <div className={styles.accountsmain}>
@@ -82,7 +78,7 @@ function WelcomeStar() {
                                     xmlns="http://www.w3.org/2000/svg"
                                 >
                                     <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                </svg> {totalstar}</h1>
+                                </svg> {total || 0}</h1>
                                 <div className={styles.accountamountdetails}>
                                     <p>Company account</p>
                                     <p>+8% from yesterday</p>
