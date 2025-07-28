@@ -13,7 +13,7 @@ function CompanyStar() {
     const [data, setData] = useState([]);
     const [received, setReceived] = useState(0);
     const [spent, setSpent] = useState(0);
-
+    const [adminTotal,setadminTotal]=useState(0)
 
     useEffect(() => {
         const companyStar = async () => {
@@ -27,6 +27,7 @@ function CompanyStar() {
             }
         }
         companyStar()
+        adminDetails()
     }, [])
 
     useEffect(() => {
@@ -52,7 +53,15 @@ function CompanyStar() {
 
         fetchAmounts();
     }, []);
-
+const adminDetails=async()=>{
+    try {
+        const res=await axios.get(`${baseUrl}/api/v1/admin/admin-wallet`)
+        setadminTotal(res.data.totalStars)
+    } catch (error) {
+        console.log(error);
+        
+    }
+}
 
     return (
         <div className={styles.accountsmain}>
@@ -80,7 +89,7 @@ function CompanyStar() {
                                         xmlns="http://www.w3.org/2000/svg"
                                     >
                                         <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                    </svg> 5000</h1>
+                                    </svg> {data.totalStars}</h1>
                                 <div className={styles.accountamountdetails}>
                                     <p>Company account</p>
                                     <p>+8% from yesterday</p>
@@ -146,29 +155,6 @@ function CompanyStar() {
                                         <UserAddOutlined style={{ fontSize: 20, color: 'white' }} />
                                     </div>
                                 </div>
-                                <h3>Users</h3>
-                                <h4 style={{
-                                    display: "flex", justifyContent: "start", alignItems: "center", textAlign: "center"
-                                }}><svg
-                                    width="20"
-                                    height="18"
-                                    viewBox="0 0 24 24"
-                                    fill="gold"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    style={{ verticalAlign: "middle", margin: "0px" }}
-
-                                >
-                                        <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                    </svg> {data.userEntryTotalStars}</h4>
-                                <p>+0,5% from yesterday</p>
-                            </div>
-                            <div className={styles.cardfour}>
-                                <div className={styles.cardfourTop}></div>
-                                <div className={styles.iconWrapper}>
-                                    <div className={styles.iconCircleBlue}>
-                                        <ProjectOutlined style={{ fontSize: 20, color: 'white' }} />
-                                    </div>
-                                </div>
                                 <h3>Payouts</h3>
                                 <h4 style={{
                                     display: "flex", justifyContent: "start", alignItems: "center", textAlign: "center"
@@ -182,9 +168,32 @@ function CompanyStar() {
 
                                 >
                                         <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                    </svg> demo</h4>
-                                <p>+8% from yesterday</p>
+                                    </svg> {data.payoutDetailsTotalStars}</h4>
+                                <p>+0,5% from yesterday</p>
                             </div>
+                                <div className={styles.cardfour}>
+                                    <div className={styles.cardfourTop}></div>
+                                    <div className={styles.iconWrapper}>
+                                        <div className={styles.iconCircleBlue}>
+                                            <ProjectOutlined style={{ fontSize: 20, color: 'white' }} />
+                                        </div>
+                                    </div>
+                                    <h3>User Payouts</h3>
+                                    <h4 style={{
+                                        display: "flex", justifyContent: "start", alignItems: "center", textAlign: "center"
+                                    }}><svg
+                                        width="20"
+                                        height="18"
+                                        viewBox="0 0 24 24"
+                                        fill="gold"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        style={{ verticalAlign: "middle", margin: "0px" }}
+
+                                    >
+                                            <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
+                                        </svg> {data?.userPayoutTransactionsTotalStars || ""}</h4>
+                                    <p>+8% from yesterday</p>
+                                </div>
                             <div className={styles.cardfour}>
                                 <div className={styles.cardfourTop}></div>
                                 <div className={styles.iconWrapper}>
@@ -229,10 +238,10 @@ function CompanyStar() {
 
                                 >
                                         <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
-                                    </svg> demo</h4>
+                                    </svg> {adminTotal}</h4>
                                 <p>+5% from yesterday</p>
                             </div>
-                            <div className={styles.cardfour}>
+                            {/* <div className={styles.cardfour}>
                                 <div className={styles.cardfourTop}></div>
                                 <div className={styles.iconWrapper}>
                                     <div className={styles.iconCircleBlue}>
@@ -254,8 +263,8 @@ function CompanyStar() {
                                         <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
                                     </svg> {data.welcomeBonusLogsTotalStars}</h4>
                                 <p>+8% from yesterday</p>
-                            </div>
-                            <div className={styles.cardthree}>
+                            </div> */}
+                            {/* <div className={styles.cardthree}>
                                 <div className={styles.cardthreeTop}></div>
                                 <div className={styles.iconWrapper}>
                                     <div className={styles.iconCirclePurple}>
@@ -277,7 +286,7 @@ function CompanyStar() {
                                         <path d="M12 2L14.9 8.6L22 9.2L17 14L18.5 21L12 17.3L5.5 21L7 14L2 9.2L9.1 8.6L12 2Z" />
                                     </svg> demo</h4>
                                 <p>+0,5% from yesterday</p>
-                            </div>
+                            </div> */}
                             <div className={styles.cardtwo}>
                                 <div className={styles.cardtwoTop}></div>
                                 <div className={styles.iconWrapper}>

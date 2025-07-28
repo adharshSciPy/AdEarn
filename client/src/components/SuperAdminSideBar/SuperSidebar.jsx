@@ -97,11 +97,11 @@ function Sidebar() {
         { key: "user-star", label: "User Star", path: "/superadminuserstar" },
         { key: "company-star", label: "Company Star", path: "/superadmincompanystar" },
         { key: "welcome-star", label: "Welcome Star", path: "/superadminwelcomestar" },
-        {
-          key: "Referal-star",
-          label: "Refereal Star",
-          path: "/superadminreferalstar",
-        },
+        // {
+        //   key: "Referal-star",
+        //   label: "Refereal Star",
+        //   path: "/superadminreferalstar",
+        // },
         { key: "contest-star", label: "Contest Star", path: "/superadminconteststar" },
         { key: "coupons-star", label: "Coupons Star", path: "/superadmincouponstar" },
         {
