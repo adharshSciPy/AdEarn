@@ -498,9 +498,9 @@ function AdForm() {
   const [selectedPaymentType, setSelectedPaymentType] = useState(null);
   const [tourState, setTourState] = useState({
     navbarCompleted: false,
-    homeCompleted: false
+    homeCompleted: false,
   });
-
+  const [targetOption, setTargetOption] = useState("");
 
   // Toggle time options when multipleTime is selected
   const handleTimeChange = (label) => {
@@ -775,9 +775,9 @@ function AdForm() {
 
   // Handle tour completion
   const handleTourComplete = (tourType) => {
-    setTourState(prev => ({
+    setTourState((prev) => ({
       ...prev,
-      [tourType === 'navbar' ? 'navbarCompleted' : 'homeCompleted']: true
+      [tourType === "navbar" ? "navbarCompleted" : "homeCompleted"]: true,
     }));
   };
 
@@ -786,7 +786,9 @@ function AdForm() {
   // Start home tour when navbar tour is completed
   useEffect(() => {
     const homeTourDone = localStorage.getItem(`userTourCompleted_${id}`);
-    const imageadsCompleted = localStorage.getItem(`imageAdTourCompleted_${id}`);
+    const imageadsCompleted = localStorage.getItem(
+      `imageAdTourCompleted_${id}`
+    );
 
     // Start home tour if navbar is done but full tour isn't complete
     if (homeTourDone && !imageadsCompleted) {
@@ -806,7 +808,6 @@ function AdForm() {
     }
   }, [tourState.navbarCompleted]);
 
-
   const startHomeTour = () => {
     // Check again to prevent duplicate tours
     const tourCompleted = localStorage.getItem(`imageAdTourCompleted_${id}`);
@@ -823,10 +824,12 @@ function AdForm() {
         "#select-ads-period",
         "#image-ads-add",
         "#audio-ads-note",
-        "#view-requirement"
+        "#view-requirement",
       ];
 
-      const existingSelectors = selectors.filter(sel => document.querySelector(sel));
+      const existingSelectors = selectors.filter((sel) =>
+        document.querySelector(sel)
+      );
 
       // Start tour if at least the place-ads-btn exists (main requirement)
       const canStartTour = document.querySelector("#ads-name");
@@ -938,9 +941,9 @@ function AdForm() {
             onReset: () => {
               // Mark both tours as completed
               localStorage.setItem(`imageAdTourCompleted_${id}`, "true");
-              setTourState(prev => ({
+              setTourState((prev) => ({
                 ...prev,
-                homeCompleted: true
+                homeCompleted: true,
               }));
             },
           });
@@ -957,7 +960,6 @@ function AdForm() {
       attempts++;
     }, 1000);
   };
-
 
   return (
     <>
@@ -1006,200 +1008,265 @@ function AdForm() {
             </div>
           </div>
         </div>
-
-        {/* Map and Location search */}
         <div
-          id="select-ads-location"
-          className={styles.container}
+          className={styles.labelContainer}
           style={{
-            pointerEvents: isRegionSelected ? "none" : "auto",
-            opacity: isRegionSelected ? 0.6 : 1,
+            marginTop: "20px",
+            marginBottom: "20px",
+            borderRadius: "20px",
+            padding: "20px",
+            backgroundColor: "white",
           }}
         >
-          <h3 style={{ paddingBottom: "20px" }}>Select Location</h3>
-          <MapContainer
-            center={[8.5241, 76.9366]}
-            zoom={12}
+          <div className={styles.labelImg}>
+            <img src={tickAd} alt="tick" />
+          </div>
+          <div className={styles.radioContainer}>
+            <label>
+              <h2>
+                <input
+                type="radio"
+                value="map"
+                checked={targetOption === "map"}
+                onChange={() => setTargetOption("map")}
+                
+              />
+              Map & Location</h2>
+            </label>
+            <label style={{ marginLeft: "20px" }}>
+              <h2>
+                <input
+                type="radio"
+                value="region"
+                checked={targetOption === "region"}
+                onChange={() => setTargetOption("region")}
+              />
+              Region-wise
+              </h2>
+            </label>
+          </div>
+        </div>
+
+        {/* Map and Location Search - show only if 'map' is selected */}
+        {targetOption === "map" && (
+          <div
+            id="select-ads-location"
+            className={styles.container}
             style={{
-              height: "400px",
-              width: "100%",
-              borderRadius: "20px",
-              overflow: "hidden",
+              pointerEvents: isRegionSelected ? "none" : "auto",
+              opacity: isRegionSelected ? 0.6 : 1,
             }}
           >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution="&copy; OpenStreetMap contributors"
-            />
-            <LocationMarkers
-              positions={positions}
-              setPositions={setPositions}
-            />
-            {positions.length > 0 && (
-              <ChangeView
-                center={[positions[0].lat, positions[0].lng]}
-                zoom={13}
-              />
-            )}
-          </MapContainer>
-
-          <h3 className={styles.heading}>Search Location / Pincode</h3>
-          <div className={styles.controls}>
-            <input
-              type="text"
-              placeholder="Enter place or pincode"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              disabled={loading}
+            <div
+              id="select-ads-location"
+              className={styles.container}
               style={{
-                width: "100%",
-                padding: "10px 15px",
-                fontSize: 16,
-                marginBottom: 10,
+                pointerEvents: isRegionSelected ? "none" : "auto",
+                opacity: isRegionSelected ? 0.6 : 1,
               }}
-            />
-
-            {loading && <p>Searching...</p>}
-            <button
-              onClick={() => {
-                if (searchInput.trim()) searchPlace(searchInput);
-              }}
-              className={styles.searchBtn}
-              disabled={loading}
             >
-              Add Pin
-            </button>
-          </div>
-
-          <h3 className={styles.heading}>Selected Pins</h3>
-
-          {/* List of pins with radius and remove button */}
-          <div className={styles.positionsList}>
-            {positions.map((pos, index) => (
-              <div key={index} className={styles.result}>
-                <p>
-                  Lat: {pos.lat.toFixed(4)}, Lng: {pos.lng.toFixed(4)}{" "}
-                  <button
-                    className={styles.removeBtn}
-                    onClick={() =>
-                      setPositions((prev) => prev.filter((_, i) => i !== index))
-                    }
-                  >
-                    ❌
-                  </button>
-                </p>
-                <input
-                  type="number"
-                  min={1}
-                  className={styles.inputBox}
-                  value={pos.radiusKm || ""}
-                  placeholder="Radius (km)"
-                  onChange={(e) => handleRadiusChange(index, e.target.value)}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Region Selection */}
-        <div
-          id="select-ads-region"
-          className={styles.adName}
-          style={{
-            marginTop: "30px",
-            pointerEvents: isMapSelected ? "none" : "auto",
-            opacity: isMapSelected ? 0.6 : 1,
-          }}
-        >
-          <div className={styles.labelContainer}>
-            <div className={styles.labelImg}>
-              <img src={tickAd} alt="tick" />
-            </div>
-            <div className={styles.AdNameHead}>
-              <h2>Region</h2>
-            </div>
-          </div>
-
-          <div
-            className={styles.labelContainer}
-            style={{ marginTop: "30px", flexDirection: "column" }}
-          >
-            <div className={styles.AdNameHead}>
-              <p>State</p>
-              <Select
-                isMulti
-                options={Object.keys(stateCityMap).map((state) => ({
-                  value: state,
-                  label: state,
-                }))}
-                value={Object.keys(stateCityMap)
-                  .filter((state) => form.state.includes(state))
-                  .map((state) => ({ value: state, label: state }))}
-                onChange={handleStateChange}
-                className={styles.selectOption}
-              />
-            </div>
-            <div className={styles.selectedStates}>
-              {form.state.map((s, index) => (
-                <span key={index} className={styles.cityTag}>
-                  {s}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setForm((prev) => ({
-                        ...prev,
-                        state: prev.state.filter((state) => state !== s),
-                      }))
-                    }
-                    className={styles.removeBtn}
-                  >
-                    ✕
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div
-            className={styles.labelContainer}
-            style={{ marginTop: "20px", flexDirection: "column" }}
-          >
-            <div className={styles.AdNameHead}>
-              <p>District</p>
-              <Select
-                isMulti
-                options={cityOptions}
-                value={cityOptions.filter((opt) =>
-                  form.city.includes(opt.value)
-                )}
-                onChange={(selected) => {
-                  const selectedCities = selected
-                    ? selected.map((opt) => opt.value)
-                    : [];
-                  setForm({ ...form, city: selectedCities });
+              <h3 style={{ paddingBottom: "20px" }}>Select Location</h3>
+              <MapContainer
+                center={[8.5241, 76.9366]}
+                zoom={12}
+                style={{
+                  height: "400px",
+                  width: "100%",
+                  borderRadius: "20px",
+                  overflow: "hidden",
                 }}
-                className={styles.selectOption}
-              />
-            </div>
-            <div className={styles.selectedCities}>
-              {form.city.map((c, index) => (
-                <span key={index} className={styles.cityTag}>
-                  {c}
-                  <button
-                    type="button"
-                    onClick={() => removeCity(c)}
-                    className={styles.removeBtn}
-                  >
-                    ✕
-                  </button>
-                </span>
-              ))}
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution="&copy; OpenStreetMap contributors"
+                />
+                <LocationMarkers
+                  positions={positions}
+                  setPositions={setPositions}
+                />
+                {positions.length > 0 && (
+                  <ChangeView
+                    center={[positions[0].lat, positions[0].lng]}
+                    zoom={13}
+                  />
+                )}
+              </MapContainer>
+
+              <h3 className={styles.heading}>Search Location / Pincode</h3>
+              <div className={styles.controls}>
+                <input
+                  type="text"
+                  placeholder="Enter place or pincode"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  disabled={loading}
+                  style={{
+                    width: "100%",
+                    padding: "10px 15px",
+                    fontSize: 16,
+                    marginBottom: 10,
+                  }}
+                />
+
+                {loading && <p>Searching...</p>}
+                <button
+                  onClick={() => {
+                    if (searchInput.trim()) searchPlace(searchInput);
+                  }}
+                  className={styles.searchBtn}
+                  disabled={loading}
+                >
+                  Add Pin
+                </button>
+              </div>
+
+              <h3 className={styles.heading}>Selected Pins</h3>
+
+              {/* List of pins with radius and remove button */}
+              <div className={styles.positionsList}>
+                {positions.map((pos, index) => (
+                  <div key={index} className={styles.result}>
+                    <p>
+                      Lat: {pos.lat.toFixed(4)}, Lng: {pos.lng.toFixed(4)}{" "}
+                      <button
+                        className={styles.removeBtn}
+                        onClick={() =>
+                          setPositions((prev) =>
+                            prev.filter((_, i) => i !== index)
+                          )
+                        }
+                      >
+                        ❌
+                      </button>
+                    </p>
+                    <input
+                      type="number"
+                      min={1}
+                      className={styles.inputBox}
+                      value={pos.radiusKm || ""}
+                      placeholder="Radius (km)"
+                      onChange={(e) =>
+                        handleRadiusChange(index, e.target.value)
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Region Selection - show only if 'region' is selected */}
+        {targetOption === "region" && (
+          <div
+            id="select-ads-region"
+            className={styles.adName}
+            style={{
+              marginTop: "30px",
+              pointerEvents: isMapSelected ? "none" : "auto",
+              opacity: isMapSelected ? 0.6 : 1,
+            }}
+          >
+            <div
+              id="select-ads-region"
+              className={styles.adName}
+              style={{
+                marginTop: "30px",
+                pointerEvents: isMapSelected ? "none" : "auto",
+                opacity: isMapSelected ? 0.6 : 1,
+              }}
+            >
+              <div className={styles.labelContainer}>
+                <div className={styles.labelImg}>
+                  <img src={tickAd} alt="tick" />
+                </div>
+                <div className={styles.AdNameHead}>
+                  <h2>Region</h2>
+                </div>
+              </div>
+
+              <div
+                className={styles.labelContainer}
+                style={{ marginTop: "30px", flexDirection: "column" }}
+              >
+                <div className={styles.AdNameHead}>
+                  <p>State</p>
+                  <Select
+                    isMulti
+                    options={Object.keys(stateCityMap).map((state) => ({
+                      value: state,
+                      label: state,
+                    }))}
+                    value={Object.keys(stateCityMap)
+                      .filter((state) => form.state.includes(state))
+                      .map((state) => ({ value: state, label: state }))}
+                    onChange={handleStateChange}
+                    className={styles.selectOption}
+                  />
+                </div>
+                <div className={styles.selectedStates}>
+                  {form.state.map((s, index) => (
+                    <span key={index} className={styles.cityTag}>
+                      {s}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm((prev) => ({
+                            ...prev,
+                            state: prev.state.filter((state) => state !== s),
+                          }))
+                        }
+                        className={styles.removeBtn}
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div
+                className={styles.labelContainer}
+                style={{ marginTop: "20px", flexDirection: "column" }}
+              >
+                <div className={styles.AdNameHead}>
+                  <p>District</p>
+                  <Select
+                    isMulti
+                    options={cityOptions}
+                    value={cityOptions.filter((opt) =>
+                      form.city.includes(opt.value)
+                    )}
+                    onChange={(selected) => {
+                      const selectedCities = selected
+                        ? selected.map((opt) => opt.value)
+                        : [];
+                      setForm({ ...form, city: selectedCities });
+                    }}
+                    className={styles.selectOption}
+                  />
+                </div>
+                <div className={styles.selectedCities}>
+                  {form.city.map((c, index) => (
+                    <span key={index} className={styles.cityTag}>
+                      {c}
+                      <button
+                        type="button"
+                        onClick={() => removeCity(c)}
+                        className={styles.removeBtn}
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Ad Period */}
-        <div className={styles.adName}>
+        <div className={styles.adName} style={{ marginTop: "20px" }}>
           <div className={styles.labelContainer}>
             <div className={styles.labelImg}>
               <img src={tickAd} alt="tick" />

@@ -142,6 +142,9 @@
   color: #3d5278;
   width: 100%;
 }
+.radioContainer h2{
+  color: #3d5278;
+}
 .AdInput {
   padding: 15px 12px;
   border-radius: 6px;
@@ -261,6 +264,12 @@
   border: none;
   color: red;
   cursor: pointer;
+}
+.radioContainer {
+  margin-top: 20px;
+  font-size: 26px;
+  display: flex;
+
 }
 
 @keyframes scaleUp {
