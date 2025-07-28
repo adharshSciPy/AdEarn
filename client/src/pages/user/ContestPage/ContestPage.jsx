@@ -8,6 +8,8 @@ import baseUrl from "../../../baseurl";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import { toast } from "react-toastify";
+import Driver from "driver.js";
+import "driver.js/dist/driver.min.css";
 
 const ContestPage = () => {
   const [contest, setContest] = useState([]);
@@ -15,6 +17,10 @@ const ContestPage = () => {
   const [selectedContest, setSelectedContest] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState("ongoing");
+  const [tourState, setTourState] = useState({
+    navbarCompleted: false,
+    homeCompleted: false,
+  });
 
   const { id } = useParams();
 
@@ -67,20 +73,166 @@ const ContestPage = () => {
 
   const activeContests = contest.filter((item) => item.status === "Active");
 
+  // Handle tour completion
+  const handleTourComplete = (tourType) => {
+    setTourState((prev) => ({
+      ...prev,
+      [tourType === "navbar" ? "navbarCompleted" : "homeCompleted"]: true,
+    }));
+  };
+
+  //driver.js
+
+  // Start home tour when navbar tour is completed
+  useEffect(() => {
+    const hometourCompleted = localStorage.getItem(
+      `userTourCompleted_${id}`
+    );
+    const contentpageCompleted = localStorage.getItem(
+      `contentpageCompleted_${id}`
+    );
+
+    // Start home tour if navbar is done but full tour isn't complete
+    if (hometourCompleted && !contentpageCompleted) {
+      // Add a small delay to ensure all elements are rendered
+      setTimeout(() => {
+        startHomeTour();
+      }, 500);
+    }
+  }, [id]); // Remove tourState.navbarCompleted dependency
+
+  // Also trigger when navbar completes via callback
+  useEffect(() => {
+    if (tourState.navbarCompleted) {
+      setTimeout(() => {
+        startHomeTour();
+      }, 500);
+    }
+  }, [tourState.navbarCompleted]);
+
+  const startHomeTour = () => {
+    // Check again to prevent duplicate tours
+    const wallettourCompleted = localStorage.getItem(
+      `contentpageCompleted_${id}`
+    );
+    if (wallettourCompleted) return;
+
+    let attempts = 0;
+
+    const interval = setInterval(() => {
+      const selectors = [
+        "#ongoing-contest",
+        "#ongoing-section",
+        "#contest-details",
+        "#contest-details-section",
+      ];
+
+      const existingSelectors = selectors.filter((sel) =>
+        document.querySelector(sel)
+      );
+
+      // Start tour if at least the place-ads-btn exists (main requirement)
+      const canStartTour = document.querySelector("#ongoing-contest");
+
+      if (canStartTour || attempts > 10) {
+        clearInterval(interval);
+
+        if (canStartTour) {
+          // Use only existing selectors for the tour
+          const tourSteps = [];
+
+          if (document.querySelector("#ongoing-contest")) {
+            tourSteps.push({
+              element: "#ongoing-contest",
+              popover: {
+                title: "Ongoing Contest",
+                description: "Click here to view all currently active contests that you can join.",
+                position: "bottom",
+              },
+            });
+          }
+
+          if (document.querySelector("#ongoing-section")) {
+            tourSteps.push({
+              element: "#ongoing-section",
+              popover: {
+                title: "Ongoing Section",
+                description: "Here we listed ongoing contest.",
+                position: "bottom",
+              },
+            });
+          }
+
+          if (document.querySelector("#contest-details")) {
+            tourSteps.push({
+              element: "#contest-details",
+              popover: {
+                title: "All Contest Details",
+                description: "Switch to this tab to view your contest participation history and results. Click Next to explore this section.",
+                position: "bottom",
+              },
+            });
+          }
+
+          if (document.querySelector("#contest-details-section")) {
+            tourSteps.push({
+              element: "#contest-details-section",
+              popover: {
+                title: "Contest Details",
+                description: "View all contest details.",
+                position: "top",
+              },
+            });
+          }
+
+          const driver = new Driver({
+            animate: true,
+            opacity: 0.5,
+            stageBackground: "rgba(0, 0, 0, 0.1)",
+            allowClose: true,
+            doneBtnText: "Next",
+            closeBtnText: "Skip",
+            nextBtnText: "Next",
+            prevBtnText: "Previous",
+            onReset: () => {
+              // Mark both tours as completed
+              localStorage.setItem(`contentpageCompleted_${id}`, "true");
+              setTourState((prev) => ({
+                ...prev,
+                homeCompleted: true,
+              }));
+            },
+          });
+
+          driver.defineSteps(tourSteps);
+          driver.start();
+        } else {
+          console.warn("Place ads button not found, completing tour anyway.");
+          // Still mark as completed if main element not found
+          localStorage.setItem(`contentpageCompleted_${id}`, "true");
+        }
+      }
+
+      attempts++;
+    }, 1000);
+  };
+
   return (
     <>
-      <Navbar />
+      <Navbar onTourComplete={handleTourComplete} />
       <div className={styles.pageWrapper}>
         <div className={styles.headerContent}>
           <div className={styles.logContainer}>
             <div className={styles.twoButtons}>
               <h3
+                id="ongoing-contest"
                 onClick={() => setActiveTab("ongoing")}
                 className={activeTab === "ongoing" ? styles.activeTab : ""}
               >
                 Ongoing Contest
               </h3>
               <h3
+                id="contest-details"
                 onClick={() => setActiveTab("all")}
                 className={activeTab === "all" ? styles.activeTab : ""}
               >
@@ -93,7 +245,7 @@ const ContestPage = () => {
         {activeTab === "ongoing" && (
           <>
             {activeContests.length > 0 ? (
-              <div className={styles.cardContainer}>
+              <div className={styles.cardContainer} id="ongoing-section">
                 {activeContests.map((item, index) => {
                   const prizeImages = item.prizeImages || [];
                   const rewardSlides =
@@ -192,7 +344,7 @@ const ContestPage = () => {
         {activeTab === "all" && (
           <>
             {userContest.length > 0 ? (
-              <div className={styles.tableWrapper}>
+              <div className={styles.tableWrapper} id="contest-details-section">
                 <table className={styles.table}>
                   <thead>
                     <tr>
