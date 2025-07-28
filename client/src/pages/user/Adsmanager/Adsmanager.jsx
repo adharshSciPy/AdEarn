@@ -15,6 +15,8 @@ import autoTable from "jspdf-autotable";
 import { EyeOutlined } from "@ant-design/icons";
 import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
 import { toast } from "react-toastify";
+import Driver from "driver.js";
+import "driver.js/dist/driver.min.css";
 
 function Adsmanager() {
   const navigate = useNavigate();
@@ -23,6 +25,10 @@ function Adsmanager() {
   const userId = useSelector((state) => state.user.id);
   const [selectedAdId, setSelectedAdId] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
+  const [tourState, setTourState] = useState({
+    navbarCompleted: false,
+    homeCompleted: false
+  });
 
   const handleToggle = async (adId) => {
     try {
@@ -86,32 +92,32 @@ function Adsmanager() {
       fetchAds();
     }
   }, [userId]);
-const fetchAds = async () => {
-      try {
-        console.log("User ID from store:", userId);
-        const response = await axios.get(
-          `${baseUrl}/api/v1/user/my-all-ads/${userId}`
-        );
-        const ads = response.data.data.ads;
-        console.log("abc", ads);
+  const fetchAds = async () => {
+    try {
+      console.log("User ID from store:", userId);
+      const response = await axios.get(
+        `${baseUrl}/api/v1/user/my-all-ads/${userId}`
+      );
+      const ads = response.data.data.ads;
+      console.log("abc", ads);
 
-        setUserads(ads);
+      setUserads(ads);
 
-        const initialToggleStates = {};
-        ads.forEach((ad) => {
-          const ref = ad.imgAdRef || ad.videoAdRef || ad.surveyAdRef;
-          initialToggleStates[ad._id] = ref?.isAdOn || false;
-        });
+      const initialToggleStates = {};
+      ads.forEach((ad) => {
+        const ref = ad.imgAdRef || ad.videoAdRef || ad.surveyAdRef;
+        initialToggleStates[ad._id] = ref?.isAdOn || false;
+      });
 
-        setToggleStates(initialToggleStates);
-        console.log(
-          "Fetched ads and initialized toggle states:",
-          initialToggleStates
-        );
-      } catch (error) {
-        console.error("Error fetching ads:", error);
-      }
-    };
+      setToggleStates(initialToggleStates);
+      console.log(
+        "Fetched ads and initialized toggle states:",
+        initialToggleStates
+      );
+    } catch (error) {
+      console.error("Error fetching ads:", error);
+    }
+  };
   const generatePdf = (row) => {
     const ref = row.imgAdRef || row.videoAdRef || row.surveyAdRef;
 
@@ -130,8 +136,8 @@ const fetchAds = async () => {
     const adType = row.imgAdRef
       ? "Image Ad"
       : row.videoAdRef
-      ? "Video Ad"
-      : "Survey Ad";
+        ? "Video Ad"
+        : "Survey Ad";
 
     const tableData = [
       ["Ad Title", ref.title || "Untitled"],
@@ -192,7 +198,7 @@ const fetchAds = async () => {
         }
       );
       console.log(res);
-      if (res.status===200){
+      if (res.status === 200) {
         fetchAds()
       }
       toast.success("Ad successfully deleted");
@@ -201,9 +207,148 @@ const fetchAds = async () => {
       console.log(error);
     }
   };
+
+  // Handle tour completion
+  const handleTourComplete = (tourType) => {
+    setTourState(prev => ({
+      ...prev,
+      [tourType === 'navbar' ? 'navbarCompleted' : 'homeCompleted']: true
+    }));
+  };
+
+  //driver.js
+
+  // Start home tour when navbar tour is completed
+  useEffect(() => {
+    const navbarTourDone = localStorage.getItem(`navbarTourDone_${userId}`);
+    const adsmanagertourCompleted = localStorage.getItem(`adsmanagerTourCompleted_${userId}`);
+
+    // Start home tour if navbar is done but full tour isn't complete
+    if (navbarTourDone && !adsmanagertourCompleted) {
+      // Add a small delay to ensure all elements are rendered
+      setTimeout(() => {
+        startHomeTour();
+      }, 500);
+    }
+  }, [userId]); // Remove tourState.navbarCompleted dependency
+
+  // Also trigger when navbar completes via callback
+  useEffect(() => {
+    if (tourState.navbarCompleted) {
+      setTimeout(() => {
+        startHomeTour();
+      }, 500);
+    }
+  }, [tourState.navbarCompleted]);
+
+
+  const startHomeTour = () => {
+    // Check again to prevent duplicate tours
+    const tourCompleted = localStorage.getItem(`adsmanagerTourCompleted_${userId}`);
+    if (tourCompleted) return;
+
+    let attempts = 0;
+
+    const interval = setInterval(() => {
+      const selectors = [
+        "#place-ads-btn",
+        "#get-duplicate",
+        "#delete-ads",
+        "#liked-ads"
+      ];
+
+      const existingSelectors = selectors.filter(sel => document.querySelector(sel));
+
+      // Start tour if at least the place-ads-btn exists (main requirement)
+      const canStartTour = document.querySelector("#place-ads-btn");
+
+      if (canStartTour || attempts > 10) {
+        clearInterval(interval);
+
+        if (canStartTour) {
+          // Use only existing selectors for the tour
+          const tourSteps = [];
+
+          if (document.querySelector("#place-ads-btn")) {
+            tourSteps.push({
+              element: "#place-ads-btn",
+              popover: {
+                title: "Place Your Ad",
+                description: "Click here to place a new advertisement.",
+                position: "bottom",
+              },
+            });
+          }
+
+          if (document.querySelector("#get-duplicate")) {
+            tourSteps.push({
+              element: "#get-duplicate",
+              popover: {
+                title: "Get Duplicate of Ads",
+                description: "Select here to get duplicate of your ad.",
+                position: "top",
+              },
+            });
+          }
+
+          if (document.querySelector("#delete-ads")) {
+            tourSteps.push({
+              element: "#delete-ads",
+              popover: {
+                title: "Delete Your Ads",
+                description: "Click here to delete your ad.",
+                position: "top",
+              },
+            });
+          }
+
+          if (document.querySelector("#liked-ads")) {
+            tourSteps.push({
+              element: "#liked-ads",
+              popover: {
+                title: "Liked Ads",
+                description: "Click here to see liked ads.",
+                position: "top",
+              },
+            });
+          }
+
+          const driver = new Driver({
+            animate: true,
+            opacity: 0.5,
+            stageBackground: "rgba(0, 0, 0, 0.1)",
+            allowClose: true,
+            doneBtnText: "Finish Tour",
+            closeBtnText: "Skip",
+            nextBtnText: "Next",
+            prevBtnText: "Previous",
+            onReset: () => {
+              // Mark both tours as completed
+              localStorage.setItem(`adsmanagerTourCompleted_${userId}`, "true");
+              setTourState(prev => ({
+                ...prev,
+                homeCompleted: true
+              }));
+            },
+          });
+
+          driver.defineSteps(tourSteps);
+          driver.start();
+        } else {
+          console.warn("Place ads button not found, completing tour anyway.");
+          // Still mark as completed if main element not found
+          localStorage.setItem(`adsmanagerTourCompleted_${userId}`, "true");
+        }
+      }
+
+      attempts++;
+    }, 1000);
+  };
+
+
   return (
     <div>
-      <Navbar />
+      <Navbar onTourComplete={handleTourComplete} />
       <CreateAdPopup isOpen={showPopup} onClose={() => setShowPopup(false)} />
       <div className={styles.mainContainer}>
         <div className={styles.homeMainContainer}>
@@ -243,7 +388,7 @@ const fetchAds = async () => {
             <div className={styles.tableContainer}>
               <div className={styles.tableMain}>
                 <div className={styles.buttonsContainer}>
-                  <div className={styles.createButtonContainer}>
+                  <div className={styles.createButtonContainer} id="place-ads-btn">
                     <button
                       style={{ display: "flex", alignItems: "center" }}
                       onClick={() => setShowPopup(true)}
@@ -254,7 +399,7 @@ const fetchAds = async () => {
                       Create
                     </button>
                   </div>
-                  <div className={styles.duplicateButtonContainer}>
+                  <div className={styles.duplicateButtonContainer} id="get-duplicate">
                     <button
                       onClick={handleDuplicate}
                       style={{ display: "flex", alignItems: "center" }}
@@ -266,7 +411,7 @@ const fetchAds = async () => {
                     </button>
                   </div>
 
-                  <div className={styles.deleteButtonContainer}>
+                  <div className={styles.deleteButtonContainer} id="delete-ads">
                     <button
                       style={{ display: "flex", alignItems: "center" }}
                       onClick={handleDelete}
@@ -277,7 +422,7 @@ const fetchAds = async () => {
                       Delete
                     </button>
                   </div>
-                  <div className={styles.reportButtonContainer}>
+                  <div className={styles.reportButtonContainer} id="liked-ads">
                     <button
                       style={{
                         display: "flex",
@@ -358,15 +503,13 @@ const fetchAds = async () => {
                             </td>
                             <td className={styles.tdBorder}>
                               <div
-                                className={`${styles.switchContainer} ${
-                                  toggleStates[row._id] ? styles.on : ""
-                                }`}
+                                className={`${styles.switchContainer} ${toggleStates[row._id] ? styles.on : ""
+                                  }`}
                                 onClick={() => handleToggle(row._id)}
                               >
                                 <div
-                                  className={`${styles.switchButton} ${
-                                    toggleStates[row._id] ? styles.on : ""
-                                  }`}
+                                  className={`${styles.switchButton} ${toggleStates[row._id] ? styles.on : ""
+                                    }`}
                                 ></div>
                               </div>
                             </td>
@@ -397,8 +540,8 @@ const fetchAds = async () => {
                                   row?.imgAdRef
                                     ? `/adedit/${row._id}`
                                     : row?.videoAdRef
-                                    ? `/videoadedit/${row._id}`
-                                    : `/adedit/${row._id}` // fallback
+                                      ? `/videoadedit/${row._id}`
+                                      : `/adedit/${row._id}` // fallback
                                 }
                                 className={styles.editBtn}
                               >
