@@ -18,21 +18,21 @@ function AdminReqCoupon() {
     }
 
     const payload = {
-      couponCount:couponCount,
-      starCountPerCoupon:perStarCount,
+      couponCount: couponCount,
+      starCountPerCoupon: perStarCount,
       note,
     };
-    
+
     try {
       console.log(payload);
-      
+
       setRequestStatus("loading");
       const res = await axios.post(
         `${baseUrl}/api/v1/admin/coupon/request/${id}`,
         payload
       );
       console.log(res);
-      
+
       if (res.status === 201) {
         setRequestStatus("success");
         setCouponCount("");
@@ -72,13 +72,15 @@ function AdminReqCoupon() {
 
               <div className={styles.field}>
                 <label>Stars Per Coupon</label>
-                <input
-                  type="number"
-                  placeholder="e.g. 5"
-                  value={perStarCount}
-                  onChange={(e) => setPerStarCount(e.target.value)}
-                  className={styles.input}
-                />
+                <select name="starCountPerCoupon" value={perStarCount} onChange={(e) => setPerStarCount(e.target.value)} className={styles.selectbtn}>
+                  <option value="">Select Stars</option>
+                  <option value="5">5 Stars</option>
+                  <option value="10">10 Stars</option>
+                  <option value="25">25 Stars</option>
+                  <option value="50">50 Stars</option>
+                  <option value="100">100 Stars</option>
+                  <option value="200">250 Stars</option>
+                </select>
               </div>
               <div className={styles.field}>
                 <label>Notes</label>

@@ -13,28 +13,30 @@ function AdminCouponReq() {
   const getRequest = async () => {
     try {
       const response = await axios.get(`${baseUrl}/api/v1/admin/assigned-coupon-requests/${adminId}`);
-      console.log(response);  
-      setBundles(response.data.data)
-      
+      console.log(response);
+      const coupondata = response.data.data;
+      setBundles(coupondata.filter((item) => item._id !== adminId))
+
+
     } catch (error) {
       console.log(error);
     }
   };
-  const sendReq=async(bundleId)=>{
+  const sendReq = async (bundleId) => {
     try {
-      const response=await axios.post(`${baseUrl}/api/v1/admin/distribute-coupon/${adminId}`,{requestId:bundleId})
+      const response = await axios.post(`${baseUrl}/api/v1/admin/distribute-coupon/${adminId}`, { requestId: bundleId })
       console.log(response);
-      if(response.status===200){
-        getRequest()  
+      if (response.status === 200) {
+        getRequest()
       }
     } catch (error) {
       console.log(error);
-      
+
     }
-    console.log("click",bundleId);
-    
+    console.log("click", bundleId);
+
   }
-  useEffect(()=>{getRequest()},[])
+  useEffect(() => { getRequest() }, [])
   return (
     <div className={styles.UserAccount}>
       <Sidebar />

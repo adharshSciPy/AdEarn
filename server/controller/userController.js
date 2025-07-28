@@ -1459,49 +1459,49 @@ user.password=newPassword
     res.status(500).json({ message: "Server error" });
   }
 };
-const sendCouponRequest = async (req, res) => {
-  const { id } = req.params; 
-  const { couponCount, perStarCount, note, role } = req.body;
+  const sendCouponRequest = async (req, res) => {
+    const { id } = req.params; 
+    const { couponCount, perStarCount, note, role } = req.body;
 
-  try {
-    if (!couponCount || !perStarCount || !role) {
-      return res.status(400).json({ message: "couponCount, perStarCount, and role are required" });
+    try {
+      if (!couponCount || !perStarCount || !role) {
+        return res.status(400).json({ message: "couponCount, perStarCount, and role are required" });
+      }
+
+      const totalStars = couponCount * perStarCount;
+      const perCouponAmount = getCouponAmount(perStarCount); 
+      const amountToPay = couponCount * perCouponAmount;
+
+      const requestBody = {
+        starCountPerCoupon: perStarCount,
+        totalStars,
+        amountToPay,
+        note,
+        paymentStatus: "pending",
+        isProcessed: false,
+      };
+
+      if (role === 300) {
+        requestBody.userId = id;
+        requestBody.requestedByRole = "user";
+      } else if (role === 400) {
+        requestBody.adminId = id;
+        requestBody.requestedByRole = "admin";
+      } else {
+        return res.status(400).json({ message: "Invalid role. Must be 300 (user) or 400 (admin)" });
+      }
+
+      const request = await CouponRequest.create(requestBody);
+
+      return res.status(201).json({
+        message: "Coupon request submitted successfully",
+        data: request,
+      });
+    } catch (err) {
+      console.error("Error sending coupon request:", err);
+      return res.status(500).json({ message: "Server error" });
     }
-
-    const totalStars = couponCount * perStarCount;
-    const perCouponAmount = getCouponAmount(perStarCount); 
-    const amountToPay = couponCount * perCouponAmount;
-
-    const requestBody = {
-      starCountPerCoupon: perStarCount,
-      totalStars,
-      amountToPay,
-      note,
-      paymentStatus: "pending",
-      isProcessed: false,
-    };
-
-    if (role === 300) {
-      requestBody.userId = id;
-      requestBody.requestedByRole = "user";
-    } else if (role === 400) {
-      requestBody.adminId = id;
-      requestBody.requestedByRole = "admin";
-    } else {
-      return res.status(400).json({ message: "Invalid role. Must be 300 (user) or 400 (admin)" });
-    }
-
-    const request = await CouponRequest.create(requestBody);
-
-    return res.status(201).json({
-      message: "Coupon request submitted successfully",
-      data: request,
-    });
-  } catch (err) {
-    console.error("Error sending coupon request:", err);
-    return res.status(500).json({ message: "Server error" });
-  }
-};
+  };
 const getUserContestEntries = async (req, res) => {
   const { userId } = req.params;
 
@@ -1796,6 +1796,83 @@ const deleteAd = async (req, res) => {
     });
   }
 };
+// to initiate coupon request 
+const initiateCouponRequest = async (req, res) => {
+  const { id } = req.params;
+  const { couponCount, perStarCount, role } = req.body;
+
+  try {
+    if (!couponCount || !perStarCount || !role) {
+      return res.status(400).json({ message: "couponCount, perStarCount, and role are required" });
+    }
+
+    const totalStars = couponCount * perStarCount;
+    const perCouponAmount = getCouponAmount(perStarCount);
+    const amountToPay = couponCount * perCouponAmount;
+
+    // In future: Create Razorpay order and return orderId as well
+
+    return res.status(200).json({
+      message: "Coupon request initiated",
+      couponCount,
+      perStarCount,
+      totalStars,
+      perCouponAmount,
+      amountToPay,
+      // future: razorpayOrderId
+    });
+  } catch (err) {
+    console.error("Error initiating coupon request:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+//to confirm the coupon request after razorpay completion
+
+const confirmCouponRequest = async (req, res) => {
+  const { id } = req.params;
+  const { couponCount, perStarCount, note, role } = req.body;
+
+  try {
+    if (!couponCount || !perStarCount || !role) {
+      return res.status(400).json({ message: "couponCount, perStarCount, and role are required" });
+    }
+
+    const totalStars = couponCount * perStarCount;
+    const perCouponAmount = getCouponAmount(perStarCount);
+    const amountToPay = couponCount * perCouponAmount;
+
+    const requestBody = {
+      starCountPerCoupon: perStarCount,
+      totalStars,
+      amountToPay,
+      note,
+      paymentStatus: "pending", // You can change to "completed" after Razorpay integration
+      isProcessed: false,
+    };
+
+    if (role === 300) {
+      requestBody.userId = id;
+      requestBody.requestedByRole = "user";
+    } else if (role === 400) {
+      requestBody.adminId = id;
+      requestBody.requestedByRole = "admin";
+    } else {
+      return res.status(400).json({ message: "Invalid role. Must be 300 (user) or 400 (admin)" });
+    }
+
+    const request = await CouponRequest.create(requestBody);
+
+    return res.status(201).json({
+      message: "Coupon request submitted successfully",
+      data: request,
+    });
+  } catch (err) {
+    console.error("Error confirming coupon request:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 export {
   registerUser,
   editUser,
@@ -1824,4 +1901,6 @@ export {
   getSavedAds,
   unsaveAd,
   deleteAd,
+  initiateCouponRequest,
+  confirmCouponRequest
 };
