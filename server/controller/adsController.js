@@ -10,6 +10,9 @@ import AdminWallet from "../model/adminwalletModel.js";
 import SuperAdminWallet from "../model/superAdminWallet.js";
 import { Admin } from "../model/adminModel.js";
 import superAdminModel from "../model/superAdminModel.js";
+import { validateAudioDuration } from "../utils/validateAudioDuration.js";
+import fs from "fs";
+
 
 // function generateStarPayoutPlan(views, totalStars) {
 //   const payout = Array(views).fill(0);
@@ -105,12 +108,21 @@ const createImageAd = async (req, res) => {
     return res.status(400).json({ message: "No image file or existing image URL provided." });
   }
 
-  let audioUrl = null;
-  if (audioFile) {
+let audioUrl = null;
+
+if (audioFile) {
+  try {
+    await validateAudioDuration(audioFile.path, 10); 
     audioUrl = `/imgAdUploads/${audioFile.filename}`;
-  } else if (req.body.existingAudioUrl) {
-    audioUrl = req.body.existingAudioUrl;
+  } catch (err) {
+    
+    fs.unlinkSync(audioFile.path);
+    return res.status(400).json({ message: err.message });
   }
+} else if (req.body.existingAudioUrl) {
+  audioUrl = req.body.existingAudioUrl;
+}
+
 
 
   const parsedAdPeriod = parseFloat(adPeriod);
