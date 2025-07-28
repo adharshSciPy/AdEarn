@@ -132,9 +132,9 @@ function ContestStar() {
               <Button>Log</Button>
             </div>
 
-            <div className={styles.companygraph}>
+            {/* <div className={styles.companygraph}>
               <Line data={data} options={options} />
-            </div>
+            </div> */}
 
             <div className={styles.accountshead}>
               <h1>Accounts</h1>

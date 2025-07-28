@@ -1,5 +1,5 @@
 import  Router  from "express";
-import { activateSubscription, addKyc, editUser, fetchAllMyAds, fetchMySingleAd, fetchUserWallet, getUserByUniqueId, getViewedAds, redeemCoupon, registerUser, resetPassword, sendCouponRequest, sendOTP, sendPasswordResetOTP, starBuy, uploadProfilePicture, userLogin, userLogout, verifyOTP, verifyPasswordResetOTP,getUserContestEntries, saveAdForLater, getSavedAds, unsaveAd, deleteAd, } from "../controller/userController.js";
+import { activateSubscription, addKyc, editUser, fetchAllMyAds, fetchMySingleAd, fetchUserWallet, getUserByUniqueId, getViewedAds, redeemCoupon, registerUser, resetPassword, sendCouponRequest, sendOTP, sendPasswordResetOTP, starBuy, uploadProfilePicture, userLogin, userLogout, verifyOTP, verifyPasswordResetOTP,getUserContestEntries, saveAdForLater, getSavedAds, unsaveAd, deleteAd, initiateStarPurchase, confirmStarPurchase, initiateCouponRequest, confirmCouponRequest, } from "../controller/userController.js";
 import uploadUserImg from "../multer/userImgMulter.js";
 import userKyc from "../multer/kycVerificationMulter.js";
 import authMiddleware from "../auth/authMiddleware.js";
@@ -16,6 +16,9 @@ userRouter.route('/profile-upload/:id').post(wrapMulter(uploadUserImg), uploadPr
 userRouter.route('/kyc-verification/:id').post(wrapMulter(userKyc), addKyc);
 userRouter.route('/by-uniqueid').get(getUserByUniqueId);
 userRouter.route('/buy-stars/:id').post(starBuy);
+userRouter.route('/initiate/star-buy/:id').post(initiateStarPurchase);
+userRouter.route('/confirm/star-buy/:id').post(confirmStarPurchase);
+
 userRouter.route('/viewed-ads/:id').get(getViewedAds);
 userRouter.route('/redeem-coupon/:id').post(redeemCoupon);
 userRouter.route('/user-wallet/:id').get(fetchUserWallet);
@@ -34,6 +37,10 @@ userRouter.route('/save-ad').post(authMiddleware,saveAdForLater);
 userRouter.route('/view/saved-ads').get(authMiddleware,getSavedAds);
 userRouter.route('/unsave-ads').post(authMiddleware,unsaveAd);
 userRouter.route('/delete-ad/:userId').delete(deleteAd);
+userRouter.route('/initiate/coupon-request/:id').post(initiateCouponRequest);
+userRouter.route('/confirm/coupon-request/:id').post(confirmCouponRequest);
+
+
 
 
 

@@ -1261,7 +1261,7 @@ const couponDistribution = async (req, res) => {
 
     // Check if the batch is already assigned
     if (couponBatch.assignedTo) {
-      return res.status(400).json({
+      return res.status(409).json({
         success: false,
         message: "Coupon batch is already assigned to another admin.",
         assignedTo: couponBatch.assignedTo,

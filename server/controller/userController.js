@@ -668,7 +668,220 @@ const getUserByUniqueId = async (req, res) => {
   }
 };
 // to buy stars
-const starBuy = async (req, res) => {
+  const starBuy = async (req, res) => {
+    const { id } = req.params;
+    const { starsNeeded } = req.body;
+    const { io, connectedUsers } = req;
+
+    if (!starsNeeded || starsNeeded <= 0) {
+      return res.status(400).json({ message: "Invalid starsNeeded value" });
+    }
+
+    try {
+      const conversionRate = 4;
+      const percentageToUser = 60;
+
+      const totalStarsGenerated = starsNeeded * (100 / percentageToUser);
+      const rupeesToPay = totalStarsGenerated / conversionRate;
+      const userShare = starsNeeded;
+      const superAdminShare = totalStarsGenerated * 0.2;
+      const adminShare = totalStarsGenerated * 0.1;
+      const referredUserShare = totalStarsGenerated * 0.1;
+
+      const user = await User.findById(id)
+        .populate("userWalletDetails")
+        .populate("referedBy");
+
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      const wallet = user.userWalletDetails;
+      if (!wallet) return res.status(404).json({ message: "User wallet not found" });
+
+      // Update user wallet
+      wallet.totalStars += Math.floor(userShare);
+      wallet.starBought.push({
+        starsNeeded: Math.floor(userShare),
+        paymentStatus: "completed",
+      });
+      await wallet.save();
+
+      let referredUserNotification = null;
+
+      // Referral logic
+      if (user.referedBy) {
+        const referredUser = await User.findById(user.referedBy).populate("userWalletDetails");
+
+        if (referredUser?.userWalletDetails) {
+          const referredWallet = referredUser.userWalletDetails;
+
+          referredWallet.totalStars += Math.floor(referredUserShare);
+          referredWallet.starBought.push({
+            starsNeeded: Math.floor(referredUserShare),
+            paymentStatus: "completed",
+          });
+          referredWallet.referralTransactions.push({
+            fromUser: user._id,
+            starsReceived: Math.floor(referredUserShare),
+          });
+
+          await referredWallet.save();
+
+          referredUser.referalCredits += Math.floor(referredUserShare);
+          await referredUser.save();
+
+          // Create notification for referred user
+          referredUserNotification = sendNotification(
+            referredUser._id,
+            USER_ROLE,
+            `You received ${Math.floor(referredUserShare)} stars as referral bonus from ${user.firstName}'s purchase!`,
+            io,
+            connectedUsers
+          );
+        }
+      } else {
+        const firstUser = await User.findOne().sort({ createdAt: 1 }).populate("userWalletDetails");
+
+        if (firstUser?.userWalletDetails) {
+        const firstWallet = firstUser.userWalletDetails;
+
+  firstWallet.totalStars += Math.floor(referredUserShare);
+  firstWallet.referralTransactions.push({
+    fromUser: user._id,
+    starsReceived: Math.floor(referredUserShare),
+  });
+  await firstWallet.save();
+
+        }
+      }
+
+      // Admin wallet
+      let adminWallet = await AdminWallet.findOne();
+      if (!adminWallet) {
+        adminWallet = new AdminWallet({
+          totalStars: Math.floor(adminShare),
+          transactions: [{
+            userId: user._id,
+            starsReceived: Math.floor(adminShare),
+          }],
+        });
+      } else {
+        adminWallet.totalStars += Math.floor(adminShare);
+        adminWallet.transactions.push({
+          userId: user._id,
+          starsReceived: Math.floor(adminShare),
+        });
+      }
+      await adminWallet.save();
+
+      // Super admin wallet
+      let superAdminWallet = await SuperAdminWallet.findOne();
+      if (!superAdminWallet) {
+        superAdminWallet = new SuperAdminWallet({
+          totalStars: Math.floor(superAdminShare),
+          transactions: [{
+            userId: user._id,
+            starsReceived: Math.floor(superAdminShare),
+          }],
+        });
+      } else {
+        superAdminWallet.totalStars += Math.floor(superAdminShare);
+        superAdminWallet.transactions.push({
+          userId: user._id,
+          starsReceived: Math.floor(superAdminShare),
+        });
+      }
+      await superAdminWallet.save();
+
+    
+      const adminUsers = await Admin.find({ adminRole: ADMIN_ROLE });
+      const superAdminUser = await superAdminModel.findOne({ role: SUPER_ADMIN_ROLE });
+
+      // Prepare all notifications
+      const notificationsToSend = [
+        sendNotification(
+          user._id,
+          USER_ROLE,
+          `You successfully purchased ${Math.floor(userShare)} stars.`,
+          io,
+          connectedUsers
+        ),
+        ...adminUsers.map((admin) =>
+          sendNotification(
+            admin._id,
+            ADMIN_ROLE,
+            `You received ${Math.floor(adminShare)} stars from ${user.firstName} ${user.lastName}'s purchase. (UserId: ${user._id})`,
+            io,
+            connectedUsers
+          )
+        ),
+        sendNotification(
+          superAdminUser?._id,
+          SUPER_ADMIN_ROLE,
+          `You received ${Math.floor(superAdminShare)} stars from ${user.firstName} ${user.lastName}'s purchase. (UserId: ${user._id})`,
+          io,
+          connectedUsers
+        ),
+      ];
+
+      // Add referred user notification if it exists
+      if (referredUserNotification) {
+        notificationsToSend.push(referredUserNotification);
+      }
+
+      await Promise.all(notificationsToSend);
+
+      return res.status(200).json({
+        message: "Star purchase successful",
+        starsRequested: starsNeeded.toString(),
+        totalStarsGenerated: Math.floor(totalStarsGenerated),
+        userShare: Math.floor(userShare),
+        adminShare: Math.floor(adminShare),
+        superAdminShare: Math.floor(superAdminShare),
+        referredUserShare: Math.floor(referredUserShare),
+        amountToPay: rupeesToPay,
+      });
+
+    } catch (error) {
+      console.error("Error in starBuy:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  };
+// star buy api with razor pay integration
+const initiateStarPurchase = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { starsNeeded } = req.body;
+    if (!id || typeof id !== "string") {
+      return res.status(400).json({ message: "User ID is required and must be a valid string" });
+    }
+
+    if (!starsNeeded || typeof starsNeeded !== "number" || starsNeeded <= 0) {
+      return res.status(400).json({ message: "starsNeeded must be a positive number" });
+    }
+    const conversionRate = 4;
+    const percentageToUser = 60;
+
+    const totalStarsGenerated = starsNeeded * (100 / percentageToUser);
+    const rupeesToPay = totalStarsGenerated / conversionRate;
+
+    // Placeholder: Razorpay integration (create order, etc.)
+ 
+
+    return res.status(200).json({
+      message: "Purchase initiated",
+      starsRequested: starsNeeded,
+      totalStarsGenerated: Math.floor(totalStarsGenerated),
+      amountToPay: rupeesToPay.toFixed(2),
+    });
+
+  } catch (error) {
+  console.error("Error in confirmStarPurchase:", error);
+  return res.status(500).json({ message: "Internal server error" })
+  }
+};
+
+//api to call after razorpay success
+const confirmStarPurchase = async (req, res) => {
   const { id } = req.params;
   const { starsNeeded } = req.body;
   const { io, connectedUsers } = req;
@@ -697,7 +910,7 @@ const starBuy = async (req, res) => {
     const wallet = user.userWalletDetails;
     if (!wallet) return res.status(404).json({ message: "User wallet not found" });
 
-    // Update user wallet
+    // User wallet update
     wallet.totalStars += Math.floor(userShare);
     wallet.starBought.push({
       starsNeeded: Math.floor(userShare),
@@ -707,13 +920,11 @@ const starBuy = async (req, res) => {
 
     let referredUserNotification = null;
 
-    // Referral logic
     if (user.referedBy) {
       const referredUser = await User.findById(user.referedBy).populate("userWalletDetails");
 
       if (referredUser?.userWalletDetails) {
         const referredWallet = referredUser.userWalletDetails;
-
         referredWallet.totalStars += Math.floor(referredUserShare);
         referredWallet.starBought.push({
           starsNeeded: Math.floor(referredUserShare),
@@ -725,11 +936,9 @@ const starBuy = async (req, res) => {
         });
 
         await referredWallet.save();
-
         referredUser.referalCredits += Math.floor(referredUserShare);
         await referredUser.save();
 
-        // Create notification for referred user
         referredUserNotification = sendNotification(
           referredUser._id,
           USER_ROLE,
@@ -740,21 +949,18 @@ const starBuy = async (req, res) => {
       }
     } else {
       const firstUser = await User.findOne().sort({ createdAt: 1 }).populate("userWalletDetails");
-
       if (firstUser?.userWalletDetails) {
-      const firstWallet = firstUser.userWalletDetails;
-
-firstWallet.totalStars += Math.floor(referredUserShare);
-firstWallet.referralTransactions.push({
-  fromUser: user._id,
-  starsReceived: Math.floor(referredUserShare),
-});
-await firstWallet.save();
-
+        const firstWallet = firstUser.userWalletDetails;
+        firstWallet.totalStars += Math.floor(referredUserShare);
+        firstWallet.referralTransactions.push({
+          fromUser: user._id,
+          starsReceived: Math.floor(referredUserShare),
+        });
+        await firstWallet.save();
       }
     }
 
-    // Admin wallet
+    // Admin Wallet
     let adminWallet = await AdminWallet.findOne();
     if (!adminWallet) {
       adminWallet = new AdminWallet({
@@ -773,7 +979,7 @@ await firstWallet.save();
     }
     await adminWallet.save();
 
-    // Super admin wallet
+    // Super Admin Wallet
     let superAdminWallet = await SuperAdminWallet.findOne();
     if (!superAdminWallet) {
       superAdminWallet = new SuperAdminWallet({
@@ -792,11 +998,9 @@ await firstWallet.save();
     }
     await superAdminWallet.save();
 
-   
     const adminUsers = await Admin.find({ adminRole: ADMIN_ROLE });
     const superAdminUser = await superAdminModel.findOne({ role: SUPER_ADMIN_ROLE });
 
-    // Prepare all notifications
     const notificationsToSend = [
       sendNotification(
         user._id,
@@ -823,7 +1027,6 @@ await firstWallet.save();
       ),
     ];
 
-    // Add referred user notification if it exists
     if (referredUserNotification) {
       notificationsToSend.push(referredUserNotification);
     }
@@ -831,18 +1034,18 @@ await firstWallet.save();
     await Promise.all(notificationsToSend);
 
     return res.status(200).json({
-      message: "Star purchase successful",
+      message: "Star purchase confirmed",
       starsRequested: starsNeeded.toString(),
       totalStarsGenerated: Math.floor(totalStarsGenerated),
       userShare: Math.floor(userShare),
       adminShare: Math.floor(adminShare),
       superAdminShare: Math.floor(superAdminShare),
       referredUserShare: Math.floor(referredUserShare),
-      amountToPay: rupeesToPay,
+      amountPaid: rupeesToPay,
     });
 
   } catch (error) {
-    console.error("Error in starBuy:", error);
+    console.error("Error in confirmStarPurchase:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -1256,49 +1459,49 @@ user.password=newPassword
     res.status(500).json({ message: "Server error" });
   }
 };
-const sendCouponRequest = async (req, res) => {
-  const { id } = req.params; 
-  const { couponCount, perStarCount, note, role } = req.body;
+  const sendCouponRequest = async (req, res) => {
+    const { id } = req.params; 
+    const { couponCount, perStarCount, note, role } = req.body;
 
-  try {
-    if (!couponCount || !perStarCount || !role) {
-      return res.status(400).json({ message: "couponCount, perStarCount, and role are required" });
+    try {
+      if (!couponCount || !perStarCount || !role) {
+        return res.status(400).json({ message: "couponCount, perStarCount, and role are required" });
+      }
+
+      const totalStars = couponCount * perStarCount;
+      const perCouponAmount = getCouponAmount(perStarCount); 
+      const amountToPay = couponCount * perCouponAmount;
+
+      const requestBody = {
+        starCountPerCoupon: perStarCount,
+        totalStars,
+        amountToPay,
+        note,
+        paymentStatus: "pending",
+        isProcessed: false,
+      };
+
+      if (role === 300) {
+        requestBody.userId = id;
+        requestBody.requestedByRole = "user";
+      } else if (role === 400) {
+        requestBody.adminId = id;
+        requestBody.requestedByRole = "admin";
+      } else {
+        return res.status(400).json({ message: "Invalid role. Must be 300 (user) or 400 (admin)" });
+      }
+
+      const request = await CouponRequest.create(requestBody);
+
+      return res.status(201).json({
+        message: "Coupon request submitted successfully",
+        data: request,
+      });
+    } catch (err) {
+      console.error("Error sending coupon request:", err);
+      return res.status(500).json({ message: "Server error" });
     }
-
-    const totalStars = couponCount * perStarCount;
-    const perCouponAmount = getCouponAmount(perStarCount); 
-    const amountToPay = couponCount * perCouponAmount;
-
-    const requestBody = {
-      starCountPerCoupon: perStarCount,
-      totalStars,
-      amountToPay,
-      note,
-      paymentStatus: "pending",
-      isProcessed: false,
-    };
-
-    if (role === 300) {
-      requestBody.userId = id;
-      requestBody.requestedByRole = "user";
-    } else if (role === 400) {
-      requestBody.adminId = id;
-      requestBody.requestedByRole = "admin";
-    } else {
-      return res.status(400).json({ message: "Invalid role. Must be 300 (user) or 400 (admin)" });
-    }
-
-    const request = await CouponRequest.create(requestBody);
-
-    return res.status(201).json({
-      message: "Coupon request submitted successfully",
-      data: request,
-    });
-  } catch (err) {
-    console.error("Error sending coupon request:", err);
-    return res.status(500).json({ message: "Server error" });
-  }
-};
+  };
 const getUserContestEntries = async (req, res) => {
   const { userId } = req.params;
 
@@ -1593,6 +1796,83 @@ const deleteAd = async (req, res) => {
     });
   }
 };
+// to initiate coupon request 
+const initiateCouponRequest = async (req, res) => {
+  const { id } = req.params;
+  const { couponCount, perStarCount, role } = req.body;
+
+  try {
+    if (!couponCount || !perStarCount || !role) {
+      return res.status(400).json({ message: "couponCount, perStarCount, and role are required" });
+    }
+
+    const totalStars = couponCount * perStarCount;
+    const perCouponAmount = getCouponAmount(perStarCount);
+    const amountToPay = couponCount * perCouponAmount;
+
+    // In future: Create Razorpay order and return orderId as well
+
+    return res.status(200).json({
+      message: "Coupon request initiated",
+      couponCount,
+      perStarCount,
+      totalStars,
+      perCouponAmount,
+      amountToPay,
+      // future: razorpayOrderId
+    });
+  } catch (err) {
+    console.error("Error initiating coupon request:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+//to confirm the coupon request after razorpay completion
+
+const confirmCouponRequest = async (req, res) => {
+  const { id } = req.params;
+  const { couponCount, perStarCount, note, role } = req.body;
+
+  try {
+    if (!couponCount || !perStarCount || !role) {
+      return res.status(400).json({ message: "couponCount, perStarCount, and role are required" });
+    }
+
+    const totalStars = couponCount * perStarCount;
+    const perCouponAmount = getCouponAmount(perStarCount);
+    const amountToPay = couponCount * perCouponAmount;
+
+    const requestBody = {
+      starCountPerCoupon: perStarCount,
+      totalStars,
+      amountToPay,
+      note,
+      paymentStatus: "pending", // You can change to "completed" after Razorpay integration
+      isProcessed: false,
+    };
+
+    if (role === 300) {
+      requestBody.userId = id;
+      requestBody.requestedByRole = "user";
+    } else if (role === 400) {
+      requestBody.adminId = id;
+      requestBody.requestedByRole = "admin";
+    } else {
+      return res.status(400).json({ message: "Invalid role. Must be 300 (user) or 400 (admin)" });
+    }
+
+    const request = await CouponRequest.create(requestBody);
+
+    return res.status(201).json({
+      message: "Coupon request submitted successfully",
+      data: request,
+    });
+  } catch (err) {
+    console.error("Error confirming coupon request:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 export {
   registerUser,
   editUser,
@@ -1602,6 +1882,8 @@ export {
   addKyc,
   getUserByUniqueId,
   starBuy,
+  initiateStarPurchase,
+  confirmStarPurchase,
   getViewedAds,
   redeemCoupon,
   fetchUserWallet,
@@ -1619,4 +1901,6 @@ export {
   getSavedAds,
   unsaveAd,
   deleteAd,
+  initiateCouponRequest,
+  confirmCouponRequest
 };
