@@ -21,7 +21,10 @@
 }
 .firstMain {
   background-image: url("../../../assets/homeBackground.png");
+  background-size: cover;
   display: flex;
+  background-repeat: no-repeat;
+  border-radius: 10px;
 }
 .firstMainleftContainer {
   width: 50%;
@@ -63,6 +66,7 @@
   border-radius: 10px;
   cursor: pointer;
   transition: color 0.4s ease;
+  overflow: hidden;
 }
 
 .firstMainbutton button::before {
@@ -96,107 +100,105 @@
   background-position: center;
   background-size: contain;
 }
-.tableContainer{
-    width: 95%;
-    margin: auto;
-    background-color: #D6E4FD;
-    margin-top: 40px;
-    border-radius: 10px;
-    margin-bottom: 40px;
-    overflow: hidden;
+.tableContainer {
+  width: 95%;
+  margin: auto;
+  background-color: #d6e4fd;
+  margin-top: 40px;
+  border-radius: 10px;
+  margin-bottom: 40px;
+  overflow: hidden;
 }
 
-.buttonsContainer{
-    width: 100%;
-    padding:30px 0;
-
+.buttonsContainer {
+  width: 100%;
+  padding: 30px 0;
 }
-.buttonsContainer{
-    display: flex;
-    align-items: center;
-    margin-left: 15px;
+.buttonsContainer {
+  display: flex;
+  align-items: center;
+  margin-left: 15px;
 }
-.createButtonContainer button{
-    padding: 8px 15px;
-    margin-left: 20px;
-    border-radius: 10px;
-    border:1px solid #3563E9;
+.createButtonContainer button {
+  padding: 8px 15px;
+  margin-left: 20px;
+  border-radius: 10px;
+  border: 1px solid #3563e9;
 }
-.duplicateButtonContainer button{
-    padding: 8px 15px;
-    margin-left: 20px;
-    border-radius: 10px;
-    border:1px solid #3563E9;
+.duplicateButtonContainer button {
+  padding: 8px 15px;
+  margin-left: 20px;
+  border-radius: 10px;
+  border: 1px solid #3563e9;
 }
-.editButtonContainer button{
-    padding: 8px 15px;
-    margin-left: 20px;
-    border-radius: 10px;
-    border:1px solid #3563E9;
+.editButtonContainer button {
+  padding: 8px 15px;
+  margin-left: 20px;
+  border-radius: 10px;
+  border: 1px solid #3563e9;
 }
-.deleteButtonContainer button{
-    padding: 8px 15px;
-    margin-left: 20px;
-    border-radius: 10px;
-    border:1px solid #3563E9;
+.deleteButtonContainer button {
+  padding: 8px 15px;
+  margin-left: 20px;
+  border-radius: 10px;
+  border: 1px solid #3563e9;
 }
-.reportButtonContainer button{
-    padding: 8px 15px;
-    margin-left: 20px;
-    border-radius: 10px;
-    border:1px solid #3563E9;
+.reportButtonContainer button {
+  padding: 8px 15px;
+  margin-left: 20px;
+  border-radius: 10px;
+  border: 1px solid #3563e9;
 }
-.img{
-    height: 100%;
-    width: 100%;
-    object-fit: contain;
+.img {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
 }
-.tick{
-    height: 15px;
-    width: 15px;
+.tick {
+  height: 15px;
+  width: 15px;
 }
-.tableSub{
-    overflow: hidden;
+.tableSub {
+  overflow: hidden;
 }
-.tableSub th,td{
-    text-align: center;
-    padding: 15px 10px;
+.tableSub th,
+td {
+  text-align: center;
+  padding: 15px 10px;
 }
-.tableSub th{
-    background-color: #5D32B9;
-    color: white;
+.tableSub th {
+  background-color: #5d32b9;
+  color: white;
 }
-.tdBorder{
-    border-left: 1px solid #3563E9;
-    border-right: 1px solid #3563E9;
-
+.tdBorder {
+  border-left: 1px solid #3563e9;
+  border-right: 1px solid #3563e9;
 }
-.tdMainContainer{
-    display: flex;
-    flex-direction: column;
+.tdMainContainer {
+  display: flex;
+  flex-direction: column;
 }
-.topTd{
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
+.topTd {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
 }
-.tdButton{
-    border: none;
-    background-color: transparent;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    
+.tdButton {
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.bottomTd{
-    display: flex;
-    justify-content: center;
-    margin-top: 5px;
-    align-items: center;
+.bottomTd {
+  display: flex;
+  justify-content: center;
+  margin-top: 5px;
+  align-items: center;
 }
-.tdButton p{
-    font-size: 8px;
+.tdButton p {
+  font-size: 8px;
 }
 .switchContainer {
   width: 60px;
@@ -292,4 +294,13 @@
 }
 .moreBtn:hover {
   color: #0056b3;
+}
+
+@media (max-width: 800px) {
+  .firstMainrightContainer {
+    display: none;
+  }
+  .firstMainleftContainer {
+    width: 100%;
+  }
 }
