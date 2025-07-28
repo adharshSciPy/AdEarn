@@ -2732,7 +2732,19 @@ const createImageAdDraft = async (req, res) => {
     ];
 
     const imageUrl = `/imgAdUploads/${imageFile.filename}`;
-    const audioUrl = audioFile ? `/imgAdUploads/${audioFile.filename}` : null;
+  let audioUrl = null;
+
+if (audioFile) {
+  try {
+    await validateAudioDuration(audioFile.path, 10); 
+    audioUrl = `/imgAdUploads/${audioFile.filename}`;
+  } catch (err) {
+    
+    fs.unlinkSync(audioFile.path);
+    return res.status(400).json({ message: err.message });
+  }
+}
+
 
     const imageAd = await ImageAd.create({
       title,
