@@ -37,7 +37,6 @@ import SuperAdminAd from "../model/superAdminAdModel.js";
 import { calculateGrowth } from "../utils/calculateGrowth.js";
 import { validateAudioDuration } from "../utils/validateAudioDuration.js";
 
-
 const ObjectId = mongoose.Types.ObjectId;
 
 const USER_ROLE = process.env.USER_ROLE;
@@ -3138,25 +3137,22 @@ const postSuperAdminImageAd = async (req, res) => {
       clickUrl,
       userViewsNeeded,
       adPeriod, // optional
-      targetStates = [],
-      targetDistricts = [],
-      targetRegions = [],
-    } = req.body;
+      states,
+      districts,
+      locations,
+    } = req.body; // note: 'districts' plural here to match usage
+    const { id: superAdminId } = req.params;
 
-    // 🔸 Handle uploaded files from multer
+    // Handle uploaded files from multer
     const imageFile = req.files?.imageAd?.[0];
     const audioFile = req.files?.audioAd?.[0];
 
-    let imageUrl = "";
-    if (imageFile) {
-      imageUrl = `/imgAdUploads/${imageFile.filename}`;
-    }else {
-      return res
-        .status(400)
-        .json({ message: "No image file or existing image URL provided." });
+    if (!imageFile) {
+      return res.status(400).json({ message: "No image file provided." });
     }
-    let audioUrl = null;
+    const imageUrl = `/imgAdUploads/${imageFile.filename}`;
 
+    let audioUrl = null;
     if (audioFile) {
       try {
         await validateAudioDuration(audioFile.path, 10);
@@ -3169,32 +3165,94 @@ const postSuperAdminImageAd = async (req, res) => {
       audioUrl = req.body.existingAudioUrl;
     }
 
-    // 🔸 Step 1: Get total user count
-    const users = await User.find();
-    const totalUsers = users.length;
+    // Parse target locations, states, districts
+    let parsedLocations = [];
+    let parsedStates = [];
+    let parsedDistricts = [];
 
-    if (totalUsers === 0) {
-      return res
-        .status(400)
-        .json({ message: "No users found to show the ad." });
+    try {
+      parsedLocations =
+        typeof locations === "string" ? JSON.parse(locations) : locations;
+      parsedStates = typeof states === "string" ? JSON.parse(states) : states;
+      parsedDistricts =
+        typeof districts === "string" ? JSON.parse(districts) : districts;
+
+      if (!Array.isArray(parsedStates)) parsedStates = [];
+      if (!Array.isArray(parsedDistricts)) parsedDistricts = [];
+
+    } catch (err) {
+      return res.status(400).json({
+        message: "Invalid JSON format in locations or targets",
+        error: err.message,
+      });
     }
 
-    // 🔸 Step 2: Build zero star payout plan
+    // Validate and convert locations to geoJSON format
+    const targetRegions = [];
+    if (Array.isArray(parsedLocations)) {
+      for (const loc of parsedLocations) {
+        if (!loc.coords || !loc.radius) continue;
+
+        let latitude, longitude;
+        if (typeof loc.coords === "string") {
+          const parts = loc.coords.split(",");
+          latitude = parseFloat(parts[0]);
+          longitude = parseFloat(parts[1]);
+        } else if (Array.isArray(loc.coords) && loc.coords.length === 2) {
+          latitude = parseFloat(loc.coords[0]);
+          longitude = parseFloat(loc.coords[1]);
+        }
+
+        const radius = parseFloat(loc.radius);
+        if (isNaN(latitude) || isNaN(longitude) || isNaN(radius)) {
+          return res
+            .status(400)
+            .json({ message: "Invalid location format in coords or radius" });
+        }
+
+        targetRegions.push({
+          location: {
+            type: "Point",
+            coordinates: [latitude, longitude],
+          },
+          radius,
+        });
+      }
+    }
+
+    // Require at least one targeting field
+    if (
+      targetRegions.length === 0 &&
+      parsedStates.length === 0 &&
+      parsedDistricts.length === 0
+    ) {
+      return res.status(400).json({
+        message:
+          "At least one target location (geo, state, or district) is required",
+      });
+    }
+
+    // Now create ImageAd document
+    const users = await User.find();
+    const totalUsers = users.length;
+    if (totalUsers === 0) {
+      return res.status(400).json({ message: "No users found to show the ad." });
+    }
+
     const starPayoutPlan = Array(parseInt(totalUsers)).fill(0);
 
-    // 🔸 Step 3: Create ImageAd document
     const imageAd = new ImageAd({
       title,
       description,
       imageUrl,
-      audioUrl: audioUrl || null,
+      audioUrl,
       clickUrl: clickUrl || "",
-      createdBy: null,
+      createdBy: superAdminId,
       isAdVerified: true,
       isAdVisible: true,
       userViewsNeeded: parseInt(userViewsNeeded),
       starPayoutPlan,
-      paymentMode:"star",
+      paymentMode: "star",
       totalStarsAllocated: 0,
       extraDeductedStars: 0,
       isAdRejected: false,
@@ -3203,14 +3261,18 @@ const postSuperAdminImageAd = async (req, res) => {
       adExpirationTime: new Date(
         Date.now() + (parseInt(adPeriod) || 30) * 24 * 60 * 60 * 1000
       ),
-      targetStates,
-      targetDistricts,
       targetRegions,
+      targetStates: parsedStates,
+      targetDistricts: parsedDistricts,
     });
 
     await imageAd.save();
 
-    // 🔸 Optionally log into SuperAdminAd collection
+    const ad = new Ad({
+      imgAdRef: imageAd._id,
+    });
+    await ad.save();
+
     await SuperAdminAd.create({
       imageUrl,
       heading: title,
@@ -3220,7 +3282,8 @@ const postSuperAdminImageAd = async (req, res) => {
 
     return res.status(201).json({
       message: "Super Admin Image Ad created successfully.",
-      adId: imageAd._id,
+      imageAdId: imageAd._id,
+      adId: ad._id,
     });
   } catch (error) {
     console.error("Error creating super admin image ad:", error);
@@ -3230,6 +3293,7 @@ const postSuperAdminImageAd = async (req, res) => {
     });
   }
 };
+
 
 const getAllSuperAdminImageAds = async (req, res) => {
   try {

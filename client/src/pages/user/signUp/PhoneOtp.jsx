@@ -75,7 +75,7 @@ function PhoneOtp() {
                     <h2>Enter OTP</h2>
                   </div>
                   <div className={styles.paraContent}>
-                    <p>We've sent a 4-digit OTP to your phone.</p>
+                    <p>We've sent a 6-digit OTP to your phone.</p>
                   </div>
                   <div className={styles.formContainer}>
                     <form className="form" onSubmit={handleSubmit}>

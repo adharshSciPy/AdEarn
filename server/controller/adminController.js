@@ -1033,46 +1033,49 @@ const assignKycToAdmin = async (req, res) => {
 
   try {
     const kycDoc = await kyc.findById(kycId);
-
     if (!kycDoc || kycDoc.kycStatus !== "pending") {
       return res.status(400).json({ message: "Invalid or already processed KYC" });
     }
 
-    // 1. Check if this admin already has an active KYC assigned
-    const activeAssignment = await kyc.findOne({
+    const now = new Date();
+    const timeoutLimit = 5 * 60 * 1000; // 5 minutes in ms
+
+    // STEP 1: Check if the admin already has an active assigned KYC
+    const currentActive = await kyc.findOne({
       assignedAdminId: adminId,
       kycStatus: "pending",
-      assignmentTime: { $ne: null },
+      assignmentTime: { $ne: null }
     });
 
-    if (activeAssignment) {
-      const timeElapsed = new Date() - new Date(activeAssignment.assignmentTime);
-      const timeoutLimit = 5 * 60 * 1000; // 5 minutes in ms
-
+    if (currentActive) {
+      const timeElapsed = now - new Date(currentActive.assignmentTime);
       if (timeElapsed < timeoutLimit) {
         return res.status(409).json({
-          message: "You already have an active KYC assigned. Please complete it before taking a new one.",
-          assignedKycId: activeAssignment._id,
+          message: "You already have an active KYC assigned. Please complete it or wait until the 5-minute timeout.",
+          assignedKycId: currentActive._id,
+          remainingTime: timeoutLimit - timeElapsed,
         });
       } else {
-        // Reset the expired assignment
-        activeAssignment.assignedAdminId = null;
-        activeAssignment.assignmentTime = null;
-        await activeAssignment.save();
+        // Timeout expired, release it
+        currentActive.assignedAdminId = null;
+        currentActive.assignmentTime = null;
+        await currentActive.save();
       }
     }
 
-    // 2. Check if the target KYC is already assigned and active
+    // STEP 2: Check if the selected KYC is already assigned and still within 5 minutes
     if (
       kycDoc.assignedAdminId &&
-      new Date() - new Date(kycDoc.assignmentTime) < 5 * 60 * 1000
+      now - new Date(kycDoc.assignmentTime) < timeoutLimit
     ) {
-      return res.status(409).json({ message: "This KYC is already being processed by another admin." });
+      return res.status(409).json({
+        message: "This KYC is already being processed by another admin. Try again later.",
+      });
     }
 
-    // 3. Assign the KYC to this admin
+    // STEP 3: Assign this KYC to the current admin
     kycDoc.assignedAdminId = adminId;
-    kycDoc.assignmentTime = new Date();
+    kycDoc.assignmentTime = now;
     await kycDoc.save();
 
     return res.status(200).json({
@@ -1085,6 +1088,7 @@ const assignKycToAdmin = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 // to assign ads into respectiveadmins dash for verification with 5min timeout
 const assignAdToAdmin = async (req, res) => {
@@ -1101,63 +1105,67 @@ const assignAdToAdmin = async (req, res) => {
       return res.status(404).json({ message: "Ad not found" });
     }
 
-    const adTypeRef = adDoc.imgAdRef || adDoc.videoAdRef || adDoc.surveyAdRef;
+    const adRef = adDoc.imgAdRef || adDoc.videoAdRef || adDoc.surveyAdRef;
 
-    if (!adTypeRef) {
+    if (!adRef) {
       return res.status(400).json({ message: "No associated ad found in this wrapper" });
     }
 
-    if (adTypeRef.isAdVerified || adTypeRef.isAdRejected) {
+    if (adRef.isAdVerified || adRef.isAdRejected) {
       return res.status(400).json({ message: "Ad is already processed" });
     }
 
-    // Step 1: Check if admin already has an active ad assignment
+    const now = new Date();
+    const timeoutLimit = 5 * 60 * 1000; // 5 minutes
+
+    // Step 1: Check if this admin already has an active (locked) ad
     const adModel = adDoc.imgAdRef
       ? mongoose.model("ImageAd")
       : adDoc.videoAdRef
       ? mongoose.model("VideoAd")
       : mongoose.model("SurveyAd");
 
-    const activeAd = await adModel.findOne({
+    const currentActiveAd = await adModel.findOne({
       assignedAdminId: adminId,
       isAdVerified: false,
       isAdRejected: false,
       assignmentTime: { $ne: null },
     });
 
-    if (activeAd) {
-      const timeElapsed = new Date() - new Date(activeAd.assignmentTime);
-      const timeoutLimit = 5 * 60 * 1000;
-
-      if (timeElapsed < timeoutLimit) {
+    if (currentActiveAd) {
+      const elapsed = now - new Date(currentActiveAd.assignmentTime);
+      if (elapsed < timeoutLimit) {
         return res.status(409).json({
-          message: "You already have an active ad assigned. Complete or timeout before taking a new one.",
-          assignedAdId: activeAd._id,
+          message: "You already have an active ad assigned. Complete it or wait 5 minutes.",
+          assignedAdId: currentActiveAd._id,
+          remainingTime: timeoutLimit - elapsed,
         });
       } else {
-        // Expired assignment: release it
-        activeAd.assignedAdminId = null;
-        activeAd.assignmentTime = null;
-        await activeAd.save();
+        // Release expired lock
+        currentActiveAd.assignedAdminId = null;
+        currentActiveAd.assignmentTime = null;
+        await currentActiveAd.save();
       }
     }
 
-    // Step 2: Check if this ad is already assigned and within lock window
+    // Step 2: Check if the selected ad is already locked by someone else
     if (
-      adTypeRef.assignedAdminId &&
-      new Date() - new Date(adTypeRef.assignmentTime) < 5 * 60 * 1000
+      adRef.assignedAdminId &&
+      now - new Date(adRef.assignmentTime) < timeoutLimit
     ) {
-      return res.status(409).json({ message: "This ad is already being processed by another admin." });
+      return res.status(409).json({
+        message: "This ad is currently being processed by another admin.",
+      });
     }
 
-    // Step 3: Assign the ad
-    adTypeRef.assignedAdminId = adminId;
-    adTypeRef.assignmentTime = new Date();
-    await adTypeRef.save();
+    // Step 3: Lock the ad to this admin
+    adRef.assignedAdminId = adminId;
+    adRef.assignmentTime = now;
+    await adRef.save();
 
     return res.status(200).json({
-      message: "Ad assigned to admin",
-      ad: adTypeRef,
+      message: "Ad assigned successfully to admin",
+      assignedAdId: adRef._id,
     });
 
   } catch (err) {
@@ -1165,6 +1173,7 @@ const assignAdToAdmin = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 const fetchKycsAssignedToAdmin = async (req, res) => {
   const adminId = req.params.id;

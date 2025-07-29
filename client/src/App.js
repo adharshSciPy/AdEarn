@@ -63,6 +63,7 @@ import SurveyResponses from './pages/user/SurveyResponses/SurveyResponses';
 import SavedAds from './pages/user/SavedAds/SavedAds';
 import SavedAdsPreview from './pages/user/SavedAdsPreview/SavedAdsPreview';
 import EmailValidation from './pages/user/signUp/EmailValidation';
+import EmailOtp from './pages/user/signUp/EmailOtp';
 
 
 // superadmin
@@ -205,7 +206,8 @@ function App() {
           <Route path='/coupon' element={<CouponPage />} />
           <Route path='/surveyadspreview/:id/:adId' element={<SurveyAdPreview />} />
           <Route path='/surveyaddetails/:id/:adId' element={<SurveyResponses />} />
-          <Route path='/emailValidation/:id' element={<EmailValidation/>}/>
+          <Route path='/emailValidation/:id' element={<EmailValidation />} />
+          <Route path='/emailotp/:id' element={<EmailOtp />} />
 
 
 

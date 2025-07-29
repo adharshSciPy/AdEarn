@@ -123,7 +123,7 @@ superAdminRouter.route("/welcome-bonus/logs").get(getWelcomeBonusLogs ); // incl
 superAdminRouter.route("/total-stars/received").get(fetchTotalReceivedStars);
 superAdminRouter.route("/total-stars/given").get(fetchTotalGivenStars);
 superAdminRouter.route("/payout").post(superAdminPayout);
-superAdminRouter.route("/ad/image").post(wrapMulter(adMediaUpload), postSuperAdminImageAd);
+superAdminRouter.route("/ad/image/:id").post(wrapMulter(adMediaUpload), postSuperAdminImageAd);
 superAdminRouter.route("/ad/image").get(getAllSuperAdminImageAds);
 superAdminRouter.route("/user-ads/stats").get(getUserAndAdStats);//to get user and ads growth daily(gain on yesterday)
 superAdminRouter.route("/user/monthly-graph").get(getMonthlyUserAndAdPosterStats);
