@@ -174,7 +174,7 @@ function App() {
           <Route path='/resendotp/:phone' element={<ResendOtp />} />
 
           <Route path='/emailRegistration' element={<EmailRegistration />} />
-          <Route path='/referalPage' element={<ReferalCode />} />
+          <Route path='/referalPage/:id' element={<ReferalCode />} />
           <Route path='/form1/:id' element={<Form1 />} />
           <Route path='/form2/:id' element={<Form2 />} />
           <Route path='/userhome/:id' element={<UserHome />} />
