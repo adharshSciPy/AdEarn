@@ -1,5 +1,5 @@
 import  Router  from "express";
-import { activateSubscription, addKyc, editUser, fetchAllMyAds, fetchMySingleAd, fetchUserWallet, getUserByUniqueId, getViewedAds, redeemCoupon, registerUser, resetPassword, sendCouponRequest, sendOTP, sendPasswordResetOTP, starBuy, uploadProfilePicture, userLogin, userLogout, verifyOTP, verifyPasswordResetOTP,getUserContestEntries, saveAdForLater, getSavedAds, unsaveAd, deleteAd, initiateStarPurchase, confirmStarPurchase, initiateCouponRequest, confirmCouponRequest, } from "../controller/userController.js";
+import { activateSubscription, addKyc, editUser, fetchAllMyAds, fetchMySingleAd, fetchUserWallet, getUserByUniqueId, getViewedAds, redeemCoupon, registerUser, resetPassword, sendCouponRequest, sendOTP, sendPasswordResetOTP, starBuy, uploadProfilePicture, userLogin, userLogout, verifyOTP, verifyPasswordResetOTP,getUserContestEntries, saveAdForLater, getSavedAds, unsaveAd, deleteAd, initiateStarPurchase, confirmStarPurchase, initiateCouponRequest, confirmCouponRequest, sendUserEmailOtp, verifyUserEmailOtp, } from "../controller/userController.js";
 import uploadUserImg from "../multer/userImgMulter.js";
 import userKyc from "../multer/kycVerificationMulter.js";
 import authMiddleware from "../auth/authMiddleware.js";
@@ -39,6 +39,11 @@ userRouter.route('/unsave-ads').post(authMiddleware,unsaveAd);
 userRouter.route('/delete-ad/:userId').delete(deleteAd);
 userRouter.route('/initiate/coupon-request/:id').post(initiateCouponRequest);
 userRouter.route('/confirm/coupon-request/:id').post(confirmCouponRequest);
+userRouter.route('/send-email/otp').post(sendUserEmailOtp);
+userRouter.route('/verify-email/otp').patch(verifyUserEmailOtp);
+
+
+
 
 
 

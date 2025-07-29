@@ -27,6 +27,7 @@ import { VideoAd } from "../model/videoadModel.js";
 import { SurveyAd } from "../model/surveyadModel.js";
 import { log } from "console";
 import { convertStarsToRupees } from "../utils/convertStarsToRupees.js";
+import sgMail from "@sendgrid/mail";
 
 
 
@@ -414,6 +415,11 @@ const userLogin = async (req, res) => {
     const user = await User.findOne({ email }).populate("userWalletDetails");
     if (!user) {
       return res.status(404).json({ message: "Email doesn't exists" });
+    }
+     if (!user.isEmailVerified) {
+      return res
+        .status(400)
+        .json({ message: "Email hasn't verified" ,data:`/emailVerification`});
     }
 
     const isMatch = await user.isPasswordCorrect(password);
@@ -1871,7 +1877,161 @@ const confirmCouponRequest = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+// to verift the user email
+const sendUserEmailOtp = async (req, res) => {
+  try {
+    const { email, userId } = req.body;
 
+    if (!email || !userId) {
+      return res.status(400).json({ message: "Email and user ID are required" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await redis.set(`verify_email_otp:${userId}`, JSON.stringify({ email, otp }), "EX", 300);
+
+    await sgMail.send({
+      to: email,
+      from: config.SENDGRID_SENDER_EMAIL,
+      subject: "🔐 Your Email Verification OTP",
+      text: `Hi ${user.firstName || 'there'},
+
+Your OTP to verify your email is: ${otp}
+
+This OTP will expire in 5 minutes.
+
+If you didn't request this, please ignore this email.`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .email-container {
+              border-radius: 10px;
+              box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+              overflow: hidden;
+              background: linear-gradient(135deg, #f9f9ff 0%, #f0f4ff 100%);
+            }
+            .header {
+              background: linear-gradient(135deg, #6e8efb 0%, #4a6cf7 100%);
+              color: white;
+              padding: 25px;
+              text-align: center;
+            }
+            .logo {
+              max-width: 150px;
+              margin-bottom: 15px;
+            }
+            .content {
+              padding: 25px;
+              background-color: white;
+            }
+            .otp-card {
+              background: #f8f9fa;
+              border-left: 4px solid #4a6cf7;
+              padding: 15px;
+              margin: 20px 0;
+              border-radius: 0 5px 5px 0;
+              text-align: center;
+            }
+            .otp-code {
+              font-size: 32px;
+              font-weight: 700;
+              letter-spacing: 5px;
+              color: #222;
+              margin: 15px 0;
+            }
+            .footer {
+              text-align: center;
+              padding: 15px;
+              font-size: 12px;
+              color: #777;
+              background-color: #f5f5f5;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="email-container">
+            <div class="header">
+              <!-- Replace with your actual logo URL -->
+              <img src="https://example.com/your-logo.png" alt="Company Logo" class="logo">
+              <h1>Email Verification</h1>
+              <p>Please verify your email address</p>
+            </div>
+            
+            <div class="content">
+              <p>Hi ${user.firstName || 'there'},</p>
+              <p>We received a request to verify your email address. Please use the following OTP to complete your verification:</p>
+              
+              <div class="otp-card">
+                <p>Your verification code is:</p>
+                <div class="otp-code">${otp}</div>
+                <p>This code will expire in 5 minutes.</p>
+              </div>
+              
+              <p>If you didn't request this email, you can safely ignore it.</p>
+              <p>Thank you!</p>
+            </div>
+            
+            <div class="footer">
+              <p>© ${new Date().getFullYear()} Your Company Name. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+
+    return res.status(200).json({ message: "OTP sent successfully" });
+  } catch (err) {
+    console.error("Send OTP error:", err);
+    return res.status(500).json({ message: "Failed to send OTP" });
+  }
+};
+//to veriy the otp
+ const verifyUserEmailOtp = async (req, res) => {
+  try {
+    const { userId, otp } = req.body;
+
+    if (!userId || !otp) {
+      return res.status(400).json({ message: "User ID and OTP are required" });
+    }
+
+    const data = await redis.get(`verify_email_otp:${userId}`);
+    if (!data) return res.status(400).json({ message: "OTP expired or not found" });
+
+    const { email, otp: storedOtp } = JSON.parse(data);
+
+    if (otp !== storedOtp) {
+      return res.status(400).json({ message: "Incorrect OTP" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.email = email;
+    user.isEmailVerified = true;
+    await user.save();
+
+    await redis.del(`verify_email_otp:${userId}`);
+
+    return res.status(200).json({ message: "Email verified and updated successfully" });
+  } catch (err) {
+    console.error("OTP verification error:", err);
+    return res.status(500).json({ message: "Failed to verify OTP" });
+  }
+}
 
 export {
   registerUser,
@@ -1902,5 +2062,7 @@ export {
   unsaveAd,
   deleteAd,
   initiateCouponRequest,
-  confirmCouponRequest
+  confirmCouponRequest,
+  sendUserEmailOtp,
+  verifyUserEmailOtp
 };
