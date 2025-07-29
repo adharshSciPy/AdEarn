@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
 import styles from "./Kyc.module.css";
 import Navbar from "../NavBar/Navbar";
-import axios from 'axios'
+import axios from "axios";
 import baseUrl from "../../../baseurl";
 import { useSelector } from "react-redux";
 import Driver from "driver.js";
 import "driver.js/dist/driver.min.css";
+import { toast } from "react-toastify";
 
 function KycForm() {
-  const userId = useSelector((state) => state.user.id)
+  const userId = useSelector((state) => state.user.id);
   const [form, setForm] = useState({
     fullName: "",
     dateOfBirth: "",
@@ -26,18 +27,18 @@ function KycForm() {
     state: "",
     city: "",
     documentType: "",
-    documentNumber: ""
+    documentNumber: "",
   });
 
   const [tourState, setTourState] = useState({
     navbarCompleted: false,
-    homeCompleted: false
+    homeCompleted: false,
   });
 
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
 
-    console.log(value)
+    console.log(value);
     if (name === "documentType") {
       console.log("Selected Document Type:", value);
       // You can add extra logic here if needed later
@@ -449,8 +450,10 @@ function KycForm() {
     });
 
     try {
-      console.log("userid", userId)
-      const response = await axios.post(`${baseUrl}/api/v1/user/kyc-verification/${userId}`, formData,
+      console.log("userid", userId);
+      const response = await axios.post(
+        `${baseUrl}/api/v1/user/kyc-verification/${userId}`,
+        formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -474,19 +477,20 @@ function KycForm() {
         state: "",
         city: "",
         documentType: "",
-        documentNumber: ""
+        documentNumber: "",
       });
-      console.log("response", response)
+      console.log("response", response);
     } catch (error) {
-      console.log(error)
+      console.log(error);
+      toast.error(error.response.data.message);
     }
   };
 
   // Handle tour completion
   const handleTourComplete = (tourType) => {
-    setTourState(prev => ({
+    setTourState((prev) => ({
       ...prev,
-      [tourType === 'navbar' ? 'navbarCompleted' : 'homeCompleted']: true
+      [tourType === "navbar" ? "navbarCompleted" : "homeCompleted"]: true,
     }));
   };
 
@@ -515,7 +519,6 @@ function KycForm() {
     }
   }, [tourState.navbarCompleted]);
 
-
   const startHomeTour = () => {
     // Check again to prevent duplicate tours
     const tourCompleted = localStorage.getItem(`kycTourCompleted_${userId}`);
@@ -524,11 +527,11 @@ function KycForm() {
     let attempts = 0;
 
     const interval = setInterval(() => {
-      const selectors = [
-        "#submit-kyc"
-      ];
+      const selectors = ["#submit-kyc"];
 
-      const existingSelectors = selectors.filter(sel => document.querySelector(sel));
+      const existingSelectors = selectors.filter((sel) =>
+        document.querySelector(sel)
+      );
 
       // Start tour if at least the place-ads-btn exists (main requirement)
       const canStartTour = document.querySelector("#submit-kyc");
@@ -563,9 +566,9 @@ function KycForm() {
             onReset: () => {
               // Mark both tours as completed
               localStorage.setItem(`kycTourCompleted_${userId}`, "true");
-              setTourState(prev => ({
+              setTourState((prev) => ({
                 ...prev,
-                homeCompleted: true
+                homeCompleted: true,
               }));
             },
           });
@@ -583,7 +586,6 @@ function KycForm() {
     }, 1000);
   };
 
-
   return (
     <>
       <Navbar onTourComplete={handleTourComplete} />
@@ -595,61 +597,128 @@ function KycForm() {
           <form className={styles.profileCard} onSubmit={handleSubmit}>
             <div className={styles.formGroup}>
               <label>Full Name</label>
-              <input type="text" name="fullName" value={form.fullName} onChange={handleChange} placeholder="Your Full Name" />
+              <input
+                type="text"
+                name="fullName"
+                value={form.fullName}
+                onChange={handleChange}
+                placeholder="Your Full Name"
+              />
 
               <label>Date of Birth</label>
-              <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} />
+              <input
+                type="date"
+                name="dateOfBirth"
+                value={form.dateOfBirth}
+                onChange={handleChange}
+              />
 
               <label>Gender</label>
-              <select name="gender" value={form.gender} onChange={handleChange} style={{
-                padding: "10px",
-                borderRadius: "10px",
-                border: "none",
-              }}>
+              <select
+                name="gender"
+                value={form.gender}
+                onChange={handleChange}
+                style={{
+                  padding: "10px",
+                  borderRadius: "10px",
+                  border: "none",
+                }}
+              >
                 <option value="">Select Gender</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
               </select>
 
               <label>Nationality</label>
-              <input type="text" name="nationality" value={form.nationality} onChange={handleChange} placeholder="Nationality" />
+              <input
+                type="text"
+                name="nationality"
+                value={form.nationality}
+                onChange={handleChange}
+                placeholder="Nationality"
+              />
 
               <label>Guardian Name</label>
-              <input type="text" name="guardianName" value={form.guardianName} onChange={handleChange} placeholder="Guardian Name" />
+              <input
+                type="text"
+                name="guardianName"
+                value={form.guardianName}
+                onChange={handleChange}
+                placeholder="Guardian Name"
+              />
 
               <label>Email</label>
-              <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" />
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="Email"
+              />
 
               <label>Phone Number</label>
-              <input type="text" name="phoneNumber" value={form.phoneNumber} onChange={handleChange} placeholder="Phone Number" />
+              <input
+                type="text"
+                name="phoneNumber"
+                value={form.phoneNumber}
+                onChange={handleChange}
+                placeholder="Phone Number"
+              />
 
               <label>Permanent Address</label>
-              <input type="text" name="permanentAddress" value={form.permanentAddress} onChange={handleChange} placeholder="Permanent Address" />
+              <input
+                type="text"
+                name="permanentAddress"
+                value={form.permanentAddress}
+                onChange={handleChange}
+                placeholder="Permanent Address"
+              />
 
               <label>Current Address</label>
-              <input type="text" name="currentAddress" value={form.currentAddress} onChange={handleChange} placeholder="Current Address" />
+              <input
+                type="text"
+                name="currentAddress"
+                value={form.currentAddress}
+                onChange={handleChange}
+                placeholder="Current Address"
+              />
 
               <label>State</label>
-              <select name="state" value={form.state} onChange={handleChange} style={{
-                padding: "10px",
-                borderRadius: "10px",
-                border: "none",
-              }}>
+              <select
+                name="state"
+                value={form.state}
+                onChange={handleChange}
+                style={{
+                  padding: "10px",
+                  borderRadius: "10px",
+                  border: "none",
+                }}
+              >
                 <option value="">Select State</option>
                 {Object.keys(stateCityMap).map((state) => (
-                  <option key={state} value={state}>{state}</option>
+                  <option key={state} value={state}>
+                    {state}
+                  </option>
                 ))}
               </select>
 
               <label>City</label>
-              <select name="city" value={form.city} onChange={handleChange} disabled={!form.state} style={{
-                padding: "10px",
-                borderRadius: "10px",
-                border: "none",
-              }}>
+              <select
+                name="city"
+                value={form.city}
+                onChange={handleChange}
+                disabled={!form.state}
+                style={{
+                  padding: "10px",
+                  borderRadius: "10px",
+                  border: "none",
+                }}
+              >
                 <option value="">Select City</option>
                 {cityOptions.map((city) => (
-                  <option key={city} value={city}>{city}</option>
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
                 ))}
               </select>
 
@@ -657,13 +726,31 @@ function KycForm() {
               <input type="file" name="userKyc" onChange={handleChange} />
 
               <label>Bank Name</label>
-              <input type="text" name="bankName" value={form.bankName} onChange={handleChange} placeholder="Bank Name" />
+              <input
+                type="text"
+                name="bankName"
+                value={form.bankName}
+                onChange={handleChange}
+                placeholder="Bank Name"
+              />
 
               <label>Account Number</label>
-              <input type="text" name="accountNumber" value={form.accountNumber} onChange={handleChange} placeholder="Account Number" />
+              <input
+                type="text"
+                name="accountNumber"
+                value={form.accountNumber}
+                onChange={handleChange}
+                placeholder="Account Number"
+              />
 
               <label>IFSC Code</label>
-              <input type="text" name="ifscCode" value={form.ifscCode} onChange={handleChange} placeholder="IFSC Code" />
+              <input
+                type="text"
+                name="ifscCode"
+                value={form.ifscCode}
+                onChange={handleChange}
+                placeholder="IFSC Code"
+              />
 
               <label>Document Type</label>
               <select
@@ -685,8 +772,13 @@ function KycForm() {
               </select>
 
               <label>Document Number</label>
-              <input type="text" name="documentNumber" value={form.documentNumber} onChange={handleChange} placeholder="Document Number" />
-
+              <input
+                type="text"
+                name="documentNumber"
+                value={form.documentNumber}
+                onChange={handleChange}
+                placeholder="Document Number"
+              />
 
               <div className={styles.buttonContainer}>
                 <button type="submit">Save</button>
