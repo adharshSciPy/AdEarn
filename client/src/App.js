@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import NotificationsListener from './components/NotificationController/NotificationsListener';
 import { ToastContainer } from "react-toastify";
 
+// admin
+
 import AdminLogin from './pages/admin/Login/AdminOTP'
 import AdminSignup from './pages/admin/Register/AdminSignup'
 import AdminUpdate from './pages/admin/Register/AdminUpdate';
@@ -25,6 +27,9 @@ import ResetPassAdmin from './pages/admin/ResetPassAdmin/ResetPassAdmin';
 import AdminCouponReq from './pages/admin/AdminCouponReq/AdminCouponReq';
 import AdminCouponAssign from './pages/admin/AdminCouponAssign/AdminCouponAssign';
 import AdminReqCouponSuperAdmin from './pages/admin/AdminReqCoupon/AdminReqCoupon';
+
+
+// user
 
 import LoginUser from './pages/user/Login/LoginUser';
 import PhoneLogin from './pages/user/signUp/PhoneLogin';
@@ -57,6 +62,10 @@ import SurveyAdPreview from './pages/user/SurveyAdPreview/SurveyAdPreview';
 import SurveyResponses from './pages/user/SurveyResponses/SurveyResponses';
 import SavedAds from './pages/user/SavedAds/SavedAds';
 import SavedAdsPreview from './pages/user/SavedAdsPreview/SavedAdsPreview';
+import EmailValidation from './pages/user/signUp/EmailValidation';
+
+
+// superadmin
 
 import SuperAdminLogin from './pages/superadmin/SuperAdminLogin/SuperAdminLogin';
 import SuperadminDash from './pages/superadmin/Dashboard/SuperadminDash';
@@ -196,6 +205,7 @@ function App() {
           <Route path='/coupon' element={<CouponPage />} />
           <Route path='/surveyadspreview/:id/:adId' element={<SurveyAdPreview />} />
           <Route path='/surveyaddetails/:id/:adId' element={<SurveyResponses />} />
+          <Route path='/emailValidation/:id' element={<EmailValidation/>}/>
 
 
 
