@@ -7,7 +7,7 @@ import axios from "axios";
 import baseUrl from "../../../baseurl";
 import { useNavigate } from "react-router-dom";
 import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
-import { Modal, Input, Form, Pagination } from "antd";
+import { Modal, Input, Form, Pagination,message  } from "antd";
 import { toast } from "react-toastify";
 import Driver from "driver.js";
 import "driver.js/dist/driver.min.css";
@@ -42,8 +42,6 @@ const WalletPage = () => {
 
   const navigate = useNavigate();
   const handlePayout = async () => {
-    console.log("token", token);
-    console.log(typeof payoutAmount);
 
     try {
       const res = await axios.post(
@@ -67,6 +65,8 @@ const WalletPage = () => {
       console.log(res);
     } catch (error) {
       console.log(error);
+        toast.error(error);
+
     }
   };
   const handleCancel = () => {
@@ -617,7 +617,7 @@ const WalletPage = () => {
           <Form.Item label="Enter Star" required>
             <Input
               type="number"
-              placeholder="Minimum 1000 star is needed"
+              placeholder="Minimum 2000 stars is needed"
               value={payoutAmount}
               onChange={(e) => setPayoutAmount(parseInt(e.target.value) || 0)}
             />
