@@ -27,6 +27,7 @@ import { VideoAd } from "../model/videoadModel.js";
 import { SurveyAd } from "../model/surveyadModel.js";
 import { log } from "console";
 import { convertStarsToRupees } from "../utils/convertStarsToRupees.js";
+import sgMail from "@sendgrid/mail";
 
 
 
@@ -414,6 +415,11 @@ const userLogin = async (req, res) => {
     const user = await User.findOne({ email }).populate("userWalletDetails");
     if (!user) {
       return res.status(404).json({ message: "Email doesn't exists" });
+    }
+     if (!user.isEmailVerified) {
+      return res
+        .status(400)
+        .json({ message: "Email hasn't verified" ,data:`/emailVerification`});
     }
 
     const isMatch = await user.isPasswordCorrect(password);
@@ -850,56 +856,59 @@ const getUserByUniqueId = async (req, res) => {
 const initiateStarPurchase = async (req, res) => {
   try {
     const { id } = req.params;
-    const { starsNeeded } = req.body;
+    const { amount } = req.body;
+
     if (!id || typeof id !== "string") {
       return res.status(400).json({ message: "User ID is required and must be a valid string" });
     }
 
-    if (!starsNeeded || typeof starsNeeded !== "number" || starsNeeded <= 0) {
-      return res.status(400).json({ message: "starsNeeded must be a positive number" });
+    if (!amount || typeof amount !== "number" || amount <= 0 || amount % 25 !== 0) {
+      return res.status(400).json({ message: "Amount must be a positive number and a multiple of 25" });
     }
-    const conversionRate = 4;
-    const percentageToUser = 60;
 
-    const totalStarsGenerated = starsNeeded * (100 / percentageToUser);
-    const rupeesToPay = totalStarsGenerated / conversionRate;
+    const conversionRate = 4; // 1 ₹ = 4 stars
+    const percentageToUser = 60; // 60% stars to user
 
-    // Placeholder: Razorpay integration (create order, etc.)
- 
+    const totalStarsGenerated = amount * conversionRate;
+    const userStars = Math.floor((totalStarsGenerated * percentageToUser) / 100);
+    const platformStars = totalStarsGenerated - userStars;
+
+    // Placeholder: Razorpay integration would go here
 
     return res.status(200).json({
       message: "Purchase initiated",
-      starsRequested: starsNeeded,
-      totalStarsGenerated: Math.floor(totalStarsGenerated),
-      amountToPay: rupeesToPay.toFixed(2),
+      amountPaid: amount.toFixed(2),
+      totalStarsGenerated,
+      userStars,
+      platformStars,
     });
 
   } catch (error) {
-  console.error("Error in confirmStarPurchase:", error);
-  return res.status(500).json({ message: "Internal server error" })
+    console.error("Error in initiateStarPurchase:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 //api to call after razorpay success
 const confirmStarPurchase = async (req, res) => {
   const { id } = req.params;
-  const { starsNeeded } = req.body;
+  const { amount } = req.body;
   const { io, connectedUsers } = req;
 
-  if (!starsNeeded || starsNeeded <= 0) {
-    return res.status(400).json({ message: "Invalid starsNeeded value" });
+  if (!amount || typeof amount !== "number" || amount <= 0 || amount % 25 !== 0) {
+    return res.status(400).json({ message: "Amount must be a positive number and a multiple of 25" });
   }
 
   try {
-    const conversionRate = 4;
+    const conversionRate = 4; // ₹1 = 4 stars
     const percentageToUser = 60;
 
-    const totalStarsGenerated = starsNeeded * (100 / percentageToUser);
-    const rupeesToPay = totalStarsGenerated / conversionRate;
-    const userShare = starsNeeded;
-    const superAdminShare = totalStarsGenerated * 0.2;
-    const adminShare = totalStarsGenerated * 0.1;
-    const referredUserShare = totalStarsGenerated * 0.1;
+    const totalStarsGenerated = amount * conversionRate;
+    const userShare = Math.floor((totalStarsGenerated * percentageToUser) / 100);
+    const superAdminShare = Math.floor(totalStarsGenerated * 0.2);
+    const adminShare = Math.floor(totalStarsGenerated * 0.1);
+    const referredUserShare = Math.floor(totalStarsGenerated * 0.1);
 
     const user = await User.findById(id)
       .populate("userWalletDetails")
@@ -910,14 +919,15 @@ const confirmStarPurchase = async (req, res) => {
     const wallet = user.userWalletDetails;
     if (!wallet) return res.status(404).json({ message: "User wallet not found" });
 
-    // User wallet update
-    wallet.totalStars += Math.floor(userShare);
+    // 1. Update User Wallet
+    wallet.totalStars += userShare;
     wallet.starBought.push({
-      starsNeeded: Math.floor(userShare),
+      starsNeeded: userShare,
       paymentStatus: "completed",
     });
     await wallet.save();
 
+    // 2. Referred User Wallet or fallback
     let referredUserNotification = null;
 
     if (user.referedBy) {
@@ -925,79 +935,75 @@ const confirmStarPurchase = async (req, res) => {
 
       if (referredUser?.userWalletDetails) {
         const referredWallet = referredUser.userWalletDetails;
-        referredWallet.totalStars += Math.floor(referredUserShare);
+        referredWallet.totalStars += referredUserShare;
         referredWallet.starBought.push({
-          starsNeeded: Math.floor(referredUserShare),
+          starsNeeded: referredUserShare,
           paymentStatus: "completed",
         });
         referredWallet.referralTransactions.push({
           fromUser: user._id,
-          starsReceived: Math.floor(referredUserShare),
+          starsReceived: referredUserShare,
         });
 
         await referredWallet.save();
-        referredUser.referalCredits += Math.floor(referredUserShare);
+        referredUser.referalCredits += referredUserShare;
         await referredUser.save();
 
         referredUserNotification = sendNotification(
           referredUser._id,
           USER_ROLE,
-          `You received ${Math.floor(referredUserShare)} stars as referral bonus from ${user.firstName}'s purchase!`,
+          `You received ${referredUserShare} stars as referral bonus from ${user.firstName}'s purchase!`,
           io,
           connectedUsers
         );
       }
     } else {
+      // fallback: first registered user gets referral share
       const firstUser = await User.findOne().sort({ createdAt: 1 }).populate("userWalletDetails");
       if (firstUser?.userWalletDetails) {
         const firstWallet = firstUser.userWalletDetails;
-        firstWallet.totalStars += Math.floor(referredUserShare);
+        firstWallet.totalStars += referredUserShare;
         firstWallet.referralTransactions.push({
           fromUser: user._id,
-          starsReceived: Math.floor(referredUserShare),
+          starsReceived: referredUserShare,
         });
         await firstWallet.save();
       }
     }
 
-    // Admin Wallet
+    // 3. Admin Wallet
     let adminWallet = await AdminWallet.findOne();
     if (!adminWallet) {
       adminWallet = new AdminWallet({
-        totalStars: Math.floor(adminShare),
-        transactions: [{
-          userId: user._id,
-          starsReceived: Math.floor(adminShare),
-        }],
+        totalStars: adminShare,
+        transactions: [{ userId: user._id, starsReceived: adminShare }],
       });
     } else {
-      adminWallet.totalStars += Math.floor(adminShare);
+      adminWallet.totalStars += adminShare;
       adminWallet.transactions.push({
         userId: user._id,
-        starsReceived: Math.floor(adminShare),
+        starsReceived: adminShare,
       });
     }
     await adminWallet.save();
 
-    // Super Admin Wallet
+    // 4. Super Admin Wallet
     let superAdminWallet = await SuperAdminWallet.findOne();
     if (!superAdminWallet) {
       superAdminWallet = new SuperAdminWallet({
-        totalStars: Math.floor(superAdminShare),
-        transactions: [{
-          userId: user._id,
-          starsReceived: Math.floor(superAdminShare),
-        }],
+        totalStars: superAdminShare,
+        transactions: [{ userId: user._id, starsReceived: superAdminShare }],
       });
     } else {
-      superAdminWallet.totalStars += Math.floor(superAdminShare);
+      superAdminWallet.totalStars += superAdminShare;
       superAdminWallet.transactions.push({
         userId: user._id,
-        starsReceived: Math.floor(superAdminShare),
+        starsReceived: superAdminShare,
       });
     }
     await superAdminWallet.save();
 
+    // 5. Notifications
     const adminUsers = await Admin.find({ adminRole: ADMIN_ROLE });
     const superAdminUser = await superAdminModel.findOne({ role: SUPER_ADMIN_ROLE });
 
@@ -1005,7 +1011,7 @@ const confirmStarPurchase = async (req, res) => {
       sendNotification(
         user._id,
         USER_ROLE,
-        `You successfully purchased ${Math.floor(userShare)} stars.`,
+        `You successfully purchased ${userShare} stars.`,
         io,
         connectedUsers
       ),
@@ -1013,7 +1019,7 @@ const confirmStarPurchase = async (req, res) => {
         sendNotification(
           admin._id,
           ADMIN_ROLE,
-          `You received ${Math.floor(adminShare)} stars from ${user.firstName} ${user.lastName}'s purchase. (UserId: ${user._id})`,
+          `You received ${adminShare} stars from ${user.firstName} ${user.lastName}'s purchase.`,
           io,
           connectedUsers
         )
@@ -1021,7 +1027,7 @@ const confirmStarPurchase = async (req, res) => {
       sendNotification(
         superAdminUser?._id,
         SUPER_ADMIN_ROLE,
-        `You received ${Math.floor(superAdminShare)} stars from ${user.firstName} ${user.lastName}'s purchase. (UserId: ${user._id})`,
+        `You received ${superAdminShare} stars from ${user.firstName} ${user.lastName}'s purchase.`,
         io,
         connectedUsers
       ),
@@ -1035,13 +1041,12 @@ const confirmStarPurchase = async (req, res) => {
 
     return res.status(200).json({
       message: "Star purchase confirmed",
-      starsRequested: starsNeeded.toString(),
-      totalStarsGenerated: Math.floor(totalStarsGenerated),
-      userShare: Math.floor(userShare),
-      adminShare: Math.floor(adminShare),
-      superAdminShare: Math.floor(superAdminShare),
-      referredUserShare: Math.floor(referredUserShare),
-      amountPaid: rupeesToPay,
+      amountPaid: amount,
+      totalStarsGenerated,
+      userShare,
+      adminShare,
+      superAdminShare,
+      referredUserShare,
     });
 
   } catch (error) {
@@ -1049,6 +1054,7 @@ const confirmStarPurchase = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 
 
@@ -1871,7 +1877,161 @@ const confirmCouponRequest = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+// to verift the user email
+const sendUserEmailOtp = async (req, res) => {
+  try {
+    const { email, userId } = req.body;
 
+    if (!email || !userId) {
+      return res.status(400).json({ message: "Email and user ID are required" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await redis.set(`verify_email_otp:${userId}`, JSON.stringify({ email, otp }), "EX", 300);
+
+    await sgMail.send({
+      to: email,
+      from: config.SENDGRID_SENDER_EMAIL,
+      subject: "🔐 Your Email Verification OTP",
+      text: `Hi ${user.firstName || 'there'},
+
+Your OTP to verify your email is: ${otp}
+
+This OTP will expire in 5 minutes.
+
+If you didn't request this, please ignore this email.`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .email-container {
+              border-radius: 10px;
+              box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+              overflow: hidden;
+              background: linear-gradient(135deg, #f9f9ff 0%, #f0f4ff 100%);
+            }
+            .header {
+              background: linear-gradient(135deg, #6e8efb 0%, #4a6cf7 100%);
+              color: white;
+              padding: 25px;
+              text-align: center;
+            }
+            .logo {
+              max-width: 150px;
+              margin-bottom: 15px;
+            }
+            .content {
+              padding: 25px;
+              background-color: white;
+            }
+            .otp-card {
+              background: #f8f9fa;
+              border-left: 4px solid #4a6cf7;
+              padding: 15px;
+              margin: 20px 0;
+              border-radius: 0 5px 5px 0;
+              text-align: center;
+            }
+            .otp-code {
+              font-size: 32px;
+              font-weight: 700;
+              letter-spacing: 5px;
+              color: #222;
+              margin: 15px 0;
+            }
+            .footer {
+              text-align: center;
+              padding: 15px;
+              font-size: 12px;
+              color: #777;
+              background-color: #f5f5f5;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="email-container">
+            <div class="header">
+              <!-- Replace with your actual logo URL -->
+              <img src="https://example.com/your-logo.png" alt="Company Logo" class="logo">
+              <h1>Email Verification</h1>
+              <p>Please verify your email address</p>
+            </div>
+            
+            <div class="content">
+              <p>Hi ${user.firstName || 'there'},</p>
+              <p>We received a request to verify your email address. Please use the following OTP to complete your verification:</p>
+              
+              <div class="otp-card">
+                <p>Your verification code is:</p>
+                <div class="otp-code">${otp}</div>
+                <p>This code will expire in 5 minutes.</p>
+              </div>
+              
+              <p>If you didn't request this email, you can safely ignore it.</p>
+              <p>Thank you!</p>
+            </div>
+            
+            <div class="footer">
+              <p>© ${new Date().getFullYear()} Your Company Name. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+
+    return res.status(200).json({ message: "OTP sent successfully" });
+  } catch (err) {
+    console.error("Send OTP error:", err);
+    return res.status(500).json({ message: "Failed to send OTP" });
+  }
+};
+//to veriy the otp
+ const verifyUserEmailOtp = async (req, res) => {
+  try {
+    const { userId, otp } = req.body;
+
+    if (!userId || !otp) {
+      return res.status(400).json({ message: "User ID and OTP are required" });
+    }
+
+    const data = await redis.get(`verify_email_otp:${userId}`);
+    if (!data) return res.status(400).json({ message: "OTP expired or not found" });
+
+    const { email, otp: storedOtp } = JSON.parse(data);
+
+    if (otp !== storedOtp) {
+      return res.status(400).json({ message: "Incorrect OTP" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.email = email;
+    user.isEmailVerified = true;
+    await user.save();
+
+    await redis.del(`verify_email_otp:${userId}`);
+
+    return res.status(200).json({ message: "Email verified and updated successfully" });
+  } catch (err) {
+    console.error("OTP verification error:", err);
+    return res.status(500).json({ message: "Failed to verify OTP" });
+  }
+}
 
 export {
   registerUser,
@@ -1902,5 +2062,7 @@ export {
   unsaveAd,
   deleteAd,
   initiateCouponRequest,
-  confirmCouponRequest
+  confirmCouponRequest,
+  sendUserEmailOtp,
+  verifyUserEmailOtp
 };

@@ -37,6 +37,10 @@ const userSchema = new Schema(
     email: {
       type: String,
     },
+    isEmailVerified: {
+  type: Boolean,
+  default: false, 
+},
     password: {
       type: String,
     },

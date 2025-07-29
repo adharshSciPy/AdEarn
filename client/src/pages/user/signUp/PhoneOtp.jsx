@@ -52,7 +52,7 @@ function PhoneOtp() {
       console.log(response)
       const id = response.data.user.id
       dispatch(setUser({ id: id }))
-      navigate(`/form1/${id}`)
+      navigate(`/emailValidation/${id}`)
     } catch (error) {
       console.log(error)
     }

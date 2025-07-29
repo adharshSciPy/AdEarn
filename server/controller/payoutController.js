@@ -49,7 +49,7 @@ const createPayoutRequest = async (req, res) => {
     }
 
     // 2. Validate Star Count
-    const minStars = 1000;
+    const minStars = 2000;
     if (!starCount || starCount < minStars) {
       throw new Error(`Minimum ${minStars} stars required`);
     }
