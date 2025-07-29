@@ -14,7 +14,6 @@ function Form1() {
     lastName: "",
     email: "",
     password: "",
-    referalCode: "",
     gender: "",
     maritalStatus: "",
     state: "",
@@ -48,11 +47,11 @@ function Form1() {
       lastName: "",
       email: "",
       password: "",
-      referalCode: "",
       gender: "",
       maritalStatus: "",
       state: "",
       city: "",
+      district:"",
       pincode: "",
       location: "",
     });
@@ -656,17 +655,17 @@ function Form1() {
                           className={styles.label}
                           style={{ marginTop: "20px" }}
                         >
-                          City
+                          District
                         </label>
                         <select
                           className={styles.input}
                           required
-                          name="city"
-                          value={form.city}
+                          name="district"
+                          value={form.district}
                           onChange={handleChange}
                           style={{ marginBottom: "10px" }}
                         >
-                          <option value="">Select Your City</option>
+                          <option value="">Select Your District</option>
                           {(stateCityMap[form.state] || []).map((city) => (
                             <option key={city} value={city}>
                               {city}
@@ -675,7 +674,21 @@ function Form1() {
                         </select>
                       </div>
                       <div>
-                        <label htmlFor="pincode" className={styles.label}>
+                        <label htmlFor="city" className={styles.label} style={{ marginTop: "10px" }}>
+                          City
+                        </label>
+                        <input
+                          id="city"
+                          name="city"
+                          placeholder="City"
+                          required
+                          className={styles.input}
+                          value={form.city}
+                          onChange={handleChange}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="pincode" className={styles.label}style={{ marginTop: "10px" }}>
                           Pincode
                         </label>
                         <input
@@ -703,19 +716,7 @@ function Form1() {
                           onChange={handleChange}
                         />
                       </div>
-                      <div>
-                        <label htmlFor="location" className={styles.label} style={{ marginTop: "20px" }}>
-                          Referral Code
-                        </label>
-                        <input
-                          id="location"
-                          name="referalCode"
-                          placeholder="Referral Code"
-                          className={styles.input}
-                          value={form.referalCode}
-                          onChange={handleChange}
-                        />
-                      </div>
+                      
 
 
                       <div className={styles.buttonContainer}>
