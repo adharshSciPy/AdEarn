@@ -12,12 +12,10 @@ import AdminHome from './pages/admin/Home/AdminHome';
 import AdminAds from './pages/admin/Ads/AdminAds';
 import AdminCoupon from './pages/admin/Coupons/AdminCoupon'
 import KYCVerify from './pages/admin/KYCVerify/KYCVerify'
-import AdminContest from './pages/admin/Contest/AdminContest';
 import AdminReport from './pages/admin/Report/AdminReport';
 import AdminSettings from './pages/admin/Settings/AdminSettings';
 import VerifyAds from './pages/admin/VerifyAds/VerifyAds';
 import VerifyKYC from './pages/admin/VerifyKYC/VerifyKYC';
-import ContestForm from './pages/admin/ContestForm/ContestForm';
 import Adminemailregister from "./pages/admin/Emailregister/Adminemailregister"
 import ViewKYC from './pages/admin/VerifyKYC/ViewKYC';
 import AssignedAds from './pages/admin/AssignAds/AssignedAds';
@@ -141,12 +139,10 @@ function App() {
           <Route path='/AdminAds/:id' element={<AdminAds />} />
           <Route path='/AdminCoupon/:id' element={<AdminCoupon />} />
           <Route path='/AdminKYC/:id' element={<KYCVerify />} />
-          <Route path='/AdminContest' element={<AdminContest />} />
           <Route path='/AdminReport' element={<AdminReport />} />
           <Route path='/AdminSettings' element={<AdminSettings />} />
           <Route path='/VerifyAds/:adId' element={<VerifyAds />} />
           <Route path='/VerifyKYC/:id' element={<VerifyKYC />} />
-          <Route path='/ContestForm' element={<ContestForm />} />
           <Route path='/ViewKYC/:id' element={<ViewKYC />} />
           <Route path='/AssignedAds' element={<AssignedAds />} />
           <Route path='/AssignedKyc' element={<AssignedKyc />} />
@@ -174,7 +170,7 @@ function App() {
           <Route path='/resendotp/:phone' element={<ResendOtp />} />
 
           <Route path='/emailRegistration' element={<EmailRegistration />} />
-          <Route path='/referalPage' element={<ReferalCode />} />
+          <Route path='/referalPage/:id' element={<ReferalCode />} />
           <Route path='/form1/:id' element={<Form1 />} />
           <Route path='/form2/:id' element={<Form2 />} />
           <Route path='/userhome/:id' element={<UserHome />} />

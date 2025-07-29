@@ -85,13 +85,13 @@ function Sidebar() {
                     { key: "assigned-kyc", label: "Assigned Kyc", path: "/AssignedKyc" },
                 ]
             },
-            {
-                key: "contest", label: "Contest", icon: <UserOutlined />,
-                children: [
-                    { key: "contest-all", label: "All Contest", path: "/AdminContest" },
-                    { key: "contest-new", label: "Contest Winners", path: "/ContestForm" },
-                ]
-            },
+            // {
+            //     key: "contest", label: "Contest", icon: <UserOutlined />,
+            //     children: [
+            //         { key: "contest-all", label: "All Contest", path: "/AdminContest" },
+            //         { key: "contest-new", label: "Contest Winners", path: "/ContestForm" },
+            //     ]
+            // },
             {
                 key: "report", label: "Reports", icon: <ContainerOutlined />, path: "/AdminReport",
             },

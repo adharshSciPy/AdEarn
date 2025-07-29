@@ -1,12 +1,16 @@
 import { React, useState } from "react";
 import logo from "../../../assets/Logo.png";
 import styles from "./referalpage.module.css";
-import { Link } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import baseUrl from "../../../baseurl";
 
 function ReferalCode() {
   const [coupon, setCoupon] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const { id } = useParams()
+  const navigate = useNavigate()
 
   const handleChange = (e) => {
     const value = e.target.value.toUpperCase();
@@ -15,7 +19,7 @@ function ReferalCode() {
     setMessage("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const trimmed = coupon.trim();
     const codePattern = /^[A-Z0-9@#$%&*]{6}$/;
@@ -23,6 +27,15 @@ function ReferalCode() {
     if (!codePattern.test(trimmed)) {
       setError("Invalid coupon code. Must be 6 characters: A-Z, 0-9, @#$%&*");
       return;
+    }
+    try {
+      const response = await axios.patch(`${baseUrl}/api/v1/user/update/${id}`, {
+        referalCode: trimmed
+      });
+      navigate(`/form1/${id}`)
+      console.log(response)
+    } catch (error) {
+      console.log(error)
     }
 
     // Proceed with valid code
@@ -76,9 +89,7 @@ function ReferalCode() {
                     </form>
                   </div>
                 </div>
-              <div className={styles.skipContainer}>
-                <button>skip</button>
-              </div>
+
 
               </div>
             </div>

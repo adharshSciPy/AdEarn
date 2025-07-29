@@ -48,7 +48,7 @@ function EmailOtp() {
                 }
             )
             console.log(response)
-            navigate(`/form1/${id}`)
+            navigate(`/referalPage/${id}`)
         } catch (error) {
             console.log(error)
         }
