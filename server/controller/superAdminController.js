@@ -1,6 +1,7 @@
 import superAdmin from "../model/superAdminModel.js";
 import jwt from "jsonwebtoken";
 import path from "path";
+import fs from "fs";
 import { Admin } from "../model/adminModel.js";
 import User from "../model/userModel.js";
 import SuperAdminWallet from "../model/superAdminWallet.js";
@@ -34,6 +35,8 @@ import { convertStarsToRupees } from "../utils/convertStarsToRupees.js";
 import adminwalletModel from "../model/adminwalletModel.js";
 import SuperAdminAd from "../model/superAdminAdModel.js";
 import { calculateGrowth } from "../utils/calculateGrowth.js";
+import { validateAudioDuration } from "../utils/validateAudioDuration.js";
+
 
 const ObjectId = mongoose.Types.ObjectId;
 
@@ -3090,40 +3093,141 @@ const superAdminPayout = async (req, res) => {
   }
 };
 
+// const postSuperAdminImageAd = async (req, res) => {
+//   try {
+//     // Check if imageAd file is present in req.files
+//     const { heading, description } = req.body;
+//     if (!req.files || !req.files.imageAd || req.files.imageAd.length === 0) {
+//       return res.status(400).json({ message: "Image file is required" });
+//     }
+//     const audioFile = req.files?.audioAd?.[0];
+
+//     const uploadedImage = req.files.imageAd[0];
+//     let audioUrl = null;
+//     if (audioFile) {
+//       audioUrl = `/imgAdUploads/${audioFile.filename}`;
+//     } else if (req.body.existingAudioUrl) {
+//       audioUrl = req.body.existingAudioUrl;
+//     }
+//     // Create a new ad document
+//     const newAd = new SuperAdminAd({
+//       heading,
+//       description,
+//       imageUrl: `/imgAdUploads/${uploadedImage.filename}`,
+//       postedAt: new Date(),
+//       audioUrl,
+//     });
+
+//     await newAd.save();
+
+//     return res.status(201).json({
+//       message: "Super Admin Ad posted successfully",
+//       ad: newAd,
+//     });
+//   } catch (error) {
+//     console.error("Error posting Super Admin Ad:", error);
+//     return res.status(500).json({ message: "Internal Server Error" });
+//   }
+// };
+
 const postSuperAdminImageAd = async (req, res) => {
   try {
-    // Check if imageAd file is present in req.files
-    const { heading, description } = req.body;
-    if (!req.files || !req.files.imageAd || req.files.imageAd.length === 0) {
-      return res.status(400).json({ message: "Image file is required" });
-    }
+    const {
+      title,
+      description,
+      clickUrl,
+      userViewsNeeded,
+      adPeriod, // optional
+      targetStates = [],
+      targetDistricts = [],
+      targetRegions = [],
+    } = req.body;
+
+    // 🔸 Handle uploaded files from multer
+    const imageFile = req.files?.imageAd?.[0];
     const audioFile = req.files?.audioAd?.[0];
 
-    const uploadedImage = req.files.imageAd[0];
+    let imageUrl = "";
+    if (imageFile) {
+      imageUrl = `/imgAdUploads/${imageFile.filename}`;
+    }else {
+      return res
+        .status(400)
+        .json({ message: "No image file or existing image URL provided." });
+    }
     let audioUrl = null;
+
     if (audioFile) {
-      audioUrl = `/imgAdUploads/${audioFile.filename}`;
+      try {
+        await validateAudioDuration(audioFile.path, 10);
+        audioUrl = `/imgAdUploads/${audioFile.filename}`;
+      } catch (err) {
+        fs.unlinkSync(audioFile.path);
+        return res.status(400).json({ message: err.message });
+      }
     } else if (req.body.existingAudioUrl) {
       audioUrl = req.body.existingAudioUrl;
     }
-    // Create a new ad document
-    const newAd = new SuperAdminAd({
-      heading,
+
+    // 🔸 Step 1: Get total user count
+    const users = await User.find();
+    const totalUsers = users.length;
+
+    if (totalUsers === 0) {
+      return res
+        .status(400)
+        .json({ message: "No users found to show the ad." });
+    }
+
+    // 🔸 Step 2: Build zero star payout plan
+    const starPayoutPlan = Array(parseInt(totalUsers)).fill(0);
+
+    // 🔸 Step 3: Create ImageAd document
+    const imageAd = new ImageAd({
+      title,
       description,
-      imageUrl: `/imgAdUploads/${uploadedImage.filename}`,
-      postedAt: new Date(),
+      imageUrl,
+      audioUrl: audioUrl || null,
+      clickUrl: clickUrl || "",
+      createdBy: null,
+      isAdVerified: true,
+      isAdVisible: true,
+      userViewsNeeded: parseInt(userViewsNeeded),
+      starPayoutPlan,
+      paymentMode:"star",
+      totalStarsAllocated: 0,
+      extraDeductedStars: 0,
+      isAdRejected: false,
+      adPeriod: parseInt(adPeriod) || 30,
+      adVerifiedTime: new Date(),
+      adExpirationTime: new Date(
+        Date.now() + (parseInt(adPeriod) || 30) * 24 * 60 * 60 * 1000
+      ),
+      targetStates,
+      targetDistricts,
+      targetRegions,
+    });
+
+    await imageAd.save();
+
+    // 🔸 Optionally log into SuperAdminAd collection
+    await SuperAdminAd.create({
+      imageUrl,
+      heading: title,
+      description,
       audioUrl,
     });
 
-    await newAd.save();
-
     return res.status(201).json({
-      message: "Super Admin Ad posted successfully",
-      ad: newAd,
+      message: "Super Admin Image Ad created successfully.",
+      adId: imageAd._id,
     });
   } catch (error) {
-    console.error("Error posting Super Admin Ad:", error);
-    return res.status(500).json({ message: "Internal Server Error" });
+    console.error("Error creating super admin image ad:", error);
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
   }
 };
 
@@ -3309,5 +3413,5 @@ export {
   postSuperAdminImageAd,
   getAllSuperAdminImageAds,
   getUserAndAdStats,
-  getMonthlyUserAndAdPosterStats
+  getMonthlyUserAndAdPosterStats,
 };
