@@ -181,3 +181,10 @@
   align-items: center;
   gap: 10px;
 }
+
+.userdetailsmodal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+}

@@ -36,7 +36,10 @@ function SuperAdminAdsUser() {
     console.log("idid", userId)
     setViewModalOpen(true);
     try {
-      const getuserid = await axios.get(`${baseUrl}/api/v1/user/by-uniqueid?id=${userId}`);
+      const getuserid = await axios.get(`${baseUrl}/api/v1/user/by-uniqueid`, {
+        params: { id: userId }
+      });
+      setGetuserid(getuserid.data.data)
       console.log("vada", getuserid)
     } catch (error) {
       console.log(error)
@@ -422,12 +425,29 @@ function SuperAdminAdsUser() {
         </Modal>
 
         <Modal
-          title="Basic View Modal"
+          title="User Details"
           closable={{ 'aria-label': 'Custom Close Button' }}
           open={viewModalOpen}
           onCancel={handleViewCancel}
         >
-          <p>User Details Modal..</p>
+          <div className={styles.usermodal}>
+            <div className={styles.userdetailsmodal}>
+              <div>Name: {getuserid.firstName}{" "}{getuserid.lastName}</div>
+              <div>Unique Id: {getuserid.uniqueUserId}</div>
+            </div>
+            <div className={styles.userdetailsmodal}>
+              <div>Gender: {getuserid.gender}</div>
+              <div>Education: {getuserid.highestEducation}</div>
+            </div>
+            <div className={styles.userdetailsmodal}>
+              <div>Referral Code: {getuserid.myReferalCode}</div>
+              <div>Phone No: {getuserid.phoneNumber}</div>
+            </div>
+            <div className={styles.userdetailsmodal}>
+              <div>Profession: {getuserid.profession}</div>
+              <div>Location: {getuserid.city}</div>
+            </div>
+          </div>
         </Modal>
 
       </div>
