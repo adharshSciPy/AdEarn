@@ -1501,29 +1501,53 @@ const createContest = async (req, res) => {
       maxParticipants,
       winnerSelectionType,
       rewardStructure,
+      contestType,
     } = req.body;
 
-    // ✅ Validate required fields
-    if (!contestName || !startDate || !endDate || !entryStars || !maxParticipants) {
-      return res.status(400).json({ message: "All required fields must be filled" });
+    // ✅ Required field validations
+    if (!contestName || !entryStars || !contestType || !startDate) {
+      return res.status(400).json({
+        message: "contestName, entryStars, contestType, and startDate are required",
+      });
     }
 
-    // ✅ Parse dates
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    if (!["maxParticipants", "dateRange"].includes(contestType)) {
+      return res.status(400).json({ message: "Invalid contest type" });
+    }
+
+    let parsedStartDate = new Date(startDate);
+    parsedStartDate.setHours(0, 0, 0, 0);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    start.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
 
-    if (start < today) {
+    if (parsedStartDate < today) {
       return res.status(400).json({ message: "Start date cannot be in the past" });
     }
-    if (end <= start) {
-      return res.status(400).json({ message: "End date must be after start date" });
+
+    let parsedEndDate = null;
+
+    // ✅ If dateRange, validate endDate
+    if (contestType === "dateRange") {
+      if (!endDate) {
+        return res.status(400).json({ message: "endDate is required for dateRange contests" });
+      }
+
+      parsedEndDate = new Date(endDate);
+      parsedEndDate.setHours(0, 0, 0, 0);
+
+      if (parsedEndDate <= parsedStartDate) {
+        return res.status(400).json({ message: "End date must be after start date" });
+      }
     }
 
-    // ✅ Parse and validate reward structure
+    // ✅ If maxParticipants, validate it
+    if (contestType === "maxParticipants") {
+      if (!maxParticipants || maxParticipants <= 0) {
+        return res.status(400).json({ message: "maxParticipants must be a positive number" });
+      }
+    }
+
+    // ✅ Parse rewardStructure
     let parsedRewardStructure = [];
     let totalRewardStars = 0;
 
@@ -1545,7 +1569,7 @@ const createContest = async (req, res) => {
       }
     }
 
-    // ✅ Handle uploaded prize images (e.g. prizeImage_1, prizeImage_2, etc.)
+    // ✅ Handle uploaded prize images
     const imageMap = {};
     if (req.files) {
       for (const key in req.files) {
@@ -1559,7 +1583,6 @@ const createContest = async (req, res) => {
       }
     }
 
-    // ✅ Merge image into reward structure
     parsedRewardStructure = parsedRewardStructure.map((reward) => ({
       ...reward,
       image: imageMap[reward.position] || "",
@@ -1580,16 +1603,17 @@ const createContest = async (req, res) => {
     await adminWallet.save();
 
     // ✅ Determine contest status
-    const status = start <= new Date() ? "Active" : "Scheduled";
+    const status = parsedStartDate <= new Date() ? "Active" : "Scheduled";
 
     // ✅ Create and save contest
     const contest = new ContestEntry({
       contestName,
       contestNumber,
-      startDate: start,
-      endDate: end,
+      contestType,
+      startDate: parsedStartDate,
+      endDate: contestType === "dateRange" ? parsedEndDate : undefined,
+      maxParticipants: contestType === "maxParticipants" ? maxParticipants : undefined,
       entryStars,
-      maxParticipants,
       currentParticipants: 0,
       totalEntries: 0,
       rewardStructure: parsedRewardStructure,
@@ -1611,6 +1635,8 @@ const createContest = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+
 
 // const selectAutomaticWinnersInternal = async (contestId) => {
 //   const contest = await ContestEntry.findById(contestId);
@@ -1683,6 +1709,19 @@ const selectAutomaticWinnersInternal = async (contestId, io, connectedUsers) => 
   const contest = await ContestEntry.findById(contestId);
   if (!contest || contest.status === "Ended") return "Already Ended";
 
+  // Check if contest should actually end (extra safeguard)
+  const now = new Date();
+
+  if (contest.contestType === "dateRange") {
+    if (contest.endDate > now) return "Date range contest not yet ended";
+  }
+
+  if (contest.contestType === "maxParticipants") {
+    if (contest.currentParticipants < contest.maxParticipants) {
+      return "MaxParticipants contest not full yet";
+    }
+  }
+
   const adminWallet = await SuperAdminWallet.findOne();
   if (!adminWallet) return "SuperAdmin Wallet Not Found";
 
@@ -1737,20 +1776,14 @@ const selectAutomaticWinnersInternal = async (contestId, io, connectedUsers) => 
     const message = `🎉 Congratulations! You won position #${winner.position} in "${contest.contestName}" and received ${winner.prize.stars} stars.`;
 
     userNotifications.push(
-      sendNotification(
-        user._id,
-        USER_ROLE,
-        message,
-        io,
-        connectedUsers
-      )
+      sendNotification(user._id, USER_ROLE, message, io, connectedUsers)
     );
   }
 
-  // Deduct only the rewarded stars from reserved
+  // Deduct rewarded stars
   adminWallet.contestEntryWallet.reservedForContests -= totalReward;
 
-  // Return remaining reserved stars (if any) back to totalStars
+  // Return unused reserved stars back to wallet
   const reservedLeft = adminWallet.contestEntryWallet.reservedForContests;
   if (reservedLeft > 0) {
     adminWallet.totalStars += reservedLeft;
@@ -1762,7 +1795,7 @@ const selectAutomaticWinnersInternal = async (contestId, io, connectedUsers) => 
   contest.winners = winners;
   contest.status = "Ended";
   contest.result = "Completed";
-  contest.contestEntryWallet = contest.contestEntryWallet - totalReward;
+  contest.contestEntryWallet -= totalReward;
   await contest.save();
 
   const superAdmin = await superAdminModel.findOne({ role: SUPER_ADMIN_ROLE });
@@ -1771,7 +1804,7 @@ const selectAutomaticWinnersInternal = async (contestId, io, connectedUsers) => 
       sendNotification(
         superAdmin._id,
         SUPER_ADMIN_ROLE,
-        `Contest "${contest.contestName}" successfully ended. Total ${totalReward} stars were distributed to winners.${reservedLeft} stars have been returned to Superadmin wallet`,
+        `Contest "${contest.contestName}" successfully ended. Total ${totalReward} stars were distributed to winners. ${reservedLeft} stars have been returned to SuperAdmin wallet.`,
         io,
         connectedUsers
       )
@@ -1782,6 +1815,7 @@ const selectAutomaticWinnersInternal = async (contestId, io, connectedUsers) => 
 
   return "Success";
 };
+
 
 
 

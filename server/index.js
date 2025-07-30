@@ -414,7 +414,7 @@ cron.schedule("* * * * *", async () => {
 
   // ✅ Start scheduled contests
   try {
-    const { modifiedCount } = await ContestEntry.updateMany(
+    const result = await ContestEntry.updateMany(
       {
         status: "Scheduled",
         startDate: { $lte: now },
@@ -422,29 +422,31 @@ cron.schedule("* * * * *", async () => {
       { $set: { status: "Active" } }
     );
 
-    if (modifiedCount > 0) {
-      console.log(`✅ Activated ${modifiedCount} scheduled contest(s)`);
+    if (result.modifiedCount > 0) {
+      console.log(`✅ Activated ${result.modifiedCount} scheduled contest(s)`);
     }
   } catch (err) {
-    console.error("❌ Error activating contests:", err.message);
+    console.error("❌ Error activating scheduled contests:", err.message);
   }
 
-  // ✅ End expired contests
+  // ✅ End expired dateRange contests
   try {
     const contestsToEnd = await ContestEntry.find({
       status: "Active",
+      contestType: "dateRange",
       endDate: { $lte: now },
+      winnerSelectionType: "Automatic",
     });
 
     for (const contest of contestsToEnd) {
-      await selectAutomaticWinnersInternal(contest._id,io,connectedUsers);
-      console.log(`🏁 Ended contest: ${contest.title || contest._id}`);
+      await selectAutomaticWinnersInternal(contest._id, io, connectedUsers);
+      console.log(`🏁 Ended contest: ${contest.contestName || contest._id}`);
     }
   } catch (err) {
-    console.error("❌ Error ending contests:", err.message);
+    console.error("❌ Error ending expired contests:", err.message);
   }
 });
-
+  
 const PORT = process.env.PORT || 8000;
 
 connectDb()

@@ -16,8 +16,11 @@ const contestEntrySchema = new Schema({
   },
   endDate: {
   type: Date,
-  required: true
+  required: function () {
+    return this.contestType === "dateRange";
+  }
 },
+
 
   entryStars: {
     type: Number,
@@ -27,10 +30,19 @@ const contestEntrySchema = new Schema({
     type: Number,
     default: 0
   },
-  maxParticipants: {
-    type: Number,
-    required: true
-  },
+ contestType: {
+  type: String,
+  enum: ["maxParticipants", "dateRange"],
+  default: "dateRange",
+  required: true
+},
+maxParticipants: {
+  type: Number,
+  required: function () {
+    return this.contestType === "maxParticipants";
+  }
+},
+
   currentParticipants: {
     type: Number,
     default: 0
