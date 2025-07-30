@@ -27,6 +27,13 @@
   align-items: center;
 }
 
+.datebtn{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
 .tabMenu ul {
   display: flex;
   list-style: none;

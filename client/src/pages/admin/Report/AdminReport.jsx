@@ -3,7 +3,7 @@ import styles from './AdminReport.module.css'
 import Sidebar from '../../../components/sidebar/Sidebar'
 import Header from "../../../components/Header/Header"
 import CanvasJSReact from '@canvasjs/react-charts';
-import { Tabs, Table, Button, Avatar, Select, Pagination } from 'antd';
+import { Tabs, Table, Button, Avatar, Select, Pagination, DatePicker, Space } from 'antd';
 import axios from 'axios'
 import baseUrl from '../../../baseurl'
 import { useMemo } from "react";
@@ -12,8 +12,6 @@ import { useSelector } from 'react-redux';
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
-
-
 function AdminReport() {
 
   const id = useParams()
@@ -21,7 +19,6 @@ function AdminReport() {
   const [verifyads, setVerifyads] = useState([])
   const [verifykyc, setVerifykyc] = useState([])
   const [adminName, setAdminName] = useState("")
-
 
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
@@ -38,6 +35,24 @@ function AdminReport() {
     setActiveTab(tabName);
   };
 
+  // Updated onChange function for DatePicker
+  const onChange = (date, dateString) => {
+    console.log(date, dateString);
+    if (date) {
+      const month = (date.month() + 1).toString().padStart(2, '0');
+      const year = date.year().toString();
+      setSelectedMonth(month);
+      setSelectedYear(year);
+    } else {
+      // Clear filters when date is cleared
+      setSelectedMonth(null);
+      setSelectedYear(null);
+    }
+    // Reset pagination to first page when filter changes
+    setCurrentAdsPage(1);
+    setVerifyAdsPage(1);
+  };
+
   useEffect(() => {
     const getadmin = async () => {
       try {
@@ -51,7 +66,6 @@ function AdminReport() {
 
     getadmin()
   }, [])
-
 
   useEffect(() => {
     const adminVerifiedads = async () => {
@@ -86,13 +100,17 @@ function AdminReport() {
   // Filtered and paginated data for Verify Ads
   const filteredVerifiedAds = useMemo(() => {
     return verifyads.filter((ad) => {
-      const date = new Date(ad.createdAt);
+      const adRef = ad.adId?.surveyAdRef || ad.adId?.videoAdRef || ad.adId?.imageAdRef || {};
+      if (!adRef.createdAt) return false;
+
+      const date = new Date(adRef.createdAt);
       const matchMonth = selectedMonth
         ? (date.getMonth() + 1).toString().padStart(2, '0') === selectedMonth
         : true;
       const matchYear = selectedYear
         ? date.getFullYear().toString() === selectedYear
         : true;
+
       return matchMonth && matchYear;
     });
   }, [verifyads, selectedMonth, selectedYear]);
@@ -106,13 +124,17 @@ function AdminReport() {
   // Filtered and paginated data for Verify KYC
   const filteredVerifiedKyc = useMemo(() => {
     return verifykyc.filter((kyc) => {
-      const date = new Date(kyc.createdAt);
+      const kycRef = kyc.kycId || {};
+      if (!kycRef.createdAt) return false;
+
+      const date = new Date(kycRef.createdAt);
       const matchMonth = selectedMonth
         ? (date.getMonth() + 1).toString().padStart(2, '0') === selectedMonth
         : true;
       const matchYear = selectedYear
         ? date.getFullYear().toString() === selectedYear
         : true;
+
       return matchMonth && matchYear;
     });
   }, [verifykyc, selectedMonth, selectedYear]);
@@ -132,21 +154,23 @@ function AdminReport() {
     });
   };
 
-
-
   //download it in sheet
-
   const handleDownloadReport = () => {
     const wb = XLSX.utils.book_new();
     const sheetData = [];
     // Add admin name as the first row
     sheetData.push([`Admin Name: ${adminName}`]); // Full row
 
+    // Add filter info if any filters are applied
+    if (selectedMonth && selectedYear) {
+      sheetData.push([`Filtered by: ${selectedMonth}/${selectedYear}`]);
+    }
+
     // Add empty row for spacing
     sheetData.push([]);
 
     if (activeTab === "Verified Ads") {
-      const verifiedAdsSheet = paginatedVerifiedAds.map((ad) => {
+      const verifiedAdsSheet = filteredVerifiedAds.map((ad) => {
         const adRef = ad.adId?.surveyAdRef || ad.adId?.videoAdRef || ad.adId?.imageAdRef || {};
         return {
           Name: adRef.title || 'N/A',
@@ -163,11 +187,12 @@ function AdminReport() {
       XLSX.utils.book_append_sheet(wb, ws, "Verified Ads");
 
     } else if (activeTab === "Verified Kyc") {
-      const verifiedKycSheet = paginatedVerifiedKyc.map((kyc) => {
+      const verifiedKycSheet = filteredVerifiedKyc.map((kyc) => {
         const kycRef = kyc.kycId || {};
         return {
           Name: kycRef.fullName || 'N/A',
           Status: kycRef.kycStatus ?? 'N/A',
+          "Date": kycRef.createdAt ? new Date(kycRef.createdAt).toLocaleDateString() : '',
           "Assign Time": getTime(kycRef.assignmentTime) || '',
           "ID Proof": kycRef.documentType || 'N/A',
         };
@@ -182,11 +207,11 @@ function AdminReport() {
     // Write and trigger download
     const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
     const blob = new Blob([wbout], { type: "application/octet-stream" });
-    saveAs(blob, `${activeTab.replace(" ", "_")}_Report.xlsx`);
+    const fileName = selectedMonth && selectedYear 
+      ? `${activeTab.replace(" ", "_")}_Report_${selectedMonth}_${selectedYear}.xlsx`
+      : `${activeTab.replace(" ", "_")}_Report.xlsx`;
+    saveAs(blob, fileName);
   };
-
-
-
 
   return (
     <div className={styles.adminreport}>
@@ -198,7 +223,17 @@ function AdminReport() {
 
             <div className={styles.headsection}>
               <h1>Reports</h1>
-              <Button onClick={handleDownloadReport}>Download</Button>
+              <div className={styles.datebtn}>
+                <Button onClick={handleDownloadReport}>Download</Button>
+                <Space direction="vertical">
+                  <DatePicker 
+                    picker='month' 
+                    onChange={onChange}
+                    placeholder="Select Month/Year"
+                    allowClear
+                  />
+                </Space>
+              </div>
             </div>
 
             <div className={styles.Adminads}>
@@ -227,9 +262,6 @@ function AdminReport() {
 
                 {activeTab === "Verified Ads" && (
                   <section className={styles.payoutTableSection}>
-                    <h1 style={{ fontSize: "25px", padding: "10px" }}>
-                      Verify Ads
-                    </h1>
                     <table className={styles.payoutTable}>
                       <thead>
                         <tr>
@@ -248,8 +280,8 @@ function AdminReport() {
                               <td>{adRef.title || 'N/A'}</td>
                               <td>{adRef.totalViewCount ?? 0}</td>
                               <td>{adRef.totalStarsAllocated ?? 0}</td>
-                              <td>{new Date(adRef.createdAt).toLocaleDateString()}</td>
-                              <td>{getTime(adRef.adVerifiedTime)}</td>
+                              <td>{adRef.createdAt ? new Date(adRef.createdAt).toLocaleDateString() : 'N/A'}</td>
+                              <td>{adRef.adVerifiedTime ? getTime(adRef.adVerifiedTime) : 'N/A'}</td>
                             </tr>
                           );
                         })}
@@ -268,21 +300,18 @@ function AdminReport() {
                         }}
                         style={{ marginTop: "20px", textAlign: "center" }}
                       />
-
                     </div>
                   </section>
                 )}
 
                 {activeTab === "Verified Kyc" && (
                   <section className={styles.payoutTableSection}>
-                    <h1 style={{ fontSize: "25px", padding: "10px" }}>
-                      Verify Kyc
-                    </h1>
                     <table className={styles.payoutTable}>
                       <thead>
                         <tr>
                           <th>Name</th>
                           <th>Status</th>
+                          <th>Date</th>
                           <th>Assign Time</th>
                           <th>ID Proof</th>
                         </tr>
@@ -294,9 +323,10 @@ function AdminReport() {
                           return (
                             <tr key={index}>
                               <td>{adRef.fullName || 'N/A'}</td>
-                              <td>{adRef.kycStatus ?? 0}</td>
-                              <td>{getTime(adRef.assignmentTime)}</td>
-                              <td>{adRef.documentType}</td>
+                              <td>{adRef.kycStatus ?? 'N/A'}</td>
+                              <td>{adRef.createdAt ? new Date(adRef.createdAt).toLocaleDateString() : 'N/A'}</td>
+                              <td>{adRef.assignmentTime ? getTime(adRef.assignmentTime) : 'N/A'}</td>
+                              <td>{adRef.documentType || 'N/A'}</td>
                             </tr>
                           );
                         })}
@@ -315,13 +345,11 @@ function AdminReport() {
                         }}
                         style={{ marginTop: "20px", textAlign: "center" }}
                       />
-
                     </div>
                   </section>
                 )}
               </div>
             </div>
-
 
           </div>
         </div>
