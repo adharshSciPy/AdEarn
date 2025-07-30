@@ -27,6 +27,7 @@ import broadcastRouter from "./routes/broadcastRoute.js";
 import ContestEntry from "./model/contestEntrySchema.js";
 import User from "./model/userModel.js";
 import payoutRoute from "./routes/payoutRoute.js";
+import { selectAutomaticWinnersInternal } from "./controller/superAdminController.js";
 
 
 dotenv.config();
@@ -98,7 +99,7 @@ app.use('/api/v1/payout', (req, res, next) => {
 }, payoutRoute);
 // Socket.IO Connection
 io.on("connection", (socket) => {
-  console.log(" New client connected:", socket.id);
+  // console.log(" New client connected:", socket.id);
 
   socket.on("register", (userId) => {
     if (userId) {
@@ -384,25 +385,63 @@ cron.schedule("* * * * *", async () => {
   }
 });
 
+// cron.schedule("* * * * *", async () => {
+//   const now = new Date();
+
+//   try {
+//     const updated = await ContestEntry.updateMany(
+//       {
+//         status: "Scheduled",
+//         startDate: { $lte: now },
+//       },
+//       {
+//         $set: { status: "Active" },
+//       }
+//     );
+
+//     if (updated.modifiedCount > 0) {
+//       console.log(`✅ Activated ${updated.modifiedCount} scheduled contest(s)`);
+//     }
+//   } catch (err) {
+//     console.error("❌ Error auto-activating contests:", err.message);
+//   }
+// });
+// index.js
+
+
 cron.schedule("* * * * *", async () => {
   const now = new Date();
 
+  // ✅ Start scheduled contests
   try {
-    const updated = await ContestEntry.updateMany(
+    const { modifiedCount } = await ContestEntry.updateMany(
       {
         status: "Scheduled",
         startDate: { $lte: now },
       },
-      {
-        $set: { status: "Active" },
-      }
+      { $set: { status: "Active" } }
     );
 
-    if (updated.modifiedCount > 0) {
-      console.log(`✅ Activated ${updated.modifiedCount} scheduled contest(s)`);
+    if (modifiedCount > 0) {
+      console.log(`✅ Activated ${modifiedCount} scheduled contest(s)`);
     }
   } catch (err) {
-    console.error("❌ Error auto-activating contests:", err.message);
+    console.error("❌ Error activating contests:", err.message);
+  }
+
+  // ✅ End expired contests
+  try {
+    const contestsToEnd = await ContestEntry.find({
+      status: "Active",
+      endDate: { $lte: now },
+    });
+
+    for (const contest of contestsToEnd) {
+      await selectAutomaticWinnersInternal(contest._id,io,connectedUsers);
+      console.log(`🏁 Ended contest: ${contest.title || contest._id}`);
+    }
+  } catch (err) {
+    console.error("❌ Error ending contests:", err.message);
   }
 });
 
