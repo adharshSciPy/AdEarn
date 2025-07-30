@@ -112,7 +112,6 @@ import BlacklistUser from './pages/superadmin/BlacklistUser/BlacklistUser';
 import PayoutPage from './pages/superadmin/PayoutPage/PayoutPage';
 import Verifiedpayouts from './pages/superadmin/VerifiedPayouts/Verifiedpayouts';
 import PublishAds from './pages/superadmin/PublishAd/PublishAds';
-
 import SubscriptionModal from './components/SubscriptionModal/SubscriptionModal';
 
 
@@ -216,6 +215,8 @@ function App() {
 
 
           {/* SuperAdmin */}
+          <Route path='/Superlogin' element={<SuperAdminLogin />} />
+
           <Route path='/SuperadminDash' element={<SuperadminDash />} />
           <Route path='/manageadmin' element={<ManageAdmin />} />
           <Route path='/superadminadsuser' element={<SuperAdminAdUser />} />
