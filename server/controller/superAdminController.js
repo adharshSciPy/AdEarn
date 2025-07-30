@@ -2097,7 +2097,7 @@ const approveAndDistributeCouponForAdminRequest = async (req, res) => {
 };
 //to distribute stars to user
 const distributeStarsToUser = async (req, res) => {
-  let { userId, starCount } = req.body;
+  let { userId, starCount, note } = req.body;
 
   if (!userId || starCount == null) {
     return res
@@ -2127,19 +2127,25 @@ const distributeStarsToUser = async (req, res) => {
         .status(400)
         .json({ message: "Insufficient stars in SuperAdmin wallet" });
     }
+
+    // Use fallback note if not provided
+    const fallbackNote = "Stars given to user";
+    const finalNote = note?.trim() || fallbackNote;
+
+    // Deduct from SuperAdmin and log
     saWallet.totalStars -= starCount;
     saWallet.starDistributions.push({
       userId,
       starsGiven: starCount,
-      note,
+      note: finalNote,
       date: new Date(),
     });
-
     await saWallet.save();
 
+    // Add to user wallet and log
     const logEntry = {
       starCount,
-      note,
+      note: finalNote,
       givenAt: new Date(),
     };
 
@@ -2163,6 +2169,7 @@ const distributeStarsToUser = async (req, res) => {
       .json({ message: "Internal Server Error", error: error.message });
   }
 };
+
 
 // GET all contests or by contestNumber
 const getContests = async (req, res) => {
