@@ -14,6 +14,11 @@ const contestEntrySchema = new Schema({
     type: Date,
     required: true
   },
+  endDate: {
+  type: Date,
+  required: true
+},
+
   entryStars: {
     type: Number,
     required: true
