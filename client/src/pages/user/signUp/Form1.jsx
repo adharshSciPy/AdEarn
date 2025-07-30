@@ -513,20 +513,6 @@ function Form1() {
                       </div>
                       <div>
                         <label htmlFor="location" className={styles.label} style={{ marginTop: "20px" }}>
-                          Email
-                        </label>
-                        <input
-                          id="location"
-                          name="email"
-                          placeholder="Email"
-                          required
-                          className={styles.input}
-                          value={form.email}
-                          onChange={handleChange}
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="location" className={styles.label} style={{ marginTop: "20px" }}>
                           Password
                         </label>
                         <input

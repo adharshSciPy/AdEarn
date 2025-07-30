@@ -94,6 +94,12 @@ const createImageAd = async (req, res) => {
   if (!id) return res.status(400).json({ message: "User ID is required" });
   if (!title || !description || !userViewsNeeded)
     return res.status(400).json({ message: "Missing required fields" });
+  if (userViewsNeeded % 100 !== 0) {
+  return res.status(400).json({
+    message: "Views Needed must be a multiple of 100.",
+  });
+}
+
 
   const imageFile = req.files?.imageAd?.[0];
   const audioFile = req.files?.audioAd?.[0];
@@ -317,6 +323,11 @@ const createVideoAd = async (req, res) => {
   if (!id) return res.status(400).json({ message: "User ID is required" });
   if (!title || !description || !userViewsNeeded)
     return res.status(400).json({ message: "Missing required fields" });
+   if (userViewsNeeded % 100 !== 0) {
+  return res.status(400).json({
+    message: "Views Needed must be a multiple of 100.",
+  });
+}
 
   
   let videoUrl = "";
@@ -493,6 +504,11 @@ const createSurveyAd = async (req, res) => {
   if (!id) return res.status(400).json({ message: "User ID is required" });
   if (!title || !description || !questions || !userViewsNeeded)
     return res.status(400).json({ message: "Missing required fields" });
+   if (userViewsNeeded % 100 !== 0) {
+  return res.status(400).json({
+    message: "Views Needed must be a multiple of 100.",
+  });
+}
 
   let parsedQuestions, parsedStates, parsedDistricts, parsedLocations;
 

@@ -99,7 +99,7 @@ app.use('/api/v1/payout', (req, res, next) => {
 }, payoutRoute);
 // Socket.IO Connection
 io.on("connection", (socket) => {
-  console.log(" New client connected:", socket.id);
+  // console.log(" New client connected:", socket.id);
 
   socket.on("register", (userId) => {
     if (userId) {
