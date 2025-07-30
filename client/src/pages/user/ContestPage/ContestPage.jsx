@@ -85,9 +85,7 @@ const ContestPage = () => {
 
   // Start home tour when navbar tour is completed
   useEffect(() => {
-    const hometourCompleted = localStorage.getItem(
-      `userTourCompleted_${id}`
-    );
+    const hometourCompleted = localStorage.getItem(`userTourCompleted_${id}`);
     const contentpageCompleted = localStorage.getItem(
       `contentpageCompleted_${id}`
     );
@@ -146,7 +144,8 @@ const ContestPage = () => {
               element: "#ongoing-contest",
               popover: {
                 title: "Ongoing Contest",
-                description: "Click here to view all currently active contests that you can join.",
+                description:
+                  "Click here to view all currently active contests that you can join.",
                 position: "bottom",
               },
             });
@@ -168,7 +167,8 @@ const ContestPage = () => {
               element: "#contest-details",
               popover: {
                 title: "All Contest Details",
-                description: "Switch to this tab to view your contest participation history and results. Click Next to explore this section.",
+                description:
+                  "Switch to this tab to view your contest participation history and results. Click Next to explore this section.",
                 position: "bottom",
               },
             });
@@ -247,13 +247,8 @@ const ContestPage = () => {
             {activeContests.length > 0 ? (
               <div className={styles.cardContainer} id="ongoing-section">
                 {activeContests.map((item, index) => {
-                  const prizeImages = item.prizeImages || [];
-                  const rewardSlides =
-                    item.rewardStructure?.map((reward) => ({
-                      position: reward.position,
-                      stars: reward.stars,
-                    })) || [];
-                  const totalPrizes = prizeImages.length + rewardSlides.length;
+                  const rewardSlides = item.rewardStructure || [];
+                  const totalPrizes = rewardSlides.length;
 
                   return (
                     <div className={styles.card} key={index}>
@@ -262,23 +257,24 @@ const ContestPage = () => {
                         slidesPerView={1}
                         className={styles.carousel}
                       >
-                        {prizeImages.map((img, i) => (
-                          <SwiperSlide key={`prize-${i}`}>
-                            <img
-                              src={`${baseUrl}${img}`}
-                              alt={`Prize ${i + 1}`}
-                              className={styles.prizeImage}
-                            />
-                          </SwiperSlide>
-                        ))}
                         {rewardSlides.map((reward, i) => (
                           <SwiperSlide key={`reward-${i}`}>
-                            <div className={styles.rewardSlide}>
-                              <div className={styles.rewardText}>
-                                🏅 <strong>Position:</strong> {reward.position}
-                                <br />⭐ <strong>Stars:</strong> {reward.stars}
+                            {reward.image ? (
+                              <img
+                                src={`${baseUrl}${reward.image}`}
+                                alt={`Prize for position ${reward.position}`}
+                                className={styles.prizeImage}
+                              />
+                            ) : (
+                              <div className={styles.rewardSlide}>
+                                <div className={styles.rewardText}>
+                                  🏅 <strong>Position:</strong>{" "}
+                                  {reward.position}
+                                  <br />⭐ <strong>Stars:</strong>{" "}
+                                  {reward.stars}
+                                </div>
                               </div>
-                            </div>
+                            )}
                           </SwiperSlide>
                         ))}
                       </Swiper>
@@ -399,9 +395,7 @@ const ContestPage = () => {
                   <div className={styles.sparkle}></div>
                 </div>
                 <h2>No Contest Participation</h2>
-                <p className={styles.subtitle}>
-                  Your trophy case is empty
-                </p>
+                <p className={styles.subtitle}>Your trophy case is empty</p>
                 <p className={styles.description}>
                   You haven't joined any contests yet.
                   <br />

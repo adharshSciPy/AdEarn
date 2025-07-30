@@ -24,10 +24,6 @@ function ReferalCode() {
     const trimmed = coupon.trim();
     const codePattern = /^[A-Z0-9@#$%&*]{6}$/;
 
-    if (!codePattern.test(trimmed)) {
-      setError("Invalid coupon code. Must be 6 characters: A-Z, 0-9, @#$%&*");
-      return;
-    }
     try {
       const response = await axios.patch(`${baseUrl}/api/v1/user/update/${id}`, {
         referalCode: trimmed
@@ -73,7 +69,6 @@ function ReferalCode() {
                             name="coupon"
                             value={coupon}
                             onChange={handleChange}
-                            required
                             className={styles.input}
                             placeholder="#EDED231"
                           />
