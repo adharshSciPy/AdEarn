@@ -2686,7 +2686,11 @@ const createImageAdDraft = async (req, res) => {
   if (!userId || !title || !description || !userViewsNeeded || !imageFile) {
     return res.status(400).json({ message: "Missing required fields" });
   }
-
+ if (userViewsNeeded % 100 !== 0) {
+  return res.status(400).json({
+    message: "Views Needed must be a multiple of 100.",
+  });
+}
   try {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -2820,6 +2824,11 @@ const createVideoAdDraft = async (req, res) => {
   if (!userId || !title || !description || !userViewsNeeded || !videoFile) {
     return res.status(400).json({ message: "Missing required fields" });
   }
+   if (userViewsNeeded % 100 !== 0) {
+  return res.status(400).json({
+    message: "Views Needed must be a multiple of 100.",
+  });
+}
 
   try {
     const user = await User.findById(userId);
@@ -2964,7 +2973,11 @@ const createSurveyAdDraft = async (req, res) => {
   if (!userId || !title || !description || !questions || !userViewsNeeded) {
     return res.status(400).json({ message: "Missing required fields" });
   }
-
+   if (userViewsNeeded % 100 !== 0) {
+  return res.status(400).json({
+    message: "Views Needed must be a multiple of 100.",
+  });
+}
   let parsedQuestions, parsedStates, parsedDistricts, parsedLocations;
 
   try {
