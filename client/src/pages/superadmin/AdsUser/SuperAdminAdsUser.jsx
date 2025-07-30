@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import styles from "./superadsuser.module.css";
 import { Modal, Switch, Pagination, Button, Input } from "antd";
-import { DeleteOutlined, HolderOutlined } from "@ant-design/icons";
+import { DeleteOutlined, HolderOutlined, EyeOutlined } from "@ant-design/icons";
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
 import Header from '../../../components/Header/Header'
 import baseUrl from "../../../baseurl"
@@ -12,6 +12,7 @@ function SuperAdminAdsUser() {
   const [allUsers, setAllUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [userStars, setUserStars] = useState({});
+  const [getuserid, setGetuserid] = useState({})
 
 
   const [activeTab, setActiveTab] = useState("All Users");
@@ -29,6 +30,22 @@ function SuperAdminAdsUser() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userId, setUserId] = useState("")
+
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const showViewModal = async (userId) => {
+    console.log("idid", userId)
+    setViewModalOpen(true);
+    try {
+      const getuserid = await axios.get(`${baseUrl}/api/v1/user/by-uniqueid?id=${userId}`);
+      console.log("vada", getuserid)
+    } catch (error) {
+      console.log(error)
+    }
+  };
+
+  const handleViewCancel = () => {
+    setViewModalOpen(false);
+  };
 
 
   const [form, setForm] = useState({
@@ -215,6 +232,16 @@ function SuperAdminAdsUser() {
     setIsDeleteModalVisible(false);
   };
 
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    if (isNaN(date)) return 'Invalid Date';
+
+    const day = date.getDate().toString().padStart(2, '0');     // 01–31
+    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // 01–12
+    const year = date.getFullYear();                            // 2025
+
+    return `${day}/${month}/${year}`;
+  }
 
 
 
@@ -280,10 +307,10 @@ function SuperAdminAdsUser() {
         <div className={styles.table}>
           <div className={styles.tableHeader}>
             <div>Users</div>
-            <div>Last seen</div>
-            <div>Total stars</div>
+            <div>Date</div>
             <div>Ads Viewed</div>
             <div>Black listed</div>
+            <div>Action</div>
           </div>
 
           {visibleUsers.map((user) => (
@@ -299,8 +326,7 @@ function SuperAdminAdsUser() {
                   <p>{user.lastName}</p>
                 </div>
               </div>
-              <div>{user.lastSeen}</div>
-              <div>{userStars[user._id] ?? 0}</div>
+              <div>{formatDate(user.createdAt)}</div>
               <div>{user.viewedAds.length}</div>
               <div
                 className={user.isUserEnabled ? styles.listed : styles.notListed}
@@ -327,7 +353,7 @@ function SuperAdminAdsUser() {
                       setUserId(user._id);
                       setIsModalOpen(true);
                     }}>Add Stars</Button>
-
+                    <Button onClick={() => showViewModal(user.uniqueUserId)}><EyeOutlined /></Button>
                   </>
                 )}
               </div>
@@ -393,6 +419,15 @@ function SuperAdminAdsUser() {
           <div className={styles.addstarsform}>
             <Input type="text" name="superadminGiven" value={form.superadminGiven} placeholder="Enter Star Count" onChange={onChangeHandler} />
           </div>
+        </Modal>
+
+        <Modal
+          title="Basic View Modal"
+          closable={{ 'aria-label': 'Custom Close Button' }}
+          open={viewModalOpen}
+          onCancel={handleViewCancel}
+        >
+          <p>User Details Modal..</p>
         </Modal>
 
       </div>
