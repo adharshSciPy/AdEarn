@@ -670,22 +670,29 @@ const addKyc = async (req, res) => {
 };
 
 const getUserByUniqueId = async (req, res) => {
-  const { id } = req.body;
+  const { id } = req.query;
+
+  if (!id) {
+    return res.status(400).json({ message: "User ID is required in query" });
+  }
+
   try {
     const user = await User.findOne({ uniqueUserId: id });
     if (!user) {
       return res
-        .status(400)
-        .json({ messsage: "No User Found ,Please check the ID" });
+        .status(404)
+        .json({ message: "No user found. Please check the ID." });
     }
+
     return res
       .status(200)
-      .json({ message: "User fetched succesfully", data: user });
+      .json({ message: "User fetched successfully", data: user });
   } catch (error) {
     console.error("Error fetching user:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 // to buy stars
   const starBuy = async (req, res) => {
     const { id } = req.params;
