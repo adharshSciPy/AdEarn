@@ -485,11 +485,23 @@ const userLogout = async (req, res) => {
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // Format: DD/MM/YYYY, HH:MM AM/PM
+    const now = new Date();
+    const options = {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    };
+    const formattedDateTime = now.toLocaleString("en-IN", options);
+
     user.refreshToken = null;
-    user.lastSeen = formatTo12HourTime(new Date());
+    user.lastSeen = formattedDateTime;
     await user.save();
 
-    res.clearCookie("refreshToken"); // if used in cookies
+    res.clearCookie("refreshToken");
 
     return res.status(200).json({ message: "User logged out successfully" });
   } catch (err) {
@@ -497,6 +509,7 @@ const userLogout = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 // user profile picture upload
 const uploadProfilePicture = async (req, res) => {
   const { id } = req.params;
@@ -657,22 +670,29 @@ const addKyc = async (req, res) => {
 };
 
 const getUserByUniqueId = async (req, res) => {
-  const { id } = req.body;
+  const { id } = req.query;
+
+  if (!id) {
+    return res.status(400).json({ message: "User ID is required in query" });
+  }
+
   try {
     const user = await User.findOne({ uniqueUserId: id });
     if (!user) {
       return res
-        .status(400)
-        .json({ messsage: "No User Found ,Please check the ID" });
+        .status(404)
+        .json({ message: "No user found. Please check the ID." });
     }
+
     return res
       .status(200)
-      .json({ message: "User fetched succesfully", data: user });
+      .json({ message: "User fetched successfully", data: user });
   } catch (error) {
     console.error("Error fetching user:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 // to buy stars
   const starBuy = async (req, res) => {
     const { id } = req.params;

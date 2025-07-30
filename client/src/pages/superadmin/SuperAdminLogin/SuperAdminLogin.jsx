@@ -5,10 +5,13 @@ import { Link, useNavigate } from "react-router-dom";
 import baseUrl from "../../../baseurl";
 import axios from "axios";
 import { Modal, Input, message } from "antd";
+import { setSuper } from "../../../components/features/superSlice";
+import { useDispatch } from "react-redux";
 
 
 function SuperAdminLogin() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const showModal = () => setIsModalOpen(true);
@@ -35,6 +38,13 @@ function SuperAdminLogin() {
       );
       if (response.status === 200) {
         navigate(`/SuperadminDash`);
+         dispatch(
+                  setSuper({
+                    id: response.data.user._id,
+                    token: response.data.accessToken,
+                    role: response.data.role,
+                  })
+                );
       }
       console.log(response);
     } catch (error) {

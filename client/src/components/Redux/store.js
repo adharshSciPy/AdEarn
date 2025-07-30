@@ -7,7 +7,7 @@ import { combineReducers } from "redux";
 import userReducer from "../features/slice";
 import adminReducer from "../features/adminSlice";
 import notificationReducer from "../features/notificationSlice"; // 🔔 Add this
-
+import superReducer from "../features/superSlice"
 // 🔐 Persist config
 const persistConfig = {
   key: "root",
@@ -19,6 +19,7 @@ const persistConfig = {
 const rootReducer = combineReducers({
   user: userReducer,
   admin: adminReducer,
+  super:superReducer,
   notification: notificationReducer, // ✅ Included but not persisted
 });
 

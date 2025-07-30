@@ -1,9 +1,10 @@
 import { Router } from "express";
 import authMiddleware from "../auth/authMiddleware.js";
 import { createPayoutRequest, getAllCompletedPayouts, getAllUnVerifiedPayoutRequest, getAllVerifiedPayoutRequests, getSingleVerifiedPayoutRequest, markPayoutAsCompleted, myPayoutRequests, myRejectedPayouts, myVerifiedPayouts, rejectPayoutRequest, singleUnverifiedPayoutRequest, verifyPayoutRequest } from "../controller/payoutController.js";
+import checkSubscription from "../utils/checkSubscription.js";
 
 const payoutRoute=Router();
-payoutRoute.route('/request').post (authMiddleware,createPayoutRequest)// to send payout request from user
+payoutRoute.route('/request').post (authMiddleware,checkSubscription,createPayoutRequest)// to send payout request from user
 payoutRoute.route('/all-unverified/requests').get(getAllUnVerifiedPayoutRequest)//to fetch the unverifed requests on the superAdmin side
 payoutRoute.route('/single-unverified/request/:id').get(singleUnverifiedPayoutRequest)// to fetch single unverified request on superAdmin side
 payoutRoute.route('/verify/request/:id').patch(verifyPayoutRequest)// to verify payout request on superAdmin side
