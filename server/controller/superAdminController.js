@@ -1501,29 +1501,49 @@ const createContest = async (req, res) => {
       maxParticipants,
       winnerSelectionType,
       rewardStructure,
+      contestType,
     } = req.body;
 
-    // ✅ Validate required fields
-    if (!contestName || !startDate || !endDate || !entryStars || !maxParticipants) {
-      return res.status(400).json({ message: "All required fields must be filled" });
+    if (!contestName || !entryStars || !contestType || !startDate) {
+      return res.status(400).json({
+        message: "contestName, entryStars, contestType, and startDate are required",
+      });
     }
 
-    // ✅ Parse dates
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    if (!["maxParticipants", "dateRange"].includes(contestType)) {
+      return res.status(400).json({ message: "Invalid contest type" });
+    }
+
+    let parsedStartDate = new Date(startDate);
+    parsedStartDate.setHours(0, 0, 0, 0);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    start.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
 
-    if (start < today) {
+    if (parsedStartDate < today) {
       return res.status(400).json({ message: "Start date cannot be in the past" });
     }
-    if (end <= start) {
-      return res.status(400).json({ message: "End date must be after start date" });
+
+    let parsedEndDate = null;
+
+    if (contestType === "dateRange") {
+      if (!endDate) {
+        return res.status(400).json({ message: "endDate is required for dateRange contests" });
+      }
+
+      parsedEndDate = new Date(endDate);
+      parsedEndDate.setHours(0, 0, 0, 0);
+
+      if (parsedEndDate <= parsedStartDate) {
+        return res.status(400).json({ message: "End date must be after start date" });
+      }
     }
 
-    // ✅ Parse and validate reward structure
+    if (contestType === "maxParticipants") {
+      if (!maxParticipants || maxParticipants <= 0) {
+        return res.status(400).json({ message: "maxParticipants must be a positive number" });
+      }
+    }
+
     let parsedRewardStructure = [];
     let totalRewardStars = 0;
 
@@ -1545,7 +1565,8 @@ const createContest = async (req, res) => {
       }
     }
 
-    // ✅ Handle uploaded prize images (e.g. prizeImage_1, prizeImage_2, etc.)
+    console.log(`💰 Total reward stars required: ${totalRewardStars}`);
+
     const imageMap = {};
     if (req.files) {
       for (const key in req.files) {
@@ -1559,37 +1580,36 @@ const createContest = async (req, res) => {
       }
     }
 
-    // ✅ Merge image into reward structure
     parsedRewardStructure = parsedRewardStructure.map((reward) => ({
       ...reward,
       image: imageMap[reward.position] || "",
     }));
 
-    // ✅ Generate unique contest number
     const contestNumber = await generateUniqueContestNumber();
 
-    // ✅ Deduct stars from Super Admin wallet
     const adminWallet = await SuperAdminWallet.findOne();
     if (!adminWallet || adminWallet.totalStars < totalRewardStars) {
       return res.status(400).json({ message: "Not enough stars in SuperAdmin wallet" });
     }
 
+    console.log(`🔻 Deducting ${totalRewardStars} from SuperAdmin total stars (${adminWallet.totalStars})`);
     adminWallet.totalStars -= totalRewardStars;
     adminWallet.contestEntryWallet.reservedForContests =
       (adminWallet.contestEntryWallet.reservedForContests || 0) + totalRewardStars;
     await adminWallet.save();
 
-    // ✅ Determine contest status
-    const status = start <= new Date() ? "Active" : "Scheduled";
+    console.log(`✅ Reserved in contestEntryWallet: ${adminWallet.contestEntryWallet.reservedForContests}`);
 
-    // ✅ Create and save contest
+    const status = parsedStartDate <= new Date() ? "Active" : "Scheduled";
+
     const contest = new ContestEntry({
       contestName,
       contestNumber,
-      startDate: start,
-      endDate: end,
+      contestType,
+      startDate: parsedStartDate,
+      endDate: contestType === "dateRange" ? parsedEndDate : undefined,
+      maxParticipants: contestType === "maxParticipants" ? maxParticipants : undefined,
       entryStars,
-      maxParticipants,
       currentParticipants: 0,
       totalEntries: 0,
       rewardStructure: parsedRewardStructure,
@@ -1611,6 +1631,9 @@ const createContest = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+
+
 
 // const selectAutomaticWinnersInternal = async (contestId) => {
 //   const contest = await ContestEntry.findById(contestId);
@@ -1683,6 +1706,16 @@ const selectAutomaticWinnersInternal = async (contestId, io, connectedUsers) => 
   const contest = await ContestEntry.findById(contestId);
   if (!contest || contest.status === "Ended") return "Already Ended";
 
+  const now = new Date();
+
+  if (contest.contestType === "dateRange" && contest.endDate > now) {
+    return "Date range contest not yet ended";
+  }
+
+  if (contest.contestType === "maxParticipants" && contest.currentParticipants < contest.maxParticipants) {
+    return "MaxParticipants contest not full yet";
+  }
+
   const adminWallet = await SuperAdminWallet.findOne();
   if (!adminWallet) return "SuperAdmin Wallet Not Found";
 
@@ -1691,6 +1724,8 @@ const selectAutomaticWinnersInternal = async (contestId, io, connectedUsers) => 
   const contestEntries = allEntries.filter(
     (entry) => entry.contestId.toString() === contestId.toString()
   );
+
+  console.log(`🎯 Found ${contestEntries.length} entries for contestId: ${contestId}`);
 
   const rewardStructure = contest.rewardStructure || [];
 
@@ -1718,43 +1753,44 @@ const selectAutomaticWinnersInternal = async (contestId, io, connectedUsers) => 
   });
 
   const totalReward = winners.reduce((sum, w) => sum + (w.prize?.stars || 0), 0);
+  console.log(`🏆 Total reward stars to be distributed: ${totalReward}`);
+  console.log(`💰 Contest's reserved stars before deduction: ${contest.contestEntryWallet}`);
 
-  if (adminWallet.contestEntryWallet.reservedForContests < totalReward) {
-    console.log("❌ Not enough reserved stars for reward distribution");
-    return "Insufficient Stars";
+  if (contest.contestEntryWallet < totalReward) {
+    console.log("❌ Not enough reserved stars in this contest's wallet");
+    return "Insufficient Stars for this contest";
   }
 
   const userNotifications = [];
 
   for (const winner of winners) {
     const user = await User.findById(winner.userId).populate("userWalletDetails");
-
     if (!user || !user.userWalletDetails) continue;
 
     user.userWalletDetails.totalStars += winner.prize.stars;
     await user.userWalletDetails.save();
 
+    console.log(`✅ User ${user.phoneNumber} awarded ${winner.prize.stars} stars at position ${winner.position}`);
+
     const message = `🎉 Congratulations! You won position #${winner.position} in "${contest.contestName}" and received ${winner.prize.stars} stars.`;
 
     userNotifications.push(
-      sendNotification(
-        user._id,
-        USER_ROLE,
-        message,
-        io,
-        connectedUsers
-      )
+      sendNotification(user._id, USER_ROLE, message, io, connectedUsers)
     );
   }
 
-  // Deduct only the rewarded stars from reserved
+  // 🟡 Deduct rewarded stars from contest-specific wallet
+  contest.contestEntryWallet -= totalReward;
+
+  // 🟡 Deduct from global reserved pool
   adminWallet.contestEntryWallet.reservedForContests -= totalReward;
 
-  // Return remaining reserved stars (if any) back to totalStars
-  const reservedLeft = adminWallet.contestEntryWallet.reservedForContests;
-  if (reservedLeft > 0) {
-    adminWallet.totalStars += reservedLeft;
-    adminWallet.contestEntryWallet.reservedForContests = 0;
+  // 🔁 Return leftover (if any) from contest back to SuperAdmin
+  if (contest.contestEntryWallet > 0) {
+    console.log(`🔁 Returning ${contest.contestEntryWallet} unused stars from contest to SuperAdmin`);
+    adminWallet.totalStars += contest.contestEntryWallet;
+    adminWallet.contestEntryWallet.reservedForContests -= contest.contestEntryWallet;
+    contest.contestEntryWallet = 0;
   }
 
   await adminWallet.save();
@@ -1762,7 +1798,6 @@ const selectAutomaticWinnersInternal = async (contestId, io, connectedUsers) => 
   contest.winners = winners;
   contest.status = "Ended";
   contest.result = "Completed";
-  contest.contestEntryWallet = contest.contestEntryWallet - totalReward;
   await contest.save();
 
   const superAdmin = await superAdminModel.findOne({ role: SUPER_ADMIN_ROLE });
@@ -1771,7 +1806,7 @@ const selectAutomaticWinnersInternal = async (contestId, io, connectedUsers) => 
       sendNotification(
         superAdmin._id,
         SUPER_ADMIN_ROLE,
-        `Contest "${contest.contestName}" successfully ended. Total ${totalReward} stars were distributed to winners.${reservedLeft} stars have been returned to Superadmin wallet`,
+        `Contest "${contest.contestName}" successfully ended. ${totalReward} stars were distributed to winners. Leftover stars (if any) returned.`,
         io,
         connectedUsers
       )
@@ -1780,8 +1815,12 @@ const selectAutomaticWinnersInternal = async (contestId, io, connectedUsers) => 
 
   await Promise.all(userNotifications);
 
+  console.log(`🏁 Ended contest: ${contest.contestName}`);
   return "Success";
 };
+
+
+
 
 
 

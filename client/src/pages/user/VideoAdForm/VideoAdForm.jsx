@@ -492,10 +492,8 @@ function VideoAdForm() {
   const [submitSuccess, setSubmitSuccess] = useState("");
   const [tourState, setTourState] = useState({
     navbarCompleted: false,
-    homeCompleted: false
+    homeCompleted: false,
   });
-
-
 
   // Toggle time options when multipleTime is selected
   const handleTimeChange = (label) => {
@@ -697,6 +695,7 @@ function VideoAdForm() {
           {
             headers: {
               "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${userToken}`,
             },
           }
         );
@@ -737,7 +736,6 @@ function VideoAdForm() {
       }
     } else {
       console.log("error");
-
     }
     setTimeout(() => {
       setSubmitSuccess("Ad saved successfully!");
@@ -765,9 +763,9 @@ function VideoAdForm() {
 
   // Handle tour completion
   const handleTourComplete = (tourType) => {
-    setTourState(prev => ({
+    setTourState((prev) => ({
       ...prev,
-      [tourType === 'navbar' ? 'navbarCompleted' : 'homeCompleted']: true
+      [tourType === "navbar" ? "navbarCompleted" : "homeCompleted"]: true,
     }));
   };
 
@@ -776,7 +774,9 @@ function VideoAdForm() {
   // Start home tour when navbar tour is completed
   useEffect(() => {
     const homeTourDone = localStorage.getItem(`userTourCompleted_${id}`);
-    const videoadsCompleted = localStorage.getItem(`videoAdTourCompleted_${id}`);
+    const videoadsCompleted = localStorage.getItem(
+      `videoAdTourCompleted_${id}`
+    );
 
     // Start home tour if navbar is done but full tour isn't complete
     if (homeTourDone && !videoadsCompleted) {
@@ -796,7 +796,6 @@ function VideoAdForm() {
     }
   }, [tourState.navbarCompleted]);
 
-
   const startHomeTour = () => {
     // Check again to prevent duplicate tours
     const tourCompleted = localStorage.getItem(`videoAdTourCompleted_${id}`);
@@ -812,10 +811,12 @@ function VideoAdForm() {
         "#select-ads-region",
         "#select-ads-period",
         "#video-ads-add",
-        "#view-requirement"
+        "#view-requirement",
       ];
 
-      const existingSelectors = selectors.filter(sel => document.querySelector(sel));
+      const existingSelectors = selectors.filter((sel) =>
+        document.querySelector(sel)
+      );
 
       // Start tour if at least the place-ads-btn exists (main requirement)
       const canStartTour = document.querySelector("#ads-name");
@@ -916,9 +917,9 @@ function VideoAdForm() {
             onReset: () => {
               // Mark both tours as completed
               localStorage.setItem(`videoAdTourCompleted_${id}`, "true");
-              setTourState(prev => ({
+              setTourState((prev) => ({
                 ...prev,
-                homeCompleted: true
+                homeCompleted: true,
               }));
             },
           });
@@ -935,7 +936,6 @@ function VideoAdForm() {
       attempts++;
     }, 1000);
   };
-
 
   return (
     <>
@@ -961,7 +961,11 @@ function VideoAdForm() {
           </div>
 
           {/* Ad Category */}
-          <div className={styles.labelContainer} style={{ marginTop: "20px" }} id="select-ads-category">
+          <div
+            className={styles.labelContainer}
+            style={{ marginTop: "20px" }}
+            id="select-ads-category"
+          >
             <div className={styles.labelImg}>
               <img src={tickAd} alt="tick" />
             </div>

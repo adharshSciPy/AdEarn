@@ -24,6 +24,7 @@ import Navbar from "../NavBar/Navbar";
 import axios from "axios";
 import Driver from "driver.js";
 import "driver.js/dist/driver.min.css";
+import { useSelector } from "react-redux";
 
 // Fix leaflet's default icon issue
 delete L.Icon.Default.prototype._getIconUrl;
@@ -468,7 +469,7 @@ function AdForm() {
   const { id } = useParams();
   const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-
+  const userToken = useSelector((state) => state.user.token);
   const [singleTime, setSingleTime] = useState(false);
   const [multipleTime, setMultipleTime] = useState(false);
   const [timeOptions, setTimeOptions] = useState({
@@ -670,6 +671,7 @@ function AdForm() {
           {
             headers: {
               "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${userToken}`,
             },
           }
         );
@@ -714,6 +716,7 @@ function AdForm() {
           {
             headers: {
               "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${userToken}`,
             },
           }
         );
@@ -1025,23 +1028,23 @@ function AdForm() {
             <label>
               <h2>
                 <input
-                type="radio"
-                value="map"
-                checked={targetOption === "map"}
-                onChange={() => setTargetOption("map")}
-                
-              />
-              Map & Location</h2>
+                  type="radio"
+                  value="map"
+                  checked={targetOption === "map"}
+                  onChange={() => setTargetOption("map")}
+                />
+                Map & Location
+              </h2>
             </label>
             <label style={{ marginLeft: "20px" }}>
               <h2>
                 <input
-                type="radio"
-                value="region"
-                checked={targetOption === "region"}
-                onChange={() => setTargetOption("region")}
-              />
-              Region-wise
+                  type="radio"
+                  value="region"
+                  checked={targetOption === "region"}
+                  onChange={() => setTargetOption("region")}
+                />
+                Region-wise
               </h2>
             </label>
           </div>

@@ -470,6 +470,7 @@ function VideoAdEdit() {
   const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const location = useLocation();
+  const userToken=useSelector((state)=>state.user.token)
   const isEditMode = Boolean(id); // true if editing existing ad (id exists)
   const isDuplicateMode = Boolean(location.state?.duplicatedAd);
   const duplicatedAd = location.state?.duplicatedAd || null;
@@ -689,6 +690,7 @@ function VideoAdEdit() {
       const response = await axios[method](endpoint, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${userToken}`,
         },
       });
 

@@ -40,9 +40,15 @@ function AdPreview() {
 
   // Fetch reward after scratch completed
   const getAddContribution = async () => {
+    console.log("j",userToken);
+    
     try {
       const response = await axios.post(
-        `${baseUrl}/api/v1/ads/view-ads/${id}/${adId}`
+        `${baseUrl}/api/v1/ads/view-ads/${id}/${adId}`,{},{
+          headers:{
+            Authorization:`Bearer ${userToken}`,
+          }
+        }
       );
       setReward(response.data);
       console.log(response.data);

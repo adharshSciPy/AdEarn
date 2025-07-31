@@ -5,13 +5,14 @@ import baseUrl from "../../../baseurl";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../NavBar/Navbar";
 import { Modal, Button } from "antd";
-
 import ScratchCard from "../AdPreview/ScratchComponent/ScratchCom";
+import { useSelector } from "react-redux";
 
 const SurveyAdPreview = () => {
   const [selectedOptions, setSelectedOptions] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [reward, setReward] = useState({});
+  const userToken=useSelector((state)=>state.user.token)
   const [showScratchModal, setShowScratchModal] = useState(false);
   const [scratchCompleted, setScratchCompleted] = useState(false);
   const [ad, setAd] = useState({});
@@ -45,7 +46,11 @@ const SurveyAdPreview = () => {
     try {
       const response = await axios.post(
         `${baseUrl}/api/v1/ads/survey-response/submit`,
-        payload
+        payload,{
+          headers:{
+            Authorization:`Bearer ${userToken}`,
+          }
+        }
       );
       console.log(response);
       setSubmitted(true);
@@ -60,7 +65,9 @@ const SurveyAdPreview = () => {
   const getAddContribution = async () => {
     try {
       const response = await axios.post(
-        `${baseUrl}/api/v1/ads/view-ads/${id}/${adId}`
+        `${baseUrl}/api/v1/ads/view-ads/${id}/${adId}`,{},{headers:{
+            Authorization:`Bearer ${userToken}`,
+          }}
       );
       setReward(response.data);
       console.log(response.data);
