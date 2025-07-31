@@ -472,7 +472,7 @@ function AdEdit() {
   const location = useLocation();
   const isEditMode = Boolean(id);
   const isDuplicateMode = Boolean(location.state?.duplicatedAd);
-
+const userToken=useSelector((state)=>state.user.token)
   const duplicatedAd = location.state?.duplicatedAd || null;
   const [singleTime, setSingleTime] = useState(false);
   const [multipleTime, setMultipleTime] = useState(false);
@@ -706,6 +706,7 @@ function AdEdit() {
       const response = await axios[method](endpoint, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
+            Authorization:`Bearer ${userToken}`,
         },
       });
 

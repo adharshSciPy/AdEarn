@@ -23,6 +23,7 @@ import styles from "./Surveyads.module.css";
 import tickAd from "../../../assets/tickAd.png";
 import Navbar from "../NavBar/Navbar";
 import axios from "axios";
+import { useSelector } from "react-redux";
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
@@ -464,7 +465,7 @@ function SurveyAds() {
   const { id } = useParams();
   const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-
+  const userToken = useSelector((state) => state.user.token);
   const [singleTime, setSingleTime] = useState(false);
   const [multipleTime, setMultipleTime] = useState(false);
   const [timeOptions, setTimeOptions] = useState({
@@ -500,7 +501,7 @@ function SurveyAds() {
 
   const [tourState, setTourState] = useState({
     navbarCompleted: false,
-    homeCompleted: false
+    homeCompleted: false,
   });
 
   const handleOptionChange = (index, value) => {
@@ -725,6 +726,8 @@ function SurveyAds() {
           {
             headers: {
               "Content-Type": "multipart/form-data",
+
+              Authorization: `Bearer ${userToken}`,
             },
           }
         );
@@ -772,6 +775,7 @@ function SurveyAds() {
           {
             headers: {
               "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${userToken}`,
             },
           }
         );
@@ -813,7 +817,6 @@ function SurveyAds() {
       }
     } else {
       console.log("error");
-
     }
   };
   const [preview, setPreview] = useState(null);
@@ -837,9 +840,9 @@ function SurveyAds() {
 
   // Handle tour completion
   const handleTourComplete = (tourType) => {
-    setTourState(prev => ({
+    setTourState((prev) => ({
       ...prev,
-      [tourType === 'navbar' ? 'navbarCompleted' : 'homeCompleted']: true
+      [tourType === "navbar" ? "navbarCompleted" : "homeCompleted"]: true,
     }));
   };
 
@@ -848,7 +851,9 @@ function SurveyAds() {
   // Start home tour when navbar tour is completed
   useEffect(() => {
     const homeTourDone = localStorage.getItem(`userTourCompleted_${id}`);
-    const surveyadsCompleted = localStorage.getItem(`surveyAdTourCompleted_${id}`);
+    const surveyadsCompleted = localStorage.getItem(
+      `surveyAdTourCompleted_${id}`
+    );
 
     // Start home tour if navbar is done but full tour isn't complete
     if (homeTourDone && !surveyadsCompleted) {
@@ -868,7 +873,6 @@ function SurveyAds() {
     }
   }, [tourState.navbarCompleted]);
 
-
   const startHomeTour = () => {
     // Check again to prevent duplicate tours
     const tourCompleted = localStorage.getItem(`surveyAdTourCompleted_${id}`);
@@ -884,10 +888,12 @@ function SurveyAds() {
         "#select-ads-region",
         "#select-ads-period",
         "#survey-ads-add",
-        "#view-requirement"
+        "#view-requirement",
       ];
 
-      const existingSelectors = selectors.filter(sel => document.querySelector(sel));
+      const existingSelectors = selectors.filter((sel) =>
+        document.querySelector(sel)
+      );
 
       // Start tour if at least the place-ads-btn exists (main requirement)
       const canStartTour = document.querySelector("#ads-name");
@@ -988,9 +994,9 @@ function SurveyAds() {
             onReset: () => {
               // Mark both tours as completed
               localStorage.setItem(`surveyAdTourCompleted_${id}`, "true");
-              setTourState(prev => ({
+              setTourState((prev) => ({
                 ...prev,
-                homeCompleted: true
+                homeCompleted: true,
               }));
             },
           });
@@ -1007,7 +1013,6 @@ function SurveyAds() {
       attempts++;
     }, 1000);
   };
-
 
   return (
     <>

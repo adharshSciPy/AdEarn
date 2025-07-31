@@ -12,10 +12,13 @@ import Driver from "driver.js";
 import "driver.js/dist/driver.min.css";
 import Lottie from "lottie-react";
 import noAdsAnimation from "../../../assets/loading.json"
+import { useSelector } from "react-redux";
+
 
 function UserHome() {
   const navigate = useNavigate();
   const [imageAdData, setImageAd] = useState([]);
+  const userToken=useSelector((state)=>state.user.token)
   const [videAdData, setVideoAd] = useState([]);
   const [surveyData, setSurveyData] = useState([]);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
@@ -58,7 +61,9 @@ function UserHome() {
         url += `?lat=${lat}&lng=${lng}`;
       }
 
-      const response = await axios.get(url);
+      const response = await axios.get(url,{headers:{
+              Authorization: `Bearer ${userToken}`,
+            }},);
       console.log("response", response);
 
       setImageAd(response.data.ads);
@@ -71,25 +76,84 @@ function UserHome() {
     }
   };
 
-  const getVideoAdData = async () => {
+const getVideoAdData = async () => {
+  try {
+    let lat = null;
+    let lng = null;
+
+    // Try to get location if permitted
     try {
-      const response = await axios.get(`${baseUrl}/api/v1/ads/video-ads/${id}`);
-      setVideoAd(response.data.ads);
-    } catch (error) {
-      console.log(error);
+      const getPosition = () =>
+        new Promise((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject)
+        );
+      const position = await getPosition();
+      lat = position.coords.latitude;
+      lng = position.coords.longitude;
+    } catch (locationError) {
+      console.log("Location access denied or failed:", locationError.message);
     }
-  };
-  const getSurveyData = async () => {
+
+    let url = `${baseUrl}/api/v1/ads/video-ads/${id}`;
+    if (lat && lng) {
+      url += `?lat=${lat}&lng=${lng}`;
+    }
+
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+      },
+    });
+
+    setVideoAd(response.data.ads);
+  } catch (error) {
+    if (error.response) {
+      console.log("API error:", error.response.data.message);
+    } else {
+      console.log("Error fetching video ad data:", error.message);
+    }
+  }
+};
+const getSurveyData = async () => {
+  try {
+    let lat = null;
+    let lng = null;
+
+    // Try to get location if permitted
     try {
-      const response = await axios.get(
-        `${baseUrl}/api/v1/ads/survey-ads/${id}`
-      );
-      setSurveyData(response.data.ads);
-      console.log(response);
-    } catch (error) {
-      console.log(error);
+      const getPosition = () =>
+        new Promise((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject)
+        );
+      const position = await getPosition();
+      lat = position.coords.latitude;
+      lng = position.coords.longitude;
+    } catch (locationError) {
+      console.log("Location access denied or failed:", locationError.message);
     }
-  };
+
+    let url = `${baseUrl}/api/v1/ads/survey-ads/${id}`;
+    if (lat && lng) {
+      url += `?lat=${lat}&lng=${lng}`;
+    }
+
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+      },
+    });
+
+    setSurveyData(response.data.ads);
+    console.log(response);
+  } catch (error) {
+    if (error.response) {
+      console.log("API error:", error.response.data.message);
+    } else {
+      console.log("Error fetching survey ad data:", error.message);
+    }
+  }
+};
+
 
   useEffect(() => {
     getImageAdData();
