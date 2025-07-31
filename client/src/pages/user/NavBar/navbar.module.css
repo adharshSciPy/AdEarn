@@ -1,75 +1,155 @@
+/* Base styles */
 .mainContainer {
   width: 100%;
   position: relative;
   background-color: white;
-  
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
 }
+
 .subContainerNav {
-  width: 96%;
+  
+  max-width: 98%;
   margin: auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
   background-color: white;
-
+  padding: 15px 0;
+  transition: padding 0.3s ease;
 }
+
+.logoContainer {
+  flex-shrink: 0;
+}
+
 .logo {
   width: 200px;
   height: auto;
+  transition: width 0.3s ease;
 }
+
 .logo img {
   height: 100%;
   width: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
+
 .iconsContainer {
   display: flex;
-  width: 40%;
   justify-content: space-around;
-  padding: 20px;
+  align-items: center;
+  gap: 15px;
+  padding: 10px;
+  flex-wrap: wrap;
+  transition: all 0.3s ease;
 }
+
 .iconContainer {
   width: 50px;
-  height: max-content;
-  border: 1px solid black;
+  height: 50px;
+  border: 1px solid #e0e0e0;
   padding: 10px;
-  border-radius: 50px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;position: relative;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #fff;
 }
+
+.iconContainer:hover {
+  border-color: #007bff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+}
+
 .iconContainer img {
   height: 100%;
   width: 100%;
-  object-fit: cover;
-  border-radius: 50px;
+  object-fit: contain;
 }
 
-.bottomNav {
-  display: none;
+.iconWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+.notificationDot {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  height: 12px;
+  width: 12px;
+  background-color: #ff4444;
+  border-radius: 50%;
+  border: 2px solid white;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
 .notificationDropdown {
   position: absolute;
-  top: 70px;
+  top: 80px;
   right: 20px;
   background: #fff;
   border: 1px solid #ddd;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  width: 260px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  width: 300px;
+  max-width: 90vw;
   z-index: 1000;
-  border-radius: 6px;
-  padding: 10px;
-  overflow-y: scroll;
-  height: 300px;
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
+  animation: fadeInDown 0.3s ease;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notificationDropdown::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  right: 30px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid white;
 }
 
 .notificationItem {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
+  padding: 15px;
+  border-bottom: 1px solid #f0f0f0;
   font-size: 14px;
   color: #333;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.notificationItem:hover {
+  background-color: #f8f9fa;
 }
 
 .notificationItem:last-child {
@@ -80,67 +160,515 @@
   font-size: 14px;
   color: #999;
   text-align: center;
-  padding: 10px;
-}
-.notificationDot {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  height: 10px;
-  width: 10px;
-  background-color: red;
-  border-radius: 50%;
+  padding: 20px;
+  font-style: italic;
 }
 
-@media (max-width: 978px) {
-  .iconsContainer {
-    width: 60%;
+/* Bottom Navigation (Mobile) */
+.bottomNav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+  background-color: white;
+  border-top: 1px solid #ddd;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 999;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  padding: 0 10px;
+}
+
+.bottomNavItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 8px;
+  border-radius: 12px;
+  position: relative;
+  min-width: 40px;
+  flex: 1;
+  max-width: 60px;
+}
+
+/* Fixed sizing for all icons in bottom nav */
+.bottomNavItem img,
+.bottomNavItem > div,
+.bottomNavItem > div > img {
+  height: 24px !important;
+  width: 24px !important;
+  max-height: 24px !important;
+  max-width: 24px !important;
+  object-fit: contain !important;
+  transition: all 0.3s ease;
+}
+
+/* Active/Selected Navigation Item Styles */
+.bottomNavItem.active {
+  background: linear-gradient(135deg, rgba(0, 123, 255, 0.15) 0%, rgba(0, 123, 255, 0.05) 100%);
+  transform: translateY(-8px);
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgba(0, 123, 255, 0.25);
+  position: relative;
+  overflow: visible;
+}
+
+.bottomNavItem.active::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  border-radius: 22px;
+  z-index: -1;
+  opacity: 0.8;
+}
+
+.bottomNavItem.active img,
+.bottomNavItem.active > div,
+.bottomNavItem.active > div > img {
+  transform: scale(1.15);
+  filter: brightness(1.1) saturate(1.2);
+}
+
+/* Animated bottom indicator */
+.bottomNavItem::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #007bff, #0056b3);
+  border-radius: 2px 2px 0 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 -2px 8px rgba(0, 123, 255, 0.4);
+}
+
+.bottomNavItem.active::after {
+  width: 30px;
+  animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+  0% {
+    width: 0;
+    opacity: 0;
+  }
+  50% {
+    width: 35px;
+    opacity: 0.8;
+  }
+  100% {
+    width: 30px;
+    opacity: 1;
   }
 }
-@media (max-width: 685px) {
-  .mobileContainer {
-    display: block;
+
+/* Ripple effect on tap */
+.bottomNavItem {
+  position: relative;
+  overflow: hidden;
+}
+
+.bottomNavItem::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(0, 123, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s ease;
+  z-index: 0;
+}
+
+.bottomNavItem:active::before {
+  width: 60px;
+  height: 60px;
+}
+
+/* Ensure content is above ripple */
+.bottomNavItem img,
+.bottomNavItem > div {
+  position: relative;
+  z-index: 1;
+}
+
+/* Responsive Breakpoints */
+
+/* Large Desktop (1200px and up) */
+@media (min-width: 1200px) {
+  .iconsContainer {
+    gap: 20px;
+    padding: 20px;
   }
+  
   .iconContainer {
+    width: 55px;
+    height: 55px;
+  }
+}
+
+/* Desktop (992px to 1199px) */
+@media (max-width: 1199px) and (min-width: 992px) {
+  .subContainerNav {
+    width: 98%;
+  }
+  
+  .iconsContainer {
+    gap: 12px;
+  }
+}
+
+/* Tablet Landscape (768px to 991px) */
+@media (max-width: 991px) and (min-width: 768px) {
+  .logo {
+    width: 160px;
+  }
+  
+  .iconsContainer {
+    gap: 10px;
+    padding: 10px;
+  }
+  
+  .iconContainer {
+    width: 45px;
+    height: 45px;
+    padding: 8px;
+  }
+  
+  .notificationDropdown {
+    width: 280px;
+    right: 10px;
+  }
+}
+
+/* Tablet Portrait (576px to 767px) */
+@media (max-width: 767px) and (min-width: 576px) {
+  .logo {
+    width: 140px;
+  }
+  
+  .iconsContainer {
+    gap: 8px;
+    padding: 8px;
+  }
+  
+  .iconContainer {
+    width: 40px;
+    height: 40px;
+    padding: 6px;
+  }
+  
+  .subContainerNav {
+    padding: 12px 0;
+  }
+  
+  .notificationDropdown {
+    width: 260px;
+    top: 65px;
+  }
+}
+
+/* Mobile Large (481px to 575px) */
+@media (max-width: 575px) and (min-width: 481px) {
+  .mainContainer {
+    padding: 20px 0; /* Account for bottom nav */
+  }
+  
+  .iconsContainer {
     display: none;
   }
+  
   .bottomNav {
     display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 60px;
-    background-color: white;
-    border-top: 1px solid #ddd;
-    justify-content: space-around;
-    align-items: center;
-    z-index: 999;
-    box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.1);
   }
-
-  .bottomNavItem {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  
+  .logo {
+    width: 120px;
+  }
+  
+  .subContainerNav {
     justify-content: center;
-    cursor: pointer;
-    transition: transform 0.2s ease, background-color 0.3s ease;
-    padding: 5px 10px;
-    border-radius: 8px;
+    padding: 10px 0;
   }
-
-  .bottomNavItem img {
-    height: 24px;
-    width: 24px;
+  
+  .notificationDropdown {
+    top: 60px;
+    right: 5px;
+    left: 5px;
+    width: auto;
   }
+}
 
+/* Mobile (480px and below) */
+@media (max-width: 480px) {
+  .mainContainer {
+    padding-bottom: 70px;
+  }
+  
+  .iconsContainer {
+    display: none;
+  }
+  
+  .bottomNav {
+    display: flex;
+    height: 65px;
+    padding: 0 5px;
+  }
+  
+  .bottomNavItem {
+    padding: 5px;
+    min-width: 35px;
+    max-width: 50px;
+  }
+  
+  .bottomNavItem img,
+  .bottomNavItem > div,
+  .bottomNavItem > div > img {
+    height: 20px !important;
+    width: 20px !important;
+    max-height: 20px !important;
+    max-width: 20px !important;
+  }
+  
+  .logo {
+    width: 100px;
+  }
+  
+  .subContainerNav {
+    justify-content: center;
+    padding: 8px 0;
+    width: 100%;
+  }
+  
+  .notificationDropdown {
+    top: 55px;
+    right: 5px;
+    left: 5px;
+    width: auto;
+    max-height: 250px;
+    overflow-y: auto;
+  }
+  
+  .notificationItem {
+    padding: 12px;
+    font-size: 13px;
+  }
+}
+
+/* Extra Small Mobile (360px and below) */
+@media (max-width: 360px) {
+  .bottomNav {
+    height: 60px;
+    padding: 0 2px;
+  }
+  
+  .bottomNavItem {
+    padding: 3px;
+    min-width: 30px;
+    max-width: 45px;
+  }
+  
+  .bottomNavItem img,
+  .bottomNavItem > div,
+  .bottomNavItem > div > img {
+    height: 18px !important;
+    width: 18px !important;
+    max-height: 18px !important;
+    max-width: 18px !important;
+  }
+  
+  .logo {
+    width: 90px;
+  }
+  
+  .notificationDropdown {
+    max-height: 200px;
+  }
+}
+
+/* Landscape orientation adjustments for mobile */
+@media (max-width: 767px) and (orientation: landscape) {
+  .bottomNav {
+    height: 55px;
+  }
+  
+  .bottomNavItem {
+    padding: 4px;
+    max-width: 55px;
+  }
+  
+  .bottomNavItem img,
+  .bottomNavItem > div,
+  .bottomNavItem > div > img {
+    height: 22px !important;
+    width: 22px !important;
+    max-height: 22px !important;
+    max-width: 22px !important;
+  }
+  
+  .subContainerNav {
+    padding: 6px 0;
+  }
+  
+  .logo {
+    width: 100px;
+  }
+  
+  .notificationDropdown {
+    max-height: 180px;
+  }
+}
+
+/* Alternative Design Variations (uncomment to use) */
+
+/* Option 1: Floating Badge Style */
+/*
+.bottomNavItem.active {
+  background: white;
+  transform: translateY(-12px);
+  border-radius: 25px;
+  box-shadow: 0 10px 25px rgba(0, 123, 255, 0.3);
+  border: 2px solid #007bff;
+  min-height: 50px;
+  margin-top: -10px;
+}
+
+.bottomNavItem.active::after {
+  display: none;
+}
+*/
+
+/* Option 2: Neon Glow Effect */
+/*
+.bottomNavItem.active {
+  background: rgba(0, 123, 255, 0.1);
+  transform: translateY(-5px);
+  border-radius: 15px;
+  box-shadow: 
+    0 0 20px rgba(0, 123, 255, 0.5),
+    0 0 40px rgba(0, 123, 255, 0.3),
+    0 0 60px rgba(0, 123, 255, 0.1);
+  border: 1px solid rgba(0, 123, 255, 0.3);
+}
+
+.bottomNavItem.active img,
+.bottomNavItem.active > div,
+.bottomNavItem.active > div > img {
+  filter: drop-shadow(0 0 8px rgba(0, 123, 255, 0.8));
+}
+*/
+
+/* Option 3: Morphing Circle */
+/*
+.bottomNavItem.active {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  transform: translateY(-8px) scale(1.1);
+  border-radius: 50%;
+  width: 55px;
+  height: 55px;
+  box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+}
+
+.bottomNavItem.active img,
+.bottomNavItem.active > div,
+.bottomNavItem.active > div > img {
+  filter: brightness(0) invert(1);
+}
+
+.bottomNavItem.active::after {
+  display: none;
+}
+*/
+
+/* Option 4: Material Design Style */
+/*
+.bottomNavItem.active {
+  background: rgba(0, 123, 255, 0.12);
+  transform: none;
+  border-radius: 16px;
+  position: relative;
+}
+
+.bottomNavItem.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #007bff;
+  border-radius: 16px 16px 0 0;
+}
+
+.bottomNavItem.active::after {
+  display: none;
+}
+*/
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .notificationDot {
+    animation: none;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .mainContainer,
+  .subContainerNav,
+  .bottomNav {
+    background-color: #1a1a1a;
+    color: white;
+  }
+  
+  .iconContainer {
+    border-color: #333;
+    background-color: #2a2a2a;
+  }
+  
+  .iconContainer:hover {
+    border-color: #007bff;
+    background-color: #333;
+  }
+  
+  .notificationDropdown {
+    background-color: #2a2a2a;
+    border-color: #333;
+    color: white;
+  }
+  
+  .notificationItem {
+    border-bottom-color: #333;
+  }
+  
+  .notificationItem:hover {
+    background-color: #333;
+  }
+  
+  .bottomNav {
+    border-top-color: #333;
+  }
+  
   .bottomNavItem.active {
-    transform: scale(1.2);
-    background-color: rgba(0, 123, 255, 0.1);
-    border-top: 2px solid #007bff;
-  }
-  .subContainerNav{
-    padding: 15px 0;
+    background-color: rgba(0, 123, 255, 0.2);
   }
 }
