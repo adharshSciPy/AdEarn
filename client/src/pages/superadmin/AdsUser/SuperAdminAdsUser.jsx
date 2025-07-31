@@ -6,8 +6,11 @@ import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar";
 import Header from '../../../components/Header/Header'
 import baseUrl from "../../../baseurl"
 import axios from 'axios'
+import { useNavigate } from "react-router-dom";
 
 function SuperAdminAdsUser() {
+
+  const navigate = useNavigate()
 
   const [allUsers, setAllUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -429,6 +432,27 @@ function SuperAdminAdsUser() {
           closable={{ 'aria-label': 'Custom Close Button' }}
           open={viewModalOpen}
           onCancel={handleViewCancel}
+          onOk={() => navigate(`/Superusertransaction/${getuserid._id}`)}
+          okText="Payout Details"
+          footer={[
+            <button
+              key="submit"
+              onClick={() => navigate(`/Superusertransaction/${getuserid._id}`)}
+              className="ant-btn ant-btn-primary"
+              style={{ backgroundColor: "#693bb8", padding: "10px", borderRadius: "8px", color: "white", border: "none" }}
+            >
+              Payout Details
+            </button>,
+            <button
+              key="submit"
+              onClick={() => navigate(`/UserAdsDetails/${getuserid._id}`)}
+              className="ant-btn ant-btn-primary"
+              style={{ backgroundColor: "#693bb8", padding: "10px", borderRadius: "8px", color: "white", border: "none" }}
+            >
+              Ads Details
+            </button>
+
+          ]}
         >
           <div className={styles.usermodal}>
             <div className={styles.userdetailsmodal}>
