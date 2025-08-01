@@ -1959,7 +1959,7 @@ const fetchVerifiedSurveyAd = async (req, res) => {
     const allAds = await Ad.find().populate("surveyAdRef");
     const verifiedSurveyAds = [];
 
-    const addIfEligible = async (surveyAd, ad) => {
+    const adIfEligible = async (surveyAd, ad) => {
       const hasUserCompleted = surveyAd.usersCompleted?.some(
         (entry) => entry.userId.toString() === userId
       );
@@ -1975,7 +1975,7 @@ const fetchVerifiedSurveyAd = async (req, res) => {
         if (!surveyAd.adRepetition && hasUserCompleted) return;
 
         if (surveyAd.adRepetition) {
-          const userSchedule = surveyAd.repeatSchedule?.find(
+          const userSchedule = surveyAd.adRepeatSchedule?.find(
             (entry) => entry.userId.toString() === userId
           );
           if (userSchedule && userSchedule.nextScheduledAt > currentDate) return;
@@ -2044,7 +2044,7 @@ const fetchVerifiedSurveyAd = async (req, res) => {
       });
 
       if (isUserInTargetRegion) {
-        await addIfEligible(surveyAd, ad);
+        await adIfEligible(surveyAd, ad);
         continue;
       }
 
@@ -2063,21 +2063,22 @@ const fetchVerifiedSurveyAd = async (req, res) => {
           );
 
           if (normalizedDistricts.includes("all")) {
-            await addIfEligible(surveyAd, ad);
-            continue;
-          }
+             isUserInTargetDistrict = true;
+          
+          }else{
 
           isUserInTargetDistrict = normalizedDistricts.includes(userDistrict);
+          }
         }
       }
 
       if (isUserInTargetState && isUserInTargetDistrict) {
-        await addIfEligible(surveyAd, ad);
+        await adIfEligible(surveyAd, ad);
         continue;
       }
 
       if (isUserInTargetState && surveyAd.targetDistricts.length === 0) {
-        await addIfEligible(surveyAd, ad);
+        await adIfEligible(surveyAd, ad);
         continue;
       }
     }
@@ -2090,6 +2091,7 @@ const fetchVerifiedSurveyAd = async (req, res) => {
 
     return res.status(200).json({
       message: "Verified survey ads fetched successfully",
+      count: verifiedVideoAds.length,
       ads: verifiedSurveyAds,
     });
   } catch (error) {
