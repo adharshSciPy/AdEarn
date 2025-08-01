@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from 'react'
-import styles from "./UserTransaction.module.css"
+import styles from "./SuperAdminAccount.module.css"
 import Header from '../../../components/Header/Header'
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar"
 import { DatePicker, Space, Pagination } from 'antd';
 import baseUrl from '../../../baseurl';
 import axios from "axios"
-import { useParams } from 'react-router-dom';
 
-function UserTransaction() {
+function SuperAdminAccount() {
 
-    const { id } = useParams();
     const [data, setData] = useState([])
     const [selectedMonth, setSelectedMonth] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
-
 
     const onChange = (date, dateString) => {
         if (date) {
@@ -26,24 +23,25 @@ function UserTransaction() {
         setCurrentPage(1);
     };
 
-
     useEffect(() => {
         const details = async () => {
             try {
-                const response = await axios.get(`${baseUrl}/api/v1/payout/my-payouts/verified/${id}`, {
+                // For frontend filtering approach, get more data or all data
+                const response = await axios.get(`${baseUrl}/api/v1/super-admin/superadmin-wallet`, {
                     params: {
                         page: 1,
                         limit: 1000,
                     }
                 });
-                setData(response.data.completedPayouts)
+
+                setData(response.data.transactions)
                 console.log(response)
             } catch (error) {
                 console.log(error)
             }
         }
         details()
-    }, [])
+    }, []) // Remove dependencies since we're getting all data once
 
     function formatDate(dateString) {
         const date = new Date(dateString);
@@ -67,7 +65,6 @@ function UserTransaction() {
         }
     };
 
-
     return (
         <div className={styles.usertransactionmain}>
             <div className={styles.usertransactioncontainer}>
@@ -75,7 +72,7 @@ function UserTransaction() {
                 <SuperSidebar />
                 <div className={styles.usertransaction}>
                     <div className={styles.usertransactionsection} style={{ width: '100%', maxWidth: '1550px', height: '600px', padding: '30px' }}>
-                        <h1>User Payout Details</h1>
+                        <h1>Super Admin Account Details</h1>
                         <div className={styles.filterbtn}>
                             <Space direction="vertical">
                                 <DatePicker onChange={onChange} picker="month" />
@@ -86,32 +83,36 @@ function UserTransaction() {
                                 <thead>
                                     <tr>
                                         <th>Date</th>
-                                        <th>Amount</th>
+                                        <th>Email</th>
+                                        <th>Reason</th>
                                         <th>Star Count</th>
-                                        <th>Verified Date</th>
-                                        <th>Payout Completion</th>
-                                        <th>Payout Status</th>
                                     </tr>
                                 </thead>
+
                                 <tbody>
+                                    {/* Frontend filtering and pagination */}
                                     {data
                                         .filter((value) => {
                                             if (!selectedMonth) return true;
-                                            const payoutDate = new Date(value.createdAt);
+                                            const payoutDate = new Date(value.date);
                                             return (
                                                 payoutDate.getMonth() === selectedMonth.month() &&
                                                 payoutDate.getFullYear() === selectedMonth.year()
                                             );
-                                        }).map((value, index) => (
-                                            <tr key={index}>
-                                                <td>{formatDate(value.createdAt)}</td>
-                                                <td>{value.amount}</td>
-                                                <td>{value.starCount}</td>
-                                                <td>{formatDate(value.verifiedAt)}</td>
-                                                <td>{formatDate(value.payoutCompletedAt)}</td>
-                                                <td>{value.payoutStatus}</td>
-                                            </tr>
-                                        ))}
+                                        })
+                                        .slice((currentPage - 1) * pageSize, currentPage * pageSize) // Apply pagination
+                                        .map((value, index) => {
+
+                                            return (
+                                                <tr key={index}>
+                                                    <td>{formatDate(value.date)}</td>
+                                                    <td>{value?.userId?.email}</td>
+                                                    <td>{value.reason}</td>
+                                                    <td>{value.starsReceived}</td>
+                                                   
+                                                </tr>
+                                            );
+                                        })}
                                 </tbody>
                             </table>
                         </div>
@@ -133,11 +134,10 @@ function UserTransaction() {
                             style={{ marginTop: "20px", textAlign: "right", display: "flex", justifyContent: "end", alignItems: "end" }}
                         />
                     </div>
-
                 </div>
             </div>
         </div>
     )
 }
 
-export default UserTransaction
+export default SuperAdminAccount

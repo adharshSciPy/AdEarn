@@ -14,7 +14,9 @@ function SuperAdminContestPage() {
     startDate: "",
     entryStars: "",
     maxParticipants: "",
+    endDate: "",
     winnerSelectionType: "Manual",
+    entryLimitType: "maxParticipants", // New field to track radio selection
   });
 
   const [winners, setWinners] = useState([
@@ -53,19 +55,18 @@ function SuperAdminContestPage() {
   };
 
   const removeWinner = (index) => {
-  if (winners.length === 1) return;
+    if (winners.length === 1) return;
 
-  const updated = winners.filter((_, i) => i !== index);
+    const updated = winners.filter((_, i) => i !== index);
 
-  // Recalculate labels
-  const relabeled = updated.map((winner, i) => ({
-    ...winner,
-    label: `${numberToOrdinal(i + 1)} winner`,
-  }));
+    // Recalculate labels
+    const relabeled = updated.map((winner, i) => ({
+      ...winner,
+      label: `${numberToOrdinal(i + 1)} winner`,
+    }));
 
-  setWinners(relabeled);
-};
-  
+    setWinners(relabeled);
+  };
 
   const handleCancel = () => {
     setFormData({
@@ -74,7 +75,9 @@ function SuperAdminContestPage() {
       startDate: "",
       entryStars: "",
       maxParticipants: "",
+      endDate: "",
       winnerSelectionType: "Manual",
+      contestType: "maxParticipants",
     });
 
     setWinners([{ label: "1st winner", value: "", file: null }]);
@@ -172,16 +175,6 @@ function SuperAdminContestPage() {
               required
             />
 
-            <label>Enter Contest Number</label>
-            <input
-              type="text"
-              name="contestNumber"
-              value={formData.contestNumber}
-              onChange={handleChange}
-              placeholder="Enter Contest Number"
-              required
-            />
-
             <label>Enter Start Date</label>
             <input
               type="date"
@@ -201,15 +194,54 @@ function SuperAdminContestPage() {
               required
             />
 
-            <label>Total Entry</label>
-            <input
-              type="text"
-              name="maxParticipants"
-              value={formData.maxParticipants}
-              onChange={handleChange}
-              placeholder="Total Entry"
-              required
-            />
+            <label>Entry Limit Type</label>
+            <div className={styles.radioGroup}>
+              <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                <input
+                  type="radio"
+                  name="contestType"
+                  value="maxParticipants"
+                  checked={formData.contestType === "maxParticipants"}
+                  onChange={handleChange}
+                />
+                <label>Max Participants</label>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                <input
+                  type="radio"
+                  name="contestType"
+                  value="dateRange"
+                  checked={formData.contestType === "dateRange"}
+                  onChange={handleChange}
+                />
+                <label>Date Range</label>
+              </div>
+            </div>
+
+            {formData.contestType === "maxParticipants" ? (
+              <>
+                <label>Total Entry</label>
+                <input
+                  type="text"
+                  name="maxParticipants"
+                  value={formData.maxParticipants}
+                  onChange={handleChange}
+                  placeholder="Total Entry"
+                  required
+                />
+              </>
+            ) : (
+              <>
+                <label>End Date</label>
+                <input
+                  type="date"
+                  name="endDate"
+                  value={formData.endDate}
+                  onChange={handleChange}
+                  required
+                />
+              </>
+            )}
 
             <label>Winner Selection</label>
             <div className={styles.radioGroup}>

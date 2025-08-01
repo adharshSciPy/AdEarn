@@ -11,6 +11,9 @@ const imageAd = new mongoose.Schema(
       type: String,
       required: true,
     },
+    category:{
+type:String
+    },
     imageUrl: {
       type: String,
       required: true,

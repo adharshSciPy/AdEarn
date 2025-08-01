@@ -29,6 +29,8 @@ import User from "./model/userModel.js";
 import payoutRoute from "./routes/payoutRoute.js";
 import { selectAutomaticWinnersInternal } from "./controller/superAdminController.js";
 import rateLimit from "express-rate-limit";
+import mongoSanitize from 'express-mongo-sanitize';
+import xss from 'xss-clean';
 
 dotenv.config();
 const _filename = fileURLToPath(import.meta.url);
@@ -54,9 +56,37 @@ const connectedUsers = new Map();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: '16kb' }));
-
+//Backend Security
 app.use(cors());
 app.use('/api/', apiLimiter);
+// app.use((req, res, next) => {
+//   mongoSanitize.sanitize(req.body);
+//   mongoSanitize.sanitize(req.params);
+  
+//   next();
+// });
+
+// app.use((req, res, next) => {
+//   if (req.body) req.body = xss(req.body);
+//   if (req.params) req.params = xss(req.params);
+ 
+//   next();
+// });
+
+// app.disable("x-powered-by");
+
+// app.all(/^\/api\/.*/, (req, res, next) => {
+//   const allowedMethods = ["GET", "POST", "PUT", "PATCH", "DELETE"];
+//   if (!allowedMethods.includes(req.method)) {
+//     return res.status(405).send("Method Not Allowed");
+//   }
+//   next();
+// });
+
+
+
+
+
 app.use("/userUploads", express.static(path.join(__dirname, "Uploads/userUploads")));
 app.use("/userKyc", express.static(path.join(__dirname, "Uploads/userKyc")));
 app.use("/imgAdUploads", express.static(path.join(__dirname, "Uploads/imageAdUploads")));
@@ -106,6 +136,7 @@ app.use('/api/v1/broadcast', (req, res, next) => {
 app.use('/api/v1/payout', (req, res, next) => {
   req.io = io; req.connectedUsers = connectedUsers; next();
 }, payoutRoute);
+
 // Socket.IO Connection
 io.on("connection", (socket) => {
   // console.log(" New client connected:", socket.id);

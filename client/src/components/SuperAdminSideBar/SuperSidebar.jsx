@@ -86,6 +86,7 @@ function Sidebar() {
           path: "/superadminsubscriptionaccount",
         },
         { key: "Ads-account", label: "Ads Account", path: "/superadminadsaccount" },
+        { key: "Superadmin-account", label: "Super Admin Account", path: "/superadminaccount" }
       ],
     },
     {

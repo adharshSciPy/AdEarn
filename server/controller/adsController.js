@@ -81,6 +81,7 @@ const createImageAd = async (req, res) => {
   const {
     title,
     description,
+    category,
     userViewsNeeded,
     adPeriod,
     locations,
@@ -247,6 +248,7 @@ if (audioFile) {
     const imageAd = await ImageAd.create({
       title,
       description,
+      category,
       imageUrl,
       audioUrl,
       clickUrl: clickUrl?.trim() || null,
@@ -311,6 +313,7 @@ const createVideoAd = async (req, res) => {
   const {
     title,
     description,
+    category,
     userViewsNeeded,
     adPeriod,
     locations,
@@ -441,6 +444,7 @@ const createVideoAd = async (req, res) => {
     const videoAd = await VideoAd.create({
       title,
       description,
+      category,
       videoUrl, 
       adPeriod: adRepetition ? parsedAdPeriod : 0,
       adRepetition,
@@ -491,6 +495,7 @@ const createSurveyAd = async (req, res) => {
   const {
     title,
     description,
+    category,
     userViewsNeeded,
     adPeriod,
     questions,
@@ -663,6 +668,7 @@ if (req.file) {
       const surveyAd = await SurveyAd.create({
       title,
       description,
+      category,
       imageUrl,
       questions: parsedQuestions,
       questionStats,
@@ -2329,6 +2335,7 @@ const editImageAd = async (req, res) => {
   const {
     title,
     description,
+    category,
     adPeriod,
     locations,
     states,
@@ -2363,6 +2370,7 @@ const editImageAd = async (req, res) => {
     // 🔧 Update editable fields
     if (title) imageAd.title = title;
     if (description) imageAd.description = description;
+     if (category) imageAd.category = category;
 
     if (adPeriod) {
       const parsedAdPeriod = parseFloat(adPeriod);
@@ -2437,6 +2445,7 @@ const editVideoAd=async(req,res)=>{
   const{
     title,
     description,
+    category,
     adPeriod,
     locations,
     states,
@@ -2457,6 +2466,8 @@ return res.status(404).json({message:"Ad not found"});
     const videoAd=ad.videoAdRef;
     if(title) videoAd.title=title;
     if(description) videoAd.description=description;
+    if(category) videoAd.category=category;
+
     if (req.file) {
   videoAd.videoUrl = `/videoAdUploads/${req.file.filename}`; // Update this path if you serve files differently
 }
@@ -2545,6 +2556,7 @@ const editSurveyAd = async (req, res) => {
     const {
       title,
       description,
+      category,
       adPeriod,
       questions,
       states,
@@ -2639,6 +2651,8 @@ const editSurveyAd = async (req, res) => {
     // Update values
     surveyAd.title = title || surveyAd.title;
     surveyAd.description = description || surveyAd.description;
+    surveyAd.category = category || surveyAd.category;
+
     surveyAd.questions = parsedQuestions;
     surveyAd.imageUrl = imageUrl;
     surveyAd.adPeriod = adRepetition ? parsedAdPeriod : 0;
