@@ -1315,71 +1315,208 @@ const fetchMySingleAd = async (req, res) => {
 };
 // to reset user password
 const sendPasswordResetOTP = async (req, res) => {
-  const { phoneNumber } = req.body;
+  const { phoneNumber, email } = req.body;
+
+  if (!phoneNumber && !email) {
+    return res.status(400).json({ message: "Phone number or email is required" });
+  }
 
   try {
-    if (!phoneNumber)
-      return res.status(400).json({ message: "Phone Number is required" });
-
-    const user = await User.findOne({ phoneNumber });
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const otp =
-      config.USE_OTP_TEST_MODE === 'true' && phoneNumber === config.OTP_TEST_NUMBER
+    let identifier = ""; // For Redis key
+    let otp =
+      config.USE_OTP_TEST_MODE === "true" &&
+      (phoneNumber === config.OTP_TEST_NUMBER || email === config.OTP_TEST_EMAIL)
         ? config.OTP_TEST_VALUE
         : crypto.randomInt(100000, 999999).toString();
 
-    await redis.set(`reset_otp:${phoneNumber}`, otp, "EX", 300); // 5 min expiry
-    console.log(`✅ Password Reset OTP ${otp} for ${phoneNumber}`);
+    if (phoneNumber) {
+      const user = await User.findOne({ phoneNumber });
+      if (!user) return res.status(404).json({ message: "User not found with this phone number" });
 
-    if (config.USE_OTP_TEST_MODE !== 'true') {
-      await axios.get("https://api.msg91.com/api/v5/otp", {
-        params: {
-          authkey: config.MSG91_AUTH_KEY,
-          mobile: phoneNumber,
-          otp,
-          template_id: config.MSG91_TEMPLATE_ID,
-        },
+      identifier = `reset_otp:${phoneNumber}`;
+      await redis.set(identifier, otp, "EX", 300); // 5 minutes
+
+      console.log(`✅ Password Reset OTP ${otp} for ${phoneNumber}`);
+
+      if (config.USE_OTP_TEST_MODE !== "true") {
+        await axios.get("https://api.msg91.com/api/v5/otp", {
+          params: {
+            authkey: config.MSG91_AUTH_KEY,
+            mobile: phoneNumber,
+            otp,
+            template_id: config.MSG91_TEMPLATE_ID,
+          },
+        });
+      }
+
+      return res.status(200).json({
+        message: "OTP sent for password reset via phone",
+        ...(config.USE_OTP_TEST_MODE === "true" ? { otp } : {}),
+        phoneNumber,
+      });
+
+    } else if (email) {
+      const user = await User.findOne({ email });
+      if (!user) return res.status(404).json({ message: "User not found with this email" });
+
+      identifier = `reset_otp:${email}`;
+      await redis.set(identifier, otp, "EX", 300); // 5 minutes
+
+      console.log(`✅ Password Reset OTP ${otp} for ${email}`);
+
+      if (config.USE_OTP_TEST_MODE !== "true") {
+        const msg = {
+  to: email,
+  from: config.SENDGRID_SENDER_EMAIL,
+  subject: "🔐 Your One-Time Password (OTP)",
+  text: `Hi,
+
+Your One-Time Password (OTP) is: ${otp}
+
+Use this OTP to complete your action. Do not share this code with anyone.
+
+If you did not request this, please ignore this message.
+
+Thanks,
+The AdEarn Team`,
+  html: `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          color: #333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+        .email-container {
+          border-radius: 10px;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+          background: linear-gradient(135deg, #f9f9ff 0%, #f0f4ff 100%);
+          overflow: hidden;
+        }
+        .header {
+          background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%);
+          color: white;
+          padding: 25px;
+          text-align: center;
+        }
+        .logo {
+          max-width: 150px;
+          margin-bottom: 10px;
+        }
+        .otp-box {
+          background: #ffffff;
+          margin: 30px auto;
+          padding: 25px;
+          text-align: center;
+          border-radius: 10px;
+          border: 2px dashed #1976D2;
+          font-size: 28px;
+          font-weight: bold;
+          color: #1976D2;
+          letter-spacing: 2px;
+        }
+        .content {
+          padding: 25px;
+          background-color: white;
+        }
+        .footer {
+          text-align: center;
+          padding: 15px;
+          font-size: 12px;
+          color: #777;
+          background-color: #f5f5f5;
+        }
+        a {
+          color: #1976D2;
+          text-decoration: none;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <div class="header">
+          <img src="https://example.com/your-logo.png" alt="Company Logo" class="logo">
+          <h2>Your OTP Code</h2>
+          <p>Secure your account</p>
+        </div>
+        <div class="content">
+          <p>Hi,</p>
+          <p>Use the following One-Time Password (OTP) to proceed with your action:</p>
+          <div class="otp-box">${otp}</div>
+          <p>This code will expire in 10 minutes. Do not share it with anyone.</p>
+          <p>If you didn’t request this OTP, please ignore this message.</p>
+          <p>Thanks,<br/>The AdEarn Team</p>
+        </div>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} AdEarn. All rights reserved.</p>
+          <p>
+            <a href="${config.APP_URL}/privacy">Privacy Policy</a> |
+            <a href="${config.APP_URL}/terms">Terms of Service</a>
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `,
+};
+
+
+        await sgMail.send(msg);
+      }
+
+      return res.status(200).json({
+        message: "OTP sent for password reset via email",
+        ...(config.USE_OTP_TEST_MODE === "true" ? { otp } : {}),
+        email,
       });
     }
-
-    return res.status(200).json({
-      message: "OTP sent for password reset",
-      ...(config.USE_OTP_TEST_MODE === 'true' ? { otp } : {}),
-      phoneNumber
-    });
   } catch (err) {
     console.error("❌ Send Password Reset OTP error:", err.response?.data || err);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 const verifyPasswordResetOTP = async (req, res) => {
-  const { phoneNumber, otp } = req.body;
+  const { phoneNumber, email, otp } = req.body;
+
+  if ((!phoneNumber && !email) || !otp) {
+    return res.status(400).json({ message: "Phone number or email and OTP are required" });
+  }
 
   try {
-    if (!phoneNumber || !otp) {
-      return res.status(400).json({ message: "Phone number and OTP are required" });
-    }
+    const identifier = phoneNumber || email.toLowerCase(); // Use whichever is provided
+    const redisOtpKey = `reset_otp:${identifier}`;
+    const redisSessionKey = `reset_session:${identifier}`;
 
+    // ✅ Bypass for test mode
     if (
-      config.USE_OTP_TEST_MODE === 'true' &&
-      phoneNumber === config.OTP_TEST_NUMBER &&
+      config.USE_OTP_TEST_MODE === "true" &&
+      (
+        (phoneNumber && phoneNumber === config.OTP_TEST_NUMBER) ||
+        (email && email.toLowerCase() === config.OTP_TEST_EMAIL)
+      ) &&
       otp === config.OTP_TEST_VALUE
     ) {
-      await redis.set(`reset_session:${phoneNumber}`, "active", "EX", 600);
-      return res.status(200).json({ message: "OTP verified successfully" });
+      await redis.set(redisSessionKey, "active", "EX", 600); // 10 minutes
+      return res.status(200).json({ message: "OTP verified successfully", identifier });
     }
 
-    const savedOtp = await redis.get(`reset_otp:${phoneNumber}`);
+    // ✅ Check OTP in Redis
+    const savedOtp = await redis.get(redisOtpKey);
     if (!savedOtp || savedOtp !== otp) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
-    // Set session in Redis
-    await redis.set(`reset_session:${phoneNumber}`, "active", "EX", 600); // 10 min
+    // ✅ Set session in Redis
+    await redis.set(redisSessionKey, "active", "EX", 600); // 10 minutes
 
-    return res.status(200).json({ message: "OTP verified successfully" ,
-      phoneNumber
+    return res.status(200).json({
+      message: "OTP verified successfully",
+      ...(phoneNumber ? { phoneNumber } : { email }),
     });
   } catch (err) {
     console.error("OTP verification error:", err);
@@ -1389,20 +1526,26 @@ const verifyPasswordResetOTP = async (req, res) => {
 
 
 
+
 const resetPassword = async (req, res) => {
-  const { phoneNumber, newPassword } = req.body;
-
-  try {
-    if (!phoneNumber || !newPassword) {
-      return res.status(400).json({ message: "Phone number and new password are required" });
+  const { phoneNumber, email,newPassword } = req.body;
+try {
+    if ((!phoneNumber && !email) || !newPassword) {
+      return res.status(400).json({
+        message: "Phone number or email and new password are required",
+      });
     }
-
-    const sessionActive = await redis.get(`reset_session:${phoneNumber}`);
+      const identifier = phoneNumber || email;
+    const sessionKey = `reset_session:${identifier}`;
+    const otpKey = `reset_otp:${identifier}`;
+      const sessionActive = await redis.get(sessionKey);
     if (!sessionActive) {
-      return res.status(403).json({ message: "OTP session expired or not verified" });
+      return res.status(403).json({
+        message: "OTP session expired or not verified",
+      });
     }
-
-    const user = await User.findOne({ phoneNumber });
+ const query = phoneNumber ? { phoneNumber } : { email };
+    const user = await User.findOne(query);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -1413,8 +1556,8 @@ user.password=newPassword
     await user.save();
 
     // Clean up session
-    await redis.del(`reset_session:${phoneNumber}`);
-    await redis.del(`reset_otp:${phoneNumber}`);
+   await redis.del(sessionKey);
+    await redis.del(otpKey);
 
     return res.status(200).json({ message: "Password reset successful" });
   } catch (err) {
