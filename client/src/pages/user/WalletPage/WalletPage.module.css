@@ -338,26 +338,35 @@
   border-radius: 12px;
   padding: 20px;
   color: white;
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
   box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
   position: relative;
   overflow: hidden;
 }
 
 .referBox::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 70%
+  );
   animation: shimmer 3s infinite;
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .referTitle {
@@ -377,7 +386,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   padding: 12px 16px;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 18px;
   font-weight: bold;
   position: relative;
@@ -424,11 +433,19 @@
   border-color: rgba(76, 175, 80, 1);
   animation: pulse 0.6s ease-in-out;
 }
-
+.walletContainer {
+  padding: 0;
+}
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .copyFeedback {
@@ -457,33 +474,49 @@
     transform: translateX(-50%) translateY(0);
   }
 }
-
+@media (max-width: 800px) {
+  .firstMainrightContainer {
+    display: none;
+  }
+  .firstMainleftContainer {
+    width: 100%;
+  }
+}
 /* Responsive Design */
 @media (max-width: 768px) {
   .referBox {
     padding: 16px;
     margin: 10px;
   }
-  
+
   .referTitle {
     font-size: 14px;
     margin-bottom: 10px;
   }
-  
+
   .referCodeContainer {
     padding: 10px 12px;
     font-size: 16px;
   }
-  
+
   .copyBtn {
     padding: 6px 10px;
     font-size: 14px;
   }
-  
+
   .copyFeedback {
     font-size: 12px;
     padding: 6px 12px;
   }
+}
+@media (max-width: 575px) {
+  .walletContainer{
+    margin-bottom: 80px;
+  }
+  .balanceCard{
+    flex-direction: column;
+  }
+
 }
 
 @media (max-width: 480px) {
@@ -492,12 +525,12 @@
     align-items: stretch;
     gap: 10px;
   }
-  
+
   .copyBtnContainer {
     margin-left: 0;
     text-align: center;
   }
-  
+
   .copyBtn {
     width: 100%;
     padding: 10px;
@@ -508,16 +541,8 @@
   .referBox {
     padding: 12px;
   }
-  
+
   .referCodeText {
     font-size: 14px;
-  }
-}
-@media (max-width: 800px) {
-  .firstMainrightContainer {
-    display: none;
-  }
-  .firstMainleftContainer {
-    width: 100%;
   }
 }

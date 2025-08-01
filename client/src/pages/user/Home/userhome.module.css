@@ -24,8 +24,6 @@
   display: flex;
   background-repeat: no-repeat;
   border-radius: 10px;
-
-
 }
 .firstMainleftContainer {
   width: 50%;
@@ -276,5 +274,12 @@
   .adCard {
     flex-basis: 100%;
     margin-top: 20px;
+  }
+  .noAdsContainer {
+    margin-bottom: 100px;
+  }
+  .homeMainContainer{
+    margin-bottom: 50px;
+
   }
 }

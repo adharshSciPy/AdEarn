@@ -159,7 +159,7 @@ const getSurveyData = async () => {
     getImageAdData();
     getVideoAdData();
     getSurveyData();
-  }, []);
+  }, [id]);
   useEffect(() => {
     if (!socket.connected) socket.connect();
 
@@ -172,7 +172,7 @@ const getSurveyData = async () => {
     return () => {
       socket.off("notification");
     };
-  }, []);
+  }, [id]);
 
   const viewAd = async (adId) => {
     navigate(`/adspreview/${id}/${adId}`);
