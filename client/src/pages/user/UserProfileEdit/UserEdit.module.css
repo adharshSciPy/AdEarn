@@ -282,11 +282,48 @@
   font-size: 30px;
   font-weight: 600;
 }
+@media (max-width: 1200px) {
+  .profileWrapper{
+    padding:0px 20px 20px 20px
+  }
+}
+@media (max-width: 950px) {
+.profileHead{
+  flex-direction: column;
+}
+.rightPanel{
+  margin-top: 0;
+}
+.editformHeading{
+  padding: 20px 0;
+}
+}
 @media (max-width: 800px) {
   .firstMainrightContainer {
     display: none;
   }
   .firstMainleftContainer {
     width: 100%;
+  }
+
+}
+
+@media (max-width: 600px){
+  .leftPanel{
+    padding: 0;
+  }
+  .profileCard{
+    padding: 0;
+  }
+  .rightPanel{
+    padding: 0;
+  }
+  .profileWrapper{
+    padding: 0;
+  }
+}
+@media (max-width: 575px){
+  .profileCard{
+    margin-bottom: 100px;
   }
 }

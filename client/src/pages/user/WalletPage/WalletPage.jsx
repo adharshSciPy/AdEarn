@@ -7,7 +7,7 @@ import axios from "axios";
 import baseUrl from "../../../baseurl";
 import { useNavigate } from "react-router-dom";
 import CreateAdPopup from "../../../components/AdPopup/CreateAdPopup";
-import { Modal, Input, Form, Pagination,message  } from "antd";
+import { Modal, Input, Form, Pagination, message } from "antd";
 import { toast } from "react-toastify";
 import Driver from "driver.js";
 import "driver.js/dist/driver.min.css";
@@ -39,10 +39,12 @@ const WalletPage = () => {
 
   const [cancelledPage, setCancelledPage] = useState(1);
   const [cancelledPageSize, setCancelledPageSize] = useState(10);
+  const [copied, setCopied] = useState(false);
+  const [referCode,setreferalCode]=useState()
 
   const navigate = useNavigate();
-  const handlePayout = async () => {
 
+  const handlePayout = async () => {
     try {
       const res = await axios.post(
         `${baseUrl}/api/v1/payout/request`,
@@ -64,9 +66,8 @@ const WalletPage = () => {
       }
       console.log(res);
     } catch (error) {
-      console.log("errorrrrrrrr",error.response.data.message);
-       toast.error(error.response.data.message);
-
+      console.log("errorrrrrrrr", error.response.data.message);
+      toast.error(error.response.data.message);
     }
   };
   const handleCancel = () => {
@@ -88,6 +89,7 @@ const WalletPage = () => {
         `${baseUrl}/api/v1/user/user-wallet/${userId}`
       );
       setWalletDetails(response.data.wallet);
+      setreferalCode(response.data.user.myReferalCode)
     } catch (error) {
       console.log(error);
     }
@@ -295,7 +297,38 @@ const WalletPage = () => {
       attempts++;
     }, 1000);
   };
+  const handleCopyClick = async () => {
+    try {
+      // Modern approach - Clipboard API
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(referCode);
+      } else {
+        // Fallback for older browsers or non-secure contexts
+        const textArea = document.createElement("textarea");
+        textArea.value = referCode;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        textArea.remove();
+      }
 
+      // Show success feedback
+      setCopied(true);
+
+      // Reset after 2 seconds
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to copy text: ", err);
+      // You can add error handling here, like showing a toast notification
+      alert("Failed to copy code. Please try again.");
+    }
+  };
   return (
     <>
       <Navbar onTourComplete={handleTourComplete} />
@@ -346,13 +379,25 @@ const WalletPage = () => {
                 Buy stars
               </button>
               <div className={styles.referBox}>
-                <span>🔗 Refer Codes & Earn</span>
-                <code>
-                  #1232163311
-                  <span>
-                    <button className={styles.copyBtn}>📋</button>
+                <span className={styles.referTitle}>🔗 Refer Codes & Earn</span>
+                <code className={styles.referCodeContainer}>
+                  <span className={styles.referCodeText}>{referCode}</span>
+                  <span className={styles.copyBtnContainer}>
+                    <button
+                      className={`${styles.copyBtn} ${copied ? styles.copied : ""}`}
+
+                      onClick={handleCopyClick}
+                      title={copied ? "Copied!" : "Copy refer code"}
+                    >
+                      {copied ? "✅" : "📋"}
+                    </button>
                   </span>
                 </code>
+                {copied && (
+                  <div className={styles.copyFeedback}>
+                    ✨ Refer code copied to clipboard!
+                  </div>
+                )}
               </div>
             </div>
             <div className={styles.requestBox}>
