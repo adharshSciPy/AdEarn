@@ -86,6 +86,21 @@ function Navbar({ onTourComplete }) {
     }
   };
 
+  // Set initial active tab based on current URL
+  useEffect(() => {
+    const currentPath = window.location.pathname;
+    const matchingItem = navItems.find(item => {
+      if (typeof item.label === 'string' && item.label.startsWith('/')) {
+        return currentPath === item.label;
+      }
+      return false;
+    });
+    
+    if (matchingItem) {
+      setActiveTab(matchingItem.label);
+    }
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -194,19 +209,17 @@ function Navbar({ onTourComplete }) {
   }, [userId, onTourComplete]);
 
   const getNotifications = async () => {
-    
-  try {
-    const res = await axios.get(`${baseUrl}/api/v1/notifications/get-notifications`, {
-      headers: {
-        Authorization: `Bearer ${userToken}`,
-      },
-    });
-    setNotifications(res.data.notifications)
-  } catch (error) {
-    console.log(error);
-  }
-};
-
+    try {
+      const res = await axios.get(`${baseUrl}/api/v1/notifications/get-notifications`, {
+        headers: {
+          Authorization: `Bearer ${userToken}`,
+        },
+      });
+      setNotifications(res.data.notifications)
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <>
@@ -221,7 +234,7 @@ function Navbar({ onTourComplete }) {
           <div className={styles.iconsContainer}>
             {navItems.map((item, index) => (
               <div
-                className={styles.iconContainer}
+                className={`${styles.iconContainer} ${activeTab === item.label ? styles.active : ""}`}
                 id={item.navId}
                 key={index}
                 onClick={() => handleBottomNavClick(item.label)}
@@ -261,8 +274,7 @@ function Navbar({ onTourComplete }) {
         {navItems.map((item, index) => (
           <div
             key={index}
-            className={`${styles.bottomNavItem} ${activeTab === item.label ? styles.active : ""
-              }`}
+            className={`${styles.bottomNavItem} ${activeTab === item.label ? styles.active : ""}`}
             onClick={() => handleBottomNavClick(item.label)}
           >
             {typeof item.icon === "string" ? (
