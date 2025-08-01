@@ -115,6 +115,7 @@ import PublishAds from './pages/superadmin/PublishAd/PublishAds';
 import SubscriptionModal from './components/SubscriptionModal/SubscriptionModal';
 import UserTransaction from './pages/superadmin/UserTransaction/UserTransaction';
 import UserAdsDetails from './pages/superadmin/UserAdsDetails/UserAdsDetails';
+import SuperAdminAccount from './pages/superadmin/SuperAdminAccount/SuperAdminAccount';
 
 
 
@@ -267,7 +268,7 @@ function App() {
           <Route path='/Superadminpublishads' element={<PublishAds />} />
           <Route path='/Superusertransaction/:id' element={<UserTransaction />} />
           <Route path='/UserAdsDetails/:id' element={<UserAdsDetails />} />
-
+          <Route path='/superadminaccount' element={<SuperAdminAccount />} />
 
 
 

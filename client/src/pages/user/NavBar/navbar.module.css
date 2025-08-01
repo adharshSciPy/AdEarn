@@ -8,7 +8,6 @@
 }
 
 .subContainerNav {
-  
   max-width: 98%;
   margin: auto;
   display: flex;
@@ -65,6 +64,35 @@
   border-color: #007bff;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+}
+
+/* Active state for desktop icons */
+.iconContainer.active {
+   /* background: linear-gradient(135deg, #007bff 0%, #007bff 100%); */
+  /* border-color: #007bff; */
+  transform: translateY(-3px);
+  /* box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3); */
+  position: relative;
+}
+
+.iconContainer.active::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  border-radius: 50%;
+  z-index: -1;
+  opacity: 0.3;
+}
+
+.iconContainer.active img,
+.iconContainer.active > div,
+.iconContainer.active > div > img {
+  transform: scale(1.1);
+  filter: brightness(1.1) saturate(1.2);
 }
 
 .iconContainer img {
@@ -415,7 +443,7 @@
 /* Mobile (480px and below) */
 @media (max-width: 480px) {
   .mainContainer {
-    padding-bottom: 70px;
+    padding:30px;
   }
   
   .iconsContainer {
@@ -532,92 +560,6 @@
   }
 }
 
-/* Alternative Design Variations (uncomment to use) */
-
-/* Option 1: Floating Badge Style */
-/*
-.bottomNavItem.active {
-  background: white;
-  transform: translateY(-12px);
-  border-radius: 25px;
-  box-shadow: 0 10px 25px rgba(0, 123, 255, 0.3);
-  border: 2px solid #007bff;
-  min-height: 50px;
-  margin-top: -10px;
-}
-
-.bottomNavItem.active::after {
-  display: none;
-}
-*/
-
-/* Option 2: Neon Glow Effect */
-/*
-.bottomNavItem.active {
-  background: rgba(0, 123, 255, 0.1);
-  transform: translateY(-5px);
-  border-radius: 15px;
-  box-shadow: 
-    0 0 20px rgba(0, 123, 255, 0.5),
-    0 0 40px rgba(0, 123, 255, 0.3),
-    0 0 60px rgba(0, 123, 255, 0.1);
-  border: 1px solid rgba(0, 123, 255, 0.3);
-}
-
-.bottomNavItem.active img,
-.bottomNavItem.active > div,
-.bottomNavItem.active > div > img {
-  filter: drop-shadow(0 0 8px rgba(0, 123, 255, 0.8));
-}
-*/
-
-/* Option 3: Morphing Circle */
-/*
-.bottomNavItem.active {
-  background: linear-gradient(135deg, #007bff, #0056b3);
-  transform: translateY(-8px) scale(1.1);
-  border-radius: 50%;
-  width: 55px;
-  height: 55px;
-  box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
-}
-
-.bottomNavItem.active img,
-.bottomNavItem.active > div,
-.bottomNavItem.active > div > img {
-  filter: brightness(0) invert(1);
-}
-
-.bottomNavItem.active::after {
-  display: none;
-}
-*/
-
-/* Option 4: Material Design Style */
-/*
-.bottomNavItem.active {
-  background: rgba(0, 123, 255, 0.12);
-  transform: none;
-  border-radius: 16px;
-  position: relative;
-}
-
-.bottomNavItem.active::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: #007bff;
-  border-radius: 16px 16px 0 0;
-}
-
-.bottomNavItem.active::after {
-  display: none;
-}
-*/
-
 /* Accessibility improvements */
 @media (prefers-reduced-motion: reduce) {
   * {
@@ -632,7 +574,7 @@
 }
 
 /* Dark mode support */
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   .mainContainer,
   .subContainerNav,
   .bottomNav {
@@ -648,6 +590,11 @@
   .iconContainer:hover {
     border-color: #007bff;
     background-color: #333;
+  }
+  
+  .iconContainer.active {
+    background-color: rgba(0, 123, 255, 0.2);
+    border-color: #007bff;
   }
   
   .notificationDropdown {
@@ -671,4 +618,4 @@
   .bottomNavItem.active {
     background-color: rgba(0, 123, 255, 0.2);
   }
-}
+} */

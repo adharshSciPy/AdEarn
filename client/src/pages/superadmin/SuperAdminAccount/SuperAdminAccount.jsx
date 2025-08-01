@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import styles from "./UserAdsDetails.module.css"
+import styles from "./SuperAdminAccount.module.css"
 import Header from '../../../components/Header/Header'
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar"
 import { DatePicker, Space, Pagination } from 'antd';
 import baseUrl from '../../../baseurl';
 import axios from "axios"
-import { useParams } from 'react-router-dom';
 
-function UserAdsDetails() {
+function SuperAdminAccount() {
 
-    const { id } = useParams();
     const [data, setData] = useState([])
     const [selectedMonth, setSelectedMonth] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
@@ -29,14 +27,14 @@ function UserAdsDetails() {
         const details = async () => {
             try {
                 // For frontend filtering approach, get more data or all data
-                const response = await axios.get(`${baseUrl}/api/v1/user/my-all-ads/${id}`, {
+                const response = await axios.get(`${baseUrl}/api/v1/super-admin/superadmin-wallet`, {
                     params: {
                         page: 1,
                         limit: 1000,
                     }
                 });
-                
-                setData(response.data.data.ads)
+
+                setData(response.data.transactions)
                 console.log(response)
             } catch (error) {
                 console.log(error)
@@ -74,7 +72,7 @@ function UserAdsDetails() {
                 <SuperSidebar />
                 <div className={styles.usertransaction}>
                     <div className={styles.usertransactionsection} style={{ width: '100%', maxWidth: '1550px', height: '600px', padding: '30px' }}>
-                        <h1>User Payout Details</h1>
+                        <h1>Super Admin Account Details</h1>
                         <div className={styles.filterbtn}>
                             <Space direction="vertical">
                                 <DatePicker onChange={onChange} picker="month" />
@@ -85,11 +83,9 @@ function UserAdsDetails() {
                                 <thead>
                                     <tr>
                                         <th>Date</th>
-                                        <th>Ad Title</th>
+                                        <th>Email</th>
+                                        <th>Reason</th>
                                         <th>Star Count</th>
-                                        <th>Verified Date</th>
-                                        <th>Payout Completion</th>
-                                        <th>Payout Status</th>
                                     </tr>
                                 </thead>
 
@@ -98,7 +94,7 @@ function UserAdsDetails() {
                                     {data
                                         .filter((value) => {
                                             if (!selectedMonth) return true;
-                                            const payoutDate = new Date(value.createdAt);
+                                            const payoutDate = new Date(value.date);
                                             return (
                                                 payoutDate.getMonth() === selectedMonth.month() &&
                                                 payoutDate.getFullYear() === selectedMonth.year()
@@ -106,16 +102,14 @@ function UserAdsDetails() {
                                         })
                                         .slice((currentPage - 1) * pageSize, currentPage * pageSize) // Apply pagination
                                         .map((value, index) => {
-                                            const adRef = value.imageAdRef || value.videoAdRef || value.surveyAdRef || null;
 
                                             return (
                                                 <tr key={index}>
-                                                    <td>{formatDate(value.createdAt)}</td>
-                                                    <td>{adRef?.title}</td>
-                                                    <td>{adRef?.starCount || adRef?.totalStarsAllocated}</td>
-                                                    <td>{adRef?.adVerifiedTime ? formatDate(adRef.adVerifiedTime) : "N/A"}</td>
-                                                    <td>{adRef?.adExpirationTime ? formatDate(adRef.adExpirationTime) : "N/A"}</td>
-                                                    <td>{adRef?.isPaymentCompleted ? "Completed" : "Pending"}</td>
+                                                    <td>{formatDate(value.date)}</td>
+                                                    <td>{value?.userId?.email}</td>
+                                                    <td>{value.reason}</td>
+                                                    <td>{value.starsReceived}</td>
+                                                   
                                                 </tr>
                                             );
                                         })}
@@ -146,4 +140,4 @@ function UserAdsDetails() {
     )
 }
 
-export default UserAdsDetails
+export default SuperAdminAccount

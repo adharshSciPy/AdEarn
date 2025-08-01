@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import styles from "./UserTransaction.module.css"
 import Header from '../../../components/Header/Header'
 import SuperSidebar from "../../../components/SuperAdminSideBar/SuperSidebar"
-import { DatePicker, Space } from 'antd';
+import { DatePicker, Space, Pagination } from 'antd';
 import baseUrl from '../../../baseurl';
 import axios from "axios"
 import { useParams } from 'react-router-dom';
@@ -12,20 +12,30 @@ function UserTransaction() {
     const { id } = useParams();
     const [data, setData] = useState([])
     const [selectedMonth, setSelectedMonth] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+
 
     const onChange = (date, dateString) => {
         if (date) {
             setSelectedMonth(date);
         } else {
-            setSelectedMonth(null); // Reset filter if cleared
+            setSelectedMonth(null);
         }
+        // Reset to first page when month filter changes
+        setCurrentPage(1);
     };
 
 
     useEffect(() => {
         const details = async () => {
             try {
-                const response = await axios.get(`${baseUrl}/api/v1/payout/my-payouts/verified/${id}`);
+                const response = await axios.get(`${baseUrl}/api/v1/payout/my-payouts/verified/${id}`, {
+                    params: {
+                        page: 1,
+                        limit: 1000,
+                    }
+                });
                 setData(response.data.completedPayouts)
                 console.log(response)
             } catch (error) {
@@ -46,6 +56,16 @@ function UserTransaction() {
 
         return `${day}/${month}/${year}`;
     }
+
+    // Handle pagination change
+    const handlePaginationChange = (page, size) => {
+        setCurrentPage(page);
+        if (size !== pageSize) {
+            // If page size changed, reset to first page
+            setCurrentPage(1);
+            setPageSize(size);
+        }
+    };
 
 
     return (
@@ -95,6 +115,23 @@ function UserTransaction() {
                                 </tbody>
                             </table>
                         </div>
+                        <Pagination
+                            current={currentPage}
+                            pageSize={pageSize}
+                            total={data
+                                .filter((value) => {
+                                    if (!selectedMonth) return true;
+                                    const payoutDate = new Date(value.createdAt);
+                                    return (
+                                        payoutDate.getMonth() === selectedMonth.month() &&
+                                        payoutDate.getFullYear() === selectedMonth.year()
+                                    );
+                                }).length} // Use filtered data count
+                            showSizeChanger
+                            pageSizeOptions={['10', '20', '50', '100']}
+                            onChange={handlePaginationChange}
+                            style={{ marginTop: "20px", textAlign: "right", display: "flex", justifyContent: "end", alignItems: "end" }}
+                        />
                     </div>
 
                 </div>

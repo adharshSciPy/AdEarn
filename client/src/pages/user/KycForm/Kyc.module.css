@@ -295,3 +295,20 @@
   border: none;
   cursor: pointer;
 }
+
+@media (max-width:800px) {
+  .profileWrapper{
+    padding: 0px 20px 0px 20px;
+
+  }
+}
+@media (max-width:575px) {
+  .profileCard{
+    margin-bottom: 100px;
+    padding-bottom: 10px;
+  }
+  .profileCard{
+    padding: 10px 10px 30px 10px  ;
+    border: none;
+  }
+}
