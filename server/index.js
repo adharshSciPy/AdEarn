@@ -35,7 +35,7 @@ const _filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(_filename);
 // Limit each IP to 100 requests per 15 minutes
 const apiLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 15 minutes
+  windowMs: 1 * 60 * 1000, // 1 minute
   max: 150,
   message: "Too many requests from this IP, please try again later.",
   standardHeaders: true,
