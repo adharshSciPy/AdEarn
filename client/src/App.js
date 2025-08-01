@@ -62,6 +62,7 @@ import SavedAds from './pages/user/SavedAds/SavedAds';
 import SavedAdsPreview from './pages/user/SavedAdsPreview/SavedAdsPreview';
 import EmailValidation from './pages/user/signUp/EmailValidation';
 import EmailOtp from './pages/user/signUp/EmailOtp';
+import SurveyEdit from "./pages/user/SurveyEdit/SurveyEdit"
 
 
 // superadmin
@@ -198,6 +199,8 @@ function App() {
           <Route path='/adduplicate' element={<AdEdit />} />
 
           <Route path='/videoadedit/:id' element={<VideoAdEdit />} />
+          <Route path='/surveyadedit/:id' element={<SurveyEdit />} />
+
           <Route path='/videoduplicate' element={<VideoAdEdit />} />
 
           <Route path='/coupon' element={<CouponPage />} />

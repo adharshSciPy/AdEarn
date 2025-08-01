@@ -24,6 +24,7 @@ import styles from "./Video.module.css";
 import tickAd from "../../../assets/tickAd.png";
 import Navbar from "../NavBar/Navbar";
 import axios from "axios";
+import { useSelector } from "react-redux";
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
@@ -463,6 +464,7 @@ const stateCityMap = {
 
 function VideoAdForm() {
   const { id } = useParams();
+  const userToken = useSelector((state) => state.user.token);
   const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -484,6 +486,7 @@ function VideoAdForm() {
     adName: "",
     adPeriod: "",
     adCategory: "",
+    description: "",
   });
   const [positions, setPositions] = useState([]);
   const [searchInput, setSearchInput] = useState("");
@@ -626,7 +629,9 @@ function VideoAdForm() {
     const formData = new FormData();
 
     formData.append("title", form.adName);
-    formData.append("description", form.adCategory);
+    formData.append("category", form.adCategory);
+    formData.append("description", form.description);
+
     formData.append("userViewsNeeded", form.viewPlan);
 
     // Array of positions (e.g., { coords: "8.5,76.9", radius: "5" })
@@ -649,6 +654,7 @@ function VideoAdForm() {
           {
             headers: {
               "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${userToken}`,
             },
           }
         );
@@ -661,6 +667,7 @@ function VideoAdForm() {
             state: [],
             city: [],
             viewPlan: "",
+            clickUrl: "",
           });
           if (fileInputRef.current) {
             fileInputRef.current.value = null;
@@ -985,6 +992,23 @@ function VideoAdForm() {
                 <option>Housing</option>
                 <option>Social Issue</option>
               </select>
+            </div>
+          </div>
+          {/* Ad  descrition*/}
+          <div className={styles.labelContainer} style={{ marginTop: "20px" }}>
+            <div className={styles.labelImg}>
+              <img src={tickAd} alt="tick" />
+            </div>
+            <div className={styles.AdNameHead}>
+              <h2>Ad Description</h2>
+              <textarea 
+                className={styles.AdInput}
+                type="text"
+                placeholder="Description of your Ad"
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+              />
             </div>
           </div>
         </div>

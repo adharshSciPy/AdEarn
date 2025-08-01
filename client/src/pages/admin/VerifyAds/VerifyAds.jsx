@@ -239,6 +239,14 @@ function VerifyAds() {
                         <p>{formatDate(unverifiedAd.surveyAd.createdAt)}</p>
                       ) : null}
                     </div>
+                    
+                  </div>
+                  <div className={styles.listitems}>
+                    <div>
+                      {unverifiedAd?.imageAd?.createdAt ? (<p>{(unverifiedAd.imageAd.clickUrl)}</p>):(null)
+}
+                    </div>
+                    
                   </div>
                 </div>
               </div>

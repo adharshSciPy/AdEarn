@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import Select from "react-select";
 import baseUrl from "../../../baseurl";
-// import successAnimation from "./success.json";
 import Lottie from "lottie-react";
 import successAnimation from "../../../assets/sucess.json";
 import { useNavigate } from "react-router-dom";
-
+import Driver from "driver.js";
+import "driver.js/dist/driver.min.css";
 import {
   MapContainer,
   TileLayer,
@@ -18,16 +18,11 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import styles from "./adform.module.css";
+import styles from "./surveyedit.module.css";
 import tickAd from "../../../assets/tickAd.png";
 import Navbar from "../NavBar/Navbar";
 import axios from "axios";
-import Driver from "driver.js";
-import "driver.js/dist/driver.min.css";
 import { useSelector } from "react-redux";
-import { toast } from "react-toastify";
-
-// Fix leaflet's default icon issue
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
@@ -36,7 +31,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
 });
 
-// Map click handler for adding location markers
 function LocationMarkers({ positions, setPositions }) {
   useMapEvents({
     click(e) {
@@ -76,6 +70,7 @@ function ChangeView({ center, zoom }) {
   map.setView(center, zoom);
   return null;
 }
+
 const stateCityMap = {
   Kerala: [
     "Thiruvananthapuram",
@@ -465,12 +460,16 @@ const stateCityMap = {
   Puducherry: ["Puducherry", "Karaikal", "Mahe", "Yanam"],
   // Add more states and cities here
 };
-
-function AdForm() {
+function SurveyEdit() {
+  const userId = useSelector((state) => state.user.id);
   const { id } = useParams();
   const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const location = useLocation();
+  const isEditMode = Boolean(id);
   const userToken = useSelector((state) => state.user.token);
+  const isDuplicateMode = Boolean(location.state?.duplicatedAd);
+  const duplicatedAd = location.state?.duplicatedAd || null;
   const [singleTime, setSingleTime] = useState(false);
   const [multipleTime, setMultipleTime] = useState(false);
   const [timeOptions, setTimeOptions] = useState({
@@ -480,33 +479,54 @@ function AdForm() {
     "24hrs": false,
     "48hrs": false,
   });
-  const [image, setImage] = useState(null);
-  const [audio, setAudio] = useState(null);
-
   const [form, setForm] = useState({
     state: [],
     city: [],
     viewPlan: "",
     adName: "",
-    adPeriod: "",
     adCategory: "",
-    clickUrl:"",
-    description:"",
-
   });
+  const [yesNoQuestion, setYesNoQuestion] = useState("");
+  const [allYesNoQuestions, setAllYesNoQuestions] = useState([]);
   const [positions, setPositions] = useState([]);
   const [searchInput, setSearchInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
+  const [questionType, setQuestionType] = useState("yesno");
+  const [mcQuestion, setMcQuestion] = useState("");
+  const [mcOptions, setMcOptions] = useState([]);
+  const [allMCQuestions, setAllMCQuestions] = useState([]);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPaymentType, setSelectedPaymentType] = useState(null);
-  const [tourState, setTourState] = useState({
-    navbarCompleted: false,
-    homeCompleted: false,
-  });
-  const [targetOption, setTargetOption] = useState("");
 
+  const handleOptionChange = (index, value) => {
+    const updatedOptions = [...mcOptions];
+    updatedOptions[index] = value;
+    setMcOptions(updatedOptions);
+  };
+  const addOption = () => {
+    setMcOptions([...mcOptions, ""]);
+  };
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+  const addYesNoQuestion = () => {
+    if (yesNoQuestion.trim()) {
+      setAllYesNoQuestions([...allYesNoQuestions, yesNoQuestion]);
+      setYesNoQuestion("");
+    }
+  };
+  const removeOption = (index) => {
+    const updatedOptions = mcOptions.filter((_, i) => i !== index);
+    setMcOptions(updatedOptions);
+  };
   // Toggle time options when multipleTime is selected
   const handleTimeChange = (label) => {
     const newOptions = {
@@ -520,21 +540,25 @@ function AdForm() {
     setTimeOptions(newOptions);
     setSelectedTimeSlots(parseInt(label.replace("hrs", "")));
   };
-  const handleFileChangeaudio = (e) => {
-    const file = e.target.files[0];
-    setAudio(file);
-    if (file) {
-      const previewUrl = URL.createObjectURL(file);
-      setPreviewaudio(previewUrl);
+  const addMCQuestion = () => {
+    if (mcQuestion.trim() && mcOptions.every((opt) => opt.trim())) {
+      const newQuestion = {
+        question: mcQuestion,
+        options: mcOptions,
+      };
+      setAllMCQuestions([...allMCQuestions, newQuestion]);
+      setMcQuestion("");
+      setMcOptions([]);
     }
   };
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setImage(file);
-    if (file) {
-      setPreview(URL.createObjectURL(file));
-    }
+
+  const deleteMCQuestion = (index) => {
+    setAllMCQuestions(allMCQuestions.filter((_, i) => i !== index));
   };
+  const deleteYesNoQuestion = (index) => {
+    setAllYesNoQuestions(allYesNoQuestions.filter((_, i) => i !== index));
+  };
+
   // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -544,8 +568,6 @@ function AdForm() {
       ...(name === "state" ? { city: [] } : {}),
     }));
   };
-  const rawCities = stateCityMap[form.state] || [];
-
   const cityOptions = form.state.flatMap((state) =>
     (stateCityMap[state] || []).map((city) => ({ value: city, label: city }))
   );
@@ -567,7 +589,94 @@ function AdForm() {
       )
     );
   };
+  useEffect(() => {
+    const initFormFromData = (data) => {
+      const adRef =
+        data.imgAdRef || data.videoAdRef || data.surveyAdRef || data; // fallback for duplication
 
+      setForm({
+        adName: adRef.title || "",
+        adCategory: adRef.category || "",
+        description: adRef.description || "",
+        state: Array.isArray(adRef.targetStates) ? adRef.targetStates : [],
+        city: Array.isArray(adRef.targetDistricts) ? adRef.targetDistricts : [],
+        viewPlan: adRef.userViewsNeeded?.toString() || "",
+      });
+
+      if (adRef.videoUrl) setPreview(`${baseUrl}${adRef.videoUrl}`);
+
+      setPositions(
+        (adRef.targetRegions || []).map((region) => {
+          const coords = region?.location?.coordinates || [0, 0];
+          return {
+            lat: coords[0],
+            lng: coords[1],
+            radiusKm: region.radiusKm || 30,
+          };
+        })
+      );
+
+      // Handle Ad Period Logic
+      const adPeriod = adRef.adPeriod;
+
+      if (adPeriod === 0) {
+        // Single user single time
+        setSingleTime(true);
+        setMultipleTime(false);
+        setSelectedTimeSlots([]);
+        setTimeOptions({
+          "3hrs": false,
+          "6hrs": false,
+          "12hrs": false,
+          "24hrs": false,
+          "48hrs": false,
+        });
+      } else if (adPeriod > 0) {
+        // Single user multiple time
+        setSingleTime(false);
+        setMultipleTime(true);
+        setSelectedTimeSlots(adPeriod);
+
+        // Set the corresponding time option based on adPeriod value
+        const timeOptionsMap = {
+          3: "3hrs",
+          6: "6hrs",
+          12: "12hrs",
+          24: "24hrs",
+          48: "48hrs",
+        };
+
+        const selectedOption = timeOptionsMap[adPeriod];
+
+        setTimeOptions({
+          "3hrs": selectedOption === "3hrs",
+          "6hrs": selectedOption === "6hrs",
+          "12hrs": selectedOption === "12hrs",
+          "24hrs": selectedOption === "24hrs",
+          "48hrs": selectedOption === "48hrs",
+        });
+      }
+    };
+
+    const fetchAdData = async () => {
+      try {
+        const response = await axios.get(
+          `${baseUrl}/api/v1/user/my-single-ad/${userId}/${id}`
+        );
+        const adData = response.data.ad;
+
+        initFormFromData(adData); // Pass full object with refs
+      } catch (error) {
+        console.error("Failed to fetch ad:", error);
+      }
+    };
+
+    if (isEditMode) {
+      fetchAdData();
+    } else if (duplicatedAd) {
+      initFormFromData(duplicatedAd);
+    }
+  }, [id, userId, duplicatedAd]);
   // Validate form before submit
   const validateForm = () => {
     if (!form.adName.trim()) {
@@ -608,11 +717,10 @@ function AdForm() {
   const searchPlace = async (query) => {
     setLoading(true);
     try {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-        query
-      )}`;
-      const response = await fetch(url);
-      const data = await response.json();
+      const res = await fetch(
+        `http://localhost:8000/api/v1/geocode?q=${encodeURIComponent(query)}`
+      );
+      const data = await res.json();
 
       if (data.length > 0) {
         const newPins = data.map((place) => ({
@@ -622,7 +730,6 @@ function AdForm() {
           radiusKm: 30,
         }));
 
-        // Filter out duplicates
         const filteredPins = newPins.filter(
           (newPin) =>
             !positions.some((p) => p.lat === newPin.lat && p.lng === newPin.lng)
@@ -631,20 +738,46 @@ function AdForm() {
         if (filteredPins.length > 0) {
           setPositions((prev) => [...prev, ...filteredPins]);
         }
+      } else {
+        alert("No results found.");
       }
     } catch (error) {
       console.error("Geocode error:", error);
+      alert("Failed to search location.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // Submit form data
-  const handleSubmit = async (paymentType) => {
+  const handleSubmit = async (paymenttype) => {
     if (!validateForm()) return;
 
     setLoading(true);
     setSubmitError("");
     setSubmitSuccess("");
+
+    const allQuestions = [];
+
+    if (questionType === "yesno") {
+      allYesNoQuestions.forEach((q) =>
+        allQuestions.push({
+          questionText: q,
+          questionType: "yesno",
+          options: ["Yes", "No"],
+        })
+      );
+    }
+
+    if (questionType === "multiple") {
+      allMCQuestions.forEach((q) =>
+        allQuestions.push({
+          questionText: q.question,
+          questionType: "multiple",
+          options: q.options,
+        })
+      );
+    }
 
     const locationPayload = positions.map((p) => ({
       coords: `${p.lat},${p.lng}`,
@@ -652,40 +785,56 @@ function AdForm() {
     }));
 
     const formData = new FormData();
+    formData.append("questions", JSON.stringify(allQuestions));
     formData.append("title", form.adName);
-    formData.append("category", form.adCategory);
-    formData.append("userViewsNeeded", form.viewPlan);
+    formData.append("description", form.adCategory);
     formData.append("locations", JSON.stringify(locationPayload));
     formData.append("states", JSON.stringify(form.state));
     formData.append("districts", JSON.stringify(form.city || []));
-    formData.append("imageAd", image);
-    formData.append("audioAd", audio);
-    formData.append("clickUrl", form.clickUrl);
-    formData.append("description", form.description);
-
     formData.append(
       "adPeriod",
       JSON.stringify(singleTime ? 0 : selectedTimeSlots)
     );
 
-    try {
-      // OPTIONAL: use paymentType for conditional logic
-      console.log("Selected Payment Type:", paymentType);
-      if (paymentType === "stars") {
-        const response = await axios.post(
-          `${baseUrl}/api/v1/ads/image-ad/${id}`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${userToken}`,
-            },
-          }
-        );
+    // Only append viewPlan during create or duplicate (not edit)
+    if (!isEditMode || isDuplicateMode) {
+      formData.append("userViewsNeeded", form.viewPlan);
+    }
 
-        if (response.status === 200) {
-          console.log("Ad saved successfully:", response);
+    if (imageFile) {
+      formData.append("image", imageFile);
+    } else if (imagePreview && isDuplicateMode) {
+      // Handle existing image for duplicate mode
+      const relativeImageUrl = imagePreview.startsWith(baseUrl)
+        ? imagePreview.substring(baseUrl.length)
+        : imagePreview;
+      formData.append("existingImageUrl", relativeImageUrl);
+    }
 
+    // Conditional method and endpoint based on mode
+    const isCreateMode = !isEditMode || isDuplicateMode;
+
+    if (paymenttype === "stars") {
+      try {
+        let endpoint, method;
+
+        if (isCreateMode) {
+          endpoint = `${baseUrl}/api/v1/ads/survey-ad/${userId}`;
+          method = "post";
+        } else {
+          endpoint = `${baseUrl}/api/v1/ads/edit-survey-ad/${id}`;
+          method = "patch";
+        }
+
+        const response = await axios[method](endpoint, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${userToken}`,
+          },
+        });
+
+        if (response.status === 200 || response.status === 201) {
+          // Clear form and show success
           setForm({
             adName: "",
             adCategory: "",
@@ -693,15 +842,18 @@ function AdForm() {
             city: [],
             viewPlan: "",
           });
-          if (fileInputAudioRef.current) fileInputAudioRef.current.value = null;
-          if (fileInputRef.current) fileInputRef.current.value = null;
-
-          setPreview(null);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = null;
+          }
+          setImagePreview(null);
+          setImageFile(null);
           setPositions([]);
           setSingleTime(false);
           setMultipleTime(false);
           setSelectedTimeSlots([]);
           setSearchInput("");
+          setAllYesNoQuestions([]);
+          setAllMCQuestions([]);
           setTimeOptions({
             "3hrs": false,
             "6hrs": false,
@@ -713,65 +865,200 @@ function AdForm() {
           setShowSuccessPopup(true);
           setTimeout(() => {
             setShowSuccessPopup(false);
-            navigate(`/userhome/${id}`);
+            navigate(`/userhome/${userId}`); // Use userId instead of id
           }, 2000);
         }
-      } else {
-        const response = await axios.post(
-          `${baseUrl}/api/v1/ads/image-ad/draft/${id}`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${userToken}`,
-            },
-          }
-        );
-
-        if (response.status === 200) {
-          console.log("Ad saved successfully:", response);
-
-          setForm({
-            adName: "",
-            adCategory: "",
-            state: [],
-            city: [],
-            viewPlan: "",
-          });
-          if (fileInputAudioRef.current) fileInputAudioRef.current.value = null;
-          if (fileInputRef.current) fileInputRef.current.value = null;
-
-          setPreview(null);
-          setPositions([]);
-          setSingleTime(false);
-          setMultipleTime(false);
-          setSelectedTimeSlots([]);
-          setSearchInput("");
-          setTimeOptions({
-            "3hrs": false,
-            "6hrs": false,
-            "12hrs": false,
-            "24hrs": false,
-            "48hrs": false,
-          });
-
-          setShowSuccessPopup(true);
-          setTimeout(() => {
-            setShowSuccessPopup(false);
-            navigate(`/userhome/${id}`);
-          }, 2000);
-        }
+      } catch (error) {
+        console.log(error);
+        setSubmitError("Failed to save ad. Please try again.");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.log(error);
-      setSubmitError("Something went wrong.");
-      toast.error(error.response?.data.message || "error while creating ad")
-    } finally {
-      setLoading(false);
+    } else if (paymenttype === "payment") {
+      try {
+        let endpoint, method;
+
+        if (isCreateMode) {
+          endpoint = `${baseUrl}/api/v1/ads/survey-ad/draft/${userId}`;
+          method = "post";
+        } else {
+          endpoint = `${baseUrl}/api/v1/ads/edit-survey-ad/draft/${id}`;
+          method = "patch";
+        }
+
+        const response = await axios[method](endpoint, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${userToken}`,
+          },
+        });
+
+        if (response.status === 200 || response.status === 201) {
+          // Same cleanup as above
+          setForm({
+            adName: "",
+            adCategory: "",
+            state: [],
+            city: [],
+            viewPlan: "",
+          });
+          if (fileInputRef.current) {
+            fileInputRef.current.value = null;
+          }
+          setImagePreview(null);
+          setImageFile(null);
+          setPositions([]);
+          setSingleTime(false);
+          setMultipleTime(false);
+          setSelectedTimeSlots([]);
+          setSearchInput("");
+          setAllYesNoQuestions([]);
+          setAllMCQuestions([]);
+          setTimeOptions({
+            "3hrs": false,
+            "6hrs": false,
+            "12hrs": false,
+            "24hrs": false,
+            "48hrs": false,
+          });
+
+          setShowSuccessPopup(true);
+          setTimeout(() => {
+            setShowSuccessPopup(false);
+            navigate(`/userhome/${userId}`);
+          }, 2000);
+        }
+      } catch (error) {
+        console.log(error);
+        setSubmitError("Failed to save ad. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     }
   };
+  useEffect(() => {
+    const initFormFromData = (data) => {
+      const adRef =
+        data.imgAdRef || data.videoAdRef || data.surveyAdRef || data;
+
+      setForm({
+        adName: adRef.title || "",
+        adCategory: adRef.category || "",
+        description: adRef.description || "",
+        state: Array.isArray(adRef.targetStates) ? adRef.targetStates : [],
+        city: Array.isArray(adRef.targetDistricts) ? adRef.targetDistricts : [],
+        viewPlan: adRef.userViewsNeeded?.toString() || "",
+      });
+
+      // Handle existing image for edit/duplicate
+      if (adRef.imageUrl) {
+        setImagePreview(`${baseUrl}${adRef.imageUrl}`);
+      }
+
+      // Handle existing questions
+      if (adRef.questions && Array.isArray(adRef.questions)) {
+        const yesNoQuestions = [];
+        const mcQuestions = [];
+
+        adRef.questions.forEach((q) => {
+          if (q.questionType === "yesno") {
+            yesNoQuestions.push(q.questionText);
+          } else if (q.questionType === "multiple") {
+            mcQuestions.push({
+              question: q.questionText,
+              options: q.options,
+            });
+          }
+        });
+
+        setAllYesNoQuestions(yesNoQuestions);
+        setAllMCQuestions(mcQuestions);
+
+        // Set question type based on existing questions
+        if (yesNoQuestions.length > 0) {
+          setQuestionType("yesno");
+        } else if (mcQuestions.length > 0) {
+          setQuestionType("multiple");
+        }
+      }
+
+      setPositions(
+        (adRef.targetRegions || []).map((region) => {
+          const coords = region?.location?.coordinates || [0, 0];
+          return {
+            lat: coords[0],
+            lng: coords[1],
+            radiusKm: region.radiusKm || 30,
+          };
+        })
+      );
+
+      // Handle Ad Period Logic
+      const adPeriod = adRef.adPeriod;
+
+      if (adPeriod === 0) {
+        setSingleTime(true);
+        setMultipleTime(false);
+        setSelectedTimeSlots([]);
+        setTimeOptions({
+          "3hrs": false,
+          "6hrs": false,
+          "12hrs": false,
+          "24hrs": false,
+          "48hrs": false,
+        });
+      } else if (adPeriod > 0) {
+        setSingleTime(false);
+        setMultipleTime(true);
+        setSelectedTimeSlots(adPeriod);
+
+        const timeOptionsMap = {
+          3: "3hrs",
+          6: "6hrs",
+          12: "12hrs",
+          24: "24hrs",
+          48: "48hrs",
+        };
+
+        const selectedOption = timeOptionsMap[adPeriod];
+
+        setTimeOptions({
+          "3hrs": selectedOption === "3hrs",
+          "6hrs": selectedOption === "6hrs",
+          "12hrs": selectedOption === "12hrs",
+          "24hrs": selectedOption === "24hrs",
+          "48hrs": selectedOption === "48hrs",
+        });
+      }
+    };
+
+    const fetchAdData = async () => {
+      try {
+        const response = await axios.get(
+          `${baseUrl}/api/v1/user/my-single-ad/${userId}/${id}`
+        );
+        const adData = response.data.ad;
+        initFormFromData(adData);
+      } catch (error) {
+        console.error("Failed to fetch ad:", error);
+      }
+    };
+
+    if (isEditMode) {
+      fetchAdData();
+    } else if (duplicatedAd) {
+      initFormFromData(duplicatedAd);
+    }
+  }, [id, userId, duplicatedAd, isEditMode, isDuplicateMode]);
   const [preview, setPreview] = useState(null);
-  const [previewaudio, setPreviewaudio] = useState(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setVideo(file);
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+    }
+  };
 
   const handleStateChange = (selected) => {
     const selectedStates = selected ? selected.map((opt) => opt.value) : [];
@@ -780,28 +1067,22 @@ function AdForm() {
   const isMapSelected = positions.length > 0;
   const isRegionSelected = form.state.length > 0;
   const fileInputRef = useRef(null);
-  const fileInputAudioRef = useRef(null);
   const navigate = useNavigate();
 
   // Handle tour completion
-  const handleTourComplete = (tourType) => {
-    setTourState((prev) => ({
-      ...prev,
-      [tourType === "navbar" ? "navbarCompleted" : "homeCompleted"]: true,
-    }));
-  };
+ 
 
   //driver.js
 
   // Start home tour when navbar tour is completed
   useEffect(() => {
     const homeTourDone = localStorage.getItem(`userTourCompleted_${id}`);
-    const imageadsCompleted = localStorage.getItem(
-      `imageAdTourCompleted_${id}`
+    const surveyadsCompleted = localStorage.getItem(
+      `surveyAdTourCompleted_${id}`
     );
 
     // Start home tour if navbar is done but full tour isn't complete
-    if (homeTourDone && !imageadsCompleted) {
+    if (homeTourDone && !surveyadsCompleted) {
       // Add a small delay to ensure all elements are rendered
       setTimeout(() => {
         startHomeTour();
@@ -810,170 +1091,13 @@ function AdForm() {
   }, [id]); // Remove tourState.navbarCompleted dependency
 
   // Also trigger when navbar completes via callback
-  useEffect(() => {
-    if (tourState.navbarCompleted) {
-      setTimeout(() => {
-        startHomeTour();
-      }, 500);
-    }
-  }, [tourState.navbarCompleted]);
 
-  const startHomeTour = () => {
-    // Check again to prevent duplicate tours
-    const tourCompleted = localStorage.getItem(`imageAdTourCompleted_${id}`);
-    if (tourCompleted) return;
 
-    let attempts = 0;
 
-    const interval = setInterval(() => {
-      const selectors = [
-        "#ads-name",
-        "#select-ads-category",
-        "#select-ads-location",
-        "#select-ads-region",
-        "#select-ads-period",
-        "#image-ads-add",
-        "#audio-ads-note",
-        "#view-requirement",
-      ];
-
-      const existingSelectors = selectors.filter((sel) =>
-        document.querySelector(sel)
-      );
-
-      // Start tour if at least the place-ads-btn exists (main requirement)
-      const canStartTour = document.querySelector("#ads-name");
-
-      if (canStartTour || attempts > 10) {
-        clearInterval(interval);
-
-        if (canStartTour) {
-          // Use only existing selectors for the tour
-          const tourSteps = [];
-
-          if (document.querySelector("#ads-name")) {
-            tourSteps.push({
-              element: "#ads-name",
-              popover: {
-                title: "Add Your Ads Name",
-                description: "Click here to add your ads name.",
-                position: "bottom",
-              },
-            });
-          }
-
-          if (document.querySelector("#select-ads-category")) {
-            tourSteps.push({
-              element: "#select-ads-category",
-              popover: {
-                title: "Select Ads Category",
-                description: "Select here to add your ads category.",
-                position: "top",
-              },
-            });
-          }
-
-          if (document.querySelector("#select-ads-location")) {
-            tourSteps.push({
-              element: "#select-ads-location",
-              popover: {
-                title: "Select Your Ads Location",
-                description: "Select here to add your ads location.",
-                position: "top",
-              },
-            });
-          }
-
-          if (document.querySelector("#select-ads-region")) {
-            tourSteps.push({
-              element: "#select-ads-region",
-              popover: {
-                title: "Select Your Ads Region",
-                description: "Select here to add your ads region.",
-                position: "top",
-              },
-            });
-          }
-
-          if (document.querySelector("#select-ads-period")) {
-            tourSteps.push({
-              element: "#select-ads-period",
-              popover: {
-                title: "Select Your Ads Period Time",
-                description: "Select here to add your ads period time.",
-                position: "top",
-              },
-            });
-          }
-
-          if (document.querySelector("#image-ads-add")) {
-            tourSteps.push({
-              element: "#image-ads-add",
-              popover: {
-                title: "Select Your Image Ad",
-                description: "Select here to add your image ad.",
-                position: "top",
-              },
-            });
-          }
-
-          if (document.querySelector("#audio-ads-note")) {
-            tourSteps.push({
-              element: "#audio-ads-note",
-              popover: {
-                title: "Select Your Audio For Ads background",
-                description: "Select here to add your audio note.",
-                position: "top",
-              },
-            });
-          }
-
-          if (document.querySelector("#view-requirement")) {
-            tourSteps.push({
-              element: "#view-requirement",
-              popover: {
-                title: "Select Your Ads View Requirements",
-                description: "Select here to add your ads view requirements.",
-                position: "top",
-              },
-            });
-          }
-
-          const driver = new Driver({
-            animate: true,
-            opacity: 0.5,
-            stageBackground: "rgba(0, 0, 0, 0.1)",
-            allowClose: true,
-            doneBtnText: "Finish Tour",
-            closeBtnText: "Skip",
-            nextBtnText: "Next",
-            prevBtnText: "Previous",
-            onReset: () => {
-              // Mark both tours as completed
-              localStorage.setItem(`imageAdTourCompleted_${id}`, "true");
-              setTourState((prev) => ({
-                ...prev,
-                homeCompleted: true,
-              }));
-            },
-          });
-
-          driver.defineSteps(tourSteps);
-          driver.start();
-        } else {
-          console.warn("Place ads button not found, completing tour anyway.");
-          // Still mark as completed if main element not found
-          localStorage.setItem(`imageAdTourCompleted_${id}`, "true");
-        }
-      }
-
-      attempts++;
-    }, 1000);
-  };
 
   return (
     <>
-      <Navbar onTourComplete={handleTourComplete} />
+      <Navbar />
       <div className={styles.adFormMain}>
         {/* Ad Name */}
         <div className={styles.adName}>
@@ -993,7 +1117,6 @@ function AdForm() {
               />
             </div>
           </div>
-
           {/* Ad Category */}
           <div className={styles.labelContainer} style={{ marginTop: "20px" }}>
             <div className={styles.labelImg}>
@@ -1017,313 +1140,199 @@ function AdForm() {
               </select>
             </div>
           </div>
-          {/* Ad  descrition*/}
-          <div
-            className={styles.labelContainer}
-            style={{ marginTop: "20px" }}
-          >
-            <div className={styles.labelImg}>
-              <img src={tickAd} alt="tick" />
-            </div>
-            <div className={styles.AdNameHead}>
-              <h2>Ad Description</h2>
-              <textarea
-                className={styles.AdInput}
-                type="text"
-                placeholder="Description of your Ad"
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-           {/* Ad website */}
-          <div
-            className={styles.labelContainer}
-            style={{ marginTop: "20px" }}
-          >
-            <div className={styles.labelImg}>
-              <img src={tickAd} alt="tick" />
-            </div>
-            <div className={styles.AdNameHead}>
-              <h2>Website Details</h2>
-              <input
-                className={styles.AdInput}
-                type="text"
-                placeholder="Name of your Ad"
-                name="clickUrl"
-                value={form.clickUrl}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
         </div>
+        {/* Map and Location search */}
         <div
-          className={styles.labelContainer}
+          id="select-ads-location"
+          className={styles.container}
           style={{
-            marginTop: "20px",
-            marginBottom: "20px",
-            borderRadius: "20px",
-            padding: "20px",
-            backgroundColor: "white",
+            pointerEvents: isRegionSelected ? "none" : "auto",
+            opacity: isRegionSelected ? 0.6 : 1,
           }}
         >
-          <div className={styles.labelImg}>
-            <img src={tickAd} alt="tick" />
+          <h3 style={{ paddingBottom: "20px" }}>Select Location</h3>
+          <MapContainer
+            center={[8.5241, 76.9366]}
+            zoom={12}
+            style={{
+              height: "400px",
+              width: "100%",
+              borderRadius: "20px",
+              overflow: "hidden",
+            }}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution="&copy; OpenStreetMap contributors"
+            />
+            <LocationMarkers
+              positions={positions}
+              setPositions={setPositions}
+            />
+            {positions.length > 0 && (
+              <ChangeView
+                center={[positions[0].lat, positions[0].lng]}
+                zoom={13}
+              />
+            )}
+          </MapContainer>
+          <h3 className={styles.heading}>Search Location / Pincode</h3>
+          <div className={styles.controls}>
+            <input
+              type="text"
+              placeholder="Enter place or pincode"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              disabled={loading}
+              style={{
+                width: "100%",
+                padding: "10px 15px",
+                fontSize: 16,
+                marginBottom: 10,
+              }}
+            />
+            {loading && <p>Searching...</p>}
+            <button
+              onClick={() => {
+                if (searchInput.trim()) searchPlace(searchInput);
+              }}
+              className={styles.searchBtn}
+              disabled={loading}
+            >
+              Add Pin
+            </button>
           </div>
-          <div className={styles.radioContainer}>
-            <label>
-              <h2>
+          <h3 className={styles.heading}>Selected Pins</h3>
+          {/* List of pins with radius and remove button */}
+          <div className={styles.positionsList}>
+            {positions.map((pos, index) => (
+              <div key={index} className={styles.result}>
+                <p>
+                  Lat: {pos.lat.toFixed(4)}, Lng: {pos.lng.toFixed(4)}{" "}
+                  <button
+                    className={styles.removeBtn}
+                    onClick={() =>
+                      setPositions((prev) => prev.filter((_, i) => i !== index))
+                    }
+                  >
+                    ❌
+                  </button>
+                </p>
                 <input
-                  type="radio"
-                  value="map"
-                  checked={targetOption === "map"}
-                  onChange={() => setTargetOption("map")}
+                  type="number"
+                  min={1}
+                  className={styles.inputBox}
+                  value={pos.radiusKm || ""}
+                  placeholder="Radius (km)"
+                  onChange={(e) => handleRadiusChange(index, e.target.value)}
                 />
-                Map & Location
-              </h2>
-            </label>
-            <label style={{ marginLeft: "20px" }}>
-              <h2>
-                <input
-                  type="radio"
-                  value="region"
-                  checked={targetOption === "region"}
-                  onChange={() => setTargetOption("region")}
-                />
-                Region-wise
-              </h2>
-            </label>
+              </div>
+            ))}
           </div>
         </div>
+        {/* Region Selection */}
+        <div
+          id="select-ads-region"
+          className={styles.adName}
+          style={{
+            marginTop: "30px",
+            pointerEvents: isMapSelected ? "none" : "auto",
+            opacity: isMapSelected ? 0.6 : 1,
+          }}
+        >
+          <div className={styles.labelContainer}>
+            <div className={styles.labelImg}>
+              <img src={tickAd} alt="tick" />
+            </div>
+            <div className={styles.AdNameHead}>
+              <h2>Region</h2>
+            </div>
+          </div>
 
-        {/* Map and Location Search - show only if 'map' is selected */}
-        {targetOption === "map" && (
           <div
-            id="select-ads-location"
-            className={styles.container}
-            style={{
-              pointerEvents: isRegionSelected ? "none" : "auto",
-              opacity: isRegionSelected ? 0.6 : 1,
-            }}
+            className={styles.labelContainer}
+            style={{ marginTop: "30px", flexDirection: "column" }}
           >
-            <div
-              id="select-ads-location"
-              className={styles.container}
-              style={{
-                pointerEvents: isRegionSelected ? "none" : "auto",
-                opacity: isRegionSelected ? 0.6 : 1,
-              }}
-            >
-              <h3 style={{ paddingBottom: "20px" }}>Select Location</h3>
-              <MapContainer
-                center={[8.5241, 76.9366]}
-                zoom={12}
-                style={{
-                  height: "400px",
-                  width: "100%",
-                  borderRadius: "20px",
-                  overflow: "hidden",
-                }}
-              >
-                <TileLayer
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  attribution="&copy; OpenStreetMap contributors"
-                />
-                <LocationMarkers
-                  positions={positions}
-                  setPositions={setPositions}
-                />
-                {positions.length > 0 && (
-                  <ChangeView
-                    center={[positions[0].lat, positions[0].lng]}
-                    zoom={13}
-                  />
+            <div className={styles.AdNameHead}>
+              <p>State</p>
+              <Select
+                isMulti
+                options={Object.keys(stateCityMap).map((state) => ({
+                  value: state,
+                  label: state,
+                }))}
+                value={Object.keys(stateCityMap)
+                  .filter((state) => form.state.includes(state))
+                  .map((state) => ({ value: state, label: state }))}
+                onChange={handleStateChange}
+                className={styles.selectOption}
+              />
+            </div>
+            <div className={styles.selectedStates}>
+              {form.state.map((s, index) => (
+                <span key={index} className={styles.cityTag}>
+                  {s}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        state: prev.state.filter((state) => state !== s),
+                      }))
+                    }
+                    className={styles.removeBtn}
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+          <div
+            className={styles.labelContainer}
+            style={{ marginTop: "20px", flexDirection: "column" }}
+          >
+            <div className={styles.AdNameHead}>
+              <p>District</p>
+              <Select
+                isMulti
+                options={cityOptions}
+                value={cityOptions.filter((opt) =>
+                  form.city.includes(opt.value)
                 )}
-              </MapContainer>
-
-              <h3 className={styles.heading}>Search Location / Pincode</h3>
-              <div className={styles.controls}>
-                <input
-                  type="text"
-                  placeholder="Enter place or pincode"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  disabled={loading}
-                  style={{
-                    width: "100%",
-                    padding: "10px 15px",
-                    fontSize: 16,
-                    marginBottom: 10,
-                  }}
-                />
-
-                {loading && <p>Searching...</p>}
-                <button
-                  onClick={() => {
-                    if (searchInput.trim()) searchPlace(searchInput);
-                  }}
-                  className={styles.searchBtn}
-                  disabled={loading}
-                >
-                  Add Pin
-                </button>
-              </div>
-
-              <h3 className={styles.heading}>Selected Pins</h3>
-
-              {/* List of pins with radius and remove button */}
-              <div className={styles.positionsList}>
-                {positions.map((pos, index) => (
-                  <div key={index} className={styles.result}>
-                    <p>
-                      Lat: {pos.lat.toFixed(4)}, Lng: {pos.lng.toFixed(4)}{" "}
-                      <button
-                        className={styles.removeBtn}
-                        onClick={() =>
-                          setPositions((prev) =>
-                            prev.filter((_, i) => i !== index)
-                          )
-                        }
-                      >
-                        ❌
-                      </button>
-                    </p>
-                    <input
-                      type="number"
-                      min={1}
-                      className={styles.inputBox}
-                      value={pos.radiusKm || ""}
-                      placeholder="Radius (km)"
-                      onChange={(e) =>
-                        handleRadiusChange(index, e.target.value)
-                      }
-                    />
-                  </div>
-                ))}
-              </div>
+                onChange={(selected) => {
+                  const selectedCities = selected
+                    ? selected.map((opt) => opt.value)
+                    : [];
+                  setForm({ ...form, city: selectedCities });
+                }}
+                className={styles.selectOption}
+              />
+            </div>
+            <div className={styles.selectedCities}>
+              {form.city.map((c, index) => (
+                <span key={index} className={styles.cityTag}>
+                  {c}
+                  <button
+                    type="button"
+                    onClick={() => removeCity(c)}
+                    className={styles.removeBtn}
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
             </div>
           </div>
-        )}
-
-        {/* Region Selection - show only if 'region' is selected */}
-        {targetOption === "region" && (
-          <div
-            id="select-ads-region"
-            className={styles.adName}
-            style={{
-              marginTop: "30px",
-              pointerEvents: isMapSelected ? "none" : "auto",
-              opacity: isMapSelected ? 0.6 : 1,
-            }}
-          >
-            <div
-              id="select-ads-region"
-              className={styles.adName}
-              style={{
-                marginTop: "30px",
-                pointerEvents: isMapSelected ? "none" : "auto",
-                opacity: isMapSelected ? 0.6 : 1,
-              }}
-            >
-              <div className={styles.labelContainer}>
-                <div className={styles.labelImg}>
-                  <img src={tickAd} alt="tick" />
-                </div>
-                <div className={styles.AdNameHead}>
-                  <h2>Region</h2>
-                </div>
-              </div>
-
-              <div
-                className={styles.labelContainer}
-                style={{ marginTop: "30px", flexDirection: "column" }}
-              >
-                <div className={styles.AdNameHead}>
-                  <p>State</p>
-                  <Select
-                    isMulti
-                    options={Object.keys(stateCityMap).map((state) => ({
-                      value: state,
-                      label: state,
-                    }))}
-                    value={Object.keys(stateCityMap)
-                      .filter((state) => form.state.includes(state))
-                      .map((state) => ({ value: state, label: state }))}
-                    onChange={handleStateChange}
-                    className={styles.selectOption}
-                  />
-                </div>
-                <div className={styles.selectedStates}>
-                  {form.state.map((s, index) => (
-                    <span key={index} className={styles.cityTag}>
-                      {s}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setForm((prev) => ({
-                            ...prev,
-                            state: prev.state.filter((state) => state !== s),
-                          }))
-                        }
-                        className={styles.removeBtn}
-                      >
-                        ✕
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div
-                className={styles.labelContainer}
-                style={{ marginTop: "20px", flexDirection: "column" }}
-              >
-                <div className={styles.AdNameHead}>
-                  <p>District</p>
-                  <Select
-                    isMulti
-                    options={cityOptions}
-                    value={cityOptions.filter((opt) =>
-                      form.city.includes(opt.value)
-                    )}
-                    onChange={(selected) => {
-                      const selectedCities = selected
-                        ? selected.map((opt) => opt.value)
-                        : [];
-                      setForm({ ...form, city: selectedCities });
-                    }}
-                    className={styles.selectOption}
-                  />
-                </div>
-                <div className={styles.selectedCities}>
-                  {form.city.map((c, index) => (
-                    <span key={index} className={styles.cityTag}>
-                      {c}
-                      <button
-                        type="button"
-                        onClick={() => removeCity(c)}
-                        className={styles.removeBtn}
-                      >
-                        ✕
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
+        </div>
         {/* Ad Period */}
-        <div className={styles.adName} style={{ marginTop: "20px" }}>
+        <div className={styles.adName}>
           <div className={styles.labelContainer}>
             <div className={styles.labelImg}>
               <img src={tickAd} alt="tick" />
             </div>
             <div className={styles.AdNameHead} id="select-ads-period">
               <h2>Ad Period</h2>
-
               {/* Single Time Option */}
               <div
                 style={{
@@ -1354,7 +1363,6 @@ function AdForm() {
                 />
                 <label>Single user single time</label>
               </div>
-
               {/* Multiple Time Option */}
               <div
                 style={{
@@ -1386,7 +1394,6 @@ function AdForm() {
                 />
                 <label>Single user multiple time</label>
               </div>
-
               {/* Time Slot Selection */}
               {["3hrs", "6hrs", "12hrs", "24hrs", "48hrs"].map((timeLabel) => (
                 <div
@@ -1412,46 +1419,156 @@ function AdForm() {
           </div>
         </div>
         <div className={styles.adName}>
-          <div className={styles.labelContainer}>
+          <div className={styles.labelContainer} id="survey-ads-add">
             <div className={styles.labelImg}>
               <img src={tickAd} alt="tick" />
             </div>
-            <div className={styles.AdNameHead} id="image-ads-add">
-              <h2>Your Ad Photo</h2>
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept="image/*"
-                onChange={handleFileChange}
-              />
-              {preview && (
-                <img
-                  src={preview}
-                  alt="Preview"
-                  className={styles.previewImg}
+            <div className={styles.AdNameHead}>
+              <h2>Your Survey Ad</h2>
+              <div className={styles.radioGroup}>
+                <label>
+                  <input
+                    type="radio"
+                    checked={questionType === "yesno"}
+                    onChange={() => setQuestionType("yesno")}
+                  />
+                  Yes or No Questions
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    checked={questionType === "multiple"}
+                    onChange={() => setQuestionType("multiple")}
+                  />
+                  Multiple Choice Questions
+                </label>
+              </div>
+            </div>
+            {/* Yes/No UI */}
+            {questionType === "yesno" && (
+              <div className={styles.section}>
+                <label className={styles.label}>Yes/No Question</label>
+                <input
+                  type="text"
+                  value={yesNoQuestion}
+                  onChange={(e) => setYesNoQuestion(e.target.value)}
+                  placeholder="Enter your Yes/No question"
+                  className={styles.input}
                 />
-              )}
-            </div>
-          </div>
-        </div>
-        <div className={styles.adName}>
-          <div className={styles.labelContainer}>
-            <div className={styles.labelImg}>
-              <img src={tickAd} alt="tick" />
-            </div>
-            <div className={styles.AdNameHead} id="audio-ads-note">
-              <h2>Your Voice Not</h2>
+                <button onClick={addYesNoQuestion} className={styles.button}>
+                  Add Question
+                </button>
+                <p className={styles.note}>
+                  <strong>Note:</strong> Yes/No questions do not require
+                  options.
+                </p>
+                <div style={{ marginTop: "20px" }}>
+                  {allYesNoQuestions.map((q, i) => (
+                    <div key={i} className={styles.questionContainer}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <div>
+                          <strong>Q{i + 1}:</strong> {q}
+                        </div>
+                        <button
+                          onClick={() => deleteYesNoQuestion(i)}
+                          className={styles.deleteButton}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* MCQ UI */}
+            {questionType === "multiple" && (
+              <div className={styles.section}>
+                <label className={styles.label}>Multiple Choice Question</label>
+                <input
+                  type="text"
+                  value={mcQuestion}
+                  onChange={(e) => setMcQuestion(e.target.value)}
+                  placeholder="Enter your multiple choice question"
+                  className={styles.input}
+                />
+                {mcOptions.map((opt, idx) => (
+                  <div
+                    key={idx}
+                    style={{ display: "flex", gap: "10px", marginTop: "10px" }}
+                  >
+                    <input
+                      type="text"
+                      value={opt}
+                      onChange={(e) => handleOptionChange(idx, e.target.value)}
+                      placeholder={`Option ${idx + 1}`}
+                      className={styles.input}
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      onClick={() => removeOption(idx)}
+                      className={styles.deleteButton}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <button onClick={addOption} className={styles.addOptionButton}>
+                  ➕ Add Option
+                </button>
+                <button onClick={addMCQuestion} className={styles.button}>
+                  Add Question
+                </button>
+                <div style={{ marginTop: "20px" }}>
+                  {allMCQuestions.map((q, i) => (
+                    <div key={i} className={styles.questionContainer}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <div>
+                          <strong>Q{i + 1}:</strong> {q.question}
+                        </div>
+                        <button
+                          onClick={() => deleteMCQuestion(i)}
+                          className={styles.deleteButton}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                      <ul style={{ marginTop: "5px" }}>
+                        {q.options.map((o, j) => (
+                          <li key={j}>- {o}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* File Upload */}
+            <div className={styles.section}>
+              <label className={styles.label}>Ad Image Upload</label>
               <input
                 type="file"
-                ref={fileInputAudioRef}
-                accept="audio/*"
-                onChange={handleFileChangeaudio}
+                accept="image/*"
+                onChange={handleImageChange}
               />
-              {previewaudio && (
-                <audio controls>
-                  <source src={previewaudio} />
-                  Your browser does not support the audio element.
-                </audio>
+              {imagePreview && (
+                <div style={{ marginTop: "10px" }}>
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    style={{ width: "200px", borderRadius: "8px" }}
+                  />
+                </div>
               )}
             </div>
           </div>
@@ -1481,7 +1598,6 @@ function AdForm() {
             </div>
           </div>
         </div>
-
         {/* Error & Success messages */}
         {submitError && (
           <p style={{ color: "red", marginTop: "10px" }}>{submitError}</p>
@@ -1489,7 +1605,6 @@ function AdForm() {
         {submitSuccess && (
           <p style={{ color: "green", marginTop: "10px" }}>{submitSuccess}</p>
         )}
-
         {/* Buttons */}
         <div className={styles.buttondiv}>
           <div className={styles.mobdiv}>
@@ -1560,4 +1675,4 @@ function AdForm() {
   );
 }
 
-export default AdForm;
+export default SurveyEdit;

@@ -470,7 +470,7 @@ function VideoAdEdit() {
   const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const location = useLocation();
-  const userToken=useSelector((state)=>state.user.token)
+  const userToken = useSelector((state) => state.user.token);
   const isEditMode = Boolean(id); // true if editing existing ad (id exists)
   const isDuplicateMode = Boolean(location.state?.duplicatedAd);
   const duplicatedAd = location.state?.duplicatedAd || null;
@@ -492,6 +492,7 @@ function VideoAdEdit() {
     adName: "",
     adPeriod: "",
     adCategory: "",
+    description:""
   });
   const [positions, setPositions] = useState([]);
   const [searchInput, setSearchInput] = useState("");
@@ -549,58 +550,94 @@ function VideoAdEdit() {
   };
   const userId = useSelector((state) => state.user.id);
 
-  useEffect(() => {
-    const initFormFromData = (data) => {
-      const adRef =
-        data.imgAdRef || data.videoAdRef || data.surveyAdRef || data; // fallback for duplication
+useEffect(() => {
+  const initFormFromData = (data) => {
+    const adRef =
+      data.imgAdRef || data.videoAdRef || data.surveyAdRef || data; // fallback for duplication
 
-      setForm({
-        adName: adRef.title || "",
-        adCategory: adRef.description || "",
-        state: Array.isArray(adRef.targetStates) ? adRef.targetStates : [],
-        city: Array.isArray(adRef.targetDistricts) ? adRef.targetDistricts : [],
-        viewPlan: adRef.userViewsNeeded?.toString() || "",
-        state: adRef.targetStates || "",
+    setForm({
+      adName: adRef.title || "",
+      adCategory: adRef.category || "",
+      description: adRef.description || "",
+      state: Array.isArray(adRef.targetStates) ? adRef.targetStates : [],
+      city: Array.isArray(adRef.targetDistricts) ? adRef.targetDistricts : [],
+      viewPlan: adRef.userViewsNeeded?.toString() || "",
+    });
+
+    if (adRef.videoUrl) setPreview(`${baseUrl}${adRef.videoUrl}`);
+
+    setPositions(
+      (adRef.targetRegions || []).map((region) => {
+        const coords = region?.location?.coordinates || [0, 0];
+        return {
+          lat: coords[0],
+          lng: coords[1],
+          radiusKm: region.radiusKm || 30,
+        };
+      })
+    );
+
+    // Handle Ad Period Logic
+    const adPeriod = adRef.adPeriod;
+    
+    if (adPeriod === 0) {
+      // Single user single time
+      setSingleTime(true);
+      setMultipleTime(false);
+      setSelectedTimeSlots([]);
+      setTimeOptions({
+        "3hrs": false,
+        "6hrs": false,
+        "12hrs": false,
+        "24hrs": false,
+        "48hrs": false,
       });
-
-      if (adRef.videoUrl) setPreview(`${baseUrl}${adRef.videoUrl}`);
-
-      setPositions(
-        (adRef.targetRegions || []).map((region) => {
-          const coords = region?.location?.coordinates || [0, 0];
-          return {
-            lat: coords[0],
-            lng: coords[1],
-            radiusKm: region.radiusKm || 30,
-          };
-        })
-      );
-
-      setSingleTime(!!adRef.singleTime);
-      setMultipleTime(!!adRef.adPeriod);
-      setSelectedTimeSlots(adRef.adPeriod || []);
-      setTimeOptions(adRef.adPeriod || {});
-    };
-
-    const fetchAdData = async () => {
-      try {
-        const response = await axios.get(
-          `${baseUrl}/api/v1/user/my-single-ad/${userId}/${id}`
-        );
-        const adData = response.data.ad;
-
-        initFormFromData(adData); // Pass full object with refs
-      } catch (error) {
-        console.error("Failed to fetch ad:", error);
-      }
-    };
-
-    if (isEditMode) {
-      fetchAdData();
-    } else if (duplicatedAd) {
-      initFormFromData(duplicatedAd);
+    } else if (adPeriod > 0) {
+      // Single user multiple time
+      setSingleTime(false);
+      setMultipleTime(true);
+      setSelectedTimeSlots(adPeriod);
+      
+      // Set the corresponding time option based on adPeriod value
+      const timeOptionsMap = {
+        3: "3hrs",
+        6: "6hrs", 
+        12: "12hrs",
+        24: "24hrs",
+        48: "48hrs"
+      };
+      
+      const selectedOption = timeOptionsMap[adPeriod];
+      
+      setTimeOptions({
+        "3hrs": selectedOption === "3hrs",
+        "6hrs": selectedOption === "6hrs",
+        "12hrs": selectedOption === "12hrs",
+        "24hrs": selectedOption === "24hrs",
+        "48hrs": selectedOption === "48hrs",
+      });
     }
-  }, [id, userId, duplicatedAd]);
+  };
+
+  const fetchAdData = async () => {
+    try {
+      const response = await axios.get(
+        `${baseUrl}/api/v1/user/my-single-ad/${userId}/${id}`
+      );
+      const adData = response.data.ad;
+
+      initFormFromData(adData); // Pass full object with refs
+    } catch (error) {
+      console.error("Failed to fetch ad:", error);
+    }
+  };
+
+  if (isEditMode) {
+    fetchAdData();
+  } else if (duplicatedAd) {
+    initFormFromData(duplicatedAd);
+  }
+}, [id, userId, duplicatedAd]);
 
   const searchPlace = async (query) => {
     setLoading(true);
@@ -657,7 +694,8 @@ function VideoAdEdit() {
     try {
       const formData = new FormData();
       formData.append("title", form.adName);
-      formData.append("description", form.adCategory);
+      formData.append("category", form.adCategory);
+      formData.append("description", form.description);
       formData.append("locations", JSON.stringify(locationPayload));
       formData.append("states", JSON.stringify(form.state));
       formData.append("districts", JSON.stringify(form.city || []));
@@ -777,6 +815,22 @@ function VideoAdEdit() {
                 <option>Housing</option>
                 <option>Social Issue</option>
               </select>
+            </div>
+          </div>
+          <div className={styles.labelContainer} style={{ marginTop: "20px" }}>
+            <div className={styles.labelImg}>
+              <img src={tickAd} alt="tick" />
+            </div>
+            <div className={styles.AdNameHead}>
+              <h2>Ad Description</h2>
+              <textarea
+                className={styles.AdInput}
+                type="text"
+                placeholder="Description of your Ad"
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+              />
             </div>
           </div>
         </div>
