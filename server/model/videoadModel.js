@@ -11,6 +11,9 @@ const videoAd = new mongoose.Schema(
       type: String,
       required: true,
     },
+      category:{
+type:String
+    },
     videoUrl: {
       type: String,
       required: true,
