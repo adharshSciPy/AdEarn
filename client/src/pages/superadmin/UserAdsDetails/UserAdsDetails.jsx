@@ -14,7 +14,6 @@ function UserAdsDetails() {
     const [selectedMonth, setSelectedMonth] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
-    const [datacount, setCount] = useState("")
 
     const onChange = (date, dateString) => {
         if (date) {
@@ -22,28 +21,29 @@ function UserAdsDetails() {
         } else {
             setSelectedMonth(null);
         }
+        // Reset to first page when month filter changes
+        setCurrentPage(1);
     };
-
 
     useEffect(() => {
         const details = async () => {
             try {
-                const response = await axios.get(`${baseUrl}/api/v1/user/my-all-ads/${id}`,
-                    {
-                        params: {
-                            page: currentPage,
-                            limit: pageSize,
-                        }
-                    });
+                // For frontend filtering approach, get more data or all data
+                const response = await axios.get(`${baseUrl}/api/v1/user/my-all-ads/${id}`, {
+                    params: {
+                        page: 1,
+                        limit: 1000,
+                    }
+                });
+                
                 setData(response.data.data.ads)
-                setCount(response.data.data.count)
                 console.log(response)
             } catch (error) {
                 console.log(error)
             }
         }
         details()
-    }, [currentPage, pageSize])
+    }, []) // Remove dependencies since we're getting all data once
 
     function formatDate(dateString) {
         const date = new Date(dateString);
@@ -56,6 +56,16 @@ function UserAdsDetails() {
 
         return `${day}/${month}/${year}`;
     }
+
+    // Handle pagination change
+    const handlePaginationChange = (page, size) => {
+        setCurrentPage(page);
+        if (size !== pageSize) {
+            // If page size changed, reset to first page
+            setCurrentPage(1);
+            setPageSize(size);
+        }
+    };
 
     return (
         <div className={styles.usertransactionmain}>
@@ -84,6 +94,7 @@ function UserAdsDetails() {
                                 </thead>
 
                                 <tbody>
+                                    {/* Frontend filtering and pagination */}
                                     {data
                                         .filter((value) => {
                                             if (!selectedMonth) return true;
@@ -93,6 +104,7 @@ function UserAdsDetails() {
                                                 payoutDate.getFullYear() === selectedMonth.year()
                                             );
                                         })
+                                        .slice((currentPage - 1) * pageSize, currentPage * pageSize) // Apply pagination
                                         .map((value, index) => {
                                             const adRef = value.imageAdRef || value.videoAdRef || value.surveyAdRef || null;
 
@@ -108,24 +120,26 @@ function UserAdsDetails() {
                                             );
                                         })}
                                 </tbody>
-
                             </table>
                         </div>
                         <Pagination
                             current={currentPage}
                             pageSize={pageSize}
-                            total={datacount} // total transaction count
+                            total={data
+                                .filter((value) => {
+                                    if (!selectedMonth) return true;
+                                    const payoutDate = new Date(value.createdAt);
+                                    return (
+                                        payoutDate.getMonth() === selectedMonth.month() &&
+                                        payoutDate.getFullYear() === selectedMonth.year()
+                                    );
+                                }).length} // Use filtered data count
                             showSizeChanger
                             pageSizeOptions={['10', '20', '50', '100']}
-                            onChange={(page, size) => {
-                                setCurrentPage(page);
-                                setPageSize(size);
-                            }}
+                            onChange={handlePaginationChange}
                             style={{ marginTop: "20px", textAlign: "right", display: "flex", justifyContent: "end", alignItems: "end" }}
                         />
                     </div>
-
-
                 </div>
             </div>
         </div>
@@ -133,4 +147,3 @@ function UserAdsDetails() {
 }
 
 export default UserAdsDetails
-
