@@ -15,7 +15,7 @@ import "driver.js/dist/driver.min.css";
 const WalletPage = () => {
   const [activeTab, setActiveTab] = useState("Payouts");
   const [showPopup, setShowPopup] = useState(false);
-  const [stars, setStars] = useState("");
+  const [stars, setStars] = useState(0);
   const [walletDetails, setWalletDetails] = useState([]);
   const [showBuyStarsModal, setShowBuyStarsModal] = useState(false);
   const [payoutAmount, setPayoutAmount] = useState(0);
@@ -107,8 +107,8 @@ const WalletPage = () => {
   const paymentClick = async () => {
     try {
       const response = await axios.post(
-        `${baseUrl}/api/v1/user/buy-stars/${userId}`,
-        { starsNeeded: stars }
+        `${baseUrl}/api/v1/user/initiate/star-buy/${userId}`,
+        { amount: parseInt(stars) }
       );
       console.log(response);
       if (response.status === 200) {
@@ -632,12 +632,12 @@ const WalletPage = () => {
                 Enter number of stars
               </p>
               <input
-                placeholder="Enter number of stars"
+                placeholder="Enter Amount mulitple of 25INR"
                 type="number"
                 className={styles.modalInput}
                 onChange={(e) => setStars(e.target.value)}
               ></input>
-              <p className={styles.indicator}> * minimum 60 stars</p>
+              <p className={styles.indicator}> * multiple of 25 INR</p>
               <div className={styles.modalActions}>
                 <button
                   onClick={() => setShowBuyStarsModal(false)}
