@@ -449,17 +449,23 @@ cron.schedule("* * * * *", async () => {
 // index.js
 
 
-cron.schedule("0 0 * * *", async () => {
+cron.schedule("0/2 * * * *", async () => {
   const now = new Date();
-  console.log(`[${now.toISOString()}] 🔁 Running 2-minute contest scheduler...`);
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
 
-  // ✅ Start scheduled contests
+  const todayEnd = new Date(now);
+  todayEnd.setHours(23, 59, 59, 999);
+
+  console.log(`[${now.toISOString()}] 🔁 Running hourly contest scheduler...`);
+
+  // ✅ Activate all contests scheduled for today
   try {
     console.log("⏳ Checking for scheduled contests to activate...");
     const result = await ContestEntry.updateMany(
       {
         status: "Scheduled",
-        startDate: { $lte: now },
+        startDate: { $gte: todayStart, $lte: todayEnd }
       },
       { $set: { status: "Active" } }
     );
@@ -467,13 +473,13 @@ cron.schedule("0 0 * * *", async () => {
     if (result.modifiedCount > 0) {
       console.log(`✅ Activated ${result.modifiedCount} scheduled contest(s)`);
     } else {
-      console.log("ℹ️ No scheduled contests to activate at this time.");
+      console.log("ℹ️ No scheduled contests to activate right now.");
     }
   } catch (err) {
     console.error("❌ Error activating scheduled contests:", err.message);
   }
 
-  // ✅ End expired dateRange contests
+  // ✅ End expired dateRange contests with automatic winner selection
   try {
     console.log("⏳ Checking for active dateRange contests to end...");
     const contestsToEnd = await ContestEntry.find({
@@ -483,14 +489,14 @@ cron.schedule("0 0 * * *", async () => {
       winnerSelectionType: "Automatic",
     });
 
-    if (contestsToEnd.length === 0) {
-      console.log("ℹ️ No expired dateRange contests found.");
-    }
-
     for (const contest of contestsToEnd) {
       console.log(`🏁 Ending contest: ${contest.contestName || contest._id}`);
       await selectAutomaticWinnersInternal(contest._id, io, connectedUsers);
       console.log(`✅ Winners selected for contest: ${contest.contestName || contest._id}`);
+    }
+
+    if (contestsToEnd.length === 0) {
+      console.log("ℹ️ No expired contests found.");
     }
   } catch (err) {
     console.error("❌ Error ending expired contests:", err.message);
@@ -498,6 +504,7 @@ cron.schedule("0 0 * * *", async () => {
 
   console.log(`[${new Date().toISOString()}] ✅ Scheduler cycle complete.\n`);
 });
+
 
   
 const PORT = process.env.PORT || 8000;

@@ -1819,12 +1819,6 @@ const selectAutomaticWinnersInternal = async (contestId, io, connectedUsers) => 
   return "Success";
 };
 
-
-
-
-
-
-
 const stopContestManually = async (req, res) => {
   const { id } = req.params;
 
