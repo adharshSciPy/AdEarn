@@ -201,6 +201,8 @@ function App() {
 
           <Route path='/videoadedit/:id' element={<VideoAdEdit />} />
           <Route path='/surveyadedit/:id' element={<SurveyEdit />} />
+          <Route path='/surveyduplicate' element={<SurveyEdit />} />
+
 
           <Route path='/videoduplicate' element={<VideoAdEdit />} />
 
