@@ -590,9 +590,17 @@ function SurveyEdit() {
     );
   };
   useEffect(() => {
+    // Normalize source ad: edit fetch > duplicated surveyAd in location.state > duplicatedAd fallback
+    const sourceAd = (() => {
+      if (isEditMode) return null; // we'll fetch for edit
+      if (location.state?.surveyAd) return location.state.surveyAd;
+      if (duplicatedAd) return duplicatedAd;
+      return null;
+    })();
+
     const initFormFromData = (data) => {
       const adRef =
-        data.imgAdRef || data.videoAdRef || data.surveyAdRef || data; // fallback for duplication
+        data.imgAdRef || data.videoAdRef || data.surveyAdRef || data;
 
       setForm({
         adName: adRef.title || "",
@@ -603,8 +611,40 @@ function SurveyEdit() {
         viewPlan: adRef.userViewsNeeded?.toString() || "",
       });
 
-      if (adRef.videoUrl) setPreview(`${baseUrl}${adRef.videoUrl}`);
+      // Image / preview logic: survey ad uses imageUrl
+      if (adRef.imageUrl) {
+        setImagePreview(`${baseUrl}${adRef.imageUrl}`);
+      } else if (adRef.videoUrl) {
+        setPreview(`${baseUrl}${adRef.videoUrl}`);
+      }
 
+      // Questions
+      if (Array.isArray(adRef.questions)) {
+        const yesNoQuestions = [];
+        const mcQuestions = [];
+
+        adRef.questions.forEach((q) => {
+          if (q.questionType === "yesno") {
+            yesNoQuestions.push(q.questionText);
+          } else if (q.questionType === "multiple") {
+            mcQuestions.push({
+              question: q.questionText,
+              options: q.options,
+            });
+          }
+        });
+
+        setAllYesNoQuestions(yesNoQuestions);
+        setAllMCQuestions(mcQuestions);
+
+        if (yesNoQuestions.length > 0) {
+          setQuestionType("yesno");
+        } else if (mcQuestions.length > 0) {
+          setQuestionType("multiple");
+        }
+      }
+
+      // Regions / Pins
       setPositions(
         (adRef.targetRegions || []).map((region) => {
           const coords = region?.location?.coordinates || [0, 0];
@@ -616,11 +656,9 @@ function SurveyEdit() {
         })
       );
 
-      // Handle Ad Period Logic
+      // Ad Period
       const adPeriod = adRef.adPeriod;
-
       if (adPeriod === 0) {
-        // Single user single time
         setSingleTime(true);
         setMultipleTime(false);
         setSelectedTimeSlots([]);
@@ -632,12 +670,10 @@ function SurveyEdit() {
           "48hrs": false,
         });
       } else if (adPeriod > 0) {
-        // Single user multiple time
         setSingleTime(false);
         setMultipleTime(true);
         setSelectedTimeSlots(adPeriod);
 
-        // Set the corresponding time option based on adPeriod value
         const timeOptionsMap = {
           3: "3hrs",
           6: "6hrs",
@@ -645,9 +681,7 @@ function SurveyEdit() {
           24: "24hrs",
           48: "48hrs",
         };
-
         const selectedOption = timeOptionsMap[adPeriod];
-
         setTimeOptions({
           "3hrs": selectedOption === "3hrs",
           "6hrs": selectedOption === "6hrs",
@@ -664,8 +698,7 @@ function SurveyEdit() {
           `${baseUrl}/api/v1/user/my-single-ad/${userId}/${id}`
         );
         const adData = response.data.ad;
-
-        initFormFromData(adData); // Pass full object with refs
+        initFormFromData(adData);
       } catch (error) {
         console.error("Failed to fetch ad:", error);
       }
@@ -673,10 +706,11 @@ function SurveyEdit() {
 
     if (isEditMode) {
       fetchAdData();
-    } else if (duplicatedAd) {
-      initFormFromData(duplicatedAd);
+    } else if (sourceAd) {
+      initFormFromData(sourceAd);
     }
-  }, [id, userId, duplicatedAd]);
+  }, [id, userId, location.state, duplicatedAd, isEditMode]);
+
   // Validate form before submit
   const validateForm = () => {
     if (!form.adName.trim()) {
@@ -943,7 +977,7 @@ function SurveyEdit() {
 
       setForm({
         adName: adRef.title || "",
-        adCategory: adRef.category || "",
+        adCategory: adRef.description || "",
         description: adRef.description || "",
         state: Array.isArray(adRef.targetStates) ? adRef.targetStates : [],
         city: Array.isArray(adRef.targetDistricts) ? adRef.targetDistricts : [],
@@ -1070,7 +1104,6 @@ function SurveyEdit() {
   const navigate = useNavigate();
 
   // Handle tour completion
- 
 
   //driver.js
 
@@ -1091,9 +1124,6 @@ function SurveyEdit() {
   }, [id]); // Remove tourState.navbarCompleted dependency
 
   // Also trigger when navbar completes via callback
-
-
-
 
   return (
     <>

@@ -175,7 +175,7 @@ function Adsmanager() {
         state: { duplicatedAd: selectedAd },
       });
     } else if (selectedAd.surveyAdRef) {
-      navigate("/surveyedit", {
+      navigate("/surveyduplicate", {
         state: { duplicatedAd: selectedAd },
       });
     } else {
