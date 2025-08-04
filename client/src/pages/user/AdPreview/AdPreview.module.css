@@ -167,3 +167,11 @@
     }
 
 }
+@media (max-width: 575px){
+  .adsnametext h1{
+    font-size: 18px;
+  }
+  .verifyadscontainer{
+    margin-bottom: 70px;
+  }
+}

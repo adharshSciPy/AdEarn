@@ -8,6 +8,7 @@ import axios from "axios";
 import baseUrl from "../../../baseurl";
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 
 function AdminAds() {
   const id = useParams()
@@ -58,6 +59,7 @@ function AdminAds() {
       console.log(response)
     } catch (error) {
       console.log(error)
+      toast.error(error.response?.data.message || "error")
     }
   };
 

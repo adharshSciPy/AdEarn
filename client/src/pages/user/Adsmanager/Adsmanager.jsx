@@ -541,7 +541,7 @@ function Adsmanager() {
                                     ? `/adedit/${row._id}`
                                     : row?.videoAdRef
                                       ? `/videoadedit/${row._id}`
-                                      : `/adedit/${row._id}` // fallback
+                                      : `/surveyadedit/${row._id}` // fallback
                                 }
                                 className={styles.editBtn}
                               >

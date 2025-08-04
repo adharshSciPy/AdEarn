@@ -40,14 +40,16 @@ function AdPreview() {
 
   // Fetch reward after scratch completed
   const getAddContribution = async () => {
-    console.log("j",userToken);
-    
+    console.log("j", userToken);
+
     try {
       const response = await axios.post(
-        `${baseUrl}/api/v1/ads/view-ads/${id}/${adId}`,{},{
-          headers:{
-            Authorization:`Bearer ${userToken}`,
-          }
+        `${baseUrl}/api/v1/ads/view-ads/${id}/${adId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+          },
         }
       );
       setReward(response.data);
@@ -285,6 +287,15 @@ function AdPreview() {
                       ) : null}
                     </div>
                   </div>
+                  {unverifiedAd?.imageAd? (
+                    <div className={styles.listitems}>
+                    <div>
+                      {unverifiedAd?.imageAd?.clickUrl ? (
+                        <p>{unverifiedAd?.imageAd?.clickUrl}</p>
+                      ) : null}
+                    </div>
+                  </div>
+                  ):(null)}
                 </div>
               </div>
             </div>
