@@ -1966,9 +1966,10 @@ const fetchVerifiedSurveyAd = async (req, res) => {
     const verifiedSurveyAds = [];
 
     const adIfEligible = async (surveyAd, ad) => {
-      const hasUserCompleted = surveyAd.usersCompleted?.some(
-        (entry) => entry.userId.toString() === userId
-      );
+      const hasUserCompleted = surveyAd.viewersRewarded?.some(
+  (entry) => entry.userId.toString() === userId
+);
+
 
       const adIsActive =
         surveyAd.isAdVerified &&
@@ -2105,11 +2106,6 @@ const fetchVerifiedSurveyAd = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-
-
-
-
-  
 
 // to watch ads,star split,view count
 const viewAd = async (req, res) => {
