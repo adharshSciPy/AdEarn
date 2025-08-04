@@ -2097,7 +2097,7 @@ const fetchVerifiedSurveyAd = async (req, res) => {
 
     return res.status(200).json({
       message: "Verified survey ads fetched successfully",
-      count: verifiedVideoAds.length,
+      count: verifiedSurveyAds.length,
       ads: verifiedSurveyAds,
     });
   } catch (error) {
