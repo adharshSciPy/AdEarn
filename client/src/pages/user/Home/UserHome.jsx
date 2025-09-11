@@ -33,7 +33,8 @@ function UserHome() {
   const location = useLocation();
   const bonus = location.state?.bonus;
   console.log(bonus);
-
+  console.log(userToken);
+  
   const [showPopup, setShowPopup] = useState(false);
 
   const getImageAdData = async () => {
@@ -101,7 +102,7 @@ const getVideoAdData = async () => {
 
     const response = await axios.get(url, {
       headers: {
-        Authorization: `Bearer ${userToken}`,
+        Authorization: `Bearer${userToken}`,
       },
     });
 
@@ -139,7 +140,7 @@ const getSurveyData = async () => {
 
     const response = await axios.get(url, {
       headers: {
-        Authorization: `Bearer ${userToken}`,
+        Authorization: `Bearer${userToken}`,
       },
     });
 

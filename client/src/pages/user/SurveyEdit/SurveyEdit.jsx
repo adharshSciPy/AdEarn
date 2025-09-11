@@ -1088,7 +1088,7 @@ function SurveyEdit() {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setVideo(file);
+    // setVideo(file);
     if (file) {
       setPreview(URL.createObjectURL(file));
     }
@@ -1118,7 +1118,7 @@ function SurveyEdit() {
     if (homeTourDone && !surveyadsCompleted) {
       // Add a small delay to ensure all elements are rendered
       setTimeout(() => {
-        startHomeTour();
+        // startHomeTour();
       }, 500);
     }
   }, [id]); // Remove tourState.navbarCompleted dependency

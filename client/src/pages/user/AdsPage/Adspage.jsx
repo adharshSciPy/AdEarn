@@ -13,13 +13,18 @@ function Adspage() {
 
     const navigate = useNavigate()
     const userId = useSelector((state) => state.user.id)
+    const token =useSelector((state)=>state.user.token)
     const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
 
     useEffect(() => {
         const fetchAds = async () => {
             try {
                 console.log("userid from store", userId)
-                const response = await axios.get(`${baseUrl}/api/v1/ads/${type}-ads/${userId}`)
+                const response = await axios.get(`${baseUrl}/api/v1/ads/${type}-ads/${userId}`,{
+                    headers:{
+                        Authorization: `Bearer ${token}`
+                    }
+                })
                 setAds(response.data.ads)
                 console.log("response", response)
             } catch (error) {
